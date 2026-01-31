@@ -1,0 +1,42 @@
+@use './screen-sizes' as *;
+
+@mixin mediaMobile {
+  @media (min-width: $mobile) {
+    @content;
+  }
+}
+@mixin mediaMobileXL {
+  @media (min-width: $mobileXL) {
+    @content;
+  }
+}
+@mixin mediaTablet {
+  @media (min-width: $tablet) {
+    @content;
+  }
+}
+@mixin mediaDesktopXS {
+  @media (min-width: $desktopXS) {
+    @content;
+  }
+}
+@mixin mediaDesktopS {
+  @media (min-width: $desktopS) {
+    @content;
+  }
+}
+@mixin mediaDesktopM {
+  @media (min-width: $desktopM) {
+    @content;
+  }
+}
+@mixin mediaDesktopL {
+  @media (min-width: $desktopL) {
+    @content;
+  }
+}
+@mixin mediaDesktopXL {
+  @media (min-width: $desktopXL) {
+    @content;
+  }
+}

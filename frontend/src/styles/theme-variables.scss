@@ -1,0 +1,74 @@
+:root {
+  // Базовые цвета
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --text-primary: #1f1f1f;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+  --ant-color-primary: #1677ff;
+  --ant-color-bg-container: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --bg-primary: #141414;
+  --bg-secondary: #1f1f1f;
+  --text-primary: #ffffff;
+  --text-secondary: #d1d5db;
+  --border-color: #374151;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --ant-color-primary: #177ddc;
+  --ant-color-bg-container: #141414;
+}
+
+:root[data-theme="emerald"] {
+  --bg-primary: #f0fdf4;
+  --bg-secondary: #d1fae5;
+  --text-primary: #065f46;
+  --text-secondary: #047857;
+  --border-color: #a7f3d0;
+  --shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.2);
+  --ant-color-primary: #10b981;
+  --ant-color-bg-container: #f0fdf4;
+}
+
+:root[data-theme="corporate"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #e2e8f0;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: #cbd5e1;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --ant-color-primary: #1e40af;
+}
+
+:root[data-theme="synthwave"] {
+  --bg-primary: #0f0f23;
+  --bg-secondary: #1e1e3f;
+  --text-primary: #ec4899;
+  --text-secondary: #f472b6;
+  --border-color: #3730a3;
+  --shadow: 0 0 20px rgba(236, 72, 153, 0.3);
+  --ant-color-primary: #ec4899;
+}
+
+:root[data-theme="retro"] {
+  --bg-primary: #fef3c7;
+  --bg-secondary: #fde68a;
+  --text-primary: #92400e;
+  --text-secondary: #b45309;
+  --border-color: #f59e0b;
+  --shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
+  --ant-color-primary: #f59e0b;
+}
+
+:root[data-theme="cyberpunk"] {
+  --bg-primary: #1e1b4b;
+  --bg-secondary: #312e81;
+  --text-primary: #a78bfa;
+  --text-secondary: #c4b5fd;
+  --border-color: #6366f1;
+  --shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+  --ant-color-primary: #8b5cf6;
+}

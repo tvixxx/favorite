@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="3f46372b-cc59-4941-ac67-57da5bf12c0e" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;tvixxx&quot;
+  }
+}</component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
+  </component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/tvixxx/favorite.git&quot;,
+    &quot;accountId&quot;: &quot;16dae186-9dc4-409a-beac-e25e1b055fd0&quot;
+  }
+}</component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="OptimizeOnSaveOptions">
+    <option name="myRunOnSave" value="true" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 5
+}</component>
+  <component name="ProjectId" id="2qLpZQuYxUgrDOmKwQqoiSttUF4" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Jest.BaseModal.vue.executor&quot;: &quot;Run&quot;,
+    &quot;Jest.HelloWorld.vue.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Node.js.moveisStore.ts.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/kashilov1/Downloads/customProj/favourite-app&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.standard&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.standard&quot;: &quot;&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs.jest.jest_package&quot;: &quot;/Users/kashilov1/WebstormProjects/favourite-app/favourite/node_modules/@vue/cli-service&quot;,
+    &quot;nodejs_interpreter_path&quot;: &quot;node&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;prettierjs.PrettierConfiguration.Package&quot;: &quot;/Users/kashilov1/Downloads/customProj/favourite-app/frontend/node_modules/prettier&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;web-ide.project.structure&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/kashilov1/Downloads/customProj/favourite-app/frontend/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/backend/favorite/src/assets/favicons" />
+      <recent name="$PROJECT_DIR$/favourite" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/backend" />
+      <recent name="$PROJECT_DIR$/frontend/src/stores/profile" />
+      <recent name="$PROJECT_DIR$/frontend/src/stores/favorites" />
+      <recent name="$PROJECT_DIR$/frontend/src/stores/movies" />
+      <recent name="$PROJECT_DIR$/backend/favorite/public" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Jest.BaseModal.vue">
+    <configuration name="BaseModal.vue" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
+      <node-interpreter value="project" />
+      <jest-package value="$PROJECT_DIR$/favourite/node_modules/@vue/cli-service" />
+      <working-dir value="$PROJECT_DIR$/favourite" />
+      <envs />
+      <scope-kind value="SUITE" />
+      <test-file value="$PROJECT_DIR$/favourite/src/components/BaseModal/BaseModal.spec.ts" />
+      <test-names>
+        <test-name value="BaseModal.vue" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <configuration name="HelloWorld.vue" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
+      <node-interpreter value="project" />
+      <jest-package value="$PROJECT_DIR$/favourite/node_modules/@vue/cli-service" />
+      <working-dir value="$PROJECT_DIR$/favourite" />
+      <envs />
+      <scope-kind value="SUITE" />
+      <test-file value="$PROJECT_DIR$/favourite/tests/unit/example.spec.ts" />
+      <test-names>
+        <test-name value="HelloWorld.vue" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Jest.BaseModal.vue" />
+        <item itemvalue="Jest.HelloWorld.vue" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-a71380e98a7c-JavaScript-WS-252.28238.10" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="SvnConfiguration">
+    <configuration>$USER_HOME$/.subversion</configuration>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="3f46372b-cc59-4941-ac67-57da5bf12c0e" name="Changes" comment="" />
+      <created>1734451765403</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1734451765403</updated>
+      <workItem from="1734451766507" duration="28746000" />
+      <workItem from="1748371631407" duration="29459000" />
+      <workItem from="1748725283230" duration="3459000" />
+      <workItem from="1748887802234" duration="506000" />
+      <workItem from="1751027646350" duration="2000" />
+      <workItem from="1756149198190" duration="171000" />
+      <workItem from="1756149549805" duration="3264000" />
+      <workItem from="1756152948632" duration="9927000" />
+      <workItem from="1756476190595" duration="22672000" />
+      <workItem from="1760898592408" duration="6247000" />
+      <workItem from="1764506023691" duration="710000" />
+      <workItem from="1764506998373" duration="603000" />
+      <workItem from="1764510920255" duration="661000" />
+      <workItem from="1766517873052" duration="25149000" />
+      <workItem from="1766758314534" duration="23862000" />
+      <workItem from="1766947922658" duration="5508000" />
+      <workItem from="1767089553485" duration="58162000" />
+      <workItem from="1767705960777" duration="34842000" />
+      <workItem from="1768034417445" duration="31000" />
+      <workItem from="1768034475936" duration="9771000" />
+      <workItem from="1769108610948" duration="335000" />
+      <workItem from="1769108968678" duration="254000" />
+      <workItem from="1769109229485" duration="3894000" />
+      <workItem from="1769155659672" duration="36000" />
+      <workItem from="1769155706506" duration="12094000" />
+      <workItem from="1769879023151" duration="7239000" />
+      <workItem from="1769886321580" duration="1363000" />
+      <workItem from="1769887705811" duration="32000" />
+    </task>
+    <task id="LOCAL-00001" summary="initial project commit">
+      <option name="closed" value="true" />
+      <created>1760900464882</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1760900464882</updated>
+    </task>
+    <task id="LOCAL-00002" summary="added not crusial files">
+      <option name="closed" value="true" />
+      <created>1760903702802</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1760903702802</updated>
+    </task>
+    <task id="LOCAL-00003" summary="updated design, pages, added reusable code, updated stores.">
+      <option name="closed" value="true" />
+      <created>1766730730727</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1766730730728</updated>
+    </task>
+    <task id="LOCAL-00004" summary="xml">
+      <option name="closed" value="true" />
+      <created>1769885851560</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1769885851560</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="f5e82120-8b2a-4199-b843-56008fcb30dc" value="TOOL_WINDOW" />
+      </map>
+    </option>
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+        <entry key="f5e82120-8b2a-4199-b843-56008fcb30dc">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
+    <option name="CHECK_NEW_TODO" value="false" />
+    <ignored-roots>
+      <path value="$PROJECT_DIR$/backend/favorite" />
+    </ignored-roots>
+    <MESSAGE value="added not crusial files" />
+    <MESSAGE value="updated design, pages, added reusable code, updated stores." />
+    <MESSAGE value="initial project commit" />
+    <MESSAGE value="xml" />
+    <option name="LAST_COMMIT_MESSAGE" value="xml" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>
