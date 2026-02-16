@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { computed, ref } from "vue";
 import { useMainStore } from "@/state/state";
 import api from "@/services/api";
 import { PROFILE_ENDPOINT } from "@/constants/api/profile-endpoints";
@@ -31,7 +31,6 @@ export const useProfileStore = defineStore(PROFILE_STORE_NAME, () => {
   };
 
   const fetchProfile = async (): Promise<void> => {
-    debugger;
     if (!isLoggedIn.value) {
       setError("User not authenticated");
       return;
@@ -40,9 +39,7 @@ export const useProfileStore = defineStore(PROFILE_STORE_NAME, () => {
     setLoading(true);
     setError(null);
 
-    debugger;
     try {
-      debugger;
       const response = await api.get(PROFILE_ENDPOINT);
 
       if (response?.data && isSuccessStatus(response.status)) {
@@ -79,21 +76,15 @@ export const useProfileStore = defineStore(PROFILE_STORE_NAME, () => {
     setError(null);
 
     try {
-      debugger;
-      // Prepare the data to match backend field names
       const requestData: Record<string, any> = {};
 
-      // Map frontend field names to backend field names
       if (updates.fullName) requestData.fullName = updates.fullName;
       if (updates.email) requestData.email = updates.email;
-      if (updates.bio) requestData.description = updates.bio; // Map bio to description
       if (updates.avatar) requestData.avatar = updates.avatar;
 
-      debugger;
       const response = await api.put(PROFILE_ENDPOINT, requestData);
 
       if (response?.data && isSuccessStatus(response.status)) {
-        // Update the profile with the response data
         const userData = response.data;
         const updatedProfileData: ProfileData = {
           id: userData.id || profile.value!.id, // Keep original ID if not returned

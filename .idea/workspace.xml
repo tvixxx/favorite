@@ -4,16 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3f46372b-cc59-4941-ac67-57da5bf12c0e" name="Changes" comment="">
+    <list default="true" id="3f46372b-cc59-4941-ac67-57da5bf12c0e" name="Changes" comment="task-2 - removed commented code and useless comments">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/config/typeorm.config.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/user/dto/update-user.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/user/dto/update-user.dto.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/BaseModal/BaseModal.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/BaseModal/BaseModal.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/ListError/ListError.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ListError/ListError.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/SigninForm.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/SigninForm.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/pages/CreateMovie.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/pages/CreateMovie.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/pages/FavoritesPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/pages/FavoritesPage.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/pages/MovieList.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/pages/MovieList.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/RegisterForm.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/RegisterForm.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/stores/profile/profileStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/stores/profile/profileStore.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -220,7 +214,15 @@
       <option name="project" value="LOCAL" />
       <updated>1769885851560</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="task-2 - removed commented code and useless comments">
+      <option name="closed" value="true" />
+      <created>1771229759352</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1771229759352</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -258,7 +260,8 @@
     <MESSAGE value="initial project commit" />
     <MESSAGE value="xml" />
     <MESSAGE value="task-1 - updated actors endpoint and entities for FE and BE. refactored movie components. Updated ListEmpty component." />
-    <option name="LAST_COMMIT_MESSAGE" value="task-1 - updated actors endpoint and entities for FE and BE. refactored movie components. Updated ListEmpty component." />
+    <MESSAGE value="task-2 - removed commented code and useless comments" />
+    <option name="LAST_COMMIT_MESSAGE" value="task-2 - removed commented code and useless comments" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
