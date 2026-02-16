@@ -7,6 +7,7 @@ export const APP_ENDPOINTS = {
   profile: "profile",
   uploads: "uploads",
   users: "users",
+  actors: "actors",
 } as const;
 
 export type AppEndpoints = keyof typeof APP_ENDPOINTS | string;

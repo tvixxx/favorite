@@ -1,67 +1,26 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from "vue";
+import { onBeforeUnmount, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useMainStore } from "@/state/state";
-import { MOVIES_ENDPOINTS } from "@/constants";
-import { message } from "ant-design-vue";
-import api from "@/services/api";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import { formatDateTime, formatYear } from "@/utils";
 import { useMoviesStore } from "@/stores/movies/moviesStore";
+import { formatDate, formatYear } from "@/utils";
 
 const store = useMainStore();
 const moviesStore = useMoviesStore();
 const router = useRouter();
 
-const currentMovieId = +router.currentRoute.value.params.id;
+const currentMovieId = router.currentRoute.value.params.id as string | null;
 
 onMounted(async () => {
   const shouldLoadMovie = !moviesStore.currentMovie && store.isLoggedIn;
 
   if (shouldLoadMovie) {
-    await getMovieDetail();
+    await moviesStore.getMovieDetail(currentMovieId);
   }
 });
 
-onBeforeUnmount(() => {
-  moviesStore.setCurrentMovie(null);
-});
-
-const getMovieDetail = async () => {
-  if (!moviesStore.isMoviesLoaded) {
-    moviesStore.setLoadingMovie(true);
-    moviesStore.setErrorMovie(null);
-
-    try {
-      const { data, status } = await api.get(
-        `${MOVIES_ENDPOINTS}/${currentMovieId}`
-      );
-
-      if (status !== 200) {
-        moviesStore.setErrorMovie("Ошибка загрузки фильма");
-        message.error(moviesStore.isMovieError);
-        return;
-      }
-
-      moviesStore.setCurrentMovie(data);
-    } catch (err) {
-      moviesStore.setErrorMovie("Ошибка загрузки фильма");
-      message.error(moviesStore.isMoviesError);
-    } finally {
-      moviesStore.setLoadingMovie(false);
-    }
-
-    return;
-  }
-
-  const foundMovie = moviesStore.getMovieById(currentMovieId);
-
-  if (foundMovie) {
-    moviesStore.setCurrentMovie(foundMovie);
-
-    return;
-  }
-};
+onBeforeUnmount(() => moviesStore.setCurrentMovie(null));
 
 const goBack = () => {
   router.back();
@@ -101,8 +60,8 @@ const goBack = () => {
         <div class="movie-card__header">
           <div class="movie-card__poster">
             <img
-              v-if="moviesStore.currentMovie.poster"
-              :src="moviesStore.currentMovie.poster"
+              v-if="moviesStore.currentMovie.imageUrl"
+              :src="moviesStore.currentMovie.imageUrl"
               alt="Постер фильма"
               class="movie-card__poster-img"
             />
@@ -124,7 +83,7 @@ const goBack = () => {
             <div class="movie-card__meta-item">
               <BaseIcon name="mdi:calendar" class="movie-card__meta-icon" />
               <span class="movie-card__meta-sub-title">Дата просмотра: </span>
-              {{ formatDateTime(moviesStore.currentMovie.date) }}
+              {{ formatDate(moviesStore.currentMovie.date) }}
             </div>
 
             <div

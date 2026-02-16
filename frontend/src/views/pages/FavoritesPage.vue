@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
-import { type Movie } from "@/stores/movies/moviesStore";
 import { computed, onMounted, ref } from "vue";
 import { formatDate, formatYear } from "@/utils";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
@@ -13,12 +12,13 @@ import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import ListError from "@/components/ListError/ListError.vue";
 import ListLoading from "@/components/ListLoading/ListLoading.vue";
 import ListEmpty from "@/components/ListEmpty/ListEmpty.vue";
+import type { Movie } from "@/stores";
 
 const router = useRouter();
 const favoritesStore = useFavoritesStore();
 const mainStore = useMainStore();
 
-const imageErrors = ref<Set<number>>(new Set());
+const imageErrors = ref<Set<string>>(new Set());
 
 const hasFavorites = computed(() => favoritesStore.favoritesList.length !== 0);
 const totalFavorites = computed(() => favoritesStore.favoritesList.length);
@@ -35,7 +35,7 @@ const showPaginator = computed(
 const getPosterSrc = (item: Movie) => {
   return imageErrors.value.has(item.id)
     ? FALLBACK_IMAGE_URL
-    : item.poster || FALLBACK_IMAGE_URL;
+    : item.imageUrl || FALLBACK_IMAGE_URL;
 };
 
 onMounted(async () => {
@@ -44,7 +44,7 @@ onMounted(async () => {
   }
 });
 
-const handleImageError = (movieId: number) => {
+const handleImageError = (movieId: string) => {
   imageErrors.value.add(movieId);
 };
 
@@ -87,30 +87,17 @@ const goToMovies = () => {
       <div v-else-if="favoritesStore.isLoading" class="favorites__loading">
         <ListLoading
           size="large"
-          :center="true"
           loading-text="Загружаем избранное..."
+          :center="true"
         />
       </div>
 
       <div v-else-if="!hasFavorites" class="favorites__empty-state">
         <ListEmpty
-          empty-hero-icon="mdi:heart-off"
           description="Избранных фильмов пока нет..."
-          :btn-handler="goToMovies()"
-          btn-text="Найти фильмы"
-          btn-icon="mdi:movie"
+          btn-text="Перейти в фильмы"
+          :btn-handler="goToMovies"
         />
-        <!--        <div class="favorites__empty-hero">-->
-        <!--          <BaseIcon name="mdi:heart-off" class="favorites__empty-heart" />-->
-        <!--        </div>-->
-        <!--        <a-empty description="Избранных фильмов пока нет...">-->
-        <!--          <template #footer>-->
-        <!--            <a-button type="primary" @click="goToMovie" size="large">-->
-        <!--              <BaseIcon name="mdi:movie" />-->
-        <!--              Найти фильмы-->
-        <!--            </a-button>-->
-        <!--          </template>-->
-        <!--        </a-empty>-->
       </div>
 
       <div v-else class="favorites__section">

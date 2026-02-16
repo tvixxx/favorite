@@ -1,5 +1,6 @@
 export * from "./auth-endpoints";
 export * from "./upload-endpoints";
+export * from "./actors-endpoints";
 export * from "./profile-endpoints";
 export * from "./movies-endpoints";
 export * from "./users-endpoints";

@@ -1,12 +1,14 @@
 export interface Movie {
-  id: number;
+  id: string;
   title: string;
   date: Date | null;
   publishDate: Date | null;
-  poster: string;
+  imageUrl: string;
   description: string;
   rate: number;
   createdAt: Date;
-  isFavorite: boolean; // Changed from 'favorite' to match backend schema
-  favoriteId?: number | null; // Made optional since backend might not use this exact field
+  isFavorite: boolean;
+  favoriteId?: number | null;
+  actorIds?: string[];
+  actors?: string[];
 }

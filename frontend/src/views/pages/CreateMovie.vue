@@ -1,22 +1,66 @@
 <script lang="ts" setup>
-import { reactive, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 
 import { message } from "ant-design-vue";
 import { useMoviesStore } from "@/stores/movies/moviesStore";
+import { useActorsStore } from "@/stores/actors/actorsStore";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
+import { showErrorRequest } from "@/state/utils";
 
 const moviesStore = useMoviesStore();
+const actorsStore = useActorsStore();
 
-let formData = reactive({
+const handleActorSelection = async (selectedValues: string[]) => {
+  const processedValues: string[] = [];
+
+  for (const value of selectedValues) {
+    // Check if the value is already a UUID (actor ID) or a new name
+    debugger;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    debugger;
+    if (!uuidRegex.test(value)) {
+      // This is a new actor name - create it
+      const newActor = await actorsStore.addActorByName(value);
+      if (newActor) {
+        processedValues.push(newActor.id);
+      }
+    } else {
+      // This is already an actor ID, add it directly
+      processedValues.push(value);
+    }
+  }
+
+  formData.actorIds = processedValues;
+};
+
+export interface CreateMovie {
+  title: string;
+  date: string;
+  publishDate: string;
+  description?: string;
+  imageUrl: string;
+  rate: number;
+  isFavorite: boolean;
+  actorIds: string[];
+}
+
+let formData = reactive<CreateMovie>({
   title: "",
   date: "",
   publishDate: "",
   description: "",
-  poster: "",
+  imageUrl: "",
   rate: 0,
   isFavorite: false,
+  actorIds: [],
 });
 const formRef = ref(null);
+
+onMounted(async () => {
+  await actorsStore.fetchActors();
+});
 
 const addNewMovie = async () => {
   const { title } = formData;
@@ -26,14 +70,14 @@ const addNewMovie = async () => {
       ...formData,
       date: formData.date ? new Date(formData.date) : null,
       publishDate: formData.publishDate ? new Date(formData.publishDate) : null,
+      actorIds: formData.actorIds, // Include actor IDs (already processed in handleActorSelection)
     });
 
-    // Очистить поля формы после успешного добавления
     formRef?.value?.resetFields();
+    formData.actorIds = [];
     message.success(`${title} добавлен`);
   } catch (error) {
-    console.error("Error adding movie: ", error);
-    message.error(`Не удалось добавить ${title}`);
+    showErrorRequest(error);
   }
 };
 </script>
@@ -70,16 +114,38 @@ const addNewMovie = async () => {
 
               <a-form-item
                 label="Ссылка на постер"
-                name="poster"
+                name="imageUrl"
                 :rules="[
                   { required: true, message: 'Введите ссылку на постер' },
                 ]"
               >
                 <a-input
-                  v-model:value="formData.poster"
+                  v-model:value="formData.imageUrl"
                   size="large"
                   placeholder="https://image.tmdb.org/t/p/w500/..."
                 />
+              </a-form-item>
+
+              <!-- Actor Selection -->
+              <a-form-item label="Актеры" name="actorIds">
+                <a-select
+                  v-model:value="formData.actorIds"
+                  mode="tags"
+                  placeholder="Выберите или введите актеров"
+                  size="large"
+                  style="width: 100%"
+                  :loading="actorsStore.isActorsLoading"
+                  :disabled="actorsStore.isActorsLoading"
+                  @change="handleActorSelection"
+                >
+                  <a-select-option
+                    v-for="actor in actorsStore.getAllActors"
+                    :key="actor.id"
+                    :value="actor.id"
+                  >
+                    {{ actor.name }}
+                  </a-select-option>
+                </a-select>
               </a-form-item>
 
               <a-form-item label="Дата просмотра" name="date">
@@ -107,7 +173,7 @@ const addNewMovie = async () => {
                 <div class="preview-poster">
                   <img
                     :src="
-                      formData.poster ||
+                      formData.imageUrl ||
                       'https://placehold.co/280x200?text=Постер'
                     "
                     alt="Предпросмотр постера"
