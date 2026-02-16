@@ -20,7 +20,6 @@ const formState = reactive<FormState>({
 });
 
 const onFinish = (values: FormState) => {
-  debugger;
   login(values);
 };
 
@@ -44,11 +43,9 @@ const login = async ({ email, password }: FormState) => {
   }
 
   try {
-    debugger;
     await store.logIn({ email, password });
     router.push("/profile");
   } catch (err: any) {
-    debugger;
     if (err.status === 401) {
       message.error(`Не удалось войти!`);
     } else {

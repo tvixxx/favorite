@@ -34,7 +34,7 @@ const showPaginator = computed(
 const getPosterSrc = (item: Movie) => {
   return imageErrors.value.has(item.id)
     ? FALLBACK_IMAGE_URL
-    : item.poster || FALLBACK_IMAGE_URL;
+    : item.imageUrl || FALLBACK_IMAGE_URL;
 };
 
 onMounted(async () => {
@@ -256,7 +256,6 @@ const goToMovie = ({ id }: Movie) => {
   }
 }
 
-// ✅ BEM ГРИД
 .movie-list__grid {
   display: grid;
   gap: 2.5rem;

@@ -71,7 +71,6 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   );
 
   const createMovie = async (movieData: Partial<Movie>): Promise<void> => {
-    // Prepare the data to match backend field names
     const requestData: Partial<Movie> = { ...movieData };
 
     try {
@@ -86,7 +85,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
         const movie: Movie = {
           id: data.id,
           ...movieData,
-          isFavorite: movieData.isFavorite || false, // Handle both field names
+          isFavorite: movieData.isFavorite || false,
           createdAt,
         } as Movie;
         moviesList.value.push(movie);
@@ -97,7 +96,6 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   };
 
   const updateMovie = async (movieData: Movie): Promise<void> => {
-    // Prepare the data to match backend field names
     const requestData: Partial<Movie> = { ...movieData };
 
     try {
@@ -119,7 +117,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     }
   };
 
-  const removeMovie = async (movieId: number): Promise<void> => {
+  const removeMovie = async (movieId: string): Promise<void> => {
     try {
       const response = await useFetch(`${MOVIES_ENDPOINTS}/${movieId}`, {
         method: FETCH_METHOD.delete,
@@ -144,7 +142,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     try {
       const { data, status } = await useFetch(
         `${API_BASE_URL}/${APP_ENDPOINTS.movies}`
-      ); // Updated to use full URL
+      );
 
       if (status !== 200) {
         router.push("/login");
@@ -162,10 +160,55 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     }
   };
 
-  const getMovieById = (movieId: number | null) => {
+  const getMovieById = (movieId: string | null) => {
     return (
       moviesList.value.find((movie: Movie) => movie.id === movieId) ?? null
     );
+  };
+
+  const getMovieDetail = async (movieId: string | null) => {
+    if (!isMoviesLoaded.value) {
+      setLoadingMovie(true);
+      setErrorMovie(null);
+
+      const start = Date.now();
+
+      try {
+        const { data, status } = await useFetch(
+          `${MOVIES_ENDPOINTS}/${movieId}`,
+          {
+            method: FETCH_METHOD.get,
+          }
+        );
+
+        if (status !== 200) {
+          setErrorMovie("Ошибка загрузки фильма");
+          message.error(isMovieError.value);
+          return;
+        }
+
+        setCurrentMovie(data);
+      } catch (error) {
+        showErrorRequest(error);
+        setErrorMovie("Ошибка загрузки фильма");
+      } finally {
+        setTimeout(() => {
+          setLoadingMovie(false);
+        }, getDefaultLoaderDelayTime(start));
+      }
+
+      return;
+    }
+
+    if (movieId) {
+      const foundMovie = getMovieById(`${movieId}`);
+
+      if (foundMovie) {
+        setCurrentMovie(foundMovie);
+
+        return;
+      }
+    }
   };
 
   return {
@@ -196,6 +239,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     setPageSize,
 
     getMovieById,
+    getMovieDetail,
 
     // Movies
     fetchMovies,
