@@ -413,7 +413,7 @@ const goToMovies = () => {
   }
 
   &__card-title {
-    font-size: clamp(1rem, 2vw, 1.25rem); // ✅ МЕНЬШЕ!
+    font-size: clamp(1rem, 2vw, 1.25rem);
     font-weight: 700;
     margin: 0;
     line-height: 1.25;

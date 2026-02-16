@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, watch } from "vue";
+import { nextTick, ref, watch } from "vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 
 const modelValue = defineModel<boolean>();
@@ -209,7 +209,6 @@ const handleConfirm = () => {
   }
 }
 
-// Стилизация Ant Design элементов
 :deep(.ant-form-item-label > label) {
   font-weight: 600;
   color: var(--text-primary);
