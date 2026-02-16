@@ -4,26 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3f46372b-cc59-4941-ac67-57da5bf12c0e" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/frontend/src/stores/actors/actorsStore.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/stores/actors/index.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/stores/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/prettier.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/prettier.xml" afterDir="false" />
+    <list default="true" id="3f46372b-cc59-4941-ac67-57da5bf12c0e" name="Changes" comment="task-2 - removed commented code and useless comments">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/constants/api/actors-endpoints.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/ListEmpty/ListEmpty.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ListEmpty/ListEmpty.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/SigninForm.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/SigninForm.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/constants/api/auth-endpoints.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/constants/api/auth-endpoints.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/constants/api/endpoints.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/constants/api/endpoints.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/constants/api/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/constants/api/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/stores/movies/moviesStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/stores/movies/moviesStore.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/stores/movies/types/movies.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/stores/movies/types/movies.types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/pages/CreateMovie.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/pages/CreateMovie.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/pages/FavoritesPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/pages/FavoritesPage.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/pages/MovieDetail.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/pages/MovieDetail.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/pages/MovieList.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/pages/MovieList.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/vue.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/vue.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/RegisterForm.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/RegisterForm.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/stores/profile/profileStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/stores/profile/profileStore.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -82,7 +66,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "feat/fav-1-update-create-movie",
+    "git-widget-placeholder": "feat/task-2-refactor-remove-comments",
     "last_opened_file_path": "/Users/kashilov1/Downloads/customProj/favourite-app",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.standard": "true",
@@ -139,6 +123,8 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Jest.HelloWorld.vue" />
+        <item itemvalue="Jest.BaseModal.vue" />
         <item itemvalue="Jest.BaseModal.vue" />
         <item itemvalue="Jest.HelloWorld.vue" />
       </list>
@@ -228,7 +214,15 @@
       <option name="project" value="LOCAL" />
       <updated>1769885851560</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="task-2 - removed commented code and useless comments">
+      <option name="closed" value="true" />
+      <created>1771229759352</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1771229759352</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -265,7 +259,9 @@
     <MESSAGE value="updated design, pages, added reusable code, updated stores." />
     <MESSAGE value="initial project commit" />
     <MESSAGE value="xml" />
-    <option name="LAST_COMMIT_MESSAGE" value="xml" />
+    <MESSAGE value="task-1 - updated actors endpoint and entities for FE and BE. refactored movie components. Updated ListEmpty component." />
+    <MESSAGE value="task-2 - removed commented code and useless comments" />
+    <option name="LAST_COMMIT_MESSAGE" value="task-2 - removed commented code and useless comments" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

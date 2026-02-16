@@ -286,7 +286,6 @@ const goToMovie = ({ id }: Movie) => {
   }
 }
 
-// ✅ BEM КАРТОЧКА
 .movie-card {
   background: var(--bg-primary);
   border-radius: 20px;
@@ -343,7 +342,6 @@ const goToMovie = ({ id }: Movie) => {
   transition: transform 0.4s ease;
 }
 
-// ✅ BEM СЕРДЦЕ
 .movie-card__favorite {
   position: absolute;
   top: 16px;
@@ -366,7 +364,6 @@ const goToMovie = ({ id }: Movie) => {
   }
 }
 
-// ✅ BEM CONTENT
 .movie-card__content {
   padding: 1.5rem;
   height: calc(100% - 240px);
@@ -381,7 +378,6 @@ const goToMovie = ({ id }: Movie) => {
   position: relative;
 }
 
-// ✅ BEM РЕЙТИНГ
 .movie-card__rating {
   align-self: flex-end;
   background: var(--ant-color-primary);
@@ -394,7 +390,6 @@ const goToMovie = ({ id }: Movie) => {
     color-mix(in srgb, var(--ant-color-primary) 30%, transparent);
 }
 
-// ✅ BEM DELETE
 .movie-card__delete {
   position: absolute;
   top: 1rem;
@@ -436,7 +431,6 @@ const goToMovie = ({ id }: Movie) => {
   }
 }
 
-// ✅ BEM TITLE
 .movie-card__title {
   font-size: clamp(1rem, 2vw, 1.25rem);
   font-weight: 700;
@@ -450,7 +444,6 @@ const goToMovie = ({ id }: Movie) => {
   flex-grow: 1;
 }
 
-// ✅ BEM META
 .movie-card__meta {
   display: flex;
   justify-content: space-between;
@@ -480,7 +473,6 @@ const goToMovie = ({ id }: Movie) => {
   color: var(--ant-color-primary);
 }
 
-// ✅ BEM КНОПКИ
 .movie-card__favorite-btn {
   flex: 1;
   display: flex;

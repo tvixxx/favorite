@@ -14,20 +14,15 @@ const handleActorSelection = async (selectedValues: string[]) => {
   const processedValues: string[] = [];
 
   for (const value of selectedValues) {
-    // Check if the value is already a UUID (actor ID) or a new name
-    debugger;
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    debugger;
     if (!uuidRegex.test(value)) {
-      // This is a new actor name - create it
       const newActor = await actorsStore.addActorByName(value);
       if (newActor) {
         processedValues.push(newActor.id);
       }
     } else {
-      // This is already an actor ID, add it directly
       processedValues.push(value);
     }
   }
@@ -70,7 +65,7 @@ const addNewMovie = async () => {
       ...formData,
       date: formData.date ? new Date(formData.date) : null,
       publishDate: formData.publishDate ? new Date(formData.publishDate) : null,
-      actorIds: formData.actorIds, // Include actor IDs (already processed in handleActorSelection)
+      actorIds: formData.actorIds,
     });
 
     formRef?.value?.resetFields();

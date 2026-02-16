@@ -1,6 +1,5 @@
 import {
   IsArray,
-  IsEmail,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -16,11 +15,6 @@ export class UpdateUserDto {
     message: 'Длина имени должна быть длинной от 3 до 20 символов',
   })
   fullName: string;
-
-  // @IsString({ message: 'Email должен быть строкой' })
-  // @IsNotEmpty({ message: 'Email не должно быть пустым' })
-  // @IsEmail()
-  // email: string;
 
   @IsArray({ message: 'Теги должны быть массивом строк' })
   @IsEnum(Genre, { message: 'Недопустимое значение тега', each: true })

@@ -161,7 +161,6 @@ const login = async ({ email, password }: FormState) => {
     }
   }
 
-  // Ant Form стилизация
   :deep(.ant-form) {
     background: var(--bg-primary);
     padding: 2.5rem 2rem;
@@ -218,7 +217,6 @@ const login = async ({ email, password }: FormState) => {
     }
   }
 
-  // Submit Button
   &__submit {
     margin-bottom: 0 !important;
 
@@ -246,7 +244,6 @@ const login = async ({ email, password }: FormState) => {
     }
   }
 
-  // Field Icons
   &__field-icon {
     color: var(--ant-color-primary);
     width: 20px;
@@ -254,7 +251,6 @@ const login = async ({ email, password }: FormState) => {
     margin-right: 0.5rem;
   }
 
-  // Tablet+
   @include mediaTablet {
     padding: 3rem 2rem;
 
@@ -267,7 +263,6 @@ const login = async ({ email, password }: FormState) => {
     }
   }
 
-  // Desktop+
   @include mediaDesktopXS {
     padding: 4rem 3rem;
 

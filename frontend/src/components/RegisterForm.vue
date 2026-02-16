@@ -58,7 +58,6 @@ const register = async ({ email, password, name }: FormState) => {
   }
 
   try {
-    debugger;
     await store.register({
       email,
       password,

@@ -114,7 +114,6 @@ defineProps<Props>();
     }
   }
 
-  // ✅ МЕДИА ЗАПРОСЫ как в ваших страницах
   @include mediaTablet {
     padding: 3rem;
 
