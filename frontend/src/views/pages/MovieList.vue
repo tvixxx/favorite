@@ -125,9 +125,15 @@ const goToMovie = ({ id }: Movie) => {
             />
             <div class="movie-card__favorite">
               <BaseIcon
-                :name="item.favorite ? 'mdi:heart' : 'mdi:heart-outline'"
+                :name="item.isFavorite ? 'mdi:heart' : 'mdi:heart-outline'"
                 :width="22"
                 :height="22"
+                @click.stop="
+                  () =>
+                    item.isFavorite
+                      ? removeFromFavorite(item)
+                      : addToFavorite(item)
+                "
               />
             </div>
           </div>
@@ -153,30 +159,6 @@ const goToMovie = ({ id }: Movie) => {
                 {{ formatYear(item.publishDate) }}
               </div>
             </div>
-
-            <div class="movie-card__meta movie-card__meta_favorite">
-              <a-button
-                v-if="!item.favorite"
-                class="movie-card__favorite-btn"
-                type="primary"
-                size="large"
-                @click.stop="() => addToFavorite(item)"
-              >
-                В избранное
-                <BaseIcon name="mdi:favorite" class="movie-card__meta-icon" />
-              </a-button>
-
-              <a-button
-                v-else
-                class="movie-card__favorite-btn"
-                type="primary"
-                size="large"
-                @click.stop="() => removeFromFavorite(item)"
-              >
-                Из избранного
-                <BaseIcon name="mdi:trash" class="movie-card__meta-icon" />
-              </a-button>
-            </div>
           </div>
         </div>
       </div>
@@ -196,7 +178,6 @@ const goToMovie = ({ id }: Movie) => {
   </div>
 </template>
 
-✅ ПОЛНЫЕ BEM STYLES MovieList.vue (100% как FavoritesPage): text
 <style scoped lang="scss">
 @use "../../styles/screen-sizes" as *;
 @use "../../styles/media" as *;
@@ -325,163 +306,153 @@ const goToMovie = ({ id }: Movie) => {
       transform: scale(1.05);
     }
   }
-}
 
-.movie-card__header {
-  position: relative;
-  height: 240px;
-  overflow: hidden;
-  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
-}
-
-.movie-card__poster {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
-  transition: transform 0.4s ease;
-}
-
-.movie-card__favorite {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  z-index: 2;
-
-  svg {
-    width: 22px;
-    height: 22px;
-    color: var(--ant-color-primary);
+  &__header {
+    position: relative;
+    height: 240px;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
   }
-}
 
-.movie-card__content {
-  padding: 1.5rem;
-  height: calc(100% - 240px);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--bg-primary) 100%, transparent) 0%,
-    color-mix(in srgb, var(--bg-secondary) 100%, transparent) 100%
-  );
-  position: relative;
-}
+  &__poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    transition: transform 0.4s ease;
+  }
 
-.movie-card__rating {
-  align-self: flex-end;
-  background: var(--ant-color-primary);
-  color: white;
-  padding: 0.375rem 0.875rem;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 700;
-  box-shadow: 0 4px 16px
-    color-mix(in srgb, var(--ant-color-primary) 30%, transparent);
-}
+  &__favorite {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    z-index: 2;
 
-.movie-card__delete {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--bg-secondary) 85%, transparent);
-  border: 2px solid color-mix(in srgb, var(--text-secondary) 70%, transparent);
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(12px);
-  opacity: 0.9;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  z-index: 2;
-
-  @media (min-width: 900px) {
-    opacity: 0;
-    .movie-card:hover & {
-      opacity: 1;
+    svg {
+      width: 22px;
+      height: 22px;
+      color: var(--ant-color-primary);
     }
   }
 
-  &:hover {
-    background: #ef4444;
-    border-color: #dc2626;
+  &__content {
+    padding: 1.5rem;
+    height: calc(100% - 240px);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-primary) 100%, transparent) 0%,
+      color-mix(in srgb, var(--bg-secondary) 100%, transparent) 100%
+    );
+    position: relative;
+  }
+
+  &__rating {
+    align-self: flex-end;
+    background: var(--ant-color-primary);
     color: white;
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    padding: 0.375rem 0.875rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    box-shadow: 0 4px 16px
+      color-mix(in srgb, var(--ant-color-primary) 30%, transparent);
   }
 
-  svg {
-    width: 18px;
-    height: 18px;
+  &__delete {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--bg-secondary) 85%, transparent);
+    border: 2px solid color-mix(in srgb, var(--text-secondary) 70%, transparent);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(12px);
+    opacity: 0.9;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 2;
+
+    @media (min-width: 900px) {
+      opacity: 0;
+      .movie-card:hover & {
+        opacity: 1;
+      }
+    }
+
+    &:hover {
+      background: #ef4444;
+      border-color: #dc2626;
+      color: white;
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
   }
-}
 
-.movie-card__title {
-  font-size: clamp(1rem, 2vw, 1.25rem);
-  font-weight: 700;
-  margin: 0;
-  line-height: 1.25;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  color: var(--text-primary);
-  flex-grow: 1;
-}
-
-.movie-card__meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  margin-top: auto;
-  padding-top: 0.5rem;
-  border-top: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
-
-  &--favorite {
-    border-top: none;
-    padding-top: 0;
+  &__title {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--text-primary);
+    flex-grow: 1;
   }
 
-  &__item {
+  &__meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: auto;
+    padding-top: 0.5rem;
+    border-top: 1px solid
+      color-mix(in srgb, var(--border-color) 40%, transparent);
+
+    &--favorite {
+      border-top: none;
+      padding-top: 0;
+    }
+  }
+
+  &__meta-item {
     display: flex;
     align-items: center;
     gap: 0.375rem;
+    justify-content: center;
   }
-}
 
-.movie-card__meta-icon {
-  width: 16px;
-  height: 16px;
-  color: var(--ant-color-primary);
-}
-
-.movie-card__favorite-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  .movie-card__meta-icon {
-    color: var(--ant-color-secondary);
-    margin-left: 0.375rem;
+  &__meta-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--ant-color-primary);
   }
 }
 </style>

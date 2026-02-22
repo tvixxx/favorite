@@ -88,16 +88,6 @@ export class CreateMovieRequest {
   isFavorite: boolean;
 
   @ApiProperty({
-    description: 'ID избранного фильма',
-    example: 'dasijo2-d12dsad-d12kx1-dxzv1',
-    type: Number,
-    nullable: true,
-  })
-  @IsInt()
-  @IsOptional()
-  favoriteId?: number;
-
-  @ApiProperty({
     description: 'ID актеров',
     example: ['dad213-dad21-d1213-dokojp2', 'dopdad1-1212dsx-cczcsq-d1221q'],
     type: [String],

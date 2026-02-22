@@ -8,7 +8,6 @@ export interface Movie {
   rate: number;
   createdAt: Date;
   isFavorite: boolean;
-  favoriteId?: number | null;
   actorIds?: string[];
   actors?: string[];
 }

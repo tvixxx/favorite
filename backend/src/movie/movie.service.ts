@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateMovieRequest } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
-import type { Actor, Movie, Review } from '../generated/prisma/client';
+import type { Actor, Movie, Prisma, Review } from '../generated/prisma/client';
 
 @Injectable()
 class MovieService {
@@ -41,7 +41,6 @@ class MovieService {
       genre,
       date,
       isFavorite,
-      favoriteId,
     } = dto;
 
     return this.prismaService.$transaction(async (tx) => {
@@ -66,7 +65,6 @@ class MovieService {
           genre,
           date,
           isFavorite,
-          favoriteId,
           poster: imageUrl ? { create: { url: imageUrl } } : undefined,
           actors: {
             connect: actors.map((actor) => ({
@@ -158,7 +156,6 @@ class MovieService {
       genre,
       date,
       isFavorite,
-      favoriteId,
     } = dto;
 
     return this.prismaService.$transaction(async (tx) => {
@@ -190,7 +187,6 @@ class MovieService {
           genre,
           date,
           isFavorite,
-          favoriteId,
           poster: imageUrl ? { create: { url: imageUrl } } : undefined,
           actors: {
             connect: actors.map((actor) => ({ id: actor.id })),
@@ -207,29 +203,75 @@ class MovieService {
     dto: Partial<CreateMovieRequest>,
   ): Promise<boolean> {
     return this.prismaService.$transaction(async (tx) => {
-      const updateData: any = { ...dto };
+      const movie = await tx.movie.findUnique({ where: { id } });
 
-      if (dto.actorIds !== undefined && dto.actorIds.length) {
+      if (!movie) {
+        throw new NotFoundException('Фильм не был найден!');
+      }
+
+      const {
+        actorIds,
+        imageUrl,
+        title,
+        publishDate,
+        description,
+        rate,
+        genre,
+        date,
+        isFavorite,
+      } = dto;
+
+      const updateData: Prisma.MovieUpdateInput = {};
+
+      if (title !== undefined) {
+        updateData.title = title;
+      }
+
+      if (publishDate !== undefined) {
+        updateData.publishDate = publishDate;
+      }
+
+      if (description !== undefined) {
+        updateData.description = description;
+      }
+
+      if (rate !== undefined) {
+        updateData.rate = rate;
+      }
+
+      if (genre !== undefined) {
+        updateData.genre = genre;
+      }
+
+      if (date !== undefined) {
+        updateData.date = date;
+      }
+
+      if (isFavorite !== undefined) {
+        updateData.isFavorite = isFavorite;
+      }
+
+      if (actorIds !== undefined && actorIds.length) {
         const actors = await tx.actor.findMany({
-          where: { id: { in: dto.actorIds } },
+          where: { id: { in: actorIds } },
         });
 
-        if (actors.length !== dto.actorIds.length) {
+        if (actors.length !== actorIds.length) {
           throw new NotFoundException('Один или несколько актеров не найдены');
         }
 
-        updateData.actors = { connect: dto.actorIds.map((id) => ({ id })) };
+        updateData.actors = {
+          connect: actors.map((actor) => ({ id: actor.id })),
+        };
       }
 
-      if (dto.imageUrl !== undefined) {
-        updateData.poster = { create: { url: dto.imageUrl } };
+      if (imageUrl !== undefined) {
+        updateData.poster = imageUrl
+          ? { create: { url: imageUrl } }
+          : { disconnect: true };
       }
 
-      await tx.movie.update({
-        where: { id },
-        data: updateData,
-      });
-
+      await tx.movie.update({ where: { id }, data: updateData });
       return true;
     });
   }

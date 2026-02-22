@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, reactive, ref } from "vue";
+import { computed, ref } from "vue";
 import { getDefaultLoaderDelayTime, MOVIES_ENDPOINTS } from "@/constants";
 import { isSuccessStatus } from "@/utils";
 import { message } from "ant-design-vue";
@@ -70,6 +70,10 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     Math.ceil(moviesList.value.length / pageSize.value)
   );
 
+  const favoriteMovies = computed(() => {
+    return moviesList.value.filter((movie: Movie) => movie.isFavorite);
+  });
+
   const createMovie = async (movieData: Partial<Movie>): Promise<void> => {
     const requestData: Partial<Movie> = { ...movieData };
 
@@ -105,9 +109,9 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
       });
 
       if (isSuccessStatus(response.status)) {
-        const updatedMovieData = reactive(response.data) as Movie;
+        // Обновляем локальное состояние
         const movies = moviesList.value.map((movie: Movie) =>
-          movie.id === movieData.id ? updatedMovieData : movie
+          movie.id === movieData.id ? { ...movie, ...requestData } : movie
         );
 
         setMovies(movies);
@@ -223,6 +227,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     // Movies page info refs
     paginatedMovies,
     totalPages,
+    favoriteMovies,
 
     // Movie refs
     currentMovie,
