@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
 import { Genre } from '../../constants';
 
 export class MovieResponse {
@@ -61,14 +60,6 @@ export class MovieResponse {
     type: Boolean,
   })
   isFavorite: boolean;
-
-  @ApiProperty({
-    description: 'ID избранного фильма',
-    example: 'dasijo2-d12dsad-d12kx1-dxzv1',
-    type: Number,
-    nullable: true,
-  })
-  favoriteId?: number;
 
   @ApiProperty({
     description: 'ID актеров',
