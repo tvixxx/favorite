@@ -69,17 +69,24 @@ const isStatsFailed = computed(() => moviesStore.isMoviesStatsError);
     />
 
     <div v-if="isStats" class="setting-block__stats">
-      <div v-if="isStatsLoading" class="settings-block__stats-loading">
-        загрузка...
+      <div v-if="isStatsLoading" class="setting-block__stats-loading">
+        <div class="setting-block__loader"></div>
+        <span>Загрузка статистики...</span>
       </div>
       <div v-else>
-        <div
-          v-if="isStatsFailed || !stats"
-          class="settings-block__stats-failed"
-        >
-          Ошибка загрузки...
+        <div v-if="true || !stats" class="setting-block__stats-error">
+          <BaseIcon name="mdi:alert-circle" class="setting-block__error-icon" />
+          <span>Ошибка загрузки статистики</span>
+          <a-button
+            type="primary"
+            size="small"
+            @click="moviesStore.fetchMoviesStats"
+            class="setting-block__retry-btn"
+          >
+            Повторить
+          </a-button>
         </div>
-        <div v-else class="settings-block__stats-info">
+        <div v-else class="setting-block__stats-content">
           <StatsBlock :items="stats" />
         </div>
       </div>
@@ -117,6 +124,63 @@ const isStatsFailed = computed(() => moviesStore.isMoviesStatsError);
     color: var(--text-secondary);
     margin-bottom: 1rem;
     line-height: 1.6;
+  }
+
+  &__stats {
+    padding: 1rem;
+    background: color-mix(in srgb, var(--bg-secondary) 50%, transparent);
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--border-color) 30%, transparent);
+  }
+
+  &__stats-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--text-secondary);
+  }
+
+  &__loader {
+    width: 40px;
+    height: 40px;
+    border: 3px solid color-mix(in srgb, var(--border-color) 50%, transparent);
+    border-top: 3px solid var(--ant-color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  &__stats-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: color-mix(in srgb, var(--ant-color-error) 80%, var(--text-primary));
+  }
+
+  &__error-icon {
+    width: 2rem;
+    height: 2rem;
+    color: var(--ant-color-error);
+  }
+
+  &__retry-btn {
+    margin-top: 1rem;
   }
 }
 </style>

@@ -4,42 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3f46372b-cc59-4941-ac67-57da5bf12c0e" name="Changes" comment="task-2 - removed debuggers">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/movie/dto/movies-stats.dto.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/ProfileSettings/ProfileSettings.vue" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/ProfileSettings/components/SettingBlock/SettingBlock.vue" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/ProfileSettings/components/Stats/StatsBlock.vue" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/ProfileSettings/constants/index.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/ProfileSettings/constants/profile-settings.constants.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/shared/profile/index.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/shared/profile/profile.types.ts" afterDir="false" />
+    <list default="true" id="3f46372b-cc59-4941-ac67-57da5bf12c0e" name="Changes" comment="task-4 - added new endpoint for stats, updated FE for new stats block. refactored code">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/prisma/schema.prisma" beforeDir="false" afterPath="$PROJECT_DIR$/backend/prisma/schema.prisma" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/app.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/app.controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/common/swagger/swagger.constants.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/common/swagger/swagger.constants.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/internal/class.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/internal/class.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/internal/prismaNamespace.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/internal/prismaNamespace.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/internal/prismaNamespaceBrowser.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/internal/prismaNamespaceBrowser.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/models/Movie.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/models/Movie.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/movie/dto/create-movie.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/movie/dto/create-movie.dto.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/movie/dto/movie.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/movie/dto/movie.dto.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/movie/movie.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/movie/movie.controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/movie/movie.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/movie/movie.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/user/decorators/black-list-names.decorator.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/user/decorators/black-list-names.decorator.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/ListEmpty/ListEmpty.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/List/ListEmpty/ListEmpty.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/ListError/ListError.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/List/ListError/ListError.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/ListLoading/ListLoading.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/List/ListLoading/ListLoading.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/constants/api/endpoints.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/constants/api/endpoints.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/constants/api/movies-endpoints.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/constants/api/movies-endpoints.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/shared/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/shared/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/state/constants/constants.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/state/constants/constants.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/stores/movies/moviesStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/stores/movies/moviesStore.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/stores/movies/types/movies.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/stores/movies/types/movies.types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/pages/FavoritesPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/pages/FavoritesPage.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/pages/MovieList.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/pages/MovieList.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/pages/ProfilePage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/pages/ProfilePage.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/ProfileSettings/components/SettingBlock/SettingBlock.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ProfileSettings/components/SettingBlock/SettingBlock.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -261,7 +228,15 @@
       <option name="project" value="LOCAL" />
       <updated>1771229759352</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="task-4 - added new endpoint for stats, updated FE for new stats block. refactored code">
+      <option name="closed" value="true" />
+      <created>1771858635499</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1771858635499</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -300,7 +275,8 @@
     <MESSAGE value="xml" />
     <MESSAGE value="task-1 - updated actors endpoint and entities for FE and BE. refactored movie components. Updated ListEmpty component." />
     <MESSAGE value="task-2 - removed commented code and useless comments" />
-    <option name="LAST_COMMIT_MESSAGE" value="task-2 - removed commented code and useless comments" />
+    <MESSAGE value="task-4 - added new endpoint for stats, updated FE for new stats block. refactored code" />
+    <option name="LAST_COMMIT_MESSAGE" value="task-4 - added new endpoint for stats, updated FE for new stats block. refactored code" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
