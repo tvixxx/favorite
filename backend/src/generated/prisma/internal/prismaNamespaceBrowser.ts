@@ -93,6 +93,8 @@ export const MovieScalarFieldEnum = {
   description: 'description',
   rate: 'rate',
   isFavorite: 'isFavorite',
+  seeLater: 'seeLater',
+  isSerial: 'isSerial',
   genre: 'genre',
   date: 'date',
   publishDate: 'publishDate',

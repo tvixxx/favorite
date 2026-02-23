@@ -30,8 +30,8 @@ defineProps<Props>();
 </template>
 
 <style scoped lang="scss">
-@use "../../styles/screen-sizes" as *;
-@use "../../styles/media" as *;
+@use "../../../styles/screen-sizes" as *;
+@use "../../../styles/media" as *;
 
 .list-error {
   min-height: 50vh;

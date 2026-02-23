@@ -9,9 +9,9 @@ import { useFavoritesStore } from "@/stores/favorites/favoritesStore";
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
-import ListError from "@/components/ListError/ListError.vue";
-import ListLoading from "@/components/ListLoading/ListLoading.vue";
-import ListEmpty from "@/components/ListEmpty/ListEmpty.vue";
+import ListError from "@/components/List/ListError/ListError.vue";
+import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
+import ListEmpty from "@/components/List/ListEmpty/ListEmpty.vue";
 import type { Movie } from "@/stores";
 
 const router = useRouter();
@@ -107,6 +107,7 @@ const goToMovies = () => {
             Избранное
           </h2>
           <a-button
+            v-if="favoritesStore.isError"
             size="large"
             @click="favoritesStore.fetchFavorites"
             class="favorites__refresh"

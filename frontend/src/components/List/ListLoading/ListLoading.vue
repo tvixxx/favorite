@@ -24,8 +24,8 @@ const tip = computed(() => props.loadingText ?? "Загружаем...");
 </template>
 
 <style scoped lang="scss">
-@use "../../styles/screen-sizes" as *;
-@use "../../styles/media" as *;
+@use "../../../styles/screen-sizes" as *;
+@use "../../../styles/media" as *;
 
 .list-loading {
   min-height: 50vh;

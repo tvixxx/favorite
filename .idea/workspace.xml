@@ -4,29 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3f46372b-cc59-4941-ac67-57da5bf12c0e" name="Changes" comment="task-2 - removed debuggers">
+    <list default="true" id="3f46372b-cc59-4941-ac67-57da5bf12c0e" name="Changes" comment="task-4 - added new endpoint for stats, updated FE for new stats block. refactored code">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/prisma/schema.prisma" beforeDir="false" afterPath="$PROJECT_DIR$/backend/prisma/schema.prisma" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/browser.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/browser.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/client.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/commonInputTypes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/commonInputTypes.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/internal/class.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/internal/class.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/internal/prismaNamespace.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/internal/prismaNamespace.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/internal/prismaNamespaceBrowser.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/internal/prismaNamespaceBrowser.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/models.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/models.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/models/Actor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/models/Actor.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/models/Movie.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/models/Movie.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/models/MoviePoster.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/models/MoviePoster.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/models/Review.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/models/Review.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/generated/prisma/models/User.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/generated/prisma/models/User.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/movie/dto/create-movie.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/movie/dto/create-movie.dto.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/movie/dto/movie.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/movie/dto/movie.dto.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/movie/movie.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/movie/movie.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/NavigationLinks.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/NavigationLinks.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/stores/favorites/favoritesStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/stores/favorites/favoritesStore.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/stores/movies/moviesStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/stores/movies/moviesStore.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/stores/movies/types/movies.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/stores/movies/types/movies.types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/pages/MovieList.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/pages/MovieList.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/ProfileSettings/components/SettingBlock/SettingBlock.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ProfileSettings/components/SettingBlock/SettingBlock.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -76,46 +56,47 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Jest.BaseModal.vue.executor&quot;: &quot;Run&quot;,
-    &quot;Jest.HelloWorld.vue.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Node.js.moveisStore.ts.executor&quot;: &quot;Debug&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feat/task-3-update-favorites-page&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/kashilov1/Downloads/customProj/favourite-app&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.standard&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.standard&quot;: &quot;&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs.jest.jest_package&quot;: &quot;/Users/kashilov1/WebstormProjects/favourite-app/favourite/node_modules/@vue/cli-service&quot;,
-    &quot;nodejs_interpreter_path&quot;: &quot;node&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;prettierjs.PrettierConfiguration.Package&quot;: &quot;/Users/kashilov1/Downloads/customProj/favourite-app/backend/node_modules/prettier&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;actions.on.save&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;/Users/kashilov1/Downloads/customProj/favourite-app/backend/node_modules/typescript/lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "JavaScript Debug.localhost:51212.executor": "Debug",
+    "Jest.BaseModal.vue.executor": "Run",
+    "Jest.HelloWorld.vue.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Node.js.moveisStore.ts.executor": "Debug",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "feat/task-4-profile-stats",
+    "last_opened_file_path": "/Users/kashilov1/Downloads/customProj/favourite-app",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.standard": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.standard": "",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs.jest.jest_package": "/Users/kashilov1/WebstormProjects/favourite-app/favourite/node_modules/@vue/cli-service",
+    "nodejs_interpreter_path": "node",
+    "nodejs_package_manager_path": "npm",
+    "prettierjs.PrettierConfiguration.Package": "/Users/kashilov1/Downloads/customProj/favourite-app/backend/node_modules/prettier",
+    "settings.editor.selected.configurable": "actions.on.save",
+    "ts.external.directory.path": "/Users/kashilov1/Downloads/customProj/favourite-app/backend/node_modules/typescript/lib",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/backend/favorite/src/assets/favicons" />
       <recent name="$PROJECT_DIR$/favourite" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/frontend/src/components/List" />
+      <recent name="$PROJECT_DIR$/frontend/src/components/ProfileSettings/components" />
       <recent name="$PROJECT_DIR$/backend" />
       <recent name="$PROJECT_DIR$/frontend/src/stores/profile" />
       <recent name="$PROJECT_DIR$/frontend/src/stores/favorites" />
-      <recent name="$PROJECT_DIR$/frontend/src/stores/movies" />
-      <recent name="$PROJECT_DIR$/backend/favorite/public" />
     </key>
   </component>
-  <component name="RunManager" selected="Jest.BaseModal.vue">
+  <component name="RunManager" selected="JavaScript Debug.localhost:51212">
     <configuration name="BaseModal.vue" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
       <node-interpreter value="project" />
       <jest-package value="$PROJECT_DIR$/favourite/node_modules/@vue/cli-service" />
@@ -140,8 +121,12 @@
       </test-names>
       <method v="2" />
     </configuration>
+    <configuration name="localhost:51212" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:51212">
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="JavaScript Debug.localhost:51212" />
         <item itemvalue="Jest.HelloWorld.vue" />
         <item itemvalue="Jest.BaseModal.vue" />
         <item itemvalue="Jest.BaseModal.vue" />
@@ -243,7 +228,15 @@
       <option name="project" value="LOCAL" />
       <updated>1771229759352</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="task-4 - added new endpoint for stats, updated FE for new stats block. refactored code">
+      <option name="closed" value="true" />
+      <created>1771858635499</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1771858635499</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -282,7 +275,8 @@
     <MESSAGE value="xml" />
     <MESSAGE value="task-1 - updated actors endpoint and entities for FE and BE. refactored movie components. Updated ListEmpty component." />
     <MESSAGE value="task-2 - removed commented code and useless comments" />
-    <option name="LAST_COMMIT_MESSAGE" value="task-2 - removed commented code and useless comments" />
+    <MESSAGE value="task-4 - added new endpoint for stats, updated FE for new stats block. refactored code" />
+    <option name="LAST_COMMIT_MESSAGE" value="task-4 - added new endpoint for stats, updated FE for new stats block. refactored code" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

@@ -4,11 +4,10 @@ import { useRouter } from "vue-router";
 
 import { computed, ref } from "vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import type { SelectProps } from "ant-design-vue";
-import { currentTheme, themes } from "@/composable";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import type { UserData } from "@/state/types";
+import ProfileSettings from "@/components/ProfileSettings/ProfileSettings.vue";
 
 const store = useMainStore();
 const router = useRouter();
@@ -39,15 +38,6 @@ const shortId = computed(() => {
 
   return user.value?.id;
 });
-
-const themeOptions: SelectProps["options"] = themes.map((theme) => ({
-  label: theme.charAt(0).toUpperCase() + theme.slice(1),
-  value: theme,
-}));
-
-const filterOption = (input: string, option: any) => {
-  return option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0;
-};
 
 const goToLogin = () => {
   router.push("/login");
@@ -100,30 +90,7 @@ const showEditDisplayNameModal = () => {
           </div>
         </article>
 
-        <aside class="settings-card">
-          <section class="setting-block">
-            <div class="setting-block__header">
-              <BaseIcon
-                name="mdi:theme-light-dark"
-                class="setting-block__icon"
-              />
-              <h3 class="setting-block__title">Цветовая тема</h3>
-            </div>
-            <p class="setting-block__description">
-              Выберите тему, которая вам больше нравится
-            </p>
-            <a-select
-              v-model:value="currentTheme"
-              show-search
-              placeholder="Выберите тему"
-              size="large"
-              :style="{ width: '100%' }"
-              :options="themeOptions"
-              :filter-option="filterOption"
-              :allow-clear="true"
-            />
-          </section>
-        </aside>
+        <ProfileSettings />
       </div>
 
       <div v-else class="guest-card">
@@ -234,6 +201,7 @@ const showEditDisplayNameModal = () => {
 
 .user-card {
   height: 100%;
+  max-height: 200px;
   display: flex;
   background: var(--bg-primary);
   border-radius: 24px;
@@ -347,51 +315,6 @@ const showEditDisplayNameModal = () => {
   }
 }
 
-.settings-card {
-  height: fit-content;
-  background: var(--bg-primary);
-  border-radius: 24px;
-  box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-color);
-  padding: 2.5rem;
-
-  @include mediaMobileXL {
-    padding: 2rem;
-  }
-}
-
-.setting-block {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-
-  &__header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
-  }
-
-  &__icon {
-    width: 28px;
-    height: 28px;
-    color: var(--ant-color-primary);
-  }
-
-  &__title {
-    margin: 0;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--text-primary);
-  }
-
-  &__description {
-    color: var(--text-secondary);
-    margin-bottom: 1rem;
-    line-height: 1.6;
-  }
-}
-
 .guest-card {
   background: var(--bg-primary);
   border-radius: 24px;
@@ -436,6 +359,9 @@ const showEditDisplayNameModal = () => {
   }
 
   &__login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     min-width: 220px;
 
     @include mediaMobile {
