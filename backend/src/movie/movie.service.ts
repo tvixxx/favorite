@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateMovieRequest } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
 import type { Actor, Movie, Prisma, Review } from '../generated/prisma/client';
+import { MoviesStatsResponse } from './dto/movies-stats.dto';
 
 @Injectable()
 class MovieService {
@@ -41,6 +42,8 @@ class MovieService {
       genre,
       date,
       isFavorite,
+      seeLater,
+      isSerial,
     } = dto;
 
     return this.prismaService.$transaction(async (tx) => {
@@ -65,6 +68,8 @@ class MovieService {
           genre,
           date,
           isFavorite,
+          seeLater,
+          isSerial,
           poster: imageUrl ? { create: { url: imageUrl } } : undefined,
           actors: {
             connect: actors.map((actor) => ({
@@ -156,6 +161,8 @@ class MovieService {
       genre,
       date,
       isFavorite,
+      seeLater,
+      isSerial,
     } = dto;
 
     return this.prismaService.$transaction(async (tx) => {
@@ -187,6 +194,8 @@ class MovieService {
           genre,
           date,
           isFavorite,
+          seeLater,
+          isSerial,
           poster: imageUrl ? { create: { url: imageUrl } } : undefined,
           actors: {
             connect: actors.map((actor) => ({ id: actor.id })),
@@ -219,6 +228,8 @@ class MovieService {
         genre,
         date,
         isFavorite,
+        seeLater,
+        isSerial,
       } = dto;
 
       const updateData: Prisma.MovieUpdateInput = {};
@@ -249,6 +260,14 @@ class MovieService {
 
       if (isFavorite !== undefined) {
         updateData.isFavorite = isFavorite;
+      }
+
+      if (seeLater !== undefined) {
+        updateData.seeLater = seeLater;
+      }
+
+      if (isSerial !== undefined) {
+        updateData.isSerial = isSerial;
       }
 
       if (actorIds !== undefined && actorIds.length) {
@@ -284,12 +303,29 @@ class MovieService {
 
       return id;
     } catch (error) {
-      if (error.code === 'P2025') {
+      if (error?.code === 'P2025') {
         throw new NotFoundException(`Фильм с айди: ${id} не найден`);
       }
 
       throw error;
     }
+  }
+
+  public async getMoviesStats(): Promise<MoviesStatsResponse> {
+    const [allMovies, allFavorites, allSerials, allSeeLater] =
+      await Promise.all([
+        this.prismaService.movie.count(),
+        this.prismaService.movie.count({ where: { isFavorite: true } }),
+        this.prismaService.movie.count({ where: { isSerial: true } }),
+        this.prismaService.movie.count({ where: { seeLater: true } }),
+      ]);
+
+    return {
+      allMovies,
+      allFavorites,
+      allSerials,
+      allSeeLater,
+    };
   }
 }
 

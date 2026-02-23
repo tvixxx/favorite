@@ -26,6 +26,8 @@ model Movie {
   description String
   rate        Int
   isFavorite  Boolean      @default(false) @map("is_favorite")
+  seeLater    Boolean      @default(false) @map("see_later")
+  isSerial    Boolean      @default(false) @map("is_serial")
   genre       Genre?
   date        DateTime?
   publishDate DateTime?    @map("publish_date")

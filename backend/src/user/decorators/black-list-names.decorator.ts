@@ -33,7 +33,7 @@ function hasForbiddenWord(text: string, forbiddenWords: string[]): boolean {
     (word) =>
       lowerText.startsWith(word) ||
       lowerText.endsWith(word) ||
-      lowerText.includes(`${word}`) || // слово в середине
+      lowerText.includes(`${word}`) ||
       lowerText === word,
   );
 }

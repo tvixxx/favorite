@@ -21,6 +21,8 @@ export const ERROR_FETCH_USER_TEXT =
 export const ERROR_FETCH_MOVIES_TEXT =
   "Ошибка загрузки фильмов. Пожалуйста, попробуйте позже";
 
+export const ERROR_FETCH_MOVIES_STATS_TEXT = "Ошибка загрузки статистики";
+
 // SUCCESS MESSAGES
 export const SUCCESS_LOGIN_TEXT = "Добро пожаловать";
 export const SUCCESS_UPDATE_USER_NAME_TEXT = "Имя успешно обновлено";

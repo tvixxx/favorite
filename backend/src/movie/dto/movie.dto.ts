@@ -62,6 +62,20 @@ export class MovieResponse {
   isFavorite: boolean;
 
   @ApiProperty({
+    description: 'Добавлен в посмотреть позже',
+    example: false,
+    type: Boolean,
+  })
+  seeLater: boolean;
+
+  @ApiProperty({
+    description: 'Признак сериала',
+    example: false,
+    type: Boolean,
+  })
+  isSerial: boolean;
+
+  @ApiProperty({
     description: 'ID актеров',
     example: ['dad213-dad21-d1213-dokojp2', 'dopdad1-1212dsx-cczcsq-d1221q'],
     type: [String],

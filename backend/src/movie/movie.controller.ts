@@ -19,6 +19,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { MoviesStatsResponse } from './dto/movies-stats.dto';
 
 @ApiTags('Movies')
 @Controller('movies')
@@ -37,6 +38,23 @@ export class MovieController {
   @Get()
   public findAll() {
     return this.movieService.findAll();
+  }
+
+  @ApiOperation({
+    summary: 'Получить статистику по фильмам и сериалам',
+    description:
+      'Возвращает статистику по всем фильмам, сериалам, просмотреть позже и избранному',
+  })
+  @ApiOkResponse({
+    description: 'Статистика получена',
+    type: MoviesStatsResponse,
+  })
+  @ApiNotFoundResponse({
+    description: 'Статистика не получена',
+  })
+  @Get('stats')
+  public getMoviesStats(): Promise<MoviesStatsResponse> {
+    return this.movieService.getMoviesStats();
   }
 
   @ApiOperation({

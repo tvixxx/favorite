@@ -88,6 +88,24 @@ export class CreateMovieRequest {
   isFavorite: boolean;
 
   @ApiProperty({
+    description: 'Добавлен в "Посмотреть позже"',
+    example: false,
+    type: Boolean,
+  })
+  @IsBoolean()
+  @IsNotEmpty()
+  seeLater: boolean;
+
+  @ApiProperty({
+    description: 'Признак сериала',
+    example: false,
+    type: Boolean,
+  })
+  @IsBoolean()
+  @IsNotEmpty()
+  isSerial: boolean;
+
+  @ApiProperty({
     description: 'ID актеров',
     example: ['dad213-dad21-d1213-dokojp2', 'dopdad1-1212dsx-cczcsq-d1221q'],
     type: [String],

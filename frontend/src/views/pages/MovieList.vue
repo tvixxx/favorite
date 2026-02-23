@@ -10,8 +10,8 @@ import { useMainStore } from "@/state/state";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { useFavoritesStore } from "@/stores/favorites/favoritesStore";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
-import ListError from "@/components/ListError/ListError.vue";
-import ListLoading from "@/components/ListLoading/ListLoading.vue";
+import ListError from "@/components/List/ListError/ListError.vue";
+import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
 
 const router = useRouter();
 const moviesStore = useMoviesStore();

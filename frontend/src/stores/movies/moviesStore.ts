@@ -4,11 +4,13 @@ import { getDefaultLoaderDelayTime, MOVIES_ENDPOINTS } from "@/constants";
 import { isSuccessStatus } from "@/utils";
 import { message } from "ant-design-vue";
 import { useRouter } from "vue-router";
-import { API_BASE_URL, APP_ENDPOINTS } from "@/constants/api/endpoints";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { showErrorRequest } from "@/state/utils";
-import { ERROR_FETCH_MOVIES_TEXT } from "@/state/constants";
-import type { Movie } from "@/stores/movies/types";
+import {
+  ERROR_FETCH_MOVIES_STATS_TEXT,
+  ERROR_FETCH_MOVIES_TEXT,
+} from "@/state/constants";
+import type { Movie, MoviesStats } from "@/stores/movies/types";
 import { MOVIE_STORE_NAME } from "@/stores/movies/constants";
 
 export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
@@ -26,6 +28,11 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   const isMovieError = ref<string | null>(null);
   const currentPage = ref(1);
   const pageSize = ref(6);
+
+  // Movies stats
+  const moviesStats = ref<MoviesStats | null>(null);
+  const isMoviesStatsLoading = ref<boolean>(false);
+  const isMoviesStatsError = ref<string | null>(null);
 
   const setCurrentPage = (page: number) => {
     currentPage.value = page;
@@ -49,6 +56,19 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     isMoviesLoaded.value = true;
   };
 
+  const setMoviesStats = (stats: MoviesStats): void => {
+    moviesStats.value = stats;
+    setMoviesStatsLoading(true);
+  };
+
+  const setMoviesStatsLoading = (isLoading: boolean): void => {
+    isMoviesStatsLoading.value = isLoading;
+  };
+
+  const setMoviesStatsError = (error: string | null): void => {
+    isMoviesStatsError.value = error;
+  };
+
   const setLoadingMovie = (value: boolean) => {
     isMovieLoading.value = value;
   };
@@ -70,9 +90,13 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     Math.ceil(moviesList.value.length / pageSize.value)
   );
 
-  const favoriteMovies = computed(() => {
-    return moviesList.value.filter((movie: Movie) => movie.isFavorite);
-  });
+  const favoriteMovies = computed(() =>
+    moviesList.value.filter((movie: Movie) => movie.isFavorite)
+  );
+
+  const isSerial = computed(() => currentMovie.value?.isSerial);
+
+  const seeLater = computed(() => currentMovie.value?.seeLater);
 
   const createMovie = async (movieData: Partial<Movie>): Promise<void> => {
     const requestData: Partial<Movie> = { ...movieData };
@@ -144,9 +168,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     const start = Date.now();
 
     try {
-      const { data, status } = await useFetch(
-        `${API_BASE_URL}/${APP_ENDPOINTS.movies}`
-      );
+      const { data, status } = await useFetch(`${MOVIES_ENDPOINTS}`);
 
       if (status !== 200) {
         router.push("/login");
@@ -160,6 +182,31 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     } finally {
       setTimeout(() => {
         setLoadingMovies(false);
+      }, getDefaultLoaderDelayTime(start));
+    }
+  };
+
+  const fetchMoviesStats = async () => {
+    setMoviesStatsLoading(true);
+    setMoviesStatsError(null);
+
+    const start = Date.now();
+
+    try {
+      const { data, status } = await useFetch(`${MOVIES_ENDPOINTS}/stats`);
+
+      if (status !== 200) {
+        router.push("/login");
+        return;
+      }
+
+      setMoviesStats(data);
+    } catch (err) {
+      setMoviesStatsError(ERROR_FETCH_MOVIES_STATS_TEXT);
+      message.error(isMoviesStatsError.value);
+    } finally {
+      setTimeout(() => {
+        setMoviesStatsLoading(false);
       }, getDefaultLoaderDelayTime(start));
     }
   };
@@ -228,11 +275,18 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     paginatedMovies,
     totalPages,
     favoriteMovies,
+    seeLater,
+    isSerial,
 
     // Movie refs
     currentMovie,
     isMovieLoading,
     isMovieError,
+
+    // Movies stats
+    moviesStats,
+    isMoviesStatsLoading,
+    isMoviesStatsError,
 
     setMovies,
     setCurrentMovie,
@@ -248,6 +302,11 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
     // Movies
     fetchMovies,
+
+    // Movies stats
+    fetchMoviesStats,
+    setMoviesStatsLoading,
+    setMoviesStatsError,
 
     // Movie handlers
     createMovie,

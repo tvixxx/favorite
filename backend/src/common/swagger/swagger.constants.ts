@@ -17,5 +17,4 @@ export const SWAGGER_SETUP_OPTIONS_DATA = {
   jsonDocumentUrl: '/swagger.json',
   yamlDocumentUrl: '/swagger.yml',
   customSiteTitle: 'Favorite API',
-  // customfavIcon: '/favicons/heart.png',
 };
