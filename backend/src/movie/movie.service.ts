@@ -348,19 +348,6 @@ class MovieService {
         poster: true,
         reviews: true,
       },
-      // include: {
-      //   poster: {
-      //     select: {
-      //       url: true,
-      //     },
-      //   },
-      //   _count: {
-      //     select: {
-      //       reviews: true,
-      //       actors: true,
-      //     },
-      //   },
-      // },
     });
 
     return movies;
