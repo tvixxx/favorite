@@ -1,10 +1,9 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
 import { message } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import { formatDate, formatYear } from "@/utils";
 import { type Movie, useMoviesStore } from "@/stores/movies/moviesStore";
 import { useMainStore } from "@/state/state";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
@@ -12,6 +11,8 @@ import { useFavoritesStore } from "@/stores/favorites/favoritesStore";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
+import InputSearch from "@/components/Input/InputSearch/InputSearch.vue";
+import { formatDate, formatYear } from "@/utils";
 
 const router = useRouter();
 const moviesStore = useMoviesStore();
@@ -20,17 +21,27 @@ const favoritesStore = useFavoritesStore();
 
 const imageErrors = ref<Set<number>>(new Set());
 
-const hasMovies = computed(() => moviesStore.moviesList.length !== 0);
-const totalMovies = computed(() => moviesStore.moviesList.length);
+const hasMovies = computed(() => moviesStore.currentMoviesList.length !== 0);
+const totalMovies = computed(() => moviesStore.currentMoviesList.length);
 const shouldFetchMovies = computed(
   () => !hasMovies.value && mainStore.isLoggedIn
 );
 const showPaginator = computed(
   () =>
     !!totalMovies.value &&
-    !moviesStore.isMovieError &&
+    totalMovies.value > 0 &&
+    !moviesStore.isMoviesError &&
     !moviesStore.isMoviesLoading
 );
+
+const emptyMoviesDescription = computed(() => {
+  const hasMoviesByQuery =
+    !!moviesStore.searchQuery.length &&
+    moviesStore.currentMoviesList.length === 0;
+
+  return hasMoviesByQuery ? "Фильмы не найдены" : "Фильмов пока нет...";
+});
+
 const getPosterSrc = (item: Movie) => {
   return imageErrors.value.has(item.id)
     ? FALLBACK_IMAGE_URL
@@ -77,19 +88,35 @@ const removeFromFavorite = async (item: Movie) => {
 const goToMovie = ({ id }: Movie) => {
   router.push(`/detail/${id}`);
 };
+
+const findMovie = async (value: string) => {
+  try {
+    await moviesStore.findMovie(value);
+    // Reset pagination when searching
+    moviesStore.setCurrentPage(1);
+  } catch {
+    message.error("При поиске произошла ошибка");
+  }
+};
 </script>
 
 <template>
   <div class="movie-list">
     <HeroHeader
-      title="Кинотеатр у вас дома"
-      subtitle="Все хиты и новинки которые вы смотрели"
+      :badge-count="totalMovies"
       badge-text="Фильмотека"
       icon-name="mdi:filmstrip"
-      :badge-count="totalMovies"
+      subtitle="Все хиты и новинки которые вы смотрели"
+      title="Кинотеатр у вас дома"
     />
 
     <div class="movie-list__content">
+      <InputSearch
+        :search-handler="findMovie"
+        btn-label="Искать"
+        class="movie-list__input-search"
+        placeholder="Введите название"
+      />
       <ListError
         v-if="moviesStore.isMoviesError"
         :is-error="moviesStore.isMoviesError"
@@ -99,13 +126,13 @@ const goToMovie = ({ id }: Movie) => {
 
       <ListLoading
         v-else-if="moviesStore.isMoviesLoading"
-        size="large"
-        loading-text="Загружаем фильмы..."
         :center="true"
+        loading-text="Загружаем фильмы..."
+        size="large"
       />
 
       <div v-else-if="!totalMovies" class="movie-list__empty-state">
-        <a-empty description="Фильмов пока нет..." />
+        <a-empty :description="emptyMoviesDescription" />
       </div>
 
       <div v-else class="movie-list__grid">
@@ -117,17 +144,17 @@ const goToMovie = ({ id }: Movie) => {
         >
           <div class="movie-card__header">
             <img
-              :src="getPosterSrc(item)"
               :alt="`${item.title} постер`"
+              :src="getPosterSrc(item)"
               class="movie-card__poster"
               loading="lazy"
               @error="handleImageError(item.id)"
             />
             <div class="movie-card__favorite">
               <BaseIcon
+                :height="22"
                 :name="item.isFavorite ? 'mdi:heart' : 'mdi:heart-outline'"
                 :width="22"
-                :height="22"
                 @click.stop="
                   () =>
                     item.isFavorite
@@ -145,14 +172,14 @@ const goToMovie = ({ id }: Movie) => {
               class="movie-card__delete"
               @click.stop="() => removeMovie(item)"
             >
-              <BaseIcon name="pajamas:remove" :width="18" :height="18" />
+              <BaseIcon :height="18" :width="18" name="pajamas:remove" />
             </button>
 
             <h3 class="movie-card__title">{{ item.title }}</h3>
 
             <div class="movie-card__meta">
               <div class="movie-card__meta-item">
-                <BaseIcon name="mdi:calendar" class="movie-card__meta-icon" />
+                <BaseIcon class="movie-card__meta-icon" name="mdi:calendar" />
                 {{ formatDate(item.date) }}
               </div>
               <div class="movie-card__meta-item">
@@ -163,12 +190,15 @@ const goToMovie = ({ id }: Movie) => {
         </div>
       </div>
 
-      <div class="movie-list__pagination" v-if="showPaginator">
+      <div
+        v-if="showPaginator && totalMovies > moviesStore.pageSize"
+        class="movie-list__pagination"
+      >
         <a-pagination
           v-model:current="moviesStore.currentPage"
-          :total="totalMovies"
           :page-size="moviesStore.pageSize"
           :page-size-options="['6', '12', '18', '24']"
+          :total="totalMovies"
           show-size-changer
           @change="moviesStore.setCurrentPage"
           @showSizeChange="(_, size: number) => moviesStore.setPageSize(size)"
@@ -178,7 +208,7 @@ const goToMovie = ({ id }: Movie) => {
   </div>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 @use "../../styles/screen-sizes" as *;
 @use "../../styles/media" as *;
 
@@ -199,6 +229,17 @@ const goToMovie = ({ id }: Movie) => {
     max-width: 1400px;
     margin: 0 auto;
     padding: 0 1rem;
+  }
+
+  &__input-search {
+    max-width: 100%;
+    min-width: 100%;
+    margin-top: 16px;
+
+    @include mediaTablet {
+      max-width: 500px;
+      min-width: 500px;
+    }
   }
 
   &__loading {
@@ -263,7 +304,6 @@ const goToMovie = ({ id }: Movie) => {
   @media (max-width: 500px) {
     grid-template-columns: 1fr;
     gap: 1.5rem;
-    padding: 0 1rem;
   }
 }
 

@@ -41,6 +41,23 @@ export class MovieController {
   }
 
   @ApiOperation({
+    summary: 'Поиск фильмов по названию',
+    description:
+      'Возвращает список фильмов, соответствующих поисковому запросу',
+  })
+  @ApiOkResponse({
+    description: 'Фильмы найдены',
+    type: [MovieResponse],
+  })
+  @ApiNotFoundResponse({
+    description: 'Фильмы не найдены',
+  })
+  @Get('search')
+  public search(@Query('q') query: string) {
+    return this.movieService.search(query);
+  }
+
+  @ApiOperation({
     summary: 'Получить статистику по фильмам и сериалам',
     description:
       'Возвращает статистику по всем фильмам, сериалам, просмотреть позже и избранному',
