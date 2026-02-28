@@ -1,11 +1,11 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { currentTheme, themes } from "@/composable";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import type { SelectProps } from "ant-design-vue";
 import { computed } from "vue";
 import {
   type SettingBlockProps,
-  StatsBlockItem,
+  type StatsBlockItem,
   StatsBlockType,
 } from "@/shared/profile/profile.types";
 import StatsBlock from "@/components/ProfileSettings/components/Stats/StatsBlock.vue";
@@ -59,13 +59,13 @@ const isStatsFailed = computed(() => moviesStore.isMoviesStatsError);
     <a-select
       v-if="isTheme"
       v-model:value="currentTheme"
-      show-search
-      placeholder="Выберите тему"
-      size="large"
-      :style="{ width: '100%' }"
-      :options="themeOptions"
-      :filter-option="filterOption"
       :allow-clear="true"
+      :filter-option="filterOption"
+      :options="themeOptions"
+      :style="{ width: '100%' }"
+      placeholder="Выберите тему"
+      show-search
+      size="large"
     />
 
     <div v-if="isStats" class="setting-block__stats">
@@ -74,14 +74,14 @@ const isStatsFailed = computed(() => moviesStore.isMoviesStatsError);
         <span>Загрузка статистики...</span>
       </div>
       <div v-else>
-        <div v-if="true || !stats" class="setting-block__stats-error">
-          <BaseIcon name="mdi:alert-circle" class="setting-block__error-icon" />
+        <div v-if="isStatsFailed || !stats" class="setting-block__stats-error">
+          <BaseIcon class="setting-block__error-icon" name="mdi:alert-circle" />
           <span>Ошибка загрузки статистики</span>
           <a-button
-            type="primary"
-            size="small"
-            @click="moviesStore.fetchMoviesStats"
             class="setting-block__retry-btn"
+            size="small"
+            type="primary"
+            @click="moviesStore.fetchMoviesStats"
           >
             Повторить
           </a-button>
@@ -94,7 +94,7 @@ const isStatsFailed = computed(() => moviesStore.isMoviesStatsError);
   </section>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .setting-block {
   display: flex;
   flex-direction: column;

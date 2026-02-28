@@ -327,6 +327,31 @@ class MovieService {
       allSeeLater,
     };
   }
+
+  public async search(query: string): Promise<Movie[]> {
+    if (!query) {
+      return this.findAll();
+    }
+
+    const movies = await this.prismaService.movie.findMany({
+      where: {
+        title: {
+          contains: query,
+          mode: 'insensitive',
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        actors: true,
+        poster: true,
+        reviews: true,
+      },
+    });
+
+    return movies;
+  }
 }
 
 export default MovieService;
