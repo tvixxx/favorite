@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 
 import { message } from "ant-design-vue";
@@ -14,6 +14,7 @@ import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
 import InputSearch from "@/components/Input/InputSearch/InputSearch.vue";
 import { formatDate, formatYear } from "@/utils";
 import { ERROR_FETCH_MOVIES_TEXT } from "@/state/constants";
+import GenreFilter from "@/components/Genres/GenreFilter.vue";
 
 const router = useRouter();
 const moviesStore = useMoviesStore();
@@ -36,18 +37,15 @@ const showPaginator = computed(
 );
 
 const emptyMoviesDescription = computed(() => {
-  const hasMoviesByQuery =
-    !!moviesStore.searchQuery.length &&
-    moviesStore.currentMoviesList.length === 0;
+  const hasActiveFilters =
+    !!moviesStore.searchQuery.length || !!moviesStore.genreFilter;
 
-  return hasMoviesByQuery ? "Фильмы не найдены" : "Фильмов пока нет...";
+  if (hasActiveFilters && moviesStore.currentMoviesList.length === 0) {
+    return "Фильмы не найдены";
+  }
+
+  return "Фильмов пока нет...";
 });
-
-const getPosterSrc = (item: Movie) => {
-  return imageErrors.value.has(item.id)
-    ? FALLBACK_IMAGE_URL
-    : item.imageUrl || FALLBACK_IMAGE_URL;
-};
 
 onMounted(async () => {
   if (shouldFetchMovies.value) {
@@ -58,6 +56,30 @@ onMounted(async () => {
     }
   }
 });
+
+watch(
+  () => moviesStore.genreFilter,
+  async (genre) => {
+    try {
+      await moviesStore.findMovie(moviesStore.searchQuery, genre);
+    } catch {
+      message.error(ERROR_FETCH_MOVIES_TEXT);
+    }
+  }
+);
+
+watch(
+  () => moviesStore.searchQuery,
+  () => {
+    moviesStore.setCurrentPage(1);
+  }
+);
+
+const getPosterSrc = (item: Movie) => {
+  return imageErrors.value.has(item.id)
+    ? FALLBACK_IMAGE_URL
+    : item.imageUrl || FALLBACK_IMAGE_URL;
+};
 
 const handleImageError = (movieId: number) => {
   imageErrors.value.add(movieId);
@@ -96,8 +118,7 @@ const goToMovie = ({ id }: Movie) => {
 
 const findMovie = async (value: string) => {
   try {
-    await moviesStore.findMovie(value);
-    moviesStore.setCurrentPage(1);
+    await moviesStore.findMovie(value, moviesStore.genreFilter);
   } catch {
     message.error(ERROR_FETCH_MOVIES_TEXT);
   }
@@ -115,12 +136,18 @@ const findMovie = async (value: string) => {
     />
 
     <div class="movie-list__content">
-      <InputSearch
-        :search-handler="findMovie"
-        btn-label="Искать"
-        class="movie-list__input-search"
-        placeholder="Введите название"
-      />
+      <div class="movie-list__filters">
+        <InputSearch
+          :search-handler="findMovie"
+          btn-label="Искать"
+          class="movie-list__input-search"
+          placeholder="Введите название"
+        />
+        <GenreFilter
+          v-model="moviesStore.genreFilter"
+          class="movie-list__genre-filter"
+        />
+      </div>
       <ListError
         v-if="moviesStore.isMoviesError"
         :is-error="moviesStore.isMoviesError"
@@ -235,14 +262,34 @@ const findMovie = async (value: string) => {
     padding: 0 1rem;
   }
 
+  &__filters {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+
+    @include mediaTablet {
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+
   &__input-search {
     max-width: 100%;
     min-width: 100%;
-    margin-top: 16px;
 
     @include mediaTablet {
       max-width: 500px;
       min-width: 500px;
+    }
+  }
+
+  &__genre-filter {
+    width: 100%;
+
+    @include mediaTablet {
+      width: 220px;
     }
   }
 
