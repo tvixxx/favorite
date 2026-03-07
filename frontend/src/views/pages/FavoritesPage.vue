@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { formatDate, formatYear } from "@/utils";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { useMainStore } from "@/state/state";
@@ -14,29 +14,53 @@ import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
 import ListEmpty from "@/components/List/ListEmpty/ListEmpty.vue";
 import type { Movie } from "@/stores";
 
+import InputSearch from "@/components/Input/InputSearch/InputSearch.vue";
+import GenreFilter from "@/components/Genres/GenreFilter.vue";
+import type { Genre } from "@/components/Genres/constants/genres.constants";
+
 const router = useRouter();
 const favoritesStore = useFavoritesStore();
 const mainStore = useMainStore();
 
 const imageErrors = ref<Set<string>>(new Set());
+const genreFilter = ref<Genre | undefined>(undefined);
+const searchQuery = ref("");
 
-const hasFavorites = computed(() => favoritesStore.favoritesList.length !== 0);
-const totalFavorites = computed(() => favoritesStore.favoritesList.length);
 const shouldFetchFavorites = computed(
   () => !hasFavorites.value && mainStore.isLoggedIn
 );
+
+const filteredFavorites = computed(() => {
+  let list = favoritesStore.favoritesList;
+
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    list = list.filter((movie) => movie.title.toLowerCase().includes(query));
+  }
+
+  if (genreFilter.value) {
+    list = list.filter((movie) => movie.genre === genreFilter.value);
+  }
+
+  return list;
+});
+
+const paginatedFavorites = computed(() => {
+  const start = (favoritesStore.currentPage - 1) * favoritesStore.pageSize;
+  return filteredFavorites.value.slice(start, start + favoritesStore.pageSize);
+});
+
+const totalFavorites = computed(() => filteredFavorites.value.length);
+
+const hasFavorites = computed(() => favoritesStore.favoritesList.length !== 0);
+const hasFilteredResults = computed(() => filteredFavorites.value.length > 0);
+
 const showPaginator = computed(
   () =>
     !!favoritesStore.favoritesList.length &&
     !favoritesStore.isError &&
     !favoritesStore.isLoading
 );
-
-const getPosterSrc = (item: Movie) => {
-  return imageErrors.value.has(item.id)
-    ? FALLBACK_IMAGE_URL
-    : item.imageUrl || FALLBACK_IMAGE_URL;
-};
 
 onMounted(async () => {
   if (shouldFetchFavorites.value) {
@@ -49,6 +73,24 @@ onMounted(async () => {
     }
   }
 });
+
+watch(genreFilter, () => {
+  favoritesStore.setCurrentPage(1);
+});
+
+watch(searchQuery, () => {
+  favoritesStore.setCurrentPage(1);
+});
+
+const handleSearch = async (value: string) => {
+  searchQuery.value = value;
+};
+
+const getPosterSrc = (item: Movie) => {
+  return imageErrors.value.has(item.id)
+    ? FALLBACK_IMAGE_URL
+    : item.imageUrl || FALLBACK_IMAGE_URL;
+};
 
 const handleImageError = (movieId: string) => {
   imageErrors.value.add(movieId);
@@ -83,6 +125,15 @@ const goToMovies = () => {
     />
 
     <div class="favorites__content">
+      <div class="favorites__filters">
+        <InputSearch
+          :search-handler="handleSearch"
+          btn-label="Искать"
+          class="favorites__input-search"
+          placeholder="Введите название"
+        />
+        <GenreFilter v-model="genreFilter" class="favorites__genre-filter" />
+      </div>
       <ListError
         v-if="favoritesStore.isError"
         :isError="favoritesStore.isError"
@@ -98,7 +149,7 @@ const goToMovies = () => {
         />
       </div>
 
-      <div v-else-if="!hasFavorites" class="favorites__empty-state">
+      <div v-else-if="!hasFilteredResults" class="favorites__empty-state">
         <ListEmpty
           description="Избранных фильмов пока нет..."
           btn-text="Перейти в фильмы"
@@ -124,7 +175,7 @@ const goToMovies = () => {
 
         <div class="favorites__grid">
           <div
-            v-for="item in favoritesStore.paginatedFavorites"
+            v-for="item in paginatedFavorites"
             :key="item.id"
             class="favorites__card"
             @click="goToMovie(item)"
@@ -205,6 +256,37 @@ const goToMovies = () => {
     margin: auto;
     padding: 0 1rem;
   }
+
+  &__filters {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+
+    @include mediaTablet {
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+
+  &__input-search {
+    max-width: 100%;
+
+    @include mediaTablet {
+      max-width: 500px;
+      min-width: 500px;
+    }
+  }
+
+  &__genre-filter {
+    width: 100%;
+
+    @include mediaTablet {
+      width: 220px;
+    }
+  }
+
   &__section {
     margin-top: 2rem;
   }

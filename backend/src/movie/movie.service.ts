@@ -8,8 +8,15 @@ import { MoviesStatsResponse } from './dto/movies-stats.dto';
 class MovieService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  public async findAll(): Promise<Movie[]> {
+  public async findAll(genre?: string): Promise<Movie[]> {
+    const where: Prisma.MovieWhereInput = {};
+
+    if (genre) {
+      where.genre = genre as any;
+    }
+
     const movies = await this.prismaService.movie.findMany({
+      where,
       orderBy: {
         createdAt: 'desc',
       },
@@ -332,18 +339,26 @@ class MovieService {
     };
   }
 
-  public async search(query: string): Promise<Movie[]> {
-    if (!query) {
+  public async search(query: string, genre?: string): Promise<Movie[]> {
+    if (!query && !genre) {
       return this.findAll();
     }
 
+    const where: Prisma.MovieWhereInput = {};
+
+    if (query) {
+      where.title = {
+        contains: query,
+        mode: 'insensitive',
+      };
+    }
+
+    if (genre) {
+      where.genre = genre as any;
+    }
+
     const movies = await this.prismaService.movie.findMany({
-      where: {
-        title: {
-          contains: query,
-          mode: 'insensitive',
-        },
-      },
+      where,
       orderBy: {
         createdAt: 'desc',
       },

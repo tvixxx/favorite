@@ -36,14 +36,13 @@ export class MovieController {
     type: [MovieResponse],
   })
   @Get()
-  public findAll() {
-    return this.movieService.findAll();
+  public findAll(@Query('genre') genre?: string) {
+    return this.movieService.findAll(genre);
   }
 
   @ApiOperation({
-    summary: 'Поиск фильмов по названию',
-    description:
-      'Возвращает список фильмов, соответствующих поисковому запросу',
+    summary: 'Поиск фильмов',
+    description: 'Поиск по названию и/или жанру',
   })
   @ApiOkResponse({
     description: 'Фильмы найдены',
@@ -53,8 +52,8 @@ export class MovieController {
     description: 'Фильмы не найдены',
   })
   @Get('search')
-  public search(@Query('q') query: string) {
-    return this.movieService.search(query);
+  public search(@Query('q') query: string, @Query('genre') genre?: string) {
+    return this.movieService.search(query, genre);
   }
 
   @ApiOperation({
