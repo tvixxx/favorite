@@ -36,7 +36,7 @@ const isIconifySource = computed(() => props.source === "iconify");
 </script>
 
 <template>
-  <Icon v-if="isIconifySource" :icon="name" :width="width" :heigth="height" />
+  <Icon v-if="isIconifySource" :icon="name" :width="width" :height="height" />
 
   <!--  <component v-else :is="customIcon" :width="width" :height="height" />-->
 </template>

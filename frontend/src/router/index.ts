@@ -1,24 +1,15 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
-import MovieListPage from "@/views/pages/MovieList.vue";
-import CreateMoviePage from "@/views/pages/CreateMovie.vue";
-import LoginUser from "@/views/pages/LoginUser.vue";
-import ProfilePage from "@/views/pages/ProfilePage.vue";
-import MovieDetailPage from "@/views/pages/MovieDetail.vue";
-import FavoritesPage from "@/views/pages/FavoritesPage.vue";
 import { useMainStore } from "@/state/state";
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     redirect: "/profile",
-    meta: {
-      requiresAuth: true,
-    },
   },
   {
     path: "/login",
     name: "login",
-    component: LoginUser,
+    component: () => import("@/views/pages/LoginUser.vue"),
     meta: {
       guest: true,
     },
@@ -26,7 +17,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/create",
     name: "create",
-    component: CreateMoviePage,
+    component: () => import("@/views/pages/CreateMovie.vue"),
     meta: {
       requiresAuth: true,
     },
@@ -34,7 +25,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/list",
     name: "list",
-    component: MovieListPage,
+    component: () => import("@/views/pages/MovieList.vue"),
     meta: {
       requiresAuth: true,
     },
@@ -42,7 +33,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/detail/:id",
     name: "detail",
-    component: MovieDetailPage,
+    component: () => import("@/views/pages/MovieDetail.vue"),
     meta: {
       requiresAuth: true,
     },
@@ -50,7 +41,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/favorites",
     name: "favorites",
-    component: FavoritesPage,
+    component: () => import("@/views/pages/FavoritesPage.vue"),
     meta: {
       requiresAuth: true,
     },
@@ -58,10 +49,15 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/profile",
     name: "profile",
-    component: ProfilePage,
+    component: () => import("@/views/pages/ProfilePage.vue"),
     meta: {
       requiresAuth: true,
     },
+  },
+  {
+    path: "/:pathMatch(.*)*",
+    name: "not-found",
+    redirect: "/list",
   },
 ];
 
@@ -70,22 +66,27 @@ const router = createRouter({
   routes,
 });
 
-// Новый вариант
 router.beforeEach(async (to, _, next) => {
   const store = useMainStore();
 
-  if (!store?.user?.isAuthLoaded) {
-    await store.fetchUser();
+  if (!store.user.isAuthLoaded) {
+    try {
+      await store.fetchUser();
+      //eslint-disable-next-line
+    } catch {}
   }
 
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
   const guestOnly = to.matched.some((record) => record.meta.guest);
 
   if (requiresAuth && !store.isLoggedIn) {
-    return next("/login");
+    next("/login");
+    return;
   }
+
   if (guestOnly && store.isLoggedIn) {
-    return next("/profile");
+    next("/profile");
+    return;
   }
 
   next();
