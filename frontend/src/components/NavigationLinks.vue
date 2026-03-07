@@ -2,6 +2,8 @@
 import { computed } from "vue";
 import { useMainStore } from "@/state/state";
 import { useRoute, useRouter } from "vue-router";
+import { message } from "ant-design-vue";
+import { INFO_LOGOUT_TEXT } from "@/state/constants";
 
 const router = useRouter();
 const route = useRoute();
@@ -29,8 +31,9 @@ const selectedKeys = computed(() => {
   return [];
 });
 
-const signOut = async (): Promise<void> => {
-  await store.logOut();
+const signOut = (): void => {
+  store.logOut();
+  message.info(INFO_LOGOUT_TEXT);
   router.push("/login");
 };
 </script>

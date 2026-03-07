@@ -2,20 +2,20 @@ import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { getDefaultLoaderDelayTime, MOVIES_ENDPOINTS } from "@/constants";
 import { isSuccessStatus } from "@/utils";
-import { message } from "ant-design-vue";
-import { useRouter } from "vue-router";
 import { FETCH_METHOD, useFetch } from "@/composable";
-import { showErrorRequest } from "@/state/utils";
 import {
   ERROR_FETCH_MOVIES_STATS_TEXT,
   ERROR_FETCH_MOVIES_TEXT,
 } from "@/state/constants";
-import type { Movie, MoviesStats } from "@/stores/movies/types";
+import type {
+  Movie,
+  MoviesStats,
+  MovieApiResponse,
+} from "@/stores/movies/types";
 import { MOVIE_STORE_NAME } from "@/stores/movies/constants";
+import { mapMovieFromApi, mapMoviesFromApi } from "@/stores/movies/utils";
 
 export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
-  const router = useRouter();
-
   // Movies
   const moviesList = ref<Movie[]>([]);
   const isMoviesLoaded = ref<boolean>(false);
@@ -109,64 +109,51 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   const seeLater = computed(() => currentMovie.value?.seeLater);
 
   const createMovie = async (movieData: Partial<Movie>): Promise<void> => {
-    const requestData: Partial<Movie> = { ...movieData };
+    const response = await useFetch<MovieApiResponse>(MOVIES_ENDPOINTS, {
+      method: FETCH_METHOD.post,
+      data: movieData,
+    });
 
-    try {
-      const response = await useFetch(MOVIES_ENDPOINTS, {
-        method: FETCH_METHOD.post,
-        data: requestData,
-      });
-      const createdAt = new Date();
-
-      if (response?.data && isSuccessStatus(response.status)) {
-        const { data } = response;
-        const movie: Movie = {
-          id: data.id,
-          ...movieData,
-          isFavorite: movieData.isFavorite || false,
-          createdAt,
-        } as Movie;
-        moviesList.value.push(movie);
-      }
-    } catch (error) {
-      showErrorRequest(error);
+    if (response?.data && isSuccessStatus(response.status)) {
+      const movie = mapMovieFromApi(response.data);
+      moviesList.value.push(movie);
+    } else {
+      throw new Error("Не удалось создать фильм");
     }
   };
 
   const updateMovie = async (movieData: Movie): Promise<void> => {
     const requestData: Partial<Movie> = { ...movieData };
 
-    try {
-      const response = await useFetch(`${MOVIES_ENDPOINTS}/${movieData.id}`, {
+    const response = await useFetch<boolean>(
+      `${MOVIES_ENDPOINTS}/${movieData.id}`,
+      {
         method: FETCH_METHOD.patch,
         data: requestData,
-      });
-
-      if (isSuccessStatus(response.status)) {
-        const movies = moviesList.value.map((movie: Movie) =>
-          movie.id === movieData.id ? { ...movie, ...requestData } : movie
-        );
-
-        setMovies(movies);
       }
-    } catch (error) {
-      showErrorRequest(error);
+    );
+
+    if (isSuccessStatus(response.status)) {
+      const movies = moviesList.value.map((movie: Movie) =>
+        movie.id === movieData.id ? { ...movie, ...requestData } : movie
+      );
+      setMovies(movies);
+    } else {
+      throw new Error("Не удалось обновить фильм");
     }
   };
 
   const removeMovie = async (movieId: string): Promise<void> => {
-    try {
-      const response = await useFetch(`${MOVIES_ENDPOINTS}/${movieId}`, {
-        method: FETCH_METHOD.delete,
-      });
+    const response = await useFetch<string>(`${MOVIES_ENDPOINTS}/${movieId}`, {
+      method: FETCH_METHOD.delete,
+    });
 
-      if (isSuccessStatus(response.status)) {
-        moviesList.value = moviesList.value.filter(
-          (movie) => movie.id !== movieId
-        );
-      }
-    } catch (error) {
-      showErrorRequest(error);
+    if (isSuccessStatus(response.status)) {
+      moviesList.value = moviesList.value.filter(
+        (movie) => movie.id !== movieId
+      );
+    } else {
+      throw new Error("Не удалось удалить фильм");
     }
   };
 
@@ -185,23 +172,22 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
         endpoint = `${MOVIES_ENDPOINTS}/search?q=${encodeURIComponent(query)}`;
       }
 
-      const { data, status } = await useFetch(endpoint, {
+      const { data, status } = await useFetch<MovieApiResponse[]>(endpoint, {
         method: FETCH_METHOD.get,
       });
 
       if (status !== 200) {
-        router.push("/login");
-        return;
+        throw new Error(ERROR_FETCH_MOVIES_TEXT);
       }
 
       if (query) {
-        searchResults.value = data;
+        searchResults.value = mapMoviesFromApi(data);
       } else {
-        setMovies(data);
+        setMovies(mapMoviesFromApi(data));
       }
     } catch (err) {
       setErrorMovies(ERROR_FETCH_MOVIES_TEXT);
-      message.error(isMovieError.value);
+      throw err;
     } finally {
       setTimeout(() => {
         setLoadingMovies(false);
@@ -233,19 +219,18 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
         endpoint = `${MOVIES_ENDPOINTS}/search?q=${encodeURIComponent(query)}`;
       }
 
-      const { data, status } = await useFetch(endpoint, {
+      const { data, status } = await useFetch<MovieApiResponse[]>(endpoint, {
         method: FETCH_METHOD.get,
       });
 
       if (status !== 200) {
-        router.push("/login");
-        return;
+        throw new Error(ERROR_FETCH_MOVIES_TEXT);
       }
 
-      setMovies(data);
+      setMovies(mapMoviesFromApi(data));
     } catch (err) {
       setErrorMovies(ERROR_FETCH_MOVIES_TEXT);
-      message.error(isMovieError.value);
+      throw err;
     } finally {
       setTimeout(() => {
         setLoadingMovies(false);
@@ -260,17 +245,18 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     const start = Date.now();
 
     try {
-      const { data, status } = await useFetch(`${MOVIES_ENDPOINTS}/stats`);
+      const { data, status } = await useFetch<MoviesStats>(
+        `${MOVIES_ENDPOINTS}/stats`
+      );
 
       if (status !== 200) {
-        router.push("/login");
-        return;
+        throw new Error(ERROR_FETCH_MOVIES_STATS_TEXT);
       }
 
       setMoviesStats(data);
     } catch (err) {
       setMoviesStatsError(ERROR_FETCH_MOVIES_STATS_TEXT);
-      message.error(isMoviesStatsError.value);
+      throw err;
     } finally {
       setTimeout(() => {
         setMoviesStatsLoading(false);
@@ -292,7 +278,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
       const start = Date.now();
 
       try {
-        const { data, status } = await useFetch(
+        const { data, status } = await useFetch<MovieApiResponse>(
           `${MOVIES_ENDPOINTS}/${movieId}`,
           {
             method: FETCH_METHOD.get,
@@ -300,15 +286,13 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
         );
 
         if (status !== 200) {
-          setErrorMovie("Ошибка загрузки фильма");
-          message.error(isMovieError.value);
-          return;
+          throw new Error("Ошибка загрузки фильма");
         }
 
-        setCurrentMovie(data);
+        setCurrentMovie(mapMovieFromApi(data));
       } catch (error) {
-        showErrorRequest(error);
         setErrorMovie("Ошибка загрузки фильма");
+        throw error;
       } finally {
         setTimeout(() => {
           setLoadingMovie(false);
@@ -323,7 +307,6 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
       if (foundMovie) {
         setCurrentMovie(foundMovie);
-
         return;
       }
     }

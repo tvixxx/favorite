@@ -25,11 +25,9 @@ const changeView = (): void => {
       </a-button>
     </div>
 
-    <div v-if="showRegisterTemplate" class="auth-page__form-wrapper">
-      <RegisterForm />
-    </div>
-    <div v-if="!showRegisterTemplate" class="auth-page__form-wrapper">
-      <SigninForm />
+    <div class="auth-page__form-wrapper">
+      <RegisterForm v-if="showRegisterTemplate" />
+      <SigninForm v-else />
     </div>
   </div>
 </template>

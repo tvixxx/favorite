@@ -40,7 +40,13 @@ const getPosterSrc = (item: Movie) => {
 
 onMounted(async () => {
   if (shouldFetchFavorites.value) {
-    await favoritesStore.fetchFavorites();
+    try {
+      await favoritesStore.fetchFavorites();
+    } catch {
+      message.error(
+        "Ошибка загрузки избранного. Пожалуйста, попробуйте позже."
+      );
+    }
   }
 });
 

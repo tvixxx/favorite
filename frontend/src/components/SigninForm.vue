@@ -5,6 +5,7 @@ import { useMainStore } from "@/state/state";
 import { Icon } from "@iconify/vue";
 import { message } from "ant-design-vue";
 import { EMAIL_REGEX } from "@/constants";
+import { ERROR_LOGIN_TEXT, SUCCESS_LOGIN_TEXT } from "@/state/constants";
 
 const store = useMainStore();
 const router = useRouter();
@@ -44,13 +45,12 @@ const login = async ({ email, password }: FormState) => {
 
   try {
     await store.logIn({ email, password });
+    message.success(
+      `${SUCCESS_LOGIN_TEXT}, ${store.userData?.fullName || ""}!`
+    );
     router.push("/profile");
-  } catch (err: any) {
-    if (err.status === 401) {
-      message.error(`Не удалось войти!`);
-    } else {
-      message.error(`Произошла ошибка, пожалуйста повторите!`);
-    }
+  } catch {
+    message.error(ERROR_LOGIN_TEXT);
   }
 };
 </script>

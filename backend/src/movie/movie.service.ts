@@ -270,6 +270,10 @@ class MovieService {
         updateData.isSerial = isSerial;
       }
 
+      if (genre !== undefined) {
+        updateData.genre = genre;
+      }
+
       if (actorIds !== undefined && actorIds.length) {
         const actors = await tx.actor.findMany({
           where: { id: { in: actorIds } },

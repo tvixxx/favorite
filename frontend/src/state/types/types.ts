@@ -17,3 +17,17 @@ export interface State {
 }
 
 export type ReqType = "login" | "register";
+
+// auth/login и auth/register
+export interface AuthResponse {
+  accessToken: string;
+}
+
+// Ответ от auth/@me и users/:id
+export interface UserProfileResponse {
+  id: string;
+  email: string;
+  fullName: string;
+  fullname?: string;
+  name?: string;
+}

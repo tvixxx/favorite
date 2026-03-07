@@ -15,7 +15,10 @@ onMounted(async () => {
   useHotThemeKeys();
 
   if (!isAuthLoaded.value) {
-    await store.fetchUser();
+    try {
+      await store.fetchUser();
+      // eslint-disable-next-line
+    } catch {}
   }
 });
 </script>
