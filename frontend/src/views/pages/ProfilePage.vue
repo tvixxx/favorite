@@ -8,6 +8,11 @@ import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import type { UserData } from "@/state/types";
 import ProfileSettings from "@/components/ProfileSettings/ProfileSettings.vue";
+import { message } from "ant-design-vue";
+import {
+  ERROR_UPDATE_USER_NAME_TEXT,
+  SUCCESS_UPDATE_USER_NAME_TEXT,
+} from "@/state/constants";
 
 const store = useMainStore();
 const router = useRouter();
@@ -44,8 +49,14 @@ const goToLogin = () => {
 };
 
 const updateName = async () => {
-  await store.updateDisplayName(editForm.value.fullName);
-  isModalVisible.value = false;
+  try {
+    await store.updateDisplayName(editForm.value.fullName);
+    message.success(SUCCESS_UPDATE_USER_NAME_TEXT);
+  } catch {
+    message.error(ERROR_UPDATE_USER_NAME_TEXT);
+  } finally {
+    isModalVisible.value = false;
+  }
 };
 
 const showEditDisplayNameModal = () => {

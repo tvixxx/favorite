@@ -5,6 +5,7 @@ import { useMainStore } from "@/state/state";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { useMoviesStore } from "@/stores/movies/moviesStore";
 import { formatDate, formatYear } from "@/utils";
+import { message } from "ant-design-vue";
 
 const store = useMainStore();
 const moviesStore = useMoviesStore();
@@ -16,7 +17,11 @@ onMounted(async () => {
   const shouldLoadMovie = !moviesStore.currentMovie && store.isLoggedIn;
 
   if (shouldLoadMovie) {
-    await moviesStore.getMovieDetail(currentMovieId);
+    try {
+      await moviesStore.getMovieDetail(currentMovieId);
+    } catch {
+      message.error("Не удалось загрузить фильм");
+    }
   }
 });
 

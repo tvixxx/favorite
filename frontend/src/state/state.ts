@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, ref } from "vue";
+import { computed, onScopeDispose, ref } from "vue";
 import {
   AUTH_ME_ENDPOINT,
   AUTH_USER_ENDPOINT,
@@ -11,17 +11,12 @@ import {
 import { isSuccessStatus } from "@/utils";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { StorageSerializers, useStorage } from "@vueuse/core";
-import type { ReqType, State, UserData } from "@/state/types";
-import {
-  showErrorRequest,
-  showFetchRequestError,
-  showInfoLogoutMessage,
-  showLoginRequestError,
-  showRegistrationRequestError,
-  showSuccessLoginText,
-  showSuccessUpdateUserName,
-  showUpdateUserNameError,
-} from "@/state/utils";
+import type {
+  AuthResponse,
+  State,
+  UserData,
+  UserProfileResponse,
+} from "@/state/types";
 import { DEFAULT_MAIN_STATE, MAIN_STORE_NAME } from "@/state/constants";
 
 export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
@@ -54,33 +49,30 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
 
     const id = user.value.data?.id;
 
-    try {
-      const userProfileData = await useFetch(`${USERS_ENDPOINTS}/${id}`, {
+    const userProfileData = await useFetch<UserProfileResponse>(
+      `${USERS_ENDPOINTS}/${id}`,
+      {
         method: FETCH_METHOD.patch,
         data: {
           fullName: displayName,
         },
-      });
-
-      if (userProfileData?.data && isSuccessStatus(userProfileData.status)) {
-        const { token } = userProfileData;
-        const { email, fullName, id: userId } = userProfileData.data;
-        const userObj: UserData = {
-          email,
-          fullName,
-          id: userId || user.value.data?.id,
-          accessToken: token ?? "",
-        };
-
-        userDataRaw.value = userObj;
-        state.value.user.data = userObj;
-
-        showSuccessUpdateUserName();
-      } else {
-        showUpdateUserNameError();
       }
-    } catch (error: any) {
-      showErrorRequest(error);
+    );
+
+    if (userProfileData?.data && isSuccessStatus(userProfileData.status)) {
+      const { token } = userProfileData;
+      const { email, fullName, id: userId } = userProfileData.data;
+      const userObj: UserData = {
+        email,
+        fullName,
+        id: userId || user.value.data?.id || "",
+        accessToken: token ?? "",
+      };
+
+      userDataRaw.value = userObj;
+      state.value.user.data = userObj;
+    } else {
+      throw new Error("Не удалось изменить имя");
     }
   }
 
@@ -93,25 +85,20 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     password: string;
     name: string;
   }): Promise<void> {
-    try {
-      const response = await useFetch(REGISTER_USER_ENDPOINT, {
-        method: FETCH_METHOD.post,
-        data: {
-          fullName: name,
-          email,
-          password,
-        },
-      });
+    const response = await useFetch<AuthResponse>(REGISTER_USER_ENDPOINT, {
+      method: FETCH_METHOD.post,
+      data: {
+        fullName: name,
+        email,
+        password,
+      },
+    });
 
-      if (response?.data && isSuccessStatus(response.status)) {
-        const { accessToken: newToken } = response.data;
-
-        await fetchUserProfile(newToken, "register");
-      } else {
-        showRegistrationRequestError();
-      }
-    } catch (error: any) {
-      showErrorRequest(error);
+    if (response?.data && isSuccessStatus(response.status)) {
+      const { accessToken: newToken } = response.data;
+      await fetchUserProfile(newToken);
+    } else {
+      throw new Error("Не удалось зарегистрироваться");
     }
   }
 
@@ -122,35 +109,20 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     email: string;
     password: string;
   }): Promise<void> {
-    try {
-      const response = await useFetch(AUTH_USER_ENDPOINT, {
-        method: FETCH_METHOD.post,
-        data: {
-          email,
-          password,
-        },
-      });
+    const response = await useFetch<AuthResponse>(AUTH_USER_ENDPOINT, {
+      method: FETCH_METHOD.post,
+      data: {
+        email,
+        password,
+      },
+    });
 
-      if (response?.data && isSuccessStatus(response.status)) {
-        const { accessToken: newToken } = response.data;
-
-        await fetchUserProfile(newToken, "login");
-      } else {
-        showLoginRequestError();
-      }
-    } catch (error: any) {
-      // todo: add error type for axios error
-      showErrorRequest(error);
+    if (response?.data && isSuccessStatus(response.status)) {
+      const { accessToken: newToken } = response.data;
+      await fetchUserProfile(newToken);
+    } else {
+      throw new Error("Не удалось войти");
     }
-  }
-
-  function logOut(): void {
-    userDataRaw.value = null;
-    accessToken.value = null;
-    state.value.user.data = null;
-    state.value.user.loggedIn = false;
-
-    showInfoLogoutMessage();
   }
 
   async function fetchUser(): Promise<void> {
@@ -173,14 +145,16 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     state.value.isFetchingUser = true;
 
     try {
-      const { data, status } = await useFetch(AUTH_ME_ENDPOINT);
+      const { data, status } = await useFetch<UserProfileResponse>(
+        AUTH_ME_ENDPOINT
+      );
 
       if (isSuccessStatus(status)) {
         const userObj: UserData = {
           email: data.email,
           fullName: data.fullName || data.fullname || data.name || "",
           id: data.id,
-          accessToken: accessToken.value || "", // Use existing token from storage
+          accessToken: accessToken.value || "",
         };
         userDataRaw.value = userObj;
         state.value.user.data = userObj;
@@ -190,51 +164,35 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
         state.value.user.data = null;
         state.value.user.loggedIn = false;
       }
-    } catch (error) {
-      showFetchRequestError();
+    } catch {
       userDataRaw.value = null;
       state.value.user.data = null;
       state.value.user.loggedIn = false;
+      throw new Error("Не удалось получить данные пользователя");
     } finally {
       state.value.user.isAuthLoaded = true;
       state.value.isFetchingUser = false;
     }
   }
 
-  async function fetchUserProfile(newToken: string, reqType: ReqType) {
+  async function fetchUserProfile(newToken: string): Promise<void> {
     if (!newToken) {
       return;
     }
 
-    try {
-      accessToken.value = newToken;
+    accessToken.value = newToken;
 
-      const fetchedUser = await useFetch(AUTH_ME_ENDPOINT);
+    const fetchedUser = await useFetch<UserProfileResponse>(AUTH_ME_ENDPOINT);
 
-      if (fetchedUser?.data && isSuccessStatus(fetchedUser.status)) {
-        setUserProfile(fetchedUser.data, newToken, reqType);
-      } else {
-        showFetchRequestError();
-      }
-    } catch (error) {
+    if (fetchedUser?.data && isSuccessStatus(fetchedUser.status)) {
+      setUserProfile(fetchedUser.data, newToken);
+    } else {
       accessToken.value = null;
-
-      switch (reqType) {
-        case "login":
-          showLoginRequestError();
-          break;
-        case "register":
-          showRegistrationRequestError();
-          break;
-      }
+      throw new Error("Не удалось получить профиль");
     }
   }
 
-  function setUserProfile(
-    userProfile: UserData,
-    newToken: string,
-    reqType: ReqType
-  ) {
+  function setUserProfile(userProfile: UserProfileResponse, newToken: string) {
     if (!userProfile) {
       return;
     }
@@ -247,13 +205,28 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
       accessToken: newToken,
     };
 
-    if (reqType === "login") {
-      showSuccessLoginText(fullName);
-    }
-
     userDataRaw.value = userObj;
     state.value.user.data = userObj;
     state.value.user.loggedIn = true;
+  }
+
+  function clearAuthState(): void {
+    userDataRaw.value = null;
+    accessToken.value = null;
+    state.value.user.data = null;
+    state.value.user.loggedIn = false;
+  }
+
+  function logOut(): void {
+    clearAuthState();
+  }
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("auth:logout", clearAuthState);
+
+    onScopeDispose(() => {
+      window.removeEventListener("auth:logout", clearAuthState);
+    });
   }
 
   return {

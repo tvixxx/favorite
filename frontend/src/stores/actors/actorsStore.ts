@@ -3,7 +3,6 @@ import { computed, ref } from "vue";
 import { API_BASE_URL } from "@/constants/api/endpoints";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { isSuccessStatus } from "@/utils";
-import { showErrorRequest } from "@/state/utils";
 import { ACTORS_ENDPOINT } from "@/constants";
 
 export interface Actor {
@@ -40,47 +39,43 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
     setErrorActors(null);
 
     try {
-      const { data, status } = await useFetch(`${API_BASE_URL}/actors`);
+      const { data, status } = await useFetch<Actor[]>(
+        `${API_BASE_URL}/actors`
+      );
 
       if (status !== 200) {
-        throw new Error("Failed to fetch actors");
+        throw new Error("Ошибка загрузки актеров");
       }
 
       setActors(data);
     } catch (err) {
-      setErrorActors("Ошибка загрузки актеров. Пожалуйста, попробуйте позже.");
-      console.error(err);
+      setErrorActors("Ошибка загрузки актеров");
+      throw err;
     } finally {
       setLoadingActors(false);
     }
   };
 
-  const createActor = async (
-    actorData: Omit<Actor, "id">
-  ): Promise<Actor | null> => {
-    try {
-      const response = await useFetch(`${ACTORS_ENDPOINT}`, {
-        method: FETCH_METHOD.post,
-        data: actorData,
-      });
+  const createActor = async (actorData: Omit<Actor, "id">): Promise<Actor> => {
+    const response = await useFetch<Actor>(`${ACTORS_ENDPOINT}`, {
+      method: FETCH_METHOD.post,
+      data: actorData,
+    });
 
-      if (isSuccessStatus(response.status) && response.data) {
-        // Add the new actor to our list
-        const newActor: Actor = response.data;
-        actorsList.value.push(newActor);
-        return newActor;
-      }
-    } catch (error) {
-      showErrorRequest(error);
+    if (isSuccessStatus(response.status) && response.data) {
+      const newActor = response.data;
+      actorsList.value.push(newActor);
+      return newActor;
     }
 
-    return null;
+    throw new Error("Не удалось создать актера");
   };
 
-  const addActorByName = async (name: string): Promise<Actor | null> => {
+  const addActorByName = async (name: string): Promise<Actor> => {
     const existingActor = actorsList.value.find(
       (actor) => actor.name.toLowerCase() === name.toLowerCase()
     );
+
     if (existingActor) {
       return existingActor;
     }

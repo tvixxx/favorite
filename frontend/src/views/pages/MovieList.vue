@@ -13,6 +13,7 @@ import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
 import InputSearch from "@/components/Input/InputSearch/InputSearch.vue";
 import { formatDate, formatYear } from "@/utils";
+import { ERROR_FETCH_MOVIES_TEXT } from "@/state/constants";
 
 const router = useRouter();
 const moviesStore = useMoviesStore();
@@ -50,7 +51,11 @@ const getPosterSrc = (item: Movie) => {
 
 onMounted(async () => {
   if (shouldFetchMovies.value) {
-    await moviesStore.fetchMovies();
+    try {
+      await moviesStore.fetchMovies();
+    } catch {
+      message.error(ERROR_FETCH_MOVIES_TEXT);
+    }
   }
 });
 
@@ -92,10 +97,9 @@ const goToMovie = ({ id }: Movie) => {
 const findMovie = async (value: string) => {
   try {
     await moviesStore.findMovie(value);
-    // Reset pagination when searching
     moviesStore.setCurrentPage(1);
   } catch {
-    message.error("При поиске произошла ошибка");
+    message.error(ERROR_FETCH_MOVIES_TEXT);
   }
 };
 </script>

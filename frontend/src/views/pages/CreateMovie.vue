@@ -1,11 +1,14 @@
 <script lang="ts" setup>
 import { onMounted, reactive, ref } from "vue";
 
-import { message } from "ant-design-vue";
+import { message, type FormInstance } from "ant-design-vue";
 import { useMoviesStore } from "@/stores/movies/moviesStore";
 import { useActorsStore } from "@/stores/actors/actorsStore";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import { showErrorRequest } from "@/state/utils";
+import { Genre } from "@/components/Genres/constants/genres.constants";
+import GenresList from "@/components/Genres/GenresList.vue";
+import { Movie } from "@/stores";
 
 const moviesStore = useMoviesStore();
 const actorsStore = useActorsStore();
@@ -18,9 +21,11 @@ const handleActorSelection = async (selectedValues: string[]) => {
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     if (!uuidRegex.test(value)) {
-      const newActor = await actorsStore.addActorByName(value);
-      if (newActor) {
+      try {
+        const newActor = await actorsStore.addActorByName(value);
         processedValues.push(newActor.id);
+      } catch {
+        message.error(`Не удалось добавить актера: ${value}`);
       }
     } else {
       processedValues.push(value);
@@ -30,43 +35,58 @@ const handleActorSelection = async (selectedValues: string[]) => {
   formData.actorIds = processedValues;
 };
 
-export interface CreateMovie {
+interface CreateMovieForm {
   title: string;
   date: string;
   publishDate: string;
-  description?: string;
+  description: string;
+  genre?: Genre;
+  seeLater: boolean;
+  isSerial: boolean;
   imageUrl: string;
   rate: number;
   isFavorite: boolean;
   actorIds: string[];
 }
 
-let formData = reactive<CreateMovie>({
+const formData = reactive<CreateMovieForm>({
   title: "",
   date: "",
   publishDate: "",
   description: "",
+  genre: Genre.ACTION,
+  seeLater: false,
+  isSerial: false,
   imageUrl: "",
   rate: 0,
   isFavorite: false,
   actorIds: [],
 });
-const formRef = ref(null);
+const formRef = ref<FormInstance | null>(null);
 
 onMounted(async () => {
-  await actorsStore.fetchActors();
+  try {
+    await actorsStore.fetchActors();
+  } catch {
+    message.error("Не удалось загрузить актеров");
+  }
 });
 
 const addNewMovie = async () => {
   const { title } = formData;
 
   try {
-    await moviesStore.createMovie({
+    const moviePayload: Partial<Movie> = {
       ...formData,
-      date: formData.date ? new Date(formData.date) : null,
-      publishDate: formData.publishDate ? new Date(formData.publishDate) : null,
+      genre: formData.genre ?? undefined,
+      date: formData.date ? new Date(formData.date).toISOString() : null,
+      publishDate: formData.publishDate
+        ? new Date(formData.publishDate).toISOString()
+        : null,
       actorIds: formData.actorIds,
-    });
+    };
+
+    await moviesStore.createMovie(moviePayload);
 
     formRef?.value?.resetFields();
     formData.actorIds = [];
@@ -193,6 +213,18 @@ const addNewMovie = async () => {
               </div>
             </div>
           </div>
+
+          <a-form-item label="Жанр" name="genre">
+            <GenresList v-model="formData.genre" />
+          </a-form-item>
+
+          <a-form-item label="Смотреть позже?" name="seeLater">
+            <a-switch v-model:value="formData.seeLater" />
+          </a-form-item>
+
+          <a-form-item label="Сериал?" name="isSerial">
+            <a-switch v-model:value="formData.isSerial" />
+          </a-form-item>
 
           <a-form-item label="Описание" name="description">
             <a-textarea

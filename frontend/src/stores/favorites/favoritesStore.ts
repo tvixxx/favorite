@@ -3,14 +3,15 @@ import { computed, ref } from "vue";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { getDefaultLoaderDelayTime, MOVIES_ENDPOINTS } from "@/constants";
 import { isSuccessStatus } from "@/utils";
-import { message } from "ant-design-vue";
-import { useRouter } from "vue-router";
 import { FAVORITES_STORE_NAME } from "@/stores/favorites/constants";
-import { type Movie, useMoviesStore } from "@/stores/movies";
-import { showErrorRequest } from "@/state/utils";
+import {
+  type Movie,
+  type MovieApiResponse,
+  useMoviesStore,
+} from "@/stores/movies";
+import { mapMoviesFromApi } from "@/stores/movies/utils";
 
 export const useFavoritesStore = defineStore(FAVORITES_STORE_NAME, () => {
-  const router = useRouter();
   const moviesStore = useMoviesStore();
 
   // Favorites
@@ -50,42 +51,38 @@ export const useFavoritesStore = defineStore(FAVORITES_STORE_NAME, () => {
   );
 
   const addToFavorite = async (item: Movie): Promise<void> => {
-    try {
-      const { status } = await useFetch(`${MOVIES_ENDPOINTS}/${item.id}`, {
-        method: FETCH_METHOD.patch,
-        data: {
-          isFavorite: true,
-        },
-      });
+    const { status } = await useFetch(`${MOVIES_ENDPOINTS}/${item.id}`, {
+      method: FETCH_METHOD.patch,
+      data: {
+        isFavorite: true,
+      },
+    });
 
-      if (isSuccessStatus(status)) {
-        const updatedMovies = moviesStore.moviesList.map((movie) =>
-          movie.id === item.id ? { ...movie, isFavorite: true } : movie
-        );
-        moviesStore.setMovies(updatedMovies);
-      }
-    } catch (error) {
-      showErrorRequest(error);
+    if (isSuccessStatus(status)) {
+      const updatedMovies = moviesStore.moviesList.map((movie) =>
+        movie.id === item.id ? { ...movie, isFavorite: true } : movie
+      );
+      moviesStore.setMovies(updatedMovies);
+    } else {
+      throw new Error("Не удалось добавить в избранное");
     }
   };
 
   const removeFromFavorite = async (item: Movie): Promise<void> => {
-    try {
-      const { status } = await useFetch(`${MOVIES_ENDPOINTS}/${item.id}`, {
-        method: FETCH_METHOD.patch,
-        data: {
-          isFavorite: false,
-        },
-      });
+    const { status } = await useFetch(`${MOVIES_ENDPOINTS}/${item.id}`, {
+      method: FETCH_METHOD.patch,
+      data: {
+        isFavorite: false,
+      },
+    });
 
-      if (isSuccessStatus(status)) {
-        const updatedMovies = moviesStore.moviesList.map((movie) =>
-          movie.id === item.id ? { ...movie, isFavorite: false } : movie
-        );
-        moviesStore.setMovies(updatedMovies);
-      }
-    } catch (error) {
-      showErrorRequest(error);
+    if (isSuccessStatus(status)) {
+      const updatedMovies = moviesStore.moviesList.map((movie) =>
+        movie.id === item.id ? { ...movie, isFavorite: false } : movie
+      );
+      moviesStore.setMovies(updatedMovies);
+    } else {
+      throw new Error("Не удалось убрать из избранного");
     }
   };
 
@@ -100,18 +97,18 @@ export const useFavoritesStore = defineStore(FAVORITES_STORE_NAME, () => {
     const start = Date.now();
 
     try {
-      // Fetch all movies and filter for favorites
-      const { data, status } = await useFetch(`${MOVIES_ENDPOINTS}`); // Using movies endpoint
+      const { data, status } = await useFetch<MovieApiResponse[]>(
+        `${MOVIES_ENDPOINTS}`
+      );
 
       if (status !== 200) {
-        router.push("/login");
-        return;
+        throw new Error("Ошибка загрузки избранного");
       }
 
-      moviesStore.setMovies(data);
+      moviesStore.setMovies(mapMoviesFromApi(data));
     } catch (err) {
-      setError("Ошибка загрузки избранного. Пожалуйста, попробуйте позже.");
-      message.error(isError.value);
+      setError("Ошибка загрузки избранного");
+      throw err;
     } finally {
       setTimeout(() => {
         setLoading(false);

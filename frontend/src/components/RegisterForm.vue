@@ -5,6 +5,7 @@ import { reactive } from "vue";
 import { Icon } from "@iconify/vue";
 import { message } from "ant-design-vue";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "@/constants";
+import { ERROR_REGISTRATION_TEXT } from "@/state/constants";
 
 const store = useMainStore();
 const router = useRouter();
@@ -58,19 +59,11 @@ const register = async ({ email, password, name }: FormState) => {
   }
 
   try {
-    await store.register({
-      email,
-      password,
-      name,
-    });
-
+    await store.register({ email, password, name });
+    message.success("Регистрация прошла успешно!");
     router.push("/profile");
-  } catch (err: any) {
-    if (err.status === 401) {
-      message.error(`Не удалось зарегистрироваться!`);
-    } else {
-      message.error(`Произошла ошибка, пожалуйста повторите!`);
-    }
+  } catch {
+    message.error(ERROR_REGISTRATION_TEXT);
   }
 };
 </script>
