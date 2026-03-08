@@ -1,8 +1,9 @@
 import { mount } from "@vue/test-utils";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import Modal from "./BaseModal.vue";
 import { nextTick } from "vue";
 
-describe("BaseModal.vue", () => {
+describe("BaseModal", () => {
   let wrapper: any;
 
   beforeEach(() => {
