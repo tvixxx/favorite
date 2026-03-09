@@ -11,10 +11,10 @@ import { useFavoritesStore } from "@/stores/favorites/favoritesStore";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
-import InputSearch from "@/components/Input/InputSearch/InputSearch.vue";
 import { formatDate, formatYear } from "@/utils";
 import { ERROR_FETCH_MOVIES_TEXT } from "@/state/constants";
-import GenreFilter from "@/components/Genres/GenreFilter.vue";
+import type { MoviesFilters } from "@/stores";
+import MoviesFiltersPanel from "@/components/MoviesFiltersPanel/MoviesFiltersPanel.vue";
 
 const router = useRouter();
 const moviesStore = useMoviesStore();
@@ -37,43 +37,15 @@ const showPaginator = computed(
 );
 
 const emptyMoviesDescription = computed(() => {
-  const hasActiveFilters =
-    !!moviesStore.searchQuery.length || !!moviesStore.genreFilter;
-
-  if (hasActiveFilters && moviesStore.currentMoviesList.length === 0) {
+  if (
+    moviesStore.hasActiveFilters &&
+    moviesStore.currentMoviesList.length === 0
+  ) {
     return "Фильмы не найдены";
   }
 
   return "Фильмов пока нет...";
 });
-
-onMounted(async () => {
-  if (shouldFetchMovies.value) {
-    try {
-      await moviesStore.fetchMovies();
-    } catch {
-      message.error(ERROR_FETCH_MOVIES_TEXT);
-    }
-  }
-});
-
-watch(
-  () => moviesStore.genreFilter,
-  async (genre) => {
-    try {
-      await moviesStore.findMovie(moviesStore.searchQuery, genre);
-    } catch {
-      message.error(ERROR_FETCH_MOVIES_TEXT);
-    }
-  }
-);
-
-watch(
-  () => moviesStore.searchQuery,
-  () => {
-    moviesStore.setCurrentPage(1);
-  }
-);
 
 const getPosterSrc = (item: Movie) => {
   return imageErrors.value.has(item.id)
@@ -116,13 +88,39 @@ const goToMovie = ({ id }: Movie) => {
   router.push(`/detail/${id}`);
 };
 
-const findMovie = async (value: string) => {
+const handleFiltersUpdate = async (filters: MoviesFilters) => {
+  moviesStore.setFilters(filters);
   try {
-    await moviesStore.findMovie(value, moviesStore.genreFilter);
+    await moviesStore.findMovie(moviesStore.searchQuery);
   } catch {
     message.error(ERROR_FETCH_MOVIES_TEXT);
   }
 };
+
+const findMovie = async (value: string) => {
+  try {
+    await moviesStore.findMovie(value);
+  } catch {
+    message.error(ERROR_FETCH_MOVIES_TEXT);
+  }
+};
+
+onMounted(async () => {
+  if (shouldFetchMovies.value) {
+    try {
+      await moviesStore.fetchMovies();
+    } catch {
+      message.error(ERROR_FETCH_MOVIES_TEXT);
+    }
+  }
+});
+
+watch(
+  () => moviesStore.searchQuery,
+  () => {
+    moviesStore.setCurrentPage(1);
+  }
+);
 </script>
 
 <template>
@@ -136,18 +134,10 @@ const findMovie = async (value: string) => {
     />
 
     <div class="movie-list__content">
-      <div class="movie-list__filters">
-        <InputSearch
-          :search-handler="findMovie"
-          btn-label="Искать"
-          class="movie-list__input-search"
-          placeholder="Введите название"
-        />
-        <GenreFilter
-          v-model="moviesStore.genreFilter"
-          class="movie-list__genre-filter"
-        />
-      </div>
+      <MoviesFiltersPanel
+        :search-handler="findMovie"
+        @update:filters="handleFiltersUpdate"
+      />
       <ListError
         v-if="moviesStore.isMoviesError"
         :is-error="moviesStore.isMoviesError"
@@ -257,40 +247,13 @@ const findMovie = async (value: string) => {
   overflow-x: hidden;
 
   &__content {
-    max-width: 1400px;
+    max-width: calc(100vw - 128px);
     margin: 0 auto;
     padding: 0 1rem;
-  }
-
-  &__filters {
     display: flex;
-    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 8px;
-    margin-top: 16px;
-
-    @include mediaTablet {
-      flex-direction: row;
-      align-items: center;
-    }
-  }
-
-  &__input-search {
-    max-width: 100%;
-    min-width: 100%;
-
-    @include mediaTablet {
-      max-width: 500px;
-      min-width: 500px;
-    }
-  }
-
-  &__genre-filter {
-    width: 100%;
-
-    @include mediaTablet {
-      width: 220px;
-    }
+    flex-direction: column;
   }
 
   &__loading {

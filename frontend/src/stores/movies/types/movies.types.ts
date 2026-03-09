@@ -66,3 +66,13 @@ export interface MoviesStats {
   allSerials: number;
   allSeeLater: number;
 }
+
+export interface MoviesFilters {
+  genre?: Genre;
+  rateMin?: number;
+  rateMax?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  publishDateFrom?: string;
+  publishDateTo?: string;
+}

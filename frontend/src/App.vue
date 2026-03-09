@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, onMounted } from "vue";
-import NavigationLinks from "@/components/NavigationLinks.vue";
+import NavigationLinks from "@/components/NavigationLinks/NavigationLinks.vue";
 import { useMainStore } from "@/state/state";
 import { ConfigProvider } from "ant-design-vue";
 import { themeConfig, useHotThemeKeys, useTheme } from "@/composable";

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { formatDate, formatYear } from "@/utils";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { useMainStore } from "@/state/state";
@@ -13,33 +13,101 @@ import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
 import ListEmpty from "@/components/List/ListEmpty/ListEmpty.vue";
 import type { Movie } from "@/stores";
-
-import InputSearch from "@/components/Input/InputSearch/InputSearch.vue";
-import GenreFilter from "@/components/Genres/GenreFilter.vue";
-import type { Genre } from "@/components/Genres/constants/genres.constants";
+import type { MoviesFilters } from "@/stores";
+import dayjs from "dayjs";
+import MoviesFiltersPanel from "@/components/MoviesFiltersPanel/MoviesFiltersPanel.vue";
 
 const router = useRouter();
 const favoritesStore = useFavoritesStore();
 const mainStore = useMainStore();
 
 const imageErrors = ref<Set<string>>(new Set());
-const genreFilter = ref<Genre | undefined>(undefined);
 const searchQuery = ref("");
+const localFilters = ref<MoviesFilters>({});
 
 const shouldFetchFavorites = computed(
   () => !hasFavorites.value && mainStore.isLoggedIn
 );
+
+const handleFiltersUpdate = (filters: MoviesFilters) => {
+  localFilters.value = filters;
+  favoritesStore.setCurrentPage(1);
+};
+
+const handleSearch = async (value: string) => {
+  searchQuery.value = value;
+  favoritesStore.setCurrentPage(1);
+};
 
 const filteredFavorites = computed(() => {
   let list = favoritesStore.favoritesList;
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
+
     list = list.filter((movie) => movie.title.toLowerCase().includes(query));
   }
 
-  if (genreFilter.value) {
-    list = list.filter((movie) => movie.genre === genreFilter.value);
+  const f = localFilters.value;
+
+  if (f.genre) {
+    list = list.filter((movie) => movie.genre === f.genre);
+  }
+
+  if (f.rateMin !== undefined || f.rateMax !== undefined) {
+    list = list.filter((movie) => {
+      const rate = movie.rate ?? 0;
+
+      if (f.rateMin !== undefined && rate < f.rateMin) {
+        return false;
+      }
+
+      if (f.rateMax !== undefined && rate > f.rateMax) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  if (f.dateFrom || f.dateTo) {
+    list = list.filter((movie) => {
+      if (!movie.date) {
+        return false;
+      }
+
+      const d = dayjs(movie.date);
+
+      if (f.dateFrom && d.isBefore(dayjs(f.dateFrom))) {
+        return false;
+      }
+
+      if (f.dateTo && d.isAfter(dayjs(f.dateTo))) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  if (f.publishDateFrom || f.publishDateTo) {
+    list = list.filter((movie) => {
+      if (!movie.publishDate) {
+        return false;
+      }
+
+      const d = dayjs(movie.publishDate);
+
+      if (f.publishDateFrom && d.isBefore(dayjs(f.publishDateFrom))) {
+        return false;
+      }
+
+      if (f.publishDateTo && d.isAfter(dayjs(f.publishDateTo))) {
+        return false;
+      }
+
+      return true;
+    });
   }
 
   return list;
@@ -47,11 +115,11 @@ const filteredFavorites = computed(() => {
 
 const paginatedFavorites = computed(() => {
   const start = (favoritesStore.currentPage - 1) * favoritesStore.pageSize;
+
   return filteredFavorites.value.slice(start, start + favoritesStore.pageSize);
 });
 
 const totalFavorites = computed(() => filteredFavorites.value.length);
-
 const hasFavorites = computed(() => favoritesStore.favoritesList.length !== 0);
 const hasFilteredResults = computed(() => filteredFavorites.value.length > 0);
 
@@ -61,30 +129,6 @@ const showPaginator = computed(
     !favoritesStore.isError &&
     !favoritesStore.isLoading
 );
-
-onMounted(async () => {
-  if (shouldFetchFavorites.value) {
-    try {
-      await favoritesStore.fetchFavorites();
-    } catch {
-      message.error(
-        "Ошибка загрузки избранного. Пожалуйста, попробуйте позже."
-      );
-    }
-  }
-});
-
-watch(genreFilter, () => {
-  favoritesStore.setCurrentPage(1);
-});
-
-watch(searchQuery, () => {
-  favoritesStore.setCurrentPage(1);
-});
-
-const handleSearch = async (value: string) => {
-  searchQuery.value = value;
-};
 
 const getPosterSrc = (item: Movie) => {
   return imageErrors.value.has(item.id)
@@ -112,6 +156,18 @@ const goToMovie = ({ id }: Movie) => {
 const goToMovies = () => {
   router.push("/list");
 };
+
+onMounted(async () => {
+  if (shouldFetchFavorites.value) {
+    try {
+      await favoritesStore.fetchFavorites();
+    } catch {
+      message.error(
+        "Ошибка загрузки избранного. Пожалуйста, попробуйте позже."
+      );
+    }
+  }
+});
 </script>
 
 <template>
@@ -125,15 +181,10 @@ const goToMovies = () => {
     />
 
     <div class="favorites__content">
-      <div class="favorites__filters">
-        <InputSearch
-          :search-handler="handleSearch"
-          btn-label="Искать"
-          class="favorites__input-search"
-          placeholder="Введите название"
-        />
-        <GenreFilter v-model="genreFilter" class="favorites__genre-filter" />
-      </div>
+      <MoviesFiltersPanel
+        :search-handler="handleSearch"
+        @update:filters="handleFiltersUpdate"
+      />
       <ListError
         v-if="favoritesStore.isError"
         :isError="favoritesStore.isError"
@@ -252,39 +303,13 @@ const goToMovies = () => {
   overflow-x: hidden;
 
   &__content {
-    max-width: 1400px;
-    margin: auto;
+    max-width: calc(100vw - 128px);
+    margin: 0 auto;
     padding: 0 1rem;
-  }
-
-  &__filters {
     display: flex;
-    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 8px;
-    margin-top: 16px;
-
-    @include mediaTablet {
-      flex-direction: row;
-      align-items: center;
-    }
-  }
-
-  &__input-search {
-    max-width: 100%;
-
-    @include mediaTablet {
-      max-width: 500px;
-      min-width: 500px;
-    }
-  }
-
-  &__genre-filter {
-    width: 100%;
-
-    @include mediaTablet {
-      width: 220px;
-    }
+    flex-direction: column;
   }
 
   &__section {
