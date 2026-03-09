@@ -107,8 +107,8 @@ const login = async ({ email, password }: FormState) => {
 </template>
 
 <style lang="scss">
-@use "../styles/screen-sizes" as *;
-@use "../styles/media" as *;
+@use "../../styles/screen-sizes" as *;
+@use "../../styles/media" as *;
 
 .signin {
   min-height: 450px;

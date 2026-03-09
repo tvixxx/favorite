@@ -4,16 +4,22 @@ import { PrismaService } from '../prisma/prisma.service';
 import type { Actor, Movie, Prisma, Review } from '../generated/prisma/client';
 import { MoviesStatsResponse } from './dto/movies-stats.dto';
 
+interface MovieFilters {
+  genre?: string;
+  rateMin?: number;
+  rateMax?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  publishDateFrom?: string;
+  publishDateTo?: string;
+}
+
 @Injectable()
 class MovieService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  public async findAll(genre?: string): Promise<Movie[]> {
-    const where: Prisma.MovieWhereInput = {};
-
-    if (genre) {
-      where.genre = genre as any;
-    }
+  public async findAll(filters: MovieFilters = {}): Promise<Movie[]> {
+    const where = this.buildWhereClause(filters);
 
     const movies = await this.prismaService.movie.findMany({
       where,
@@ -339,23 +345,15 @@ class MovieService {
     };
   }
 
-  public async search(query: string, genre?: string): Promise<Movie[]> {
-    if (!query && !genre) {
+  public async search(
+    query: string,
+    filters: MovieFilters = {},
+  ): Promise<Movie[]> {
+    if (!query && !Object.values(filters).some(Boolean)) {
       return this.findAll();
     }
 
-    const where: Prisma.MovieWhereInput = {};
-
-    if (query) {
-      where.title = {
-        contains: query,
-        mode: 'insensitive',
-      };
-    }
-
-    if (genre) {
-      where.genre = genre as any;
-    }
+    const where = this.buildWhereClause(filters, query);
 
     const movies = await this.prismaService.movie.findMany({
       where,
@@ -370,6 +368,56 @@ class MovieService {
     });
 
     return movies;
+  }
+
+  private buildWhereClause(
+    filters: MovieFilters,
+    query?: string,
+  ): Prisma.MovieWhereInput {
+    const where: Prisma.MovieWhereInput = {};
+
+    if (query) {
+      where.title = {
+        contains: query,
+        mode: 'insensitive',
+      };
+    }
+
+    if (filters.genre) {
+      where.genre = filters.genre as any;
+    }
+
+    if (filters.rateMin !== undefined || filters.rateMax !== undefined) {
+      where.rate = {};
+      if (filters.rateMin !== undefined) {
+        where.rate.gte = filters.rateMin;
+      }
+      if (filters.rateMax !== undefined) {
+        where.rate.lte = filters.rateMax;
+      }
+    }
+
+    if (filters.dateFrom || filters.dateTo) {
+      where.date = {};
+      if (filters.dateFrom) {
+        where.date.gte = new Date(filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        where.date.lte = new Date(filters.dateTo);
+      }
+    }
+
+    if (filters.publishDateFrom || filters.publishDateTo) {
+      where.publishDate = {};
+      if (filters.publishDateFrom) {
+        where.publishDate.gte = new Date(filters.publishDateFrom);
+      }
+      if (filters.publishDateTo) {
+        where.publishDate.lte = new Date(filters.publishDateTo);
+      }
+    }
+
+    return where;
   }
 }
 

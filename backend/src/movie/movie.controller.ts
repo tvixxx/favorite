@@ -36,8 +36,24 @@ export class MovieController {
     type: [MovieResponse],
   })
   @Get()
-  public findAll(@Query('genre') genre?: string) {
-    return this.movieService.findAll(genre);
+  public findAll(
+    @Query('genre') genre?: string,
+    @Query('rateMin') rateMin?: string,
+    @Query('rateMax') rateMax?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('publishDateFrom') publishDateFrom?: string,
+    @Query('publishDateTo') publishDateTo?: string,
+  ) {
+    return this.movieService.findAll({
+      genre,
+      rateMin: rateMin ? Number(rateMin) : undefined,
+      rateMax: rateMax ? Number(rateMax) : undefined,
+      dateFrom,
+      dateTo,
+      publishDateFrom,
+      publishDateTo,
+    });
   }
 
   @ApiOperation({
@@ -52,8 +68,25 @@ export class MovieController {
     description: 'Фильмы не найдены',
   })
   @Get('search')
-  public search(@Query('q') query: string, @Query('genre') genre?: string) {
-    return this.movieService.search(query, genre);
+  public search(
+    @Query('q') query: string,
+    @Query('genre') genre?: string,
+    @Query('rateMin') rateMin?: string,
+    @Query('rateMax') rateMax?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('publishDateFrom') publishDateFrom?: string,
+    @Query('publishDateTo') publishDateTo?: string,
+  ) {
+    return this.movieService.search(query, {
+      genre,
+      rateMin: rateMin ? Number(rateMin) : undefined,
+      rateMax: rateMax ? Number(rateMax) : undefined,
+      dateFrom,
+      dateTo,
+      publishDateFrom,
+      publishDateTo,
+    });
   }
 
   @ApiOperation({

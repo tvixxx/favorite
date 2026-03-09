@@ -132,8 +132,8 @@ const register = async ({ email, password, name }: FormState) => {
 </template>
 
 <style lang="scss">
-@use "../styles/screen-sizes" as *;
-@use "../styles/media" as *;
+@use "../../styles/screen-sizes" as *;
+@use "../../styles/media" as *;
 
 .register {
   min-height: 450px;

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import RegisterForm from "@/components/RegisterForm.vue";
-import SigninForm from "@/components/SigninForm.vue";
+import RegisterForm from "@/components/Login/RegisterForm.vue";
+import SigninForm from "@/components/Login/SigninForm.vue";
 
 const showRegisterTemplate = ref(false);
 const regText = "Зарегистрироваться?";

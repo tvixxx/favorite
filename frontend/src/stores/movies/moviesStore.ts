@@ -11,10 +11,14 @@ import type {
   Movie,
   MoviesStats,
   MovieApiResponse,
+  MoviesFilters,
 } from "@/stores/movies/types";
 import { MOVIE_STORE_NAME } from "@/stores/movies/constants";
-import { mapMovieFromApi, mapMoviesFromApi } from "@/stores/movies/utils";
-import { Genre } from "@/components/Genres/constants/genres.constants";
+import {
+  buildSearchParams,
+  mapMovieFromApi,
+  mapMoviesFromApi,
+} from "@/stores/movies/utils";
 
 export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   // Movies
@@ -28,8 +32,8 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   const searchQuery = ref<string>("");
   const isSearching = ref<boolean>(false);
 
-  // Genre filter
-  const genreFilter = ref<Genre | undefined>(undefined);
+  // Filters
+  const filters = ref<MoviesFilters>({});
 
   // Movie
   const currentMovie = ref<Movie | null>(null);
@@ -90,9 +94,14 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     currentMovie.value = item;
   };
 
+  const setFilters = (newFilters: MoviesFilters) => {
+    filters.value = newFilters;
+  };
+
   const currentMoviesList = computed(() => {
-    const hasActiveSearch = !!searchQuery.value || !!genreFilter.value;
-    return (hasActiveSearch ? searchResults.value : moviesList.value) ?? [];
+    return (
+      (hasActiveFilters.value ? searchResults.value : moviesList.value) ?? []
+    );
   });
 
   const paginatedMovies = computed(() => {
@@ -112,6 +121,19 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   const isSerial = computed(() => currentMovie.value?.isSerial);
 
   const seeLater = computed(() => currentMovie.value?.seeLater);
+
+  const hasActiveFilters = computed(() => {
+    return (
+      !!searchQuery.value ||
+      !!filters.value.genre ||
+      filters.value.rateMin !== undefined ||
+      filters.value.rateMax !== undefined ||
+      !!filters.value.dateFrom ||
+      !!filters.value.dateTo ||
+      !!filters.value.publishDateFrom ||
+      !!filters.value.publishDateTo
+    );
+  });
 
   const createMovie = async (movieData: Partial<Movie>): Promise<void> => {
     const response = await useFetch<MovieApiResponse>(MOVIES_ENDPOINTS, {
@@ -162,7 +184,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     }
   };
 
-  const findMovie = async (query: string, genre?: Genre) => {
+  const findMovie = async (query: string) => {
     searchQuery.value = query;
     isSearching.value = true;
     setLoadingMovies(true);
@@ -171,18 +193,9 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     const start = Date.now();
 
     try {
-      const params = new URLSearchParams();
-      let endpoint = MOVIES_ENDPOINTS;
-
-      if (query) {
-        params.append("q", query);
-      }
-
-      if (genre) {
-        params.append("genre", genre);
-      }
-
+      const params = buildSearchParams(filters.value, query);
       const queryString = params.toString();
+      let endpoint = MOVIES_ENDPOINTS;
 
       if (queryString) {
         endpoint = `${MOVIES_ENDPOINTS}/search?${queryString}`;
@@ -196,7 +209,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
         throw new Error(ERROR_FETCH_MOVIES_TEXT);
       }
 
-      if (query || genre) {
+      if (query || hasActiveFilters.value) {
         searchResults.value = mapMoviesFromApi(data);
       } else {
         setMovies(mapMoviesFromApi(data));
@@ -218,7 +231,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     isSearching.value = false;
   };
 
-  const fetchMovies = async (query = "", genre?: Genre) => {
+  const fetchMovies = async (query = "") => {
     if (!query && searchQuery.value) {
       clearSearch();
     }
@@ -229,21 +242,18 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     const start = Date.now();
 
     try {
-      const params = new URLSearchParams();
+      const params = buildSearchParams(filters.value, query);
       let endpoint = MOVIES_ENDPOINTS;
 
       if (query) {
-        params.append("q", query);
         endpoint = `${MOVIES_ENDPOINTS}/search`;
-      }
-
-      if (genre) {
-        params.append("genre", genre);
       }
 
       const queryString = params.toString();
       if (queryString) {
-        endpoint = `${endpoint}?${queryString}`;
+        endpoint = `${endpoint}${
+          endpoint.includes("?") ? "&" : "?"
+        }${queryString}`;
       }
 
       const { data, status } = await useFetch<MovieApiResponse[]>(endpoint, {
@@ -366,9 +376,6 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     isMoviesStatsLoading,
     isMoviesStatsError,
 
-    // Genre filter
-    genreFilter,
-
     setMovies,
     setCurrentMovie,
     setLoadingMovies,
@@ -399,5 +406,10 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     clearSearch,
     searchQuery,
     isSearching,
+
+    // Filters
+    filters,
+    setFilters,
+    hasActiveFilters,
   };
 });
