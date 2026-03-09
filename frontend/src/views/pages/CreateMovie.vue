@@ -9,6 +9,7 @@ import { showErrorRequest } from "@/state/utils";
 import { Genre } from "@/components/Genres/constants/genres.constants";
 import GenresList from "@/components/Genres/GenresList.vue";
 import { Movie } from "@/stores";
+import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 
 const moviesStore = useMoviesStore();
 const actorsStore = useActorsStore();
@@ -219,11 +220,11 @@ const addNewMovie = async () => {
           </a-form-item>
 
           <a-form-item label="Смотреть позже?" name="seeLater">
-            <a-switch v-model:value="formData.seeLater" />
+            <a-switch v-model:checked="formData.seeLater" />
           </a-form-item>
 
           <a-form-item label="Сериал?" name="isSerial">
-            <a-switch v-model:value="formData.isSerial" />
+            <a-switch v-model:checked="formData.isSerial" />
           </a-form-item>
 
           <a-form-item label="Описание" name="description">
@@ -233,7 +234,7 @@ const addNewMovie = async () => {
               size="large"
               :rows="4"
               placeholder="Расскажите о своих впечатлениях от фильма..."
-              maxlength="500"
+              :maxlength="500"
               :show-count="true"
             />
           </a-form-item>

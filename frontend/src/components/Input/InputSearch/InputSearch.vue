@@ -6,7 +6,7 @@ const DEFAULT_DEBOUNCE_TIME = 300;
 const DEFAULT_MIN_CHARS = 3;
 const DEFAULT_SEARCH_QUERY_TEXT = "";
 
-const inputValue = defineModel<string>("");
+const inputValue = defineModel<string>({ default: "" });
 
 const {
   btnLabel,

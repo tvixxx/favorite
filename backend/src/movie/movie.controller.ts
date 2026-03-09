@@ -20,6 +20,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { MoviesStatsResponse } from './dto/movies-stats.dto';
+import { Genre } from '../generated/prisma/enums';
 
 @ApiTags('Movies')
 @Controller('movies')
@@ -46,7 +47,7 @@ export class MovieController {
     @Query('publishDateTo') publishDateTo?: string,
   ) {
     return this.movieService.findAll({
-      genre,
+      genre: genre ? (genre as Genre) : undefined,
       rateMin: rateMin ? Number(rateMin) : undefined,
       rateMax: rateMax ? Number(rateMax) : undefined,
       dateFrom,
@@ -79,7 +80,7 @@ export class MovieController {
     @Query('publishDateTo') publishDateTo?: string,
   ) {
     return this.movieService.search(query, {
-      genre,
+      genre: genre ? (genre as Genre) : undefined,
       rateMin: rateMin ? Number(rateMin) : undefined,
       rateMax: rateMax ? Number(rateMax) : undefined,
       dateFrom,

@@ -1,11 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateMovieRequest } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
-import type { Actor, Movie, Prisma, Review } from '../generated/prisma/client';
+import type {
+  Actor,
+  Genre,
+  Movie,
+  Prisma,
+  Review,
+} from '../generated/prisma/client';
 import { MoviesStatsResponse } from './dto/movies-stats.dto';
 
 interface MovieFilters {
-  genre?: string;
+  genre?: Genre;
   rateMin?: number;
   rateMax?: number;
   dateFrom?: string;
@@ -384,7 +390,7 @@ class MovieService {
     }
 
     if (filters.genre) {
-      where.genre = filters.genre as any;
+      where.genre = filters.genre;
     }
 
     if (filters.rateMin !== undefined || filters.rateMax !== undefined) {
