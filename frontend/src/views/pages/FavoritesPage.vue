@@ -110,6 +110,10 @@ const filteredFavorites = computed(() => {
     });
   }
 
+  if (f.seeLater) {
+    list = list.filter((movie) => movie.seeLater);
+  }
+
   return list;
 });
 

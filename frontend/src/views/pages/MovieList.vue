@@ -84,12 +84,35 @@ const removeFromFavorite = async (item: Movie) => {
   }
 };
 
+const toggleSeeLater = async (item: Movie) => {
+  const newValue = !item.seeLater;
+
+  try {
+    await moviesStore.patchMovie(item.id, { seeLater: newValue });
+
+    if (moviesStore.filters.seeLater && !newValue) {
+      moviesStore.searchResults = moviesStore.searchResults.filter(
+        (movie) => movie.id !== item.id
+      );
+    }
+
+    message.success(
+      newValue
+        ? `${item.title} добавлен в «Смотреть позже»`
+        : `${item.title} убран из «Смотреть позже»`
+    );
+  } catch {
+    message.error("Не удалось обновить статус");
+  }
+};
+
 const goToMovie = ({ id }: Movie) => {
   router.push(`/detail/${id}`);
 };
 
 const handleFiltersUpdate = async (filters: MoviesFilters) => {
   moviesStore.setFilters(filters);
+
   try {
     await moviesStore.findMovie(moviesStore.searchQuery);
   } catch {
@@ -196,16 +219,32 @@ watch(
               <BaseIcon :height="18" :width="18" name="pajamas:remove" />
             </button>
 
-            <h3 class="movie-card__title">{{ item.title }}</h3>
+            <h3 class="movie-card__title">
+              {{ item.title }} <span v-if="item.isSerial">(сериал)</span>
+            </h3>
 
             <div class="movie-card__meta">
               <div class="movie-card__meta-item">
-                <BaseIcon class="movie-card__meta-icon" name="mdi:calendar" />
-                {{ formatDate(item.date) }}
+                <BaseIcon class="movie-card__meta-icon" name="mdi:eye" />
+                <span class="movie-card__meta-item-text">
+                  Дата просмотра: {{ formatDate(item.date) }}
+                </span>
               </div>
               <div class="movie-card__meta-item">
-                {{ formatYear(item.publishDate) }}
+                <BaseIcon class="movie-card__meta-icon" name="mdi:filmstrip" />
+                <span class="movie-card__meta-item-text"
+                  >Дата выхода: {{ formatYear(item.publishDate) }}</span
+                >
               </div>
+            </div>
+
+            <div class="movie-card__see-later" @click.stop>
+              <a-switch
+                :checked="item.seeLater"
+                size="small"
+                @change="() => toggleSeeLater(item)"
+              />
+              <span class="movie-card__see-later-label">Смотреть позже</span>
             </div>
           </div>
         </div>
@@ -481,7 +520,8 @@ watch(
   &__meta {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    flex-direction: column;
     gap: 0.75rem;
     font-size: 0.85rem;
     color: var(--text-secondary);
@@ -507,6 +547,22 @@ watch(
     width: 16px;
     height: 16px;
     color: var(--ant-color-primary);
+  }
+
+  &__see-later {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 0.5rem;
+    border-top: 1px solid
+      color-mix(in srgb, var(--border-color) 40%, transparent);
+    margin-top: auto;
+  }
+
+  &__see-later-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
   }
 }
 </style>

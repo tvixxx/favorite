@@ -44,6 +44,10 @@ interface CreateMovieForm {
   genre?: Genre;
   seeLater: boolean;
   isSerial: boolean;
+  seasonCount?: number;
+  episodeCount?: number;
+  currentSeason?: number;
+  currentEpisode?: number;
   imageUrl: string;
   rate: number;
   isFavorite: boolean;
@@ -58,6 +62,10 @@ const formData = reactive<CreateMovieForm>({
   genre: Genre.ACTION,
   seeLater: false,
   isSerial: false,
+  seasonCount: undefined,
+  episodeCount: undefined,
+  currentSeason: undefined,
+  currentEpisode: undefined,
   imageUrl: "",
   rate: 0,
   isFavorite: false,
@@ -85,6 +93,10 @@ const addNewMovie = async () => {
         ? new Date(formData.publishDate).toISOString()
         : null,
       actorIds: formData.actorIds,
+      seasonCount: formData.seasonCount ?? undefined,
+      episodeCount: formData.episodeCount ?? undefined,
+      currentSeason: formData.currentSeason ?? undefined,
+      currentEpisode: formData.currentEpisode ?? undefined,
     };
 
     await moviesStore.createMovie(moviePayload);
@@ -115,7 +127,7 @@ const addNewMovie = async () => {
           <div class="form-grid">
             <div class="form-grid__col">
               <a-form-item
-                label="Название фильма"
+                label="Название фильма/сериала"
                 name="title"
                 :rules="[
                   { required: true, message: 'Введите название фильма' },
@@ -149,7 +161,6 @@ const addNewMovie = async () => {
                   mode="tags"
                   placeholder="Выберите или введите актеров"
                   size="large"
-                  style="width: 100%"
                   :loading="actorsStore.isActorsLoading"
                   :disabled="actorsStore.isActorsLoading"
                   @change="handleActorSelection"
@@ -227,6 +238,68 @@ const addNewMovie = async () => {
             <a-switch v-model:checked="formData.isSerial" />
           </a-form-item>
 
+          <a-form-item
+            v-if="formData.isSerial"
+            label="Количество сезонов"
+            name="seasonCount"
+          >
+            <a-input-number
+              v-model:value="formData.seasonCount"
+              :min="1"
+              :precision="0"
+              size="large"
+              placeholder="Например: 5"
+              style="width: 100%"
+            />
+          </a-form-item>
+
+          <a-form-item
+            v-if="formData.isSerial"
+            label="Количество эпизодов"
+            name="episodeCount"
+          >
+            <a-input-number
+              v-model:value="formData.episodeCount"
+              :min="1"
+              :precision="0"
+              size="large"
+              placeholder="Например: 10"
+              style="width: 100%"
+            />
+          </a-form-item>
+
+          <a-form-item
+            v-if="formData.isSerial && formData.seasonCount"
+            label="На каком сезоне остановились"
+            name="currentSeason"
+          >
+            <a-input-number
+              v-model:value="formData.currentSeason"
+              :min="1"
+              :max="formData.seasonCount"
+              :precision="0"
+              size="large"
+              placeholder="Например: 2"
+              style="width: 100%"
+            />
+          </a-form-item>
+
+          <a-form-item
+            v-if="formData.isSerial && formData.episodeCount"
+            label="На какой серии остановились"
+            name="currentEpisode"
+          >
+            <a-input-number
+              v-model:value="formData.currentEpisode"
+              :min="1"
+              :max="formData.episodeCount"
+              :precision="0"
+              size="large"
+              placeholder="Например: 5"
+              style="width: 100%"
+            />
+          </a-form-item>
+
           <a-form-item label="Описание" name="description">
             <a-textarea
               v-model:value="formData.description"
@@ -250,7 +323,7 @@ const addNewMovie = async () => {
               class="form-actions__submit"
             >
               <BaseIcon name="mdi:plus" class="btn-icon" />
-              Создать фильм
+              Добавить
             </a-button>
           </a-form-item>
         </a-form>
@@ -415,6 +488,7 @@ const addNewMovie = async () => {
 
 .form-actions {
   display: flex;
+  align-items: center;
   gap: 1.5rem;
   justify-content: flex-end;
   margin-top: 2rem;
@@ -446,6 +520,10 @@ const addNewMovie = async () => {
 
   &__submit {
     min-width: 180px;
+    max-width: 200px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
     .btn-icon {
       margin-right: 8px;
@@ -462,6 +540,12 @@ const addNewMovie = async () => {
   font-weight: 600;
   color: var(--text-primary);
   font-size: 1rem;
+}
+
+.form-actions :deep(.ant-form-item-control-input-content) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 :deep(.ant-input, .ant-picker, .ant-textarea) {

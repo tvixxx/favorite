@@ -18,6 +18,7 @@ interface MovieFilters {
   dateTo?: string;
   publishDateFrom?: string;
   publishDateTo?: string;
+  seeLater?: boolean;
 }
 
 @Injectable()
@@ -63,6 +64,10 @@ class MovieService {
       isFavorite,
       seeLater,
       isSerial,
+      seasonCount,
+      episodeCount,
+      currentSeason,
+      currentEpisode,
     } = dto;
 
     return this.prismaService.$transaction(async (tx) => {
@@ -89,6 +94,10 @@ class MovieService {
           isFavorite,
           seeLater,
           isSerial,
+          seasonCount,
+          episodeCount,
+          currentSeason,
+          currentEpisode,
           poster: imageUrl ? { create: { url: imageUrl } } : undefined,
           actors: {
             connect: actors.map((actor) => ({
@@ -182,6 +191,10 @@ class MovieService {
       isFavorite,
       seeLater,
       isSerial,
+      seasonCount,
+      episodeCount,
+      currentSeason,
+      currentEpisode,
     } = dto;
 
     return this.prismaService.$transaction(async (tx) => {
@@ -215,6 +228,10 @@ class MovieService {
           isFavorite,
           seeLater,
           isSerial,
+          seasonCount,
+          episodeCount,
+          currentSeason,
+          currentEpisode,
           poster: imageUrl ? { create: { url: imageUrl } } : undefined,
           actors: {
             connect: actors.map((actor) => ({ id: actor.id })),
@@ -249,6 +266,10 @@ class MovieService {
         isFavorite,
         seeLater,
         isSerial,
+        seasonCount,
+        episodeCount,
+        currentSeason,
+        currentEpisode,
       } = dto;
 
       const updateData: Prisma.MovieUpdateInput = {};
@@ -287,6 +308,22 @@ class MovieService {
 
       if (isSerial !== undefined) {
         updateData.isSerial = isSerial;
+      }
+
+      if (seasonCount !== undefined) {
+        updateData.seasonCount = seasonCount;
+      }
+
+      if (episodeCount !== undefined) {
+        updateData.episodeCount = episodeCount;
+      }
+
+      if (currentSeason !== undefined) {
+        updateData.currentSeason = currentSeason;
+      }
+
+      if (currentEpisode !== undefined) {
+        updateData.currentEpisode = currentEpisode;
       }
 
       if (genre !== undefined) {
@@ -421,6 +458,10 @@ class MovieService {
       if (filters.publishDateTo) {
         where.publishDate.lte = new Date(filters.publishDateTo);
       }
+    }
+
+    if (filters.seeLater !== undefined) {
+      where.seeLater = filters.seeLater;
     }
 
     return where;

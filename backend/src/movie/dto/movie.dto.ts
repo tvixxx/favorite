@@ -76,6 +76,36 @@ export class MovieResponse {
   isSerial: boolean;
 
   @ApiProperty({
+    description: 'Количество сезонов',
+    example: '1',
+    type: Number,
+  })
+  seasonCount: number;
+
+  @ApiProperty({
+    description: 'Количество эпизодов',
+    example: '5',
+    type: Number,
+  })
+  episodeCount: number;
+
+  @ApiProperty({
+    description: 'Текущий сезон просмотра',
+    example: 2,
+    type: Number,
+    nullable: true,
+  })
+  currentSeason?: number;
+
+  @ApiProperty({
+    description: 'Текущий эпизод просмотра',
+    example: 5,
+    type: Number,
+    nullable: true,
+  })
+  currentEpisode?: number;
+
+  @ApiProperty({
     description: 'ID актеров',
     example: ['dad213-dad21-d1213-dokojp2', 'dopdad1-1212dsx-cczcsq-d1221q'],
     type: [String],

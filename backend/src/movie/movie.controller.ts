@@ -45,6 +45,7 @@ export class MovieController {
     @Query('dateTo') dateTo?: string,
     @Query('publishDateFrom') publishDateFrom?: string,
     @Query('publishDateTo') publishDateTo?: string,
+    @Query('seeLater') seeLater?: string,
   ) {
     return this.movieService.findAll({
       genre: genre ? (genre as Genre) : undefined,
@@ -54,6 +55,7 @@ export class MovieController {
       dateTo,
       publishDateFrom,
       publishDateTo,
+      seeLater: seeLater !== undefined ? seeLater === 'true' : undefined,
     });
   }
 
@@ -78,6 +80,7 @@ export class MovieController {
     @Query('dateTo') dateTo?: string,
     @Query('publishDateFrom') publishDateFrom?: string,
     @Query('publishDateTo') publishDateTo?: string,
+    @Query('seeLater') seeLater?: string,
   ) {
     return this.movieService.search(query, {
       genre: genre ? (genre as Genre) : undefined,
@@ -87,6 +90,7 @@ export class MovieController {
       dateTo,
       publishDateFrom,
       publishDateTo,
+      seeLater: seeLater !== undefined ? seeLater === 'true' : undefined,
     });
   }
 

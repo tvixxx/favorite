@@ -12,6 +12,7 @@ import type { MoviesFilters } from "@/stores";
 import { Genre } from "@/components/Genres/constants/genres.constants";
 
 const TABLET_WIDTH = 768;
+const DEFAULT_RATE_RANGE: [number, number] = [0, 10];
 
 defineProps<{
   searchHandler: (value: string) => Promise<void>;
@@ -21,12 +22,16 @@ const emit = defineEmits<{
   "update:filters": [filters: MoviesFilters];
 }>();
 
+const { width } = useWindowSize();
+
+const searchQuery = ref<string>("");
 const selectedGenre = ref<Genre | undefined>(undefined);
-const rateRange = ref<[number, number]>([0, 10]);
+const rateRange = ref<[number, number]>([...DEFAULT_RATE_RANGE]);
 const watchDateRange = ref<[Dayjs, Dayjs] | null>(null);
 const publishDateRange = ref<[Dayjs, Dayjs] | null>(null);
+const seeLater = ref(false);
 const isExpanded = ref(false);
-const { width } = useWindowSize();
+
 const isMobile = computed(() => width.value < TABLET_WIDTH);
 
 const toggleExpanded = () => {
@@ -40,6 +45,24 @@ const hasAdvancedFilters = computed(() => {
     rateMax < 10 ||
     !!watchDateRange.value ||
     !!publishDateRange.value
+  );
+});
+
+const clearFilters = () => {
+  searchQuery.value = "";
+  selectedGenre.value = undefined;
+  rateRange.value = [...DEFAULT_RATE_RANGE];
+  watchDateRange.value = null;
+  publishDateRange.value = null;
+  seeLater.value = false;
+};
+
+const hasAnyFilters = computed(() => {
+  return (
+    searchQuery.value.length > 0 ||
+    !!selectedGenre.value ||
+    seeLater.value ||
+    hasAdvancedFilters.value
   );
 });
 
@@ -62,6 +85,7 @@ const buildFilters = (): MoviesFilters => {
     publishDateTo: publishDateRange.value?.[1]
       ? dayjs(publishDateRange.value[1]).endOf("month").toISOString()
       : undefined,
+    seeLater: seeLater.value || undefined,
   };
 };
 
@@ -70,7 +94,7 @@ const emitFilters = () => {
 };
 
 watch(
-  [selectedGenre, rateRange, watchDateRange, publishDateRange],
+  [selectedGenre, rateRange, watchDateRange, publishDateRange, seeLater],
   emitFilters,
   { deep: true }
 );
@@ -80,12 +104,17 @@ watch(
   <div class="filters-panel">
     <div class="filters-panel__main">
       <InputSearch
+        v-model="searchQuery"
         :search-handler="searchHandler"
         btn-label="Искать"
         class="filters-panel__search"
         placeholder="Введите название"
       />
       <GenreFilter v-model="selectedGenre" class="filters-panel__genre" />
+      <div class="filters-panel__see-later">
+        <a-switch v-model:checked="seeLater" size="small" />
+        <span class="filters-panel__see-later-label">Смотреть позже</span>
+      </div>
       <button
         class="filters-panel__toggle"
         :class="{
@@ -104,6 +133,17 @@ watch(
           class="filters-panel__badge"
         />
       </button>
+
+      <a-button
+        type="primary"
+        size="large"
+        class="filters-panel__clear"
+        :disabled="!hasAnyFilters"
+        @click="clearFilters"
+      >
+        <BaseIcon name="mdi:trash" />
+        <span class="filters-panel__clear-text">Очистить</span>
+      </a-button>
     </div>
 
     <Transition name="filters-slide">
@@ -160,6 +200,28 @@ watch(
 
     @include mediaTablet {
       width: 220px;
+    }
+  }
+
+  &__see-later {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    height: 40px;
+    white-space: nowrap;
+  }
+
+  &__see-later-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+
+    @media (max-width: 1100px) {
+      display: none;
     }
   }
 
@@ -230,6 +292,50 @@ watch(
       align-items: flex-end;
       gap: 16px;
     }
+  }
+
+  &__clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    height: 40px;
+
+    &:not(:disabled) {
+      background: color-mix(
+        in srgb,
+        var(--ant-color-primary) 5%,
+        var(--bg-primary)
+      );
+    }
+
+    &:disabled {
+      cursor: default;
+      border: 1px solid var(--border-color);
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+    }
+
+    &:hover:not(:disabled) {
+      border-color: var(--ant-color-primary);
+      color: var(--ant-color-primary);
+    }
+  }
+
+  &__clear-text {
+    //@media (max-width: 1100px) {
+    //  display: none;
+    //}
   }
 }
 
