@@ -61,10 +61,12 @@ const toggleFavorite = async () => {
   try {
     if (movie.value.isFavorite) {
       await favoritesStore.removeFromFavorite(movie.value);
-      message.success(`${movie.value.title} убран из избранного`);
+      moviesStore.setCurrentMovie({ ...movie.value, isFavorite: false });
+      message.success(`"${movie.value.title}" убран из избранного`);
     } else {
       await favoritesStore.addToFavorite(movie.value);
-      message.success(`${movie.value.title} добавлен в избранное`);
+      moviesStore.setCurrentMovie({ ...movie.value, isFavorite: true });
+      message.success(`"${movie.value.title}" добавлен в избранное`);
     }
   } catch {
     message.error("Не удалось обновить избранное");
