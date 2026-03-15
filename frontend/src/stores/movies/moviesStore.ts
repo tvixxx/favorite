@@ -131,7 +131,8 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
       !!filters.value.dateFrom ||
       !!filters.value.dateTo ||
       !!filters.value.publishDateFrom ||
-      !!filters.value.publishDateTo
+      !!filters.value.publishDateTo ||
+      !!filters.value.seeLater
     );
   });
 
@@ -165,6 +166,34 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
         movie.id === movieData.id ? { ...movie, ...requestData } : movie
       );
       setMovies(movies);
+
+      searchResults.value = searchResults.value.map((movie: Movie) =>
+        movie.id === movieData.id ? { ...movie, ...requestData } : movie
+      );
+    } else {
+      throw new Error("Не удалось обновить фильм");
+    }
+  };
+
+  const patchMovie = async (
+    movieId: string,
+    data: Partial<Movie>
+  ): Promise<void> => {
+    const response = await useFetch<boolean>(`${MOVIES_ENDPOINTS}/${movieId}`, {
+      method: FETCH_METHOD.patch,
+      data,
+    });
+
+    if (isSuccessStatus(response.status)) {
+      const updatedMovie = { ...data };
+
+      moviesList.value = moviesList.value.map((movie: Movie) =>
+        movie.id === movieId ? { ...movie, ...updatedMovie } : movie
+      );
+
+      searchResults.value = searchResults.value.map((movie: Movie) =>
+        movie.id === movieId ? { ...movie, ...updatedMovie } : movie
+      );
     } else {
       throw new Error("Не удалось обновить фильм");
     }
@@ -177,6 +206,10 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
     if (isSuccessStatus(response.status)) {
       moviesList.value = moviesList.value.filter(
+        (movie) => movie.id !== movieId
+      );
+
+      searchResults.value = searchResults.value.filter(
         (movie) => movie.id !== movieId
       );
     } else {
@@ -355,6 +388,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     isMoviesLoaded,
     isMoviesLoading,
     isMoviesError,
+    searchResults,
     // Movies list refs
     currentPage,
     pageSize,
@@ -399,6 +433,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     // Movie handlers
     createMovie,
     updateMovie,
+    patchMovie,
     removeMovie,
 
     // Search

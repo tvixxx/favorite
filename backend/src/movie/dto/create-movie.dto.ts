@@ -106,6 +106,52 @@ export class CreateMovieRequest {
   isSerial: boolean;
 
   @ApiProperty({
+    description: 'Количество сезонов',
+    example: '2',
+    type: Number,
+  })
+  @IsInt()
+  @IsOptional()
+  @Min(1)
+  @Max(100)
+  seasonCount?: number;
+
+  @ApiProperty({
+    description: 'Количество эпизодов',
+    example: '10',
+    type: Number,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  episodeCount?: number;
+
+  @ApiProperty({
+    description: 'Текущий сезон просмотра',
+    example: 2,
+    type: Number,
+    required: false,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  currentSeason?: number;
+
+  @ApiProperty({
+    description: 'Текущий эпизод просмотра',
+    example: 5,
+    type: Number,
+    required: false,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  currentEpisode?: number;
+
+  @ApiProperty({
     description: 'ID актеров',
     example: ['dad213-dad21-d1213-dokojp2', 'dopdad1-1212dsx-cczcsq-d1221q'],
     type: [String],

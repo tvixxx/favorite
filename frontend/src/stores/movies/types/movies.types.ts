@@ -15,6 +15,10 @@ export interface MovieApiResponse {
   isFavorite: boolean;
   seeLater: boolean;
   isSerial: boolean;
+  seasonCount?: number;
+  episodeCount?: number;
+  currentSeason?: number;
+  currentEpisode?: number;
   genre: Genre | null;
   date: string | null;
   publishDate: string | null;
@@ -39,6 +43,10 @@ export interface Movie {
   isFavorite: boolean;
   seeLater: boolean;
   isSerial: boolean;
+  seasonCount?: number;
+  episodeCount?: number;
+  currentSeason?: number;
+  currentEpisode?: number;
   genre?: Genre;
   date: string | null;
   publishDate: string | null;
@@ -75,4 +83,5 @@ export interface MoviesFilters {
   dateTo?: string;
   publishDateFrom?: string;
   publishDateTo?: string;
+  seeLater?: boolean;
 }

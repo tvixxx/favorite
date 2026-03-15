@@ -38,5 +38,9 @@ export const buildSearchParams = (
     params.append("publishDateTo", filters.publishDateTo);
   }
 
+  if (filters.seeLater !== undefined) {
+    params.append("seeLater", String(filters.seeLater));
+  }
+
   return params;
 };
