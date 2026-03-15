@@ -307,24 +307,30 @@ onMounted(async () => {
   overflow-x: hidden;
 
   &__content {
-    max-width: calc(100vw - 128px);
+    width: 100%;
+    max-width: 1800px;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0 2rem;
     display: flex;
-    align-items: center;
-    justify-content: center;
     flex-direction: column;
+    align-items: center;
+
+    @include mediaDesktopS {
+      padding: 0 3rem;
+    }
   }
 
   &__section {
     margin-top: 2rem;
+    width: 100%;
+    max-width: 1400px;
   }
 
   &__section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid
       color-mix(in srgb, var(--border-color) 50%, transparent);
@@ -359,42 +365,36 @@ onMounted(async () => {
 
   &__grid {
     display: grid;
-    gap: 2.5rem;
+    gap: 2rem;
     margin: 2rem 0;
-    justify-content: center;
-    max-width: 1800px;
+    width: 100%;
+    max-width: 1400px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 
-    @media (min-width: 1900px) {
-      grid-template-columns: repeat(4, 430px);
+    @include mediaTablet {
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     }
-    @media (min-width: 1600px) {
-      grid-template-columns: repeat(4, 380px);
+
+    @include mediaDesktopXS {
+      grid-template-columns: repeat(auto-fill, minmax(360px, 420px));
+      justify-content: center;
     }
-    @media (min-width: 1200px) and (max-width: 1680px) {
-      grid-template-columns: repeat(3, minmax(380px, 430px));
-    }
-    @media (min-width: 900px) and (max-width: 1199px) {
-      grid-template-columns: repeat(2, 430px);
-    }
-    @media (max-width: 899px) {
-      grid-template-columns: minmax(350px, 430px);
-      gap: 2rem;
-    }
+
     @media (max-width: 500px) {
       grid-template-columns: 1fr;
       gap: 1.5rem;
-      padding: 0 1rem;
     }
   }
 
   &__card {
     background: var(--bg-primary);
-    border-radius: 20px;
+    border-radius: 16px;
     overflow: hidden;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    height: 480px;
+    display: flex;
+    flex-direction: column;
     border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
     box-shadow: var(--shadow);
 
@@ -404,7 +404,7 @@ onMounted(async () => {
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
+      height: 3px;
       background: linear-gradient(
         90deg,
         var(--ant-color-primary),
@@ -412,16 +412,22 @@ onMounted(async () => {
       );
       opacity: 0;
       transition: opacity 0.3s ease;
+      z-index: 1;
     }
 
     &:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      border-color: var(--ant-color-primary);
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.2);
+      border-color: color-mix(
+        in srgb,
+        var(--ant-color-primary) 40%,
+        transparent
+      );
 
       &::before {
         opacity: 1;
       }
+
       .favorites__poster {
         transform: scale(1.05);
       }
@@ -430,7 +436,7 @@ onMounted(async () => {
 
   &__card-image {
     position: relative;
-    height: 240px;
+    aspect-ratio: 16 / 10;
     overflow: hidden;
     background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
   }
@@ -445,75 +451,72 @@ onMounted(async () => {
 
   &__card-favorite {
     position: absolute;
-    top: 16px;
-    right: 16px;
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 255, 255, 0.95);
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 2;
 
     svg {
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       color: var(--ant-color-primary);
     }
   }
 
   &__card-content {
-    padding: 1.5rem;
-    height: calc(100% - 240px);
+    padding: 1.25rem;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--bg-primary) 100%, transparent) 0%,
-      color-mix(in srgb, var(--bg-secondary) 100%, transparent) 100%
-    );
-    position: relative;
     gap: 0.5rem;
+    flex: 1;
   }
 
   &__card-rating {
     align-self: flex-end;
     background: var(--ant-color-primary);
     color: white;
-    padding: 0.375rem 0.875rem;
-    border-radius: 20px;
-    font-size: 0.875rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.8rem;
     font-weight: 700;
-    box-shadow: 0 4px 16px
+    box-shadow: 0 2px 8px
       color-mix(in srgb, var(--ant-color-primary) 30%, transparent);
   }
 
   &__card-delete {
     position: absolute;
-    top: 1rem;
-    left: 1rem;
-    width: 36px;
-    height: 36px;
+    top: 12px;
+    left: 12px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: color-mix(in srgb, var(--bg-secondary) 85%, transparent);
-    border: 2px solid color-mix(in srgb, var(--text-secondary) 70%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text-secondary) 50%, transparent);
     color: var(--text-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(12px);
-    opacity: 0.9;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 2;
 
-    @media (min-width: 900px) {
-      opacity: 0;
-      .favorites__card:hover & {
-        opacity: 1;
-      }
+    .favorites__card:hover & {
+      opacity: 1;
+    }
+
+    @media (max-width: 899px) {
+      opacity: 0.9;
     }
 
     &:hover {
@@ -521,20 +524,20 @@ onMounted(async () => {
       border-color: #dc2626;
       color: white;
       transform: scale(1.1);
-      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
     }
 
     svg {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
     }
   }
 
   &__card-title {
-    font-size: clamp(1rem, 2vw, 1.25rem);
+    font-size: 1.05rem;
     font-weight: 700;
     margin: 0;
-    line-height: 1.25;
+    line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -548,9 +551,8 @@ onMounted(async () => {
     justify-content: space-between;
     align-items: center;
     gap: 0.75rem;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
-    margin-top: auto;
     padding-top: 0.5rem;
     border-top: 1px solid
       color-mix(in srgb, var(--border-color) 40%, transparent);
@@ -563,8 +565,8 @@ onMounted(async () => {
   }
 
   &__meta-icon {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     color: var(--ant-color-primary);
   }
 
@@ -593,6 +595,7 @@ onMounted(async () => {
     justify-content: center;
     text-align: center;
     color: var(--text-secondary);
+    width: 100%;
   }
 }
 </style>
