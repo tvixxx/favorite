@@ -1,22 +1,18 @@
 <script setup lang="ts">
-import { computed } from "vue";
-
 interface Props {
   loadingText?: string;
   size: "large" | "medium" | "small";
   center: boolean;
 }
 
-const props = defineProps<Props>();
-
-const tip = computed(() => props.loadingText ?? "Загружаем...");
+const { loadingText = "Загружаем...", size, center } = defineProps<Props>();
 </script>
 
 <template>
   <div class="list-loading" :class="{ 'list-loading_center': center }">
     <div class="list-loading__container">
       <div class="list-loading__spinner">
-        <a-spin :size="size" :tip="tip" />
+        <a-spin :size="size" :tip="loadingText" />
       </div>
       <div class="list-loading__shine"></div>
     </div>

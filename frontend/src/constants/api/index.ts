@@ -4,3 +4,4 @@ export * from "./actors-endpoints";
 export * from "./movies-endpoints";
 export * from "./users-endpoints";
 export * from "./network-statuses";
+export * from "./reviews-endpoints";

@@ -15,6 +15,7 @@ import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
 import { Movie } from "@/stores";
+import ReviewsWidget from "@/components/Reviews/ReviewsWidget.vue";
 
 const store = useMainStore();
 const moviesStore = useMoviesStore();
@@ -439,6 +440,13 @@ const saveProgress = async () => {
             </div>
           </div>
         </div>
+
+        <div
+          v-if="currentMovieId"
+          class="movie-detail__review-widget review-widget"
+        >
+          <ReviewsWidget :movie-id="currentMovieId" />
+        </div>
       </template>
     </div>
   </div>
@@ -776,6 +784,10 @@ const saveProgress = async () => {
     justify-content: center;
     gap: 6px;
   }
+}
+
+.detail-section + .movie-detail__review-widget {
+  margin-top: 1.5rem;
 }
 
 .actors-list {

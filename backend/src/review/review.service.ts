@@ -54,4 +54,20 @@ export class ReviewService {
       },
     });
   }
+
+  public async delete(id: string): Promise<string> {
+    try {
+      await this.prismaService.review.delete({
+        where: { id },
+      });
+
+      return id;
+    } catch (error) {
+      if (error?.code === 'P2025') {
+        throw new NotFoundException(`Ревью с айди: ${id} не найдено`);
+      }
+
+      throw error;
+    }
+  }
 }

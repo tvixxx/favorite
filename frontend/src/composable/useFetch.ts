@@ -9,6 +9,7 @@ export enum FETCH_METHOD {
   post = "POST",
   patch = "PATCH",
   delete = "DELETE",
+  put = "PUT",
 }
 
 export interface FetchOptions {
@@ -40,6 +41,9 @@ export async function useFetch<T = unknown>(
       break;
     case FETCH_METHOD.patch:
       response = await api.patch<T>(urlValue, options.data);
+      break;
+    case FETCH_METHOD.put:
+      response = await api.put<T>(urlValue, options.data);
       break;
     case FETCH_METHOD.get:
     default:
