@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import { computed } from "vue";
 
 interface Props {
   btnHandler: () => void;
@@ -12,12 +11,12 @@ interface Props {
   btnIcon?: string;
 }
 
-const props = defineProps<Props>();
-
-const heroIcon = computed(() => props.heroIcon ?? "mdi:heart-off");
-const iconBtn = computed(() => props.btnIcon ?? "mdi:movie");
-const sizeBtn = computed(() => props.btnSize ?? "large");
-const btnType = computed(() => props.btnType ?? "primary");
+const {
+  heroIcon = "mdi:heart-off",
+  btnIcon = "mdi:movie",
+  btnSize = "large",
+  btnType = "primary",
+} = defineProps<Props>();
 </script>
 
 <template>
@@ -28,12 +27,12 @@ const btnType = computed(() => props.btnType ?? "primary");
     <a-empty :description="description"></a-empty>
     <a-button
       v-if="btnText"
-      :type="btnType"
-      @click="btnHandler"
-      :size="sizeBtn"
       class="list-empty__btn"
+      :type="btnType"
+      :size="btnSize"
+      @click="btnHandler"
     >
-      <BaseIcon :name="iconBtn" class="list-empty__btn-icon" />
+      <BaseIcon :name="btnIcon" class="list-empty__btn-icon" />
       <span class="list-empty__btn-text">{{ btnText }}</span>
     </a-button>
   </div>
