@@ -55,7 +55,8 @@ export const ModelName = {
   Movie: 'Movie',
   MoviePoster: 'MoviePoster',
   Review: 'Review',
-  Actor: 'Actor'
+  Actor: 'Actor',
+  UserMovie: 'UserMovie'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -91,17 +92,11 @@ export const MovieScalarFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
-  rate: 'rate',
-  isFavorite: 'isFavorite',
-  seeLater: 'seeLater',
+  genre: 'genre',
+  publishDate: 'publishDate',
   isSerial: 'isSerial',
   seasonCount: 'seasonCount',
   episodeCount: 'episodeCount',
-  currentSeason: 'currentSeason',
-  currentEpisode: 'currentEpisode',
-  genre: 'genre',
-  date: 'date',
-  publishDate: 'publishDate',
   posterId: 'posterId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -124,6 +119,7 @@ export const ReviewScalarFieldEnum = {
   id: 'id',
   text: 'text',
   rate: 'rate',
+  userId: 'userId',
   movieId: 'movieId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -140,6 +136,26 @@ export const ActorScalarFieldEnum = {
 } as const
 
 export type ActorScalarFieldEnum = (typeof ActorScalarFieldEnum)[keyof typeof ActorScalarFieldEnum]
+
+
+export const UserMovieScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  movieId: 'movieId',
+  isFavorite: 'isFavorite',
+  seeLater: 'seeLater',
+  personalRate: 'personalRate',
+  watchStatus: 'watchStatus',
+  currentSeason: 'currentSeason',
+  currentEpisode: 'currentEpisode',
+  addedAt: 'addedAt',
+  lastWatchedAt: 'lastWatchedAt',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserMovieScalarFieldEnum = (typeof UserMovieScalarFieldEnum)[keyof typeof UserMovieScalarFieldEnum]
 
 
 export const SortOrder = {

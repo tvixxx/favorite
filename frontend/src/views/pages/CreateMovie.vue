@@ -1,9 +1,11 @@
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from "vue";
+import { onMounted, reactive, ref, computed } from "vue";
 
 import { message, type FormInstance } from "ant-design-vue";
 import { useMoviesStore } from "@/stores/movies/moviesStore";
+import { useUserMoviesStore } from "@/stores";
 import { useActorsStore } from "@/stores/actors/actorsStore";
+import { useMainStore } from "@/state/state";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import { showErrorRequest } from "@/state/utils";
 import { Genre } from "@/components/Genres/constants/genres.constants";
@@ -12,7 +14,11 @@ import { Movie } from "@/stores";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 
 const moviesStore = useMoviesStore();
+const userMoviesStore = useUserMoviesStore();
 const actorsStore = useActorsStore();
+const mainStore = useMainStore();
+
+const userId = computed(() => mainStore.user?.id || "");
 
 const handleActorSelection = async (selectedValues: string[]) => {
   const processedValues: string[] = [];
@@ -38,7 +44,6 @@ const handleActorSelection = async (selectedValues: string[]) => {
 
 interface CreateMovieForm {
   title: string;
-  date: string;
   publishDate: string;
   description: string;
   genre?: Genre;
@@ -49,14 +54,13 @@ interface CreateMovieForm {
   currentSeason?: number;
   currentEpisode?: number;
   imageUrl: string;
-  rate: number;
+  personalRate: number;
   isFavorite: boolean;
   actorIds: string[];
 }
 
 const formData = reactive<CreateMovieForm>({
   title: "",
-  date: "",
   publishDate: "",
   description: "",
   genre: Genre.ACTION,
@@ -67,7 +71,7 @@ const formData = reactive<CreateMovieForm>({
   currentSeason: undefined,
   currentEpisode: undefined,
   imageUrl: "",
-  rate: 0,
+  personalRate: 0,
   isFavorite: false,
   actorIds: [],
 });
@@ -86,20 +90,30 @@ const addNewMovie = async () => {
 
   try {
     const moviePayload: Partial<Movie> = {
-      ...formData,
+      title: formData.title,
+      description: formData.description,
       genre: formData.genre ?? undefined,
-      date: formData.date ? new Date(formData.date).toISOString() : null,
       publishDate: formData.publishDate
         ? new Date(formData.publishDate).toISOString()
         : null,
       actorIds: formData.actorIds,
+      imageUrl: formData.imageUrl,
+      isSerial: formData.isSerial,
       seasonCount: formData.seasonCount ?? undefined,
       episodeCount: formData.episodeCount ?? undefined,
-      currentSeason: formData.currentSeason ?? undefined,
-      currentEpisode: formData.currentEpisode ?? undefined,
     };
 
-    await moviesStore.createMovie(moviePayload);
+    const createdMovie = await moviesStore.createMovie(moviePayload);
+
+    if (createdMovie && userId.value) {
+      await userMoviesStore.addUserMovie(userId.value, createdMovie.id, {
+        isFavorite: formData.isFavorite,
+        seeLater: formData.seeLater,
+        personalRate: formData.personalRate || null,
+        currentSeason: formData.currentSeason ?? null,
+        currentEpisode: formData.currentEpisode ?? null,
+      });
+    }
 
     formRef?.value?.resetFields();
     formData.actorIds = [];
@@ -175,15 +189,6 @@ const addNewMovie = async () => {
                 </a-select>
               </a-form-item>
 
-              <a-form-item label="Дата просмотра" name="date">
-                <a-date-picker
-                  v-model:value="formData.date"
-                  size="large"
-                  style="width: 100%"
-                  placeholder="Выберите дату"
-                />
-              </a-form-item>
-
               <a-form-item label="Дата выхода фильма" name="publishDate">
                 <a-date-picker
                   v-model:value="formData.publishDate"
@@ -207,17 +212,17 @@ const addNewMovie = async () => {
                     class="preview-poster__img"
                   />
                   <div class="preview-poster__rating">
-                    {{ formData.rate || "?" }}/10
+                    {{ formData.personalRate || "?" }}/10
                   </div>
                 </div>
 
                 <a-form-item
                   label="Ваш рейтинг"
-                  name="rate"
+                  name="personalRate"
                   class="rating-item"
                 >
                   <a-rate
-                    v-model:value="formData.rate"
+                    v-model:value="formData.personalRate"
                     :count="10"
                     class="preview-rating"
                   />

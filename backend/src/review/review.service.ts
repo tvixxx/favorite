@@ -9,15 +9,29 @@ export class ReviewService {
   constructor(private readonly prismaService: PrismaService) {}
 
   public async create(dto: CreateReviewDto): Promise<Review> {
-    const { movieId, text, rate } = dto;
+    const { movieId, userId, text, rate } = dto;
 
     return this.prismaService.review.create({
       data: {
         text,
         rate,
+        user: {
+          connect: {
+            id: userId,
+          },
+        },
         movie: {
           connect: {
             id: movieId,
+          },
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
           },
         },
       },
@@ -27,6 +41,15 @@ export class ReviewService {
   public async findById(id: string): Promise<Review> {
     const review = await this.prismaService.review.findUnique({
       where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+          },
+        },
+      },
     });
 
     if (!review) {
@@ -37,7 +60,7 @@ export class ReviewService {
   }
 
   public async update(id: string, dto: CreateReviewDto): Promise<Review> {
-    const { movieId, text, rate } = dto;
+    const { movieId, userId, text, rate } = dto;
     const movie = await this.prismaService.movie.findUnique({
       where: { id: movieId },
     });
@@ -51,6 +74,16 @@ export class ReviewService {
       data: {
         text,
         rate,
+        userId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+          },
+        },
       },
     });
   }

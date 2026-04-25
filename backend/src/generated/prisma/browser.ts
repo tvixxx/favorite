@@ -42,3 +42,8 @@ export type Review = Prisma.ReviewModel
  * 
  */
 export type Actor = Prisma.ActorModel
+/**
+ * Model UserMovie
+ * 
+ */
+export type UserMovie = Prisma.UserMovieModel

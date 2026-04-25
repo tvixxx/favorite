@@ -4,42 +4,41 @@ import { useRouter } from "vue-router";
 
 import { message } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import { type Movie, useMoviesStore } from "@/stores/movies/moviesStore";
+import { type UserMovie, useUserMoviesStore } from "@/stores";
 import { useMainStore } from "@/state/state";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
-import { useFavoritesStore } from "@/stores/favorites/favoritesStore";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
 import { formatDate, formatYear } from "@/utils";
 import { ERROR_FETCH_MOVIES_TEXT } from "@/state/constants";
-import type { MoviesFilters } from "@/stores";
+import type { UserMoviesFilters } from "@/stores";
 import MoviesFiltersPanel from "@/components/MoviesFiltersPanel/MoviesFiltersPanel.vue";
 
 const router = useRouter();
-const moviesStore = useMoviesStore();
+const userMoviesStore = useUserMoviesStore();
 const mainStore = useMainStore();
-const favoritesStore = useFavoritesStore();
 
-const imageErrors = ref<Set<number>>(new Set());
+const imageErrors = ref<Set<string>>(new Set());
 
-const hasMovies = computed(() => moviesStore.currentMoviesList.length !== 0);
-const totalMovies = computed(() => moviesStore.currentMoviesList.length);
+const userId = computed(() => mainStore.user?.id || "");
+const hasMovies = computed(() => userMoviesStore.currentList.length !== 0);
+const totalMovies = computed(() => userMoviesStore.currentList.length);
 const shouldFetchMovies = computed(
-  () => !hasMovies.value && mainStore.isLoggedIn
+  () => !hasMovies.value && mainStore.isLoggedIn && userId.value
 );
 const showPaginator = computed(
   () =>
     !!totalMovies.value &&
     totalMovies.value > 0 &&
-    !moviesStore.isMoviesError &&
-    !moviesStore.isMoviesLoading
+    !userMoviesStore.isError &&
+    !userMoviesStore.isLoading
 );
 
 const emptyMoviesDescription = computed(() => {
   if (
-    moviesStore.hasActiveFilters &&
-    moviesStore.currentMoviesList.length === 0
+    userMoviesStore.hasActiveFilters &&
+    userMoviesStore.currentList.length === 0
   ) {
     return "Фильмы не найдены";
   }
@@ -47,74 +46,87 @@ const emptyMoviesDescription = computed(() => {
   return "Фильмов пока нет...";
 });
 
-const getPosterSrc = (item: Movie) => {
-  return imageErrors.value.has(item.id)
+const getPosterSrc = (item: UserMovie) => {
+  return imageErrors.value.has(item.movieId)
     ? FALLBACK_IMAGE_URL
-    : item.imageUrl || FALLBACK_IMAGE_URL;
+    : item.movie.imageUrl || FALLBACK_IMAGE_URL;
 };
 
-const handleImageError = (movieId: number) => {
+const handleImageError = (movieId: string) => {
   imageErrors.value.add(movieId);
 };
 
-const removeMovie = async ({ title, id }: Movie) => {
+const removeMovie = async (item: UserMovie) => {
   try {
-    await moviesStore.removeMovie(id);
-    message.success(`${title} удален`);
+    await userMoviesStore.removeUserMovie(userId.value, item.movieId);
+    message.success(`${item.movie.title} удален`);
   } catch {
-    message.error(`Не удалось удалить: ${title}`);
+    message.error(`Не удалось удалить: ${item.movie.title}`);
   }
 };
 
-const addToFavorite = async (item: Movie) => {
+const addToFavorite = async (item: UserMovie) => {
   try {
-    await favoritesStore.addToFavorite(item);
-    message.success(`${item.title} добавлен в избранное`);
+    await userMoviesStore.updateUserMovie(userId.value, item.movieId, {
+      isFavorite: true,
+    });
+    message.success(`${item.movie.title} добавлен в избранное`);
   } catch {
-    message.error(`Не удалось добавить в избранное: ${item.title}`);
+    message.error(`Не удалось добавить в избранное: ${item.movie.title}`);
   }
 };
 
-const removeFromFavorite = async (item: Movie) => {
+const removeFromFavorite = async (item: UserMovie) => {
   try {
-    await favoritesStore.removeFromFavorite(item);
-    message.success(`${item.title} удален из избранного`);
+    await userMoviesStore.updateUserMovie(userId.value, item.movieId, {
+      isFavorite: false,
+    });
+    message.success(`${item.movie.title} удален из избранного`);
   } catch {
-    message.error(`Не удалось удалить из избранного: ${item.title}`);
+    message.error(`Не удалось удалить из избранного: ${item.movie.title}`);
   }
 };
 
-const toggleSeeLater = async (item: Movie) => {
+const toggleSeeLater = async (item: UserMovie) => {
   const newValue = !item.seeLater;
 
   try {
-    await moviesStore.patchMovie(item.id, { seeLater: newValue });
+    await userMoviesStore.updateUserMovie(userId.value, item.movieId, {
+      seeLater: newValue,
+    });
 
-    if (moviesStore.filters.seeLater && !newValue) {
-      moviesStore.searchResults = moviesStore.searchResults.filter(
-        (movie) => movie.id !== item.id
+    if (userMoviesStore.filters.seeLater && !newValue) {
+      userMoviesStore.searchResults = userMoviesStore.searchResults.filter(
+        (um) => um.movieId !== item.movieId
       );
     }
 
     message.success(
       newValue
-        ? `${item.title} добавлен в «Смотреть позже»`
-        : `${item.title} убран из «Смотреть позже»`
+        ? `${item.movie.title} добавлен в «Смотреть позже»`
+        : `${item.movie.title} убран из «Смотреть позже»`
     );
   } catch {
     message.error("Не удалось обновить статус");
   }
 };
 
-const goToMovie = ({ id }: Movie) => {
-  router.push(`/detail/${id}`);
+const goToMovie = (item: UserMovie) => {
+  router.push(`/detail/${item.movieId}`);
 };
 
-const handleFiltersUpdate = async (filters: MoviesFilters) => {
-  moviesStore.setFilters(filters);
+const handleFiltersUpdate = async (filters: UserMoviesFilters) => {
+  userMoviesStore.setFilters(filters);
 
   try {
-    await moviesStore.findMovie(moviesStore.searchQuery);
+    if (userMoviesStore.searchQuery) {
+      await userMoviesStore.searchUserMovies(
+        userId.value,
+        userMoviesStore.searchQuery
+      );
+    } else {
+      await userMoviesStore.fetchUserMovies(userId.value);
+    }
   } catch {
     message.error(ERROR_FETCH_MOVIES_TEXT);
   }
@@ -122,7 +134,11 @@ const handleFiltersUpdate = async (filters: MoviesFilters) => {
 
 const findMovie = async (value: string) => {
   try {
-    await moviesStore.findMovie(value);
+    if (value) {
+      await userMoviesStore.searchUserMovies(userId.value, value);
+    } else {
+      await userMoviesStore.fetchUserMovies(userId.value);
+    }
   } catch {
     message.error(ERROR_FETCH_MOVIES_TEXT);
   }
@@ -131,7 +147,7 @@ const findMovie = async (value: string) => {
 onMounted(async () => {
   if (shouldFetchMovies.value) {
     try {
-      await moviesStore.fetchMovies();
+      await userMoviesStore.fetchUserMovies(userId.value);
     } catch {
       message.error(ERROR_FETCH_MOVIES_TEXT);
     }
@@ -139,9 +155,9 @@ onMounted(async () => {
 });
 
 watch(
-  () => moviesStore.searchQuery,
+  () => userMoviesStore.searchQuery,
   () => {
-    moviesStore.setCurrentPage(1);
+    userMoviesStore.setCurrentPage(1);
   }
 );
 </script>
@@ -162,14 +178,14 @@ watch(
         @update:filters="handleFiltersUpdate"
       />
       <ListError
-        v-if="moviesStore.isMoviesError"
-        :is-error="moviesStore.isMoviesError"
-        :repeat-fn="moviesStore.fetchMovies"
+        v-if="userMoviesStore.isError"
+        :is-error="userMoviesStore.isError"
+        :repeat-fn="() => userMoviesStore.fetchUserMovies(userId)"
         repeat-text="Повторить"
       />
 
       <ListLoading
-        v-else-if="moviesStore.isMoviesLoading"
+        v-else-if="userMoviesStore.isLoading"
         :center="true"
         loading-text="Загружаем фильмы..."
         size="large"
@@ -181,18 +197,18 @@ watch(
 
       <div v-else class="movie-list__grid">
         <div
-          v-for="item in moviesStore.paginatedMovies"
+          v-for="item in userMoviesStore.paginatedUserMovies"
           :key="item.id"
           class="movie-card"
           @click="goToMovie(item)"
         >
           <div class="movie-card__header">
             <img
-              :alt="`${item.title} постер`"
+              :alt="`${item.movie.title} постер`"
               :src="getPosterSrc(item)"
               class="movie-card__poster"
               loading="lazy"
-              @error="handleImageError(item.id)"
+              @error="handleImageError(item.movieId)"
             />
             <div class="movie-card__favorite">
               <BaseIcon
@@ -210,7 +226,7 @@ watch(
           </div>
 
           <div class="movie-card__content">
-            <div class="movie-card__rating">{{ item.rate }}/10</div>
+            <div class="movie-card__rating">{{ item.personalRate || 0 }}/10</div>
 
             <button
               class="movie-card__delete"
@@ -220,20 +236,20 @@ watch(
             </button>
 
             <h3 class="movie-card__title">
-              {{ item.title }} <span v-if="item.isSerial">(сериал)</span>
+              {{ item.movie.title }} <span v-if="item.movie.isSerial">(сериал)</span>
             </h3>
 
             <div class="movie-card__meta">
               <div class="movie-card__meta-item">
                 <BaseIcon class="movie-card__meta-icon" name="mdi:eye" />
                 <span class="movie-card__meta-item-text">
-                  Дата просмотра: {{ formatDate(item.date) }}
+                  Дата добавления: {{ formatDate(item.addedAt) }}
                 </span>
               </div>
               <div class="movie-card__meta-item">
                 <BaseIcon class="movie-card__meta-icon" name="mdi:filmstrip" />
                 <span class="movie-card__meta-item-text"
-                  >Дата выхода: {{ formatYear(item.publishDate) }}</span
+                  >Дата выхода: {{ formatYear(item.movie.publishDate) }}</span
                 >
               </div>
             </div>

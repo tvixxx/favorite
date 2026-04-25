@@ -1,13 +1,19 @@
 <script lang="ts" setup>
 import SettingBlock from "@/components/ProfileSettings/components/SettingBlock/SettingBlock.vue";
-import { onMounted } from "vue";
-import { useMoviesStore } from "@/stores";
+import { onMounted, computed } from "vue";
+import { useUserMoviesStore } from "@/stores";
+import { useMainStore } from "@/state/state";
 import { SETTING_BLOCKS } from "@/components/ProfileSettings/constants";
 
-const moviesStore = useMoviesStore();
+const userMoviesStore = useUserMoviesStore();
+const mainStore = useMainStore();
+
+const userId = computed(() => mainStore.user?.id || "");
 
 onMounted(async () => {
-  await moviesStore.fetchMoviesStats();
+  if (userId.value) {
+    await userMoviesStore.fetchUserMoviesStats(userId.value);
+  }
 });
 </script>
 

@@ -14,6 +14,7 @@ import { ActorModule } from './actor/actor.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { LoggerMiddleware } from './common/middlewares';
 import { AuthModule } from './auth/auth.module';
+import { UserMovieModule } from './user-movie/user-movie.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AuthModule } from './auth/auth.module';
     ReviewModule,
     ActorModule,
     AuthModule,
+    UserMovieModule,
   ],
   controllers: [AppController],
   providers: [AppService],

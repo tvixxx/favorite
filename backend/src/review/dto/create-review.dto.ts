@@ -31,6 +31,14 @@ export class CreateReviewDto {
   rate: number;
 
   @ApiProperty({
+    description: 'ID пользователя',
+    example: 'dad213-dad21-d1213-dokojp2',
+    type: String,
+  })
+  @IsUUID('4')
+  userId: string;
+
+  @ApiProperty({
     description: 'ID фильма/сериала',
     example: 'dad213-dad21-d1213-dokojp2',
     type: String,

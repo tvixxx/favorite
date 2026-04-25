@@ -19,6 +19,7 @@ interface MovieFilters {
   publishDateFrom?: string;
   publishDateTo?: string;
   seeLater?: boolean;
+  userId?: string;
 }
 
 @Injectable()
@@ -58,16 +59,10 @@ class MovieService {
       title,
       publishDate,
       description,
-      rate,
       genre,
-      date,
-      isFavorite,
-      seeLater,
       isSerial,
       seasonCount,
       episodeCount,
-      currentSeason,
-      currentEpisode,
     } = dto;
 
     return this.prismaService.$transaction(async (tx) => {
@@ -88,16 +83,10 @@ class MovieService {
           title,
           publishDate,
           description,
-          rate,
           genre,
-          date,
-          isFavorite,
-          seeLater,
           isSerial,
           seasonCount,
           episodeCount,
-          currentSeason,
-          currentEpisode,
           poster: imageUrl ? { create: { url: imageUrl } } : undefined,
           actors: {
             connect: actors.map((actor) => ({
@@ -185,16 +174,10 @@ class MovieService {
       title,
       publishDate,
       description,
-      rate,
       genre,
-      date,
-      isFavorite,
-      seeLater,
       isSerial,
       seasonCount,
       episodeCount,
-      currentSeason,
-      currentEpisode,
     } = dto;
 
     return this.prismaService.$transaction(async (tx) => {
@@ -222,16 +205,10 @@ class MovieService {
           title,
           publishDate,
           description,
-          rate,
           genre,
-          date,
-          isFavorite,
-          seeLater,
           isSerial,
           seasonCount,
           episodeCount,
-          currentSeason,
-          currentEpisode,
           poster: imageUrl ? { create: { url: imageUrl } } : undefined,
           actors: {
             connect: actors.map((actor) => ({ id: actor.id })),
@@ -260,16 +237,10 @@ class MovieService {
         title,
         publishDate,
         description,
-        rate,
         genre,
-        date,
-        isFavorite,
-        seeLater,
         isSerial,
         seasonCount,
         episodeCount,
-        currentSeason,
-        currentEpisode,
       } = dto;
 
       const updateData: Prisma.MovieUpdateInput = {};
@@ -286,24 +257,8 @@ class MovieService {
         updateData.description = description;
       }
 
-      if (rate !== undefined) {
-        updateData.rate = rate;
-      }
-
       if (genre !== undefined) {
         updateData.genre = genre;
-      }
-
-      if (date !== undefined) {
-        updateData.date = date;
-      }
-
-      if (isFavorite !== undefined) {
-        updateData.isFavorite = isFavorite;
-      }
-
-      if (seeLater !== undefined) {
-        updateData.seeLater = seeLater;
       }
 
       if (isSerial !== undefined) {
@@ -316,18 +271,6 @@ class MovieService {
 
       if (episodeCount !== undefined) {
         updateData.episodeCount = episodeCount;
-      }
-
-      if (currentSeason !== undefined) {
-        updateData.currentSeason = currentSeason;
-      }
-
-      if (currentEpisode !== undefined) {
-        updateData.currentEpisode = currentEpisode;
-      }
-
-      if (genre !== undefined) {
-        updateData.genre = genre;
       }
 
       if (actorIds !== undefined && actorIds.length) {
@@ -372,13 +315,16 @@ class MovieService {
   }
 
   public async getMoviesStats(): Promise<MoviesStatsResponse> {
-    const [allMovies, allFavorites, allSerials, allSeeLater] =
-      await Promise.all([
-        this.prismaService.movie.count(),
-        this.prismaService.movie.count({ where: { isFavorite: true } }),
-        this.prismaService.movie.count({ where: { isSerial: true } }),
-        this.prismaService.movie.count({ where: { seeLater: true } }),
-      ]);
+    const [allMovies, allSerials] = await Promise.all([
+      this.prismaService.movie.count(),
+      this.prismaService.movie.count({ where: { isSerial: true } }),
+    ]);
+
+    // Общая статистика по всем пользователям
+    const [allFavorites, allSeeLater] = await Promise.all([
+      this.prismaService.userMovie.count({ where: { isFavorite: true } }),
+      this.prismaService.userMovie.count({ where: { seeLater: true } }),
+    ]);
 
     return {
       allMovies,
@@ -430,26 +376,6 @@ class MovieService {
       where.genre = filters.genre;
     }
 
-    if (filters.rateMin !== undefined || filters.rateMax !== undefined) {
-      where.rate = {};
-      if (filters.rateMin !== undefined) {
-        where.rate.gte = filters.rateMin;
-      }
-      if (filters.rateMax !== undefined) {
-        where.rate.lte = filters.rateMax;
-      }
-    }
-
-    if (filters.dateFrom || filters.dateTo) {
-      where.date = {};
-      if (filters.dateFrom) {
-        where.date.gte = new Date(filters.dateFrom);
-      }
-      if (filters.dateTo) {
-        where.date.lte = new Date(filters.dateTo);
-      }
-    }
-
     if (filters.publishDateFrom || filters.publishDateTo) {
       where.publishDate = {};
       if (filters.publishDateFrom) {
@@ -458,10 +384,6 @@ class MovieService {
       if (filters.publishDateTo) {
         where.publishDate.lte = new Date(filters.publishDateTo);
       }
-    }
-
-    if (filters.seeLater !== undefined) {
-      where.seeLater = filters.seeLater;
     }
 
     return where;

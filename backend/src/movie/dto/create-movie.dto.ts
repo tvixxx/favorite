@@ -25,16 +25,6 @@ export class CreateMovieRequest {
   title: string;
 
   @ApiProperty({
-    description: 'Дата просмотра',
-    example: '05.12.2024',
-    type: String,
-    nullable: true,
-  })
-  @IsOptional()
-  @IsString()
-  date?: string;
-
-  @ApiProperty({
     description: 'Дата выхода',
     example: '1993',
     type: String,
@@ -63,38 +53,9 @@ export class CreateMovieRequest {
   @IsNotEmpty()
   description: string;
 
-  @ApiProperty({
-    description: 'Рейтинг',
-    example: '7',
-    type: Number,
-  })
-  @IsInt()
-  @IsNotEmpty()
-  @Min(0)
-  @Max(10)
-  rate: number;
-
   @IsOptional()
   @IsEnum(Genre, { message: 'Неверный жанр' })
   genre?: PrismaGenre;
-
-  @ApiProperty({
-    description: 'Добавлен в избранное',
-    example: false,
-    type: Boolean,
-  })
-  @IsBoolean()
-  @IsNotEmpty()
-  isFavorite: boolean;
-
-  @ApiProperty({
-    description: 'Добавлен в "Посмотреть позже"',
-    example: false,
-    type: Boolean,
-  })
-  @IsBoolean()
-  @IsNotEmpty()
-  seeLater: boolean;
 
   @ApiProperty({
     description: 'Признак сериала',
@@ -126,30 +87,6 @@ export class CreateMovieRequest {
   @Min(1)
   @Max(100)
   episodeCount?: number;
-
-  @ApiProperty({
-    description: 'Текущий сезон просмотра',
-    example: 2,
-    type: Number,
-    required: false,
-  })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  currentSeason?: number;
-
-  @ApiProperty({
-    description: 'Текущий эпизод просмотра',
-    example: 5,
-    type: Number,
-    required: false,
-  })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(1000)
-  currentEpisode?: number;
 
   @ApiProperty({
     description: 'ID актеров',
