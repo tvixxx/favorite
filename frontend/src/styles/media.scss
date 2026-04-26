@@ -1,4 +1,11 @@
 @use './screen-sizes' as *;
+@forward './screen-sizes';
+
+@mixin mediaMax($max) {
+  @media (max-width: $max) {
+    @content;
+  }
+}
 
 @mixin mediaMobile {
   @media (min-width: $mobile) {

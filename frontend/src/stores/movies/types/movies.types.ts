@@ -5,23 +5,24 @@ export interface MoviePoster {
   url: string;
 }
 
-// API ответ — что приходит с бекегда.
-// Используется только в маппере, не для компонентов.
+// Enum для статуса просмотра
+export enum WatchStatus {
+  NOT_STARTED = "NOT_STARTED",
+  WATCHING = "WATCHING",
+  COMPLETED = "COMPLETED",
+  DROPPED = "DROPPED",
+}
+
+// API ответ для Movie (общие данные фильма)
 export interface MovieApiResponse {
   id: string;
   title: string;
   description: string;
-  rate: number;
-  isFavorite: boolean;
-  seeLater: boolean;
+  genre: Genre | null;
+  publishDate: string | null;
   isSerial: boolean;
   seasonCount?: number;
   episodeCount?: number;
-  currentSeason?: number;
-  currentEpisode?: number;
-  genre: Genre | null;
-  date: string | null;
-  publishDate: string | null;
   posterId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -34,22 +35,16 @@ export interface MovieApiResponse {
   };
 }
 
-// FE модель данных
+// FE модель Movie (общие данные)
 export interface Movie {
   id: string;
   title: string;
   description: string;
-  rate: number;
-  isFavorite: boolean;
-  seeLater: boolean;
+  genre?: Genre;
+  publishDate: string | null;
   isSerial: boolean;
   seasonCount?: number;
   episodeCount?: number;
-  currentSeason?: number;
-  currentEpisode?: number;
-  genre?: Genre;
-  date: string | null;
-  publishDate: string | null;
   imageUrl: string;
   createdAt: string;
   actorIds?: string[];
@@ -61,10 +56,47 @@ export interface Movie {
   };
 }
 
+// API ответ для UserMovie (персональные данные пользователя)
+export interface UserMovieApiResponse {
+  id: string;
+  userId: string;
+  movieId: string;
+  isFavorite: boolean;
+  seeLater: boolean;
+  personalRate: number | null;
+  watchStatus: WatchStatus;
+  currentSeason: number | null;
+  currentEpisode: number | null;
+  addedAt: string;
+  lastWatchedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  movie: MovieApiResponse;
+}
+
+// FE модель UserMovie (персональные данные)
+export interface UserMovie {
+  id: string;
+  userId: string;
+  movieId: string;
+  isFavorite: boolean;
+  seeLater: boolean;
+  personalRate: number | null;
+  watchStatus: WatchStatus;
+  currentSeason: number | null;
+  currentEpisode: number | null;
+  addedAt: string;
+  lastWatchedAt: string | null;
+  completedAt: string | null;
+  movie: Movie;
+}
+
 export interface Review {
   id: string;
   text: string;
   rate: number;
+  userId: string;
   movieId: string;
 }
 
@@ -75,13 +107,28 @@ export interface MoviesStats {
   allSeeLater: number;
 }
 
+export interface UserMoviesStats {
+  totalMovies: number;
+  totalFavorites: number;
+  totalSeeLater: number;
+  totalWatching: number;
+  totalCompleted: number;
+  totalSerials: number;
+}
+
 export interface MoviesFilters {
   genre?: Genre;
-  rateMin?: number;
-  rateMax?: number;
-  dateFrom?: string;
-  dateTo?: string;
   publishDateFrom?: string;
   publishDateTo?: string;
+}
+
+export interface UserMoviesFilters {
+  genre?: Genre;
+  personalRateMin?: number;
+  personalRateMax?: number;
+  publishDateFrom?: string;
+  publishDateTo?: string;
+  isFavorite?: boolean;
   seeLater?: boolean;
+  watchStatus?: WatchStatus;
 }

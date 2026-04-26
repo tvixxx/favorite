@@ -9,45 +9,44 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String      @id @default(uuid())
+  email     String      @unique
   password  String
   fullName  String
   tags      Genre?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  userMovies UserMovie[] @relation("user_movies")
+  reviews    Review[]    @relation("user_reviews")
 
   @@map("users")
 }
 
 model Movie {
-  id             String       @id @default(uuid(4))
-  title          String
-  description    String
-  rate           Int
-  isFavorite     Boolean      @default(false) @map("is_favorite")
-  seeLater       Boolean      @default(false) @map("see_later")
-  isSerial       Boolean      @default(false) @map("is_serial")
-  seasonCount    Int?         @map("season_count")
-  episodeCount   Int?         @map("episode_count")
-  currentSeason  Int?         @map("current_season")
-  currentEpisode Int?         @map("current_episode")
-  genre          Genre?
-  date           DateTime?
-  publishDate    DateTime?    @map("publish_date")
-  posterId       String?      @unique @map("poster_id")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
-  poster         MoviePoster? @relation("movie_poster", fields: [posterId], references: [id])
-  reviews        Review[]     @relation("movie_reviews")
-  actors         Actor[]      @relation("movie_actors")
+  id           String       @id @default(uuid())
+  title        String
+  description  String
+  genre        Genre?
+  publishDate  DateTime?    @map("publish_date")
+  isSerial     Boolean      @default(false) @map("is_serial")
+  seasonCount  Int?         @map("season_count")
+  episodeCount Int?         @map("episode_count")
+  posterId     String?      @unique @map("poster_id")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  poster     MoviePoster? @relation("movie_poster", fields: [posterId], references: [id])
+  reviews    Review[]     @relation("movie_reviews")
+  actors     Actor[]      @relation("movie_actors")
+  userMovies UserMovie[]  @relation("movie_users")
 
   @@index([publishDate, title])
   @@map("movies")
 }
 
 model MoviePoster {
-  id        String   @id @default(uuid(4))
+  id        String   @id @default(uuid())
   url       String   @default("")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -57,25 +56,66 @@ model MoviePoster {
 }
 
 model Review {
-  id        String   @id @default(uuid(4))
+  id        String   @id @default(uuid())
   text      String
   rate      Int      @default(0)
+  userId    String   @map("user_id")
   movieId   String   @map("movie_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  movie     Movie    @relation("movie_reviews", fields: [movieId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
+  user  User  @relation("user_reviews", fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  movie Movie @relation("movie_reviews", fields: [movieId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId])
+  @@index([movieId])
   @@map("reviews")
 }
 
 model Actor {
-  id        String   @id @default(uuid(4))
+  id        String   @id @default(uuid())
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   movies    Movie[]  @relation("movie_actors")
 
   @@map("actors")
+}
+
+model UserMovie {
+  id             String      @id @default(uuid())
+  userId         String      @map("user_id")
+  movieId        String      @map("movie_id")
+  isFavorite     Boolean     @default(false) @map("is_favorite")
+  seeLater       Boolean     @default(false) @map("see_later")
+  personalRate   Int?        @map("personal_rate")
+  watchStatus    WatchStatus @default(NOT_STARTED) @map("watch_status")
+  currentSeason  Int?        @map("current_season")
+  currentEpisode Int?        @map("current_episode")
+  addedAt        DateTime    @default(now()) @map("added_at")
+  lastWatchedAt  DateTime?   @map("last_watched_at")
+  completedAt    DateTime?   @map("completed_at")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  user  User  @relation("user_movies", fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  movie Movie @relation("movie_users", fields: [movieId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([userId, movieId])
+  @@index([userId])
+  @@index([movieId])
+  @@index([isFavorite])
+  @@index([seeLater])
+  @@map("user_movies")
+}
+
+enum WatchStatus {
+  NOT_STARTED
+  WATCHING
+  COMPLETED
+  DROPPED
+
+  @@map("enum_watch_status")
 }
 
 enum Genre {
@@ -92,7 +132,7 @@ enum Genre {
   WAR
   WESTERN
   DOCUMENTARY
-  Sci_fi      @map("Sci-fi")
+  Sci_fi @map("Sci-fi")
 
   @@map("enum_genre")
 }

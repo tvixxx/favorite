@@ -9,6 +9,16 @@
 * 🟢 You can import this file directly.
 */
 
+export const WatchStatus = {
+  NOT_STARTED: 'NOT_STARTED',
+  WATCHING: 'WATCHING',
+  COMPLETED: 'COMPLETED',
+  DROPPED: 'DROPPED'
+} as const
+
+export type WatchStatus = (typeof WatchStatus)[keyof typeof WatchStatus]
+
+
 export const Genre = {
   ACTION: 'ACTION',
   DRAMA: 'DRAMA',

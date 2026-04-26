@@ -1,0 +1,56 @@
+@use "./media" as *;
+
+@mixin pageShell($paddingBottom: 4rem) {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  color: var(--text-primary);
+  padding-bottom: $paddingBottom;
+}
+
+@mixin pageContentContainer(
+  $maxWidth: var(--page-max-width),
+  $paddingX: var(--page-content-padding-x)
+) {
+  width: 100%;
+  max-width: $maxWidth;
+  margin: 0 auto;
+  padding: 0 $paddingX;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  @include mediaDesktopS {
+    padding: 0 var(--page-content-padding-x-desktop);
+  }
+}
+
+@mixin cardsGrid(
+  $min: 300px,
+  $tabletMin: 340px,
+  $desktopMin: 360px,
+  $desktopMax: 420px,
+  $gap: 2rem,
+  $maxWidth: var(--grid-max-width)
+) {
+  display: grid;
+  gap: $gap;
+  margin: 2rem 0;
+  width: 100%;
+  max-width: $maxWidth;
+  grid-template-columns: repeat(auto-fill, minmax($min, 1fr));
+
+  @include mediaTablet {
+    grid-template-columns: repeat(auto-fill, minmax($tabletMin, 1fr));
+  }
+
+  @include mediaDesktopXS {
+    grid-template-columns: repeat(auto-fill, minmax($desktopMin, $desktopMax));
+    justify-content: center;
+  }
+
+  @include mediaMax(500px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+

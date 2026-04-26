@@ -33,16 +33,11 @@ const changeView = (): void => {
 </template>
 
 <style lang="scss">
-@use "../../styles/screen-sizes" as *;
 @use "../../styles/media" as *;
+@use "@/styles/layout" as *;
 
 .auth-page {
-  min-height: 100vh;
-  background: linear-gradient(
-    135deg,
-    var(--bg-primary) 0%,
-    var(--bg-secondary) 100%
-  );
+  @include pageShell(0);
   display: flex;
   flex-direction: column;
   align-items: center;

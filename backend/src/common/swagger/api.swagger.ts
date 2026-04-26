@@ -12,6 +12,7 @@ import {
   SWAGGER_SETUP_OPTIONS_DATA,
 } from './swagger.constants';
 import { AuthModule } from '../../auth/auth.module';
+import { UserMovieModule } from '../../user-movie/user-movie.module';
 
 const getSwaggerDocumentConfig = (): Omit<OpenAPIObject, 'paths'> => {
   const { title, description, version, contact } = SWAGGER_CONFIG_DATA;
@@ -38,6 +39,7 @@ const SWAGGER_DOCUMENT_INCLUDE_MODULES = [
   ActorModule,
   UserModule,
   AuthModule,
+  UserMovieModule,
 ];
 
 const getSwaggerDocument = (app: INestApplication): OpenAPIObject => {

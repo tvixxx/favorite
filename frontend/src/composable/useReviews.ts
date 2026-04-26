@@ -10,6 +10,11 @@ interface CreateReviewPayload {
   movieId: string;
 }
 
+interface UpdateReviewPayload {
+  text: string;
+  rate: number;
+}
+
 const reviews = ref<Review[]>([]);
 const isLoading = ref<boolean>(false);
 const isLoaded = ref<boolean>(false);
@@ -87,7 +92,7 @@ export function useReviews() {
 
   const updateReview = async (
     reviewId: string,
-    payload: Partial<CreateReviewPayload>
+    payload: UpdateReviewPayload
   ): Promise<void> => {
     try {
       const { data, status } = await useFetch<Review>(

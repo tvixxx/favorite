@@ -1,3 +1,4 @@
 export * from "./movies";
-export * from "./favorites";
 export * from "./actors";
+export * from "./userMovies";
+export * from "./badges";

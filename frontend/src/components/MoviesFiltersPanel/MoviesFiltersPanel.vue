@@ -8,7 +8,7 @@ import RateFilter from "@/components/Filters/RateFilter.vue";
 import DateRangeFilter from "@/components/Filters/DateRangeFilter.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { useWindowSize } from "@vueuse/core";
-import type { MoviesFilters } from "@/stores";
+import type { UserMoviesFilters } from "@/stores";
 import { Genre } from "@/components/Genres/constants/genres.constants";
 
 const TABLET_WIDTH = 768;
@@ -19,7 +19,7 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-  "update:filters": [filters: MoviesFilters];
+  "update:filters": [filters: UserMoviesFilters];
 }>();
 
 const { width } = useWindowSize();
@@ -27,7 +27,6 @@ const { width } = useWindowSize();
 const searchQuery = ref<string>("");
 const selectedGenre = ref<Genre | undefined>(undefined);
 const rateRange = ref<[number, number]>([...DEFAULT_RATE_RANGE]);
-const watchDateRange = ref<[Dayjs, Dayjs] | null>(null);
 const publishDateRange = ref<[Dayjs, Dayjs] | null>(null);
 const seeLater = ref(false);
 const isExpanded = ref(false);
@@ -43,7 +42,6 @@ const hasAdvancedFilters = computed(() => {
   return (
     rateMin > 0 ||
     rateMax < 10 ||
-    !!watchDateRange.value ||
     !!publishDateRange.value
   );
 });
@@ -52,7 +50,6 @@ const clearFilters = () => {
   searchQuery.value = "";
   selectedGenre.value = undefined;
   rateRange.value = [...DEFAULT_RATE_RANGE];
-  watchDateRange.value = null;
   publishDateRange.value = null;
   seeLater.value = false;
 };
@@ -66,19 +63,13 @@ const hasAnyFilters = computed(() => {
   );
 });
 
-const buildFilters = (): MoviesFilters => {
+const buildFilters = (): UserMoviesFilters => {
   const [rateMin, rateMax] = rateRange.value;
 
   return {
     genre: selectedGenre.value,
-    rateMin: rateMin > 0 ? rateMin : undefined,
-    rateMax: rateMax < 10 ? rateMax : undefined,
-    dateFrom: watchDateRange.value?.[0]
-      ? dayjs(watchDateRange.value[0]).startOf("month").toISOString()
-      : undefined,
-    dateTo: watchDateRange.value?.[1]
-      ? dayjs(watchDateRange.value[1]).endOf("month").toISOString()
-      : undefined,
+    personalRateMin: rateMin > 0 ? rateMin : undefined,
+    personalRateMax: rateMax < 10 ? rateMax : undefined,
     publishDateFrom: publishDateRange.value?.[0]
       ? dayjs(publishDateRange.value[0]).startOf("month").toISOString()
       : undefined,
@@ -94,7 +85,7 @@ const emitFilters = () => {
 };
 
 watch(
-  [selectedGenre, rateRange, watchDateRange, publishDateRange, seeLater],
+  [selectedGenre, rateRange, publishDateRange, seeLater],
   emitFilters,
   { deep: true }
 );
@@ -149,11 +140,6 @@ watch(
     <Transition name="filters-slide">
       <div v-if="isExpanded || isMobile" class="filters-panel__advanced">
         <RateFilter v-model="rateRange" />
-        <DateRangeFilter
-          v-model="watchDateRange"
-          label="Дата просмотра"
-          :placeholder="['От', 'До']"
-        />
         <DateRangeFilter
           v-model="publishDateRange"
           label="Дата выхода"

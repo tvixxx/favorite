@@ -9,14 +9,18 @@ import {
   StatsBlockType,
 } from "@/shared/profile/profile.types";
 import StatsBlock from "@/components/ProfileSettings/components/Stats/StatsBlock.vue";
-import { useMoviesStore } from "@/stores";
+import { useUserMoviesStore } from "@/stores";
+import { useMainStore } from "@/state/state";
 import { STAT_BLOCK_TITLES } from "@/components/ProfileSettings/constants";
 
-const moviesStore = useMoviesStore();
+const userMoviesStore = useUserMoviesStore();
+const mainStore = useMainStore();
 
 const props = defineProps<SettingBlockProps>();
 const isTheme = computed(() => props.type === "theme");
 const isStats = computed(() => props.type === "stats");
+
+const userId = computed(() => mainStore.userData?.id || "");
 
 const themeOptions: SelectProps["options"] = themes.map((theme) => ({
   label: theme.charAt(0).toUpperCase() + theme.slice(1),
@@ -28,7 +32,7 @@ const filterOption = (input: string, option: any) => {
 };
 
 const stats = computed(() => {
-  const data = moviesStore.moviesStats;
+  const data = userMoviesStore.stats;
 
   if (!data) return null;
 
@@ -41,8 +45,14 @@ const stats = computed(() => {
   })) satisfies StatsBlockItem[];
 });
 
-const isStatsLoading = computed(() => moviesStore.isMoviesStatsLoading);
-const isStatsFailed = computed(() => moviesStore.isMoviesStatsError);
+const isStatsLoading = computed(() => userMoviesStore.isStatsLoading);
+const isStatsFailed = computed(() => userMoviesStore.isStatsError);
+
+const retryStats = async () => {
+  if (userId.value) {
+    await userMoviesStore.fetchUserMoviesStats(userId.value);
+  }
+};
 </script>
 
 <template>
@@ -81,7 +91,7 @@ const isStatsFailed = computed(() => moviesStore.isMoviesStatsError);
             class="setting-block__retry-btn"
             size="small"
             type="primary"
-            @click="moviesStore.fetchMoviesStats"
+            @click="retryStats"
           >
             Повторить
           </a-button>
@@ -95,6 +105,8 @@ const isStatsFailed = computed(() => moviesStore.isMoviesStatsError);
 </template>
 
 <style lang="scss" scoped>
+@use "../../../../styles/antd-overrides" as *;
+
 .setting-block {
   display: flex;
   flex-direction: column;
@@ -128,9 +140,7 @@ const isStatsFailed = computed(() => moviesStore.isMoviesStatsError);
 
   &__stats {
     padding: 1rem;
-    background: color-mix(in srgb, var(--bg-secondary) 50%, transparent);
-    border-radius: 8px;
-    border: 1px solid color-mix(in srgb, var(--border-color) 30%, transparent);
+    @include mutedInsetPanel;
   }
 
   &__stats-loading {
@@ -147,19 +157,7 @@ const isStatsFailed = computed(() => moviesStore.isMoviesStatsError);
   &__loader {
     width: 40px;
     height: 40px;
-    border: 3px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-    border-top: 3px solid var(--ant-color-primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
+    @include spinnerRing;
   }
 
   &__stats-error {

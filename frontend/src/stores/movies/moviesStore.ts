@@ -114,29 +114,18 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     return Math.ceil(list.length / pageSize.value);
   });
 
-  const favoriteMovies = computed(() =>
-    moviesList.value.filter((movie: Movie) => movie.isFavorite)
-  );
-
-  const isSerial = computed(() => currentMovie.value?.isSerial);
-
-  const seeLater = computed(() => currentMovie.value?.seeLater);
-
   const hasActiveFilters = computed(() => {
     return (
       !!searchQuery.value ||
       !!filters.value.genre ||
-      filters.value.rateMin !== undefined ||
-      filters.value.rateMax !== undefined ||
-      !!filters.value.dateFrom ||
-      !!filters.value.dateTo ||
       !!filters.value.publishDateFrom ||
-      !!filters.value.publishDateTo ||
-      !!filters.value.seeLater
+      !!filters.value.publishDateTo
     );
   });
 
-  const createMovie = async (movieData: Partial<Movie>): Promise<void> => {
+  const createMovie = async (
+    movieData: Partial<Movie>
+  ): Promise<Movie> => {
     const response = await useFetch<MovieApiResponse>(MOVIES_ENDPOINTS, {
       method: FETCH_METHOD.post,
       data: movieData,
@@ -145,6 +134,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     if (response?.data && isSuccessStatus(response.status)) {
       const movie = mapMovieFromApi(response.data);
       moviesList.value.push(movie);
+      return movie;
     } else {
       throw new Error("Не удалось создать фильм");
     }
@@ -396,9 +386,6 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     // Movies page info refs
     paginatedMovies,
     totalPages,
-    favoriteMovies,
-    seeLater,
-    isSerial,
 
     // Movie refs
     currentMovie,

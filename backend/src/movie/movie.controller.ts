@@ -39,23 +39,13 @@ export class MovieController {
   @Get()
   public findAll(
     @Query('genre') genre?: string,
-    @Query('rateMin') rateMin?: string,
-    @Query('rateMax') rateMax?: string,
-    @Query('dateFrom') dateFrom?: string,
-    @Query('dateTo') dateTo?: string,
     @Query('publishDateFrom') publishDateFrom?: string,
     @Query('publishDateTo') publishDateTo?: string,
-    @Query('seeLater') seeLater?: string,
   ) {
     return this.movieService.findAll({
       genre: genre ? (genre as Genre) : undefined,
-      rateMin: rateMin ? Number(rateMin) : undefined,
-      rateMax: rateMax ? Number(rateMax) : undefined,
-      dateFrom,
-      dateTo,
       publishDateFrom,
       publishDateTo,
-      seeLater: seeLater !== undefined ? seeLater === 'true' : undefined,
     });
   }
 
@@ -74,23 +64,13 @@ export class MovieController {
   public search(
     @Query('q') query: string,
     @Query('genre') genre?: string,
-    @Query('rateMin') rateMin?: string,
-    @Query('rateMax') rateMax?: string,
-    @Query('dateFrom') dateFrom?: string,
-    @Query('dateTo') dateTo?: string,
     @Query('publishDateFrom') publishDateFrom?: string,
     @Query('publishDateTo') publishDateTo?: string,
-    @Query('seeLater') seeLater?: string,
   ) {
     return this.movieService.search(query, {
       genre: genre ? (genre as Genre) : undefined,
-      rateMin: rateMin ? Number(rateMin) : undefined,
-      rateMax: rateMax ? Number(rateMax) : undefined,
-      dateFrom,
-      dateTo,
       publishDateFrom,
       publishDateTo,
-      seeLater: seeLater !== undefined ? seeLater === 'true' : undefined,
     });
   }
 

@@ -4,8 +4,7 @@ import { useRouter } from "vue-router";
 import { message } from "ant-design-vue";
 
 import { useMainStore } from "@/state/state";
-import { useMoviesStore } from "@/stores/movies/moviesStore";
-import { useFavoritesStore } from "@/stores/favorites/favoritesStore";
+import { useUserMoviesStore } from "@/stores";
 import { formatDate, formatYear } from "@/utils";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { GenreLabels } from "@/components/Genres/constants/genres.constants";
@@ -14,35 +13,62 @@ import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
-import { Movie } from "@/stores";
+import type { UserMovie } from "@/stores";
 import ReviewsWidget from "@/components/Reviews/ReviewsWidget.vue";
 
-const store = useMainStore();
-const moviesStore = useMoviesStore();
-const favoritesStore = useFavoritesStore();
+const mainStore = useMainStore();
+const userMoviesStore = useUserMoviesStore();
 const router = useRouter();
 
 const currentMovieId = router.currentRoute.value.params.id as string | null;
+const userId = computed(() => mainStore.userData?.id || "");
+
+const isLoading = ref(false);
+const isError = ref(false);
+const currentUserMovie = ref<UserMovie | null>(null);
 
 onMounted(async () => {
-  const shouldLoadMovie = !moviesStore.currentMovie && store.isLoggedIn;
+  if (mainStore.isLoggedIn && userId.value && currentMovieId) {
+    isLoading.value = true;
+    isError.value = false;
 
-  if (shouldLoadMovie) {
     try {
-      await moviesStore.getMovieDetail(currentMovieId);
+      const userMovie = userMoviesStore.userMovies.find(
+        (um) => um.movieId === currentMovieId
+      );
+
+      if (userMovie) {
+        currentUserMovie.value = userMovie;
+      } else {
+        const loaded = await userMoviesStore.fetchUserMovieById(
+          userId.value,
+          currentMovieId
+        );
+
+        if (loaded) {
+          currentUserMovie.value = loaded;
+        } else {
+          isError.value = true;
+        }
+      }
     } catch {
       message.error("Не удалось загрузить фильм");
+      isError.value = true;
+    } finally {
+      isLoading.value = false;
     }
   }
 });
 
-onBeforeUnmount(() => moviesStore.setCurrentMovie(null));
+onBeforeUnmount(() => {
+  currentUserMovie.value = null;
+});
 
 const isEditingProgress = ref<boolean>(false);
 const editSeason = ref<number | undefined>(undefined);
 const editEpisode = ref<number | undefined>(undefined);
 
-const movie = computed(() => moviesStore.currentMovie);
+const movie = computed(() => currentUserMovie.value?.movie);
 const posterSrc = computed(() => movie.value?.imageUrl || FALLBACK_IMAGE_URL);
 
 const genreLabel = computed(() => {
@@ -50,43 +76,46 @@ const genreLabel = computed(() => {
   return genre ? GenreLabels[genre] : null;
 });
 
-const ratePercent = computed(() => ((movie.value?.rate ?? 0) / 10) * 100);
+const ratePercent = computed(() => ((currentUserMovie.value?.personalRate ?? 0) / 10) * 100);
 
 const hasActors = computed(
   () => movie.value?.actors && movie.value.actors.length > 0
 );
 
 const toggleFavorite = async () => {
-  if (!movie.value) return;
+  if (!currentUserMovie.value) return;
 
   try {
-    if (movie.value.isFavorite) {
-      await favoritesStore.removeFromFavorite(movie.value);
-      moviesStore.setCurrentMovie({ ...movie.value, isFavorite: false });
-      message.success(`"${movie.value.title}" убран из избранного`);
-    } else {
-      await favoritesStore.addToFavorite(movie.value);
-      moviesStore.setCurrentMovie({ ...movie.value, isFavorite: true });
-      message.success(`"${movie.value.title}" добавлен в избранное`);
-    }
+    const newValue = !currentUserMovie.value.isFavorite;
+    await userMoviesStore.updateUserMovie(userId.value, currentUserMovie.value.movieId, {
+      isFavorite: newValue,
+    });
+    currentUserMovie.value = { ...currentUserMovie.value, isFavorite: newValue };
+    message.success(
+      newValue
+        ? `"${movie.value?.title}" добавлен в избранное`
+        : `"${movie.value?.title}" убран из избранного`
+    );
   } catch {
     message.error("Не удалось обновить избранное");
   }
 };
 
 const toggleSeeLater = async () => {
-  if (!movie.value) return;
+  if (!currentUserMovie.value) return;
 
-  const newValue = !movie.value.seeLater;
+  const newValue = !currentUserMovie.value.seeLater;
 
   try {
-    await moviesStore.patchMovie(movie.value.id, { seeLater: newValue });
-    moviesStore.setCurrentMovie({ ...movie.value, seeLater: newValue });
+    await userMoviesStore.updateUserMovie(userId.value, currentUserMovie.value.movieId, {
+      seeLater: newValue,
+    });
+    currentUserMovie.value = { ...currentUserMovie.value, seeLater: newValue };
 
     message.success(
       newValue
-        ? `${movie.value.title} добавлен в «Смотреть позже»`
-        : `${movie.value.title} убран из «Смотреть позже»`
+        ? `${movie.value?.title} добавлен в «Смотреть позже»`
+        : `${movie.value?.title} убран из «Смотреть позже»`
     );
   } catch {
     message.error("Не удалось обновить статус");
@@ -98,16 +127,16 @@ const goBack = () => {
 };
 
 const seasonProgress = computed(() => {
-  if (!movie.value?.seasonCount || !movie.value?.currentSeason) return 0;
+  if (!movie.value?.seasonCount || !currentUserMovie.value?.currentSeason) return 0;
   return Math.round(
-    (movie.value.currentSeason / movie.value.seasonCount) * 100
+    (currentUserMovie.value.currentSeason / movie.value.seasonCount) * 100
   );
 });
 
 const episodeProgress = computed(() => {
-  if (!movie.value?.episodeCount || !movie.value?.currentEpisode) return 0;
+  if (!movie.value?.episodeCount || !currentUserMovie.value?.currentEpisode) return 0;
   return Math.round(
-    (movie.value.currentEpisode / movie.value.episodeCount) * 100
+    (currentUserMovie.value.currentEpisode / movie.value.episodeCount) * 100
   );
 });
 
@@ -119,24 +148,24 @@ const hasSerialProgress = computed(() => {
 });
 
 const isSerialCompleted = computed(() => {
-  if (!movie.value?.isSerial) return false;
+  if (!movie.value?.isSerial || !currentUserMovie.value) return false;
 
   const seasonsComplete =
-    movie.value.seasonCount && movie.value.currentSeason
-      ? movie.value.currentSeason >= movie.value.seasonCount
+    movie.value.seasonCount && currentUserMovie.value.currentSeason
+      ? currentUserMovie.value.currentSeason >= movie.value.seasonCount
       : false;
 
   const episodesComplete =
-    movie.value.episodeCount && movie.value.currentEpisode
-      ? movie.value.currentEpisode >= movie.value.episodeCount
+    movie.value.episodeCount && currentUserMovie.value.currentEpisode
+      ? currentUserMovie.value.currentEpisode >= movie.value.episodeCount
       : false;
 
   return seasonsComplete && episodesComplete;
 });
 
 const startEditProgress = () => {
-  editSeason.value = movie.value?.currentSeason;
-  editEpisode.value = movie.value?.currentEpisode;
+  editSeason.value = currentUserMovie.value?.currentSeason;
+  editEpisode.value = currentUserMovie.value?.currentEpisode;
   isEditingProgress.value = true;
 };
 
@@ -145,17 +174,19 @@ const cancelEditProgress = () => {
 };
 
 const saveProgress = async () => {
-  if (!movie.value) return;
-
-  const updatedMovie: Movie = {
-    ...movie.value,
-    currentSeason: editSeason.value,
-    currentEpisode: editEpisode.value,
-  };
+  if (!currentUserMovie.value) return;
 
   try {
-    await moviesStore.updateMovie(updatedMovie);
-    moviesStore.setCurrentMovie(updatedMovie);
+    await userMoviesStore.updateUserMovie(userId.value, currentUserMovie.value.movieId, {
+      currentSeason: editSeason.value,
+      currentEpisode: editEpisode.value,
+    });
+
+    currentUserMovie.value = {
+      ...currentUserMovie.value,
+      currentSeason: editSeason.value ?? null,
+      currentEpisode: editEpisode.value ?? null,
+    };
 
     isEditingProgress.value = false;
     message.success("Прогресс обновлён");
@@ -181,20 +212,20 @@ const saveProgress = async () => {
       </button>
 
       <ListError
-        v-if="moviesStore.isMovieError"
-        :is-error="moviesStore.isMovieError"
-        :repeat-fn="() => moviesStore.getMovieDetail(currentMovieId)"
+        v-if="isError"
+        :is-error="isError"
+        :repeat-fn="() => router.go(0)"
         repeat-text="Повторить"
       />
 
       <ListLoading
-        v-else-if="moviesStore.isMovieLoading"
+        v-else-if="isLoading"
         :center="true"
         loading-text="Загружаем фильм..."
         size="large"
       />
 
-      <template v-else-if="movie">
+      <template v-else-if="currentUserMovie && movie">
         <div class="detail-card">
           <div class="detail-card__poster">
             <img
@@ -209,11 +240,11 @@ const saveProgress = async () => {
               <h1 class="detail-card__title">{{ movie.title }}</h1>
               <button
                 class="detail-card__favorite"
-                :class="{ 'detail-card__favorite_active': movie.isFavorite }"
+                :class="{ 'detail-card__favorite_active': currentUserMovie.isFavorite }"
                 @click="toggleFavorite"
               >
                 <BaseIcon
-                  :name="movie.isFavorite ? 'mdi:heart' : 'mdi:heart-outline'"
+                  :name="currentUserMovie.isFavorite ? 'mdi:heart' : 'mdi:heart-outline'"
                   :width="24"
                   :height="24"
                 />
@@ -237,7 +268,7 @@ const saveProgress = async () => {
                 Сериал
               </span>
               <span
-                v-if="movie.seeLater"
+                v-if="currentUserMovie.seeLater"
                 class="detail-card__tag detail-card__tag_warning"
               >
                 <BaseIcon name="mdi:clock-outline" :width="14" :height="14" />
@@ -248,7 +279,7 @@ const saveProgress = async () => {
             <div class="detail-card__rating">
               <div class="detail-card__rating-score">
                 <span class="detail-card__rating-value">
-                  {{ movie.rate }}
+                  {{ currentUserMovie.personalRate || 0 }}
                 </span>
                 <span class="detail-card__rating-max">/10</span>
               </div>
@@ -261,11 +292,11 @@ const saveProgress = async () => {
             </div>
 
             <div class="detail-card__meta">
-              <div v-if="movie.date" class="detail-card__meta-item">
+              <div v-if="currentUserMovie.addedAt" class="detail-card__meta-item">
                 <BaseIcon name="mdi:eye" :width="18" :height="18" />
-                <span class="detail-card__meta-label">Дата просмотра</span>
+                <span class="detail-card__meta-label">Дата добавления</span>
                 <span class="detail-card__meta-value">
-                  {{ formatDate(movie.date) }}
+                  {{ formatDate(currentUserMovie.addedAt) }}
                 </span>
               </div>
 
@@ -306,7 +337,7 @@ const saveProgress = async () => {
                 <BaseIcon name="mdi:clock-outline" :width="18" :height="18" />
                 <span class="detail-card__meta-label">Смотреть позже</span>
                 <a-switch
-                  :checked="movie.seeLater"
+                  :checked="currentUserMovie.seeLater"
                   size="small"
                   class="detail-card__meta-switch"
                   @change="toggleSeeLater"
@@ -371,7 +402,7 @@ const saveProgress = async () => {
               <div class="serial-progress__label">
                 <span class="serial-progress__label-text">Сезоны</span>
                 <span class="serial-progress__label-value">
-                  {{ movie.currentSeason ?? 0 }} / {{ movie.seasonCount }}
+                  {{ currentUserMovie.currentSeason ?? 0 }} / {{ movie.seasonCount }}
                 </span>
               </div>
               <a-progress
@@ -388,7 +419,7 @@ const saveProgress = async () => {
               <div class="serial-progress__label">
                 <span class="serial-progress__label-text">Эпизоды</span>
                 <span class="serial-progress__label-value">
-                  {{ movie.currentEpisode ?? 0 }} / {{ movie.episodeCount }}
+                  {{ currentUserMovie.currentEpisode ?? 0 }} / {{ movie.episodeCount }}
                 </span>
               </div>
               <a-progress
@@ -454,16 +485,10 @@ const saveProgress = async () => {
 
 <style scoped lang="scss">
 @use "../../styles/media" as *;
+@use "@/styles/layout" as *;
 
 .movie-detail {
-  min-height: 100vh;
-  background: linear-gradient(
-    135deg,
-    var(--bg-primary) 0%,
-    var(--bg-secondary) 100%
-  );
-  color: var(--text-primary);
-  padding-bottom: 4rem;
+  @include pageShell(4rem);
 
   &__content {
     max-width: 1000px;

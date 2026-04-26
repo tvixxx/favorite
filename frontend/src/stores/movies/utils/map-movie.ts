@@ -1,4 +1,9 @@
-import { Movie, MovieApiResponse } from "@/stores";
+import {
+  Movie,
+  MovieApiResponse,
+  UserMovie,
+  UserMovieApiResponse,
+} from "@/stores";
 
 // Преобразует ответ API в FE модель Movie.
 // Извлекает poster.url → imageUrl.
@@ -8,16 +13,10 @@ export function mapMovieFromApi(raw: MovieApiResponse): Movie {
     id: raw.id,
     title: raw.title,
     description: raw.description,
-    rate: raw.rate,
-    isFavorite: raw.isFavorite,
-    seeLater: raw.seeLater,
     isSerial: raw.isSerial,
     seasonCount: raw.seasonCount ?? undefined,
     episodeCount: raw.episodeCount ?? undefined,
-    currentSeason: raw.currentSeason ?? undefined,
-    currentEpisode: raw.currentEpisode ?? undefined,
     genre: raw.genre ?? undefined,
-    date: raw.date,
     publishDate: raw.publishDate,
     imageUrl: raw.poster?.url ?? "",
     createdAt: raw.createdAt,
@@ -30,4 +29,30 @@ export function mapMovieFromApi(raw: MovieApiResponse): Movie {
 // Маппит массив ответов API.
 export function mapMoviesFromApi(raw: MovieApiResponse[]): Movie[] {
   return raw.map(mapMovieFromApi);
+}
+
+// Преобразует ответ API UserMovie в FE модель
+export function mapUserMovieFromApi(raw: UserMovieApiResponse): UserMovie {
+  return {
+    id: raw.id,
+    userId: raw.userId,
+    movieId: raw.movieId,
+    isFavorite: raw.isFavorite,
+    seeLater: raw.seeLater,
+    personalRate: raw.personalRate,
+    watchStatus: raw.watchStatus,
+    currentSeason: raw.currentSeason,
+    currentEpisode: raw.currentEpisode,
+    addedAt: raw.addedAt,
+    lastWatchedAt: raw.lastWatchedAt,
+    completedAt: raw.completedAt,
+    movie: mapMovieFromApi(raw.movie),
+  };
+}
+
+// Маппит массив UserMovie
+export function mapUserMoviesFromApi(
+  raw: UserMovieApiResponse[]
+): UserMovie[] {
+  return raw.map(mapUserMovieFromApi);
 }

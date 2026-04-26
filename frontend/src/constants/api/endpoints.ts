@@ -14,6 +14,6 @@ export const APP_ENDPOINTS = {
 export type AppEndpoints = keyof typeof APP_ENDPOINTS | string;
 
 // Updated to use local backend instead of mokky.dev
-export const API_BASE_URL = "http://localhost:3000";
+export const API_BASE_URL = "http://localhost:3005";
 
-export const API_BASE_HOST_URL = "http://localhost:3000";
+export const API_BASE_HOST_URL = "http://localhost:3005";
