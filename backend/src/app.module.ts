@@ -16,6 +16,9 @@ import { LoggerMiddleware } from './common/middlewares';
 import { AuthModule } from './auth/auth.module';
 import { UserMovieModule } from './user-movie/user-movie.module';
 import { BadgeModule } from './badge/badge.module';
+import { FriendshipModule } from './friendship/friendship.module';
+import { MessageModule } from './message/message.module';
+import { UserStatusModule } from './user-status/user-status.module';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { BadgeModule } from './badge/badge.module';
     AuthModule,
     UserMovieModule,
     BadgeModule,
+    FriendshipModule,
+    MessageModule,
+    UserStatusModule,
   ],
   controllers: [AppController],
   providers: [AppService],

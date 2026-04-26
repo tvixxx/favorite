@@ -47,3 +47,18 @@ export type Actor = Prisma.ActorModel
  * 
  */
 export type UserMovie = Prisma.UserMovieModel
+/**
+ * Model Friendship
+ * 
+ */
+export type Friendship = Prisma.FriendshipModel
+/**
+ * Model Message
+ * 
+ */
+export type Message = Prisma.MessageModel
+/**
+ * Model UserStatus
+ * 
+ */
+export type UserStatus = Prisma.UserStatusModel

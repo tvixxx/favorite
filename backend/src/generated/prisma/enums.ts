@@ -37,3 +37,21 @@ export const Genre = {
 } as const
 
 export type Genre = (typeof Genre)[keyof typeof Genre]
+
+
+export const FriendshipStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  REJECTED: 'REJECTED',
+  BLOCKED: 'BLOCKED'
+} as const
+
+export type FriendshipStatus = (typeof FriendshipStatus)[keyof typeof FriendshipStatus]
+
+
+export const FriendshipType = {
+  FRIEND_REQUEST: 'FRIEND_REQUEST',
+  SUBSCRIPTION: 'SUBSCRIPTION'
+} as const
+
+export type FriendshipType = (typeof FriendshipType)[keyof typeof FriendshipType]

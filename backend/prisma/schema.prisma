@@ -17,8 +17,13 @@ model User {
   createdAt DateTime    @default(now()) @map("created_at")
   updatedAt DateTime    @updatedAt @map("updated_at")
 
-  userMovies UserMovie[] @relation("user_movies")
-  reviews    Review[]    @relation("user_reviews")
+  userMovies           UserMovie[]  @relation("user_movies")
+  reviews              Review[]     @relation("user_reviews")
+  friendshipsRequested Friendship[] @relation("friendship_requester")
+  friendshipsReceived  Friendship[] @relation("friendship_addressee")
+  sentMessages         Message[]    @relation("sent_messages")
+  receivedMessages     Message[]    @relation("received_messages")
+  status               UserStatus?  @relation("user_status")
 
   @@map("users")
 }
@@ -135,4 +140,70 @@ enum Genre {
   Sci_fi @map("Sci-fi")
 
   @@map("enum_genre")
+}
+
+model Friendship {
+  id          String           @id @default(uuid())
+  requesterId String           @map("requester_id")
+  addresseeId String           @map("addressee_id")
+  status      FriendshipStatus @default(PENDING)
+  type        FriendshipType   @default(FRIEND_REQUEST)
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  requester User @relation("friendship_requester", fields: [requesterId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  addressee User @relation("friendship_addressee", fields: [addresseeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([requesterId, addresseeId])
+  @@index([requesterId])
+  @@index([addresseeId])
+  @@index([status])
+  @@map("friendships")
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  BLOCKED
+
+  @@map("enum_friendship_status")
+}
+
+enum FriendshipType {
+  FRIEND_REQUEST
+  SUBSCRIPTION
+
+  @@map("enum_friendship_type")
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String   @map("sender_id")
+  receiverId String   @map("receiver_id")
+  content    String
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  sender   User @relation("sent_messages", fields: [senderId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  receiver User @relation("received_messages", fields: [receiverId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+  @@index([isRead])
+  @@map("messages")
+}
+
+model UserStatus {
+  userId     String   @id @map("user_id")
+  isOnline   Boolean  @default(false) @map("is_online")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  socketId   String?  @map("socket_id")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user User @relation("user_status", fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("user_statuses")
 }
