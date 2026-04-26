@@ -1,0 +1,43 @@
+@use "./media" as *;
+
+@mixin cardBase(
+  $radius: var(--radius-md),
+  $border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent),
+  $shadow: var(--shadow-card)
+) {
+  background: var(--bg-primary);
+  border-radius: $radius;
+  overflow: hidden;
+  border: $border;
+  box-shadow: $shadow;
+}
+
+@mixin clickableCard(
+  $radius: var(--radius-md),
+  $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)
+) {
+  @include cardBase($radius);
+  cursor: pointer;
+  transition: $transition;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.2);
+    border-color: color-mix(in srgb, var(--ant-color-primary) 40%, transparent);
+  }
+}
+
+@mixin elevatedPanel(
+  $radius: var(--radius-lg),
+  $shadow: var(--shadow-elevated),
+  $border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent)
+) {
+  background: var(--bg-primary);
+  border-radius: $radius;
+  box-shadow: $shadow;
+  border: $border;
+}
+

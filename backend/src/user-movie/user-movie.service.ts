@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserMovieDto, UpdateUserMovieDto } from './dto';
+import { CreateUserMovieBodyDto, UpdateUserMovieDto } from './dto';
 import type { UserMovie, Prisma } from '../generated/prisma/client';
 import { Genre, WatchStatus } from '../generated/prisma/enums';
 
@@ -68,6 +72,10 @@ export class UserMovieService {
     query: string,
     filters: UserMovieFilters = {},
   ): Promise<UserMovie[]> {
+    if (!query?.trim()) {
+      return this.findAllByUser(userId, filters);
+    }
+
     const where = this.buildWhereClause(userId, filters);
 
     // Добавляем поиск по названию фильма
@@ -76,7 +84,7 @@ export class UserMovieService {
     }
 
     where.movie.title = {
-      contains: query,
+      contains: query.trim(),
       mode: 'insensitive',
     };
 
@@ -189,12 +197,15 @@ export class UserMovieService {
     });
   }
 
-  public async create(dto: CreateUserMovieDto): Promise<UserMovie> {
-    const { userId, movieId, ...data } = dto;
+  public async create(
+    userId: string,
+    dto: CreateUserMovieBodyDto,
+  ): Promise<UserMovie> {
+    const { movieId, ...data } = dto;
 
     const existingUserMovie = await this.findByUserAndMovie(userId, movieId);
     if (existingUserMovie) {
-      throw new Error('User already has this movie');
+      throw new ConflictException('User already has this movie');
     }
 
     return this.prismaService.userMovie.create({

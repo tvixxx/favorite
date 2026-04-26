@@ -12,10 +12,12 @@ export interface StatsBlock {
 }
 
 export enum StatsBlockType {
-  allMovies = "allMovies",
-  allFavorites = "allFavorites",
-  allSerials = "allSerials",
-  allSeeLater = "allSeeLater",
+  totalMovies = "totalMovies",
+  totalFavorites = "totalFavorites",
+  totalSeeLater = "totalSeeLater",
+  totalWatching = "totalWatching",
+  totalCompleted = "totalCompleted",
+  totalSerials = "totalSerials",
 }
 
 export interface StatsBlockItem {
@@ -25,8 +27,10 @@ export interface StatsBlockItem {
 }
 
 export enum StatsBlockTitle {
-  allMovies = "Все фильмы:",
-  allFavorites = "В избранном:",
-  allSerials = "Все сериалы:",
-  allSeeLater = "Смотреть позже:",
+  totalMovies = "В коллекции:",
+  totalFavorites = "В избранном:",
+  totalSeeLater = "Смотреть позже:",
+  totalWatching = "Смотрю:",
+  totalCompleted = "Просмотрено:",
+  totalSerials = "Сериалов:",
 }

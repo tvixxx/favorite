@@ -8,7 +8,7 @@ import { SETTING_BLOCKS } from "@/components/ProfileSettings/constants";
 const userMoviesStore = useUserMoviesStore();
 const mainStore = useMainStore();
 
-const userId = computed(() => mainStore.user?.id || "");
+const userId = computed(() => mainStore.userData?.id || "");
 
 onMounted(async () => {
   if (userId.value) {
@@ -35,7 +35,6 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
-@use "../../styles/screen-sizes" as *;
 @use "../../styles/media" as *;
 
 .settings-card {

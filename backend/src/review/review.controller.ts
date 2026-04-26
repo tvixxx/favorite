@@ -16,7 +16,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ReviewService } from './review.service';
-import { ReviewResponse, CreateReviewDto } from './dto';
+import { ReviewResponse, CreateReviewDto, UpdateReviewDto } from './dto';
+import { Authorization, Authorized } from '../common/decorators';
+import type { User } from '../generated/prisma/client';
 
 @ApiTags('Reviews')
 @Controller('reviews')
@@ -31,9 +33,10 @@ export class ReviewController {
     description: 'Отзыв создан',
     type: ReviewResponse,
   })
+  @Authorization()
   @Post()
-  public create(@Body() dto: CreateReviewDto) {
-    return this.reviewService.create(dto);
+  public create(@Body() dto: CreateReviewDto, @Authorized() user: User) {
+    return this.reviewService.create(dto, user.id);
   }
 
   @ApiOperation({
@@ -61,9 +64,14 @@ export class ReviewController {
   @ApiNotFoundResponse({
     description: 'Отзыв не найден',
   })
+  @Authorization()
   @Put(':id')
-  public update(@Param('id') id: string, @Body() dto: CreateReviewDto) {
-    return this.reviewService.update(id, dto);
+  public update(
+    @Param('id') id: string,
+    @Body() dto: UpdateReviewDto,
+    @Authorized() user: User,
+  ) {
+    return this.reviewService.update(id, dto, user.id);
   }
 
   @ApiOperation({
@@ -77,8 +85,9 @@ export class ReviewController {
   @ApiNotFoundResponse({
     description: 'Отзыв не найден',
   })
+  @Authorization()
   @Delete(':id')
-  public delete(@Param('id') id: string) {
-    return this.reviewService.delete(id);
+  public delete(@Param('id') id: string, @Authorized() user: User) {
+    return this.reviewService.delete(id, user.id);
   }
 }

@@ -1,0 +1,92 @@
+@use "./media" as *;
+@use "./antd-overrides" as *;
+
+@mixin authShell {
+  min-height: 450px;
+  height: 100%;
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  border-radius: 12px;
+  box-shadow: 0px 5px 6px -1px rgba(0, 0, 0, 0.1), 0px -1px 40px rgba(0, 0, 0, 0.1);
+}
+
+@mixin authTitle($block) {
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, var(--ant-color-primary), var(--text-primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+
+  .#{$block}__title-icon {
+    color: var(--ant-color-primary);
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@mixin authAntForm($block) {
+  :deep(.ant-form) {
+    background: var(--bg-primary);
+    padding: 2.5rem 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-elevated);
+    border: 1px solid var(--border-color);
+
+    .ant-form-item {
+      margin-bottom: 1.5rem;
+
+      &.#{$block}__field {
+        .ant-form-item-label {
+          > label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+          }
+        }
+
+        .ant-form-item-control-input-content {
+          .ant-input {
+            border-radius: var(--radius-sm);
+            border: 2px solid var(--border-color);
+            height: 52px;
+            padding: 0 1rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: var(--bg-secondary);
+
+            &:focus,
+            &:hover {
+              border-color: var(--ant-color-primary);
+              @include antFocusRing(10%);
+              background: var(--bg-primary);
+            }
+
+            &::placeholder {
+              color: var(--text-secondary);
+            }
+          }
+
+          .ant-input-password {
+            .ant-input {
+              @extend .ant-input;
+            }
+
+            .ant-input-password-icon {
+              color: var(--text-secondary);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

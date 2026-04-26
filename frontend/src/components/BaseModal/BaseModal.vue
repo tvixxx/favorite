@@ -72,9 +72,7 @@ const handleConfirm = () => {
           </div>
 
           <div class="modal__body">
-            <div class="modal__body">
-              <slot name="body" />
-            </div>
+            <slot name="body" />
           </div>
 
           <div class="modal__footer">
@@ -92,7 +90,7 @@ const handleConfirm = () => {
 </template>
 
 <style lang="scss">
-@use "../../styles/screen-sizes" as *;
+@use "../../styles/antd-overrides" as *;
 @use "../../styles/media" as *;
 
 .modal-backdrop {
@@ -109,12 +107,12 @@ const handleConfirm = () => {
 
 .modal {
   background: var(--bg-primary);
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   max-width: min(90vw, 500px);
   max-height: 90vh;
   width: 100%;
   overflow: hidden;
-  box-shadow: var(--shadow), 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-modal);
   border: 1px solid var(--border-color);
   animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -145,7 +143,7 @@ const handleConfirm = () => {
 .modal__close {
   width: 36px;
   height: 36px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   border: none;
   background: var(--bg-secondary);
   color: var(--text-secondary);
@@ -179,7 +177,7 @@ const handleConfirm = () => {
 .modal__btn-cancel,
 .modal__btn-confirm {
   height: 48px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   font-weight: 600;
 }
 
@@ -209,35 +207,7 @@ const handleConfirm = () => {
   }
 }
 
-:deep(.ant-form-item-label > label) {
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 1rem;
-}
-
-:deep(.ant-input, .ant-picker, .ant-textarea) {
-  border-radius: 12px !important;
-  border: 2px solid var(--border-color) !important;
-  transition: all 0.2s ease !important;
-  height: 48px !important;
-  box-shadow: none !important;
-
-  &:focus,
-  &:hover {
-    border-color: var(--ant-color-primary) !important;
-    box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--ant-color-primary) 10%, transparent) !important;
-  }
-}
-
-:deep(.ant-form-item-has-error .ant-input) {
-  border-color: var(--ant-color-error) !important;
-}
-
-:deep(.ant-textarea) {
-  min-height: 120px !important;
-  resize: vertical !important;
-}
+@include antModalFormControls;
 
 @include mediaMobile {
   .modal__header,

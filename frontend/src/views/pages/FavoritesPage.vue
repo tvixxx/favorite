@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
-import { computed, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { formatDate, formatYear } from "@/utils";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { useMainStore } from "@/state/state";
@@ -13,7 +13,6 @@ import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
 import ListEmpty from "@/components/List/ListEmpty/ListEmpty.vue";
 import type { UserMovie, UserMoviesFilters } from "@/stores";
-import dayjs from "dayjs";
 import MoviesFiltersPanel from "@/components/MoviesFiltersPanel/MoviesFiltersPanel.vue";
 
 const router = useRouter();
@@ -24,21 +23,50 @@ const imageErrors = ref<Set<string>>(new Set());
 const searchQuery = ref("");
 const localFilters = ref<UserMoviesFilters>({});
 
-const userId = computed(() => mainStore.user?.id || "");
-const shouldFetchFavorites = computed(
-  () => !hasFavorites.value && mainStore.isLoggedIn && userId.value
+const userId = computed(() => mainStore.userData?.id || "");
+
+/** Запросы со страницы избранного всегда ограничиваются isFavorite=true */
+const applyFavoriteScopeToStore = () => {
+  userMoviesStore.setFilters({
+    ...userMoviesStore.filters,
+    isFavorite: true,
+  });
+};
+
+const favoriteUserMovies = computed(() =>
+  userMoviesStore.favoriteUserMovies
 );
+
+const shouldFetchFavorites = computed(
+  () =>
+    !favoriteUserMovies.value.length &&
+    mainStore.isLoggedIn &&
+    !!userId.value
+);
+
+const refetchFavorites = async () => {
+  if (!userId.value) {
+    return;
+  }
+  applyFavoriteScopeToStore();
+  await userMoviesStore.fetchUserMovies(userId.value);
+};
 
 const handleFiltersUpdate = async (filters: UserMoviesFilters) => {
   localFilters.value = filters;
   userMoviesStore.setCurrentPage(1);
   userMoviesStore.setFilters({ ...filters, isFavorite: true });
 
+  if (!userId.value) {
+    return;
+  }
+
   try {
-    if (searchQuery.value) {
+    if (searchQuery.value.trim()) {
       await userMoviesStore.searchUserMovies(userId.value, searchQuery.value);
     } else {
-      await userMoviesStore.fetchUserMovies(userId.value);
+      userMoviesStore.clearSearch();
+      await refetchFavorites();
     }
   } catch {
     message.error("Ошибка применения фильтров");
@@ -48,37 +76,52 @@ const handleFiltersUpdate = async (filters: UserMoviesFilters) => {
 const handleSearch = async (value: string) => {
   searchQuery.value = value;
   userMoviesStore.setCurrentPage(1);
+  applyFavoriteScopeToStore();
+
+  if (!userId.value) {
+    return;
+  }
 
   try {
-    if (value) {
+    if (value.trim()) {
       await userMoviesStore.searchUserMovies(userId.value, value);
     } else {
-      await userMoviesStore.fetchUserMovies(userId.value);
+      userMoviesStore.clearSearch();
+      await refetchFavorites();
     }
   } catch {
     message.error("Ошибка поиска");
   }
 };
 
-const favoriteUserMovies = computed(() =>
-  userMoviesStore.favoriteUserMovies
-);
+/** Сетка и пагинация: при текстовом поиске показываем searchResults (API с isFavorite), иначе — избранное из userMovies */
+const favoritesForView = computed(() => {
+  if (userMoviesStore.searchQuery.trim()) {
+    return userMoviesStore.searchResults.filter((um) => um.isFavorite);
+  }
+  return favoriteUserMovies.value;
+});
 
 const paginatedFavorites = computed(() => {
-  const favorites = favoriteUserMovies.value;
+  const favorites = favoritesForView.value;
   const start = (userMoviesStore.currentPage - 1) * userMoviesStore.pageSize;
   return favorites.slice(start, start + userMoviesStore.pageSize);
 });
 
-const totalFavorites = computed(() => favoriteUserMovies.value.length);
-const hasFavorites = computed(() => favoriteUserMovies.value.length !== 0);
-const hasFilteredResults = computed(() => favoriteUserMovies.value.length > 0);
+const totalFavorites = computed(() => favoritesForView.value.length);
+const hasFilteredResults = computed(() => favoritesForView.value.length > 0);
 
 const showPaginator = computed(
   () =>
-    !!favoriteUserMovies.value.length &&
+    !!favoritesForView.value.length &&
     !userMoviesStore.isError &&
     !userMoviesStore.isLoading
+);
+
+const emptyFavoritesDescription = computed(() =>
+  searchQuery.value.trim() || userMoviesStore.searchQuery.trim()
+    ? "В избранном ничего не найдено"
+    : "Избранных фильмов пока нет..."
 );
 
 const getPosterSrc = (item: UserMovie) => {
@@ -111,16 +154,24 @@ const goToMovies = () => {
 };
 
 onMounted(async () => {
+  applyFavoriteScopeToStore();
+
   if (shouldFetchFavorites.value) {
     try {
-      userMoviesStore.setFilters({ isFavorite: true });
-      await userMoviesStore.fetchUserMovies(userId.value);
+      await refetchFavorites();
     } catch {
       message.error(
         "Ошибка загрузки избранного. Пожалуйста, попробуйте позже."
       );
     }
   }
+});
+
+onBeforeUnmount(() => {
+  userMoviesStore.setFilters({
+    ...userMoviesStore.filters,
+    isFavorite: undefined,
+  });
 });
 </script>
 
@@ -142,7 +193,7 @@ onMounted(async () => {
       <ListError
         v-if="userMoviesStore.isError"
         :isError="userMoviesStore.isError"
-        :repeatFn="() => userMoviesStore.fetchUserMovies(userId)"
+        :repeatFn="() => void refetchFavorites()"
         repeatText="Повторить"
       />
 
@@ -156,7 +207,7 @@ onMounted(async () => {
 
       <div v-else-if="!hasFilteredResults" class="favorites__empty-state">
         <ListEmpty
-          description="Избранных фильмов пока нет..."
+          :description="emptyFavoritesDescription"
           btn-text="Перейти в фильмы"
           :btn-handler="goToMovies"
         />
@@ -171,8 +222,8 @@ onMounted(async () => {
           <a-button
             v-if="userMoviesStore.isError"
             size="large"
-            @click="() => userMoviesStore.fetchUserMovies(userId)"
             class="favorites__refresh"
+            @click="() => void refetchFavorites()"
           >
             Обновить
           </a-button>
@@ -240,34 +291,18 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
-@use "../../styles/screen-sizes" as *;
 @use "../../styles/media" as *;
+@use "@/styles/layout" as *;
+@use "@/styles/card" as *;
 
 .favorites {
-  min-height: 100vh;
-  background: linear-gradient(
-    135deg,
-    var(--bg-primary) 0%,
-    var(--bg-secondary) 100%
-  );
-  color: var(--text-primary);
-  padding: 0 0 4rem 0;
+  @include pageShell(4rem);
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
 
   &__content {
-    width: 100%;
-    max-width: 1800px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    @include mediaDesktopS {
-      padding: 0 3rem;
-    }
+    @include pageContentContainer;
   }
 
   &__section {
@@ -314,39 +349,11 @@ onMounted(async () => {
   }
 
   &__grid {
-    display: grid;
-    gap: 2rem;
-    margin: 2rem 0;
-    width: 100%;
-    max-width: 1400px;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-
-    @include mediaTablet {
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    }
-
-    @include mediaDesktopXS {
-      grid-template-columns: repeat(auto-fill, minmax(360px, 420px));
-      justify-content: center;
-    }
-
-    @media (max-width: 500px) {
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-    }
+    @include cardsGrid;
   }
 
   &__card {
-    background: var(--bg-primary);
-    border-radius: 16px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-    box-shadow: var(--shadow);
+    @include clickableCard(var(--radius-md));
 
     &::before {
       content: "";

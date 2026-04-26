@@ -42,7 +42,12 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
   // Computed
   const currentList = computed(() => {
-    return hasActiveFilters.value ? searchResults.value : userMovies.value;
+    // Текстовый поиск хранится отдельно: пока в сторе есть q — показываем searchResults.
+    // Иначе список из GET /users/:id/movies (в т.ч. при фильтрах без поиска).
+    if (searchQuery.value.trim()) {
+      return searchResults.value;
+    }
+    return userMovies.value;
   });
 
   const paginatedUserMovies = computed(() => {
@@ -111,6 +116,10 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
   // API calls
   const fetchUserMovies = async (userId: string) => {
+    if (!userId?.trim()) {
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -158,7 +167,17 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   };
 
   const searchUserMovies = async (userId: string, query: string) => {
-    searchQuery.value = query;
+    if (!userId?.trim()) {
+      return;
+    }
+
+    const q = query.trim();
+    if (!q) {
+      clearSearch();
+      return fetchUserMovies(userId);
+    }
+
+    searchQuery.value = q;
     isSearching.value = true;
     setLoading(true);
     setError(null);
@@ -166,7 +185,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     const start = Date.now();
 
     try {
-      const params = new URLSearchParams({ q: query });
+      const params = new URLSearchParams({ q });
 
       if (filters.value.genre) params.append("genre", filters.value.genre);
       if (filters.value.personalRateMin !== undefined)
@@ -207,6 +226,10 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   };
 
   const fetchUserMoviesStats = async (userId: string) => {
+    if (!userId?.trim()) {
+      return;
+    }
+
     isStatsLoading.value = true;
     isStatsError.value = null;
 
@@ -233,12 +256,15 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   };
 
   const addUserMovie = async (userId: string, movieId: string, data: Partial<UserMovie>) => {
+    if (!userId?.trim()) {
+      throw new Error("Не указан пользователь");
+    }
+
     const response = await useFetch<UserMovieApiResponse>(
       `/users/${userId}/movies`,
       {
         method: FETCH_METHOD.post,
         data: {
-          userId,
           movieId,
           ...data,
         },
@@ -259,6 +285,10 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     movieId: string,
     data: Partial<UserMovie>
   ) => {
+    if (!userId?.trim()) {
+      throw new Error("Не указан пользователь");
+    }
+
     const response = await useFetch<UserMovieApiResponse>(
       `/users/${userId}/movies/${movieId}`,
       {
@@ -284,7 +314,48 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     }
   };
 
+  const fetchUserMovieById = async (
+    userId: string,
+    movieId: string
+  ): Promise<UserMovie | null> => {
+    if (!userId?.trim()) {
+      return null;
+    }
+
+    isCurrentLoading.value = true;
+    isCurrentError.value = null;
+
+    try {
+      const { data, status } = await useFetch<UserMovieApiResponse>(
+        `/users/${userId}/movies/${movieId}`,
+        {
+          method: FETCH_METHOD.get,
+        }
+      );
+
+      if (status !== 200 || !data) {
+        return null;
+      }
+
+      const mapped = mapUserMovieFromApi(data);
+
+      if (!userMovies.value.some((um) => um.movieId === mapped.movieId)) {
+        userMovies.value.push(mapped);
+      }
+
+      return mapped;
+    } catch {
+      return null;
+    } finally {
+      isCurrentLoading.value = false;
+    }
+  };
+
   const removeUserMovie = async (userId: string, movieId: string) => {
+    if (!userId?.trim()) {
+      throw new Error("Не указан пользователь");
+    }
+
     const response = await useFetch<string>(
       `/users/${userId}/movies/${movieId}`,
       {
@@ -343,5 +414,6 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     addUserMovie,
     updateUserMovie,
     removeUserMovie,
+    fetchUserMovieById,
   };
 });

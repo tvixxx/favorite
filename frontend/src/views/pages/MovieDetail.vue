@@ -21,7 +21,7 @@ const userMoviesStore = useUserMoviesStore();
 const router = useRouter();
 
 const currentMovieId = router.currentRoute.value.params.id as string | null;
-const userId = computed(() => mainStore.user?.id || "");
+const userId = computed(() => mainStore.userData?.id || "");
 
 const isLoading = ref(false);
 const isError = ref(false);
@@ -40,7 +40,16 @@ onMounted(async () => {
       if (userMovie) {
         currentUserMovie.value = userMovie;
       } else {
-        isError.value = true;
+        const loaded = await userMoviesStore.fetchUserMovieById(
+          userId.value,
+          currentMovieId
+        );
+
+        if (loaded) {
+          currentUserMovie.value = loaded;
+        } else {
+          isError.value = true;
+        }
       }
     } catch {
       message.error("Не удалось загрузить фильм");
@@ -476,16 +485,10 @@ const saveProgress = async () => {
 
 <style scoped lang="scss">
 @use "../../styles/media" as *;
+@use "@/styles/layout" as *;
 
 .movie-detail {
-  min-height: 100vh;
-  background: linear-gradient(
-    135deg,
-    var(--bg-primary) 0%,
-    var(--bg-secondary) 100%
-  );
-  color: var(--text-primary);
-  padding-bottom: 4rem;
+  @include pageShell(4rem);
 
   &__content {
     max-width: 1000px;

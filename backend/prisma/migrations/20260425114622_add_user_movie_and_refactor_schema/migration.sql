@@ -9,22 +9,29 @@
 
 */
 -- CreateEnum
-CREATE TYPE "enum_watch_status" AS ENUM ('NOT_STARTED', 'WATCHING', 'COMPLETED', 'DROPPED');
+DO $$
+BEGIN
+  CREATE TYPE "enum_watch_status" AS ENUM ('NOT_STARTED', 'WATCHING', 'COMPLETED', 'DROPPED');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END
+$$;
 
 -- AlterTable
-ALTER TABLE "movies" DROP COLUMN "date",
-DROP COLUMN "favorite_id",
-DROP COLUMN "is_favorite",
-DROP COLUMN "rate",
-ADD COLUMN     "episode_count" INTEGER,
-ADD COLUMN     "is_serial" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "season_count" INTEGER;
+ALTER TABLE "movies"
+  DROP COLUMN IF EXISTS "date",
+  DROP COLUMN IF EXISTS "favorite_id",
+  DROP COLUMN IF EXISTS "is_favorite",
+  DROP COLUMN IF EXISTS "rate",
+  ADD COLUMN IF NOT EXISTS "episode_count" INTEGER,
+  ADD COLUMN IF NOT EXISTS "is_serial" BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS "season_count" INTEGER;
 
 -- AlterTable
-ALTER TABLE "reviews" ADD COLUMN     "user_id" TEXT NOT NULL;
+ALTER TABLE "reviews" ADD COLUMN IF NOT EXISTS "user_id" TEXT;
 
 -- CreateTable
-CREATE TABLE "user_movies" (
+CREATE TABLE IF NOT EXISTS "user_movies" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
     "movie_id" TEXT NOT NULL,
@@ -44,31 +51,62 @@ CREATE TABLE "user_movies" (
 );
 
 -- CreateIndex
-CREATE INDEX "user_movies_user_id_idx" ON "user_movies"("user_id");
+CREATE INDEX IF NOT EXISTS "user_movies_user_id_idx" ON "user_movies"("user_id");
 
 -- CreateIndex
-CREATE INDEX "user_movies_movie_id_idx" ON "user_movies"("movie_id");
+CREATE INDEX IF NOT EXISTS "user_movies_movie_id_idx" ON "user_movies"("movie_id");
 
 -- CreateIndex
-CREATE INDEX "user_movies_is_favorite_idx" ON "user_movies"("is_favorite");
+CREATE INDEX IF NOT EXISTS "user_movies_is_favorite_idx" ON "user_movies"("is_favorite");
 
 -- CreateIndex
-CREATE INDEX "user_movies_see_later_idx" ON "user_movies"("see_later");
+CREATE INDEX IF NOT EXISTS "user_movies_see_later_idx" ON "user_movies"("see_later");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_movies_user_id_movie_id_key" ON "user_movies"("user_id", "movie_id");
+DO $$
+BEGIN
+  CREATE UNIQUE INDEX "user_movies_user_id_movie_id_key" ON "user_movies"("user_id", "movie_id");
+EXCEPTION
+  WHEN duplicate_table THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END
+$$;
 
 -- CreateIndex
-CREATE INDEX "reviews_user_id_idx" ON "reviews"("user_id");
+CREATE INDEX IF NOT EXISTS "reviews_user_id_idx" ON "reviews"("user_id");
 
 -- CreateIndex
-CREATE INDEX "reviews_movie_id_idx" ON "reviews"("movie_id");
+CREATE INDEX IF NOT EXISTS "reviews_movie_id_idx" ON "reviews"("movie_id");
 
 -- AddForeignKey
-ALTER TABLE "reviews" ADD CONSTRAINT "reviews_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+DO $$
+BEGIN
+  ALTER TABLE "reviews"
+    ADD CONSTRAINT "reviews_user_id_fkey"
+    FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END
+$$;
 
 -- AddForeignKey
-ALTER TABLE "user_movies" ADD CONSTRAINT "user_movies_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+DO $$
+BEGIN
+  ALTER TABLE "user_movies"
+    ADD CONSTRAINT "user_movies_user_id_fkey"
+    FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END
+$$;
 
 -- AddForeignKey
-ALTER TABLE "user_movies" ADD CONSTRAINT "user_movies_movie_id_fkey" FOREIGN KEY ("movie_id") REFERENCES "movies"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+DO $$
+BEGIN
+  ALTER TABLE "user_movies"
+    ADD CONSTRAINT "user_movies_movie_id_fkey"
+    FOREIGN KEY ("movie_id") REFERENCES "movies"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END
+$$;

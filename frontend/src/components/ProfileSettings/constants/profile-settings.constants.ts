@@ -16,8 +16,10 @@ export const SETTING_BLOCKS: SettingBlockProps[] = [
 ];
 
 export const STAT_BLOCK_TITLES: Record<StatsBlockType, StatsBlockTitle> = {
-  [StatsBlockType.allMovies]: StatsBlockTitle.allMovies,
-  [StatsBlockType.allFavorites]: StatsBlockTitle.allFavorites,
-  [StatsBlockType.allSerials]: StatsBlockTitle.allSerials,
-  [StatsBlockType.allSeeLater]: StatsBlockTitle.allSeeLater,
+  [StatsBlockType.totalMovies]: StatsBlockTitle.totalMovies,
+  [StatsBlockType.totalFavorites]: StatsBlockTitle.totalFavorites,
+  [StatsBlockType.totalSeeLater]: StatsBlockTitle.totalSeeLater,
+  [StatsBlockType.totalWatching]: StatsBlockTitle.totalWatching,
+  [StatsBlockType.totalCompleted]: StatsBlockTitle.totalCompleted,
+  [StatsBlockType.totalSerials]: StatsBlockTitle.totalSerials,
 };

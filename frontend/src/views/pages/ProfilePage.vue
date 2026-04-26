@@ -143,17 +143,11 @@ const showEditDisplayNameModal = () => {
 </template>
 
 <style scoped lang="scss">
-@use "../../styles/screen-sizes" as *;
 @use "../../styles/media" as *;
+@use "@/styles/layout" as *;
 
 .profile-page {
-  min-height: 100vh;
-  background: linear-gradient(
-    135deg,
-    var(--bg-primary) 0%,
-    var(--bg-secondary) 100%
-  );
-  color: var(--text-primary);
+  @include pageShell(0);
   display: flex;
   flex-direction: column;
 

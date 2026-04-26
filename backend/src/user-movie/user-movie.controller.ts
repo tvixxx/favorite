@@ -2,15 +2,17 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpStatus,
+  NotFoundException,
   Param,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
 import { UserMovieService } from './user-movie.service';
-import { CreateUserMovieDto, UpdateUserMovieDto } from './dto';
+import { CreateUserMovieBodyDto, UpdateUserMovieDto } from './dto';
 import {
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -18,11 +20,19 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Genre, WatchStatus } from '../generated/prisma/enums';
+import { Authorization, Authorized } from '../common/decorators';
+import type { User } from '../generated/prisma/client';
 
 @ApiTags('User Movies')
 @Controller('users/:userId/movies')
 export class UserMovieController {
   constructor(private readonly userMovieService: UserMovieService) {}
+
+  private ensureSelf(paramUserId: string, user: User): void {
+    if (paramUserId !== user.id) {
+      throw new ForbiddenException();
+    }
+  }
 
   @ApiOperation({
     summary: 'Получить все фильмы пользователя',
@@ -31,9 +41,11 @@ export class UserMovieController {
   @ApiOkResponse({
     description: 'Фильмы найдены',
   })
+  @Authorization()
   @Get()
   public findAllByUser(
     @Param('userId') userId: string,
+    @Authorized() user: User,
     @Query('genre') genre?: string,
     @Query('personalRateMin') personalRateMin?: string,
     @Query('personalRateMax') personalRateMax?: string,
@@ -43,6 +55,7 @@ export class UserMovieController {
     @Query('seeLater') seeLater?: string,
     @Query('watchStatus') watchStatus?: string,
   ) {
+    this.ensureSelf(userId, user);
     return this.userMovieService.findAllByUser(userId, {
       genre: genre ? (genre as Genre) : undefined,
       personalRateMin: personalRateMin ? Number(personalRateMin) : undefined,
@@ -62,9 +75,11 @@ export class UserMovieController {
   @ApiOkResponse({
     description: 'Фильмы найдены',
   })
+  @Authorization()
   @Get('search')
   public searchUserMovies(
     @Param('userId') userId: string,
+    @Authorized() user: User,
     @Query('q') query: string,
     @Query('genre') genre?: string,
     @Query('personalRateMin') personalRateMin?: string,
@@ -75,6 +90,7 @@ export class UserMovieController {
     @Query('seeLater') seeLater?: string,
     @Query('watchStatus') watchStatus?: string,
   ) {
+    this.ensureSelf(userId, user);
     return this.userMovieService.searchUserMovies(userId, query, {
       genre: genre ? (genre as Genre) : undefined,
       personalRateMin: personalRateMin ? Number(personalRateMin) : undefined,
@@ -94,8 +110,13 @@ export class UserMovieController {
   @ApiOkResponse({
     description: 'Избранные фильмы найдены',
   })
+  @Authorization()
   @Get('favorites')
-  public findFavorites(@Param('userId') userId: string) {
+  public findFavorites(
+    @Param('userId') userId: string,
+    @Authorized() user: User,
+  ) {
+    this.ensureSelf(userId, user);
     return this.userMovieService.findFavoritesByUser(userId);
   }
 
@@ -106,8 +127,13 @@ export class UserMovieController {
   @ApiOkResponse({
     description: 'Фильмы найдены',
   })
+  @Authorization()
   @Get('see-later')
-  public findSeeLater(@Param('userId') userId: string) {
+  public findSeeLater(
+    @Param('userId') userId: string,
+    @Authorized() user: User,
+  ) {
+    this.ensureSelf(userId, user);
     return this.userMovieService.findSeeLaterByUser(userId);
   }
 
@@ -118,8 +144,13 @@ export class UserMovieController {
   @ApiOkResponse({
     description: 'Статистика получена',
   })
+  @Authorization()
   @Get('stats')
-  public getUserStats(@Param('userId') userId: string) {
+  public getUserStats(
+    @Param('userId') userId: string,
+    @Authorized() user: User,
+  ) {
+    this.ensureSelf(userId, user);
     return this.userMovieService.getUserStats(userId);
   }
 
@@ -133,12 +164,24 @@ export class UserMovieController {
   @ApiNotFoundResponse({
     description: 'Данные не найдены',
   })
+  @Authorization()
   @Get(':movieId')
-  public findByUserAndMovie(
+  public async findByUserAndMovie(
     @Param('userId') userId: string,
     @Param('movieId') movieId: string,
+    @Authorized() user: User,
   ) {
-    return this.userMovieService.findByUserAndMovie(userId, movieId);
+    this.ensureSelf(userId, user);
+    const row = await this.userMovieService.findByUserAndMovie(
+      userId,
+      movieId,
+    );
+
+    if (!row) {
+      throw new NotFoundException();
+    }
+
+    return row;
   }
 
   @ApiOperation({
@@ -148,9 +191,15 @@ export class UserMovieController {
   @ApiOkResponse({
     description: 'Фильм добавлен',
   })
+  @Authorization()
   @Post()
-  public create(@Body() dto: CreateUserMovieDto) {
-    return this.userMovieService.create(dto);
+  public create(
+    @Param('userId') userId: string,
+    @Body() dto: CreateUserMovieBodyDto,
+    @Authorized() user: User,
+  ) {
+    this.ensureSelf(userId, user);
+    return this.userMovieService.create(userId, dto);
   }
 
   @ApiOperation({
@@ -163,12 +212,15 @@ export class UserMovieController {
   @ApiNotFoundResponse({
     description: 'Данные не найдены',
   })
+  @Authorization()
   @Patch(':movieId')
   public update(
     @Param('userId') userId: string,
     @Param('movieId') movieId: string,
     @Body() dto: UpdateUserMovieDto,
+    @Authorized() user: User,
   ) {
+    this.ensureSelf(userId, user);
     return this.userMovieService.update(userId, movieId, dto);
   }
 
@@ -182,11 +234,14 @@ export class UserMovieController {
   @ApiNotFoundResponse({
     description: 'Данные не найдены',
   })
+  @Authorization()
   @Delete(':movieId')
   public delete(
     @Param('userId') userId: string,
     @Param('movieId') movieId: string,
+    @Authorized() user: User,
   ) {
+    this.ensureSelf(userId, user);
     return this.userMovieService.delete(userId, movieId);
   }
 }

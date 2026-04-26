@@ -3,13 +3,12 @@ import {
   IsNotEmpty,
   IsNumber,
   IsString,
-  IsUUID,
   Max,
   Min,
   MinLength,
 } from 'class-validator';
 
-export class CreateReviewDto {
+export class UpdateReviewDto {
   @ApiProperty({
     description: 'Текст отзыва',
     example: 'Какой-то отзыв для примера',
@@ -29,12 +28,4 @@ export class CreateReviewDto {
   @Min(0)
   @Max(10)
   rate: number;
-
-  @ApiProperty({
-    description: 'ID фильма/сериала',
-    example: 'dad213-dad21-d1213-dokojp2',
-    type: String,
-  })
-  @IsUUID('4')
-  movieId: string;
 }

@@ -58,6 +58,8 @@ const ratePercent = computed(() => (props.review.rate / 10) * 100);
 </template>
 
 <style scoped lang="scss">
+@use "@/styles/media" as *;
+
 .review-item {
   padding: 1.25rem;
   border-radius: 12px;
@@ -133,7 +135,7 @@ const ratePercent = computed(() => (props.review.rate / 10) * 100);
     opacity: 0;
     transition: opacity 0.2s ease;
 
-    @media (max-width: 768px) {
+    @include mediaMax($tablet) {
       opacity: 1;
     }
   }

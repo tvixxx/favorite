@@ -52,7 +52,7 @@ const handleSubmit = async (text: string, rate: number) => {
 
   try {
     if (isEditing.value && editingReview.value) {
-      await updateReview(editingReview.value.id, { text, rate, movieId });
+      await updateReview(editingReview.value.id, { text, rate });
       message.success("Отзыв обновлён");
       cancelEdit();
     } else {

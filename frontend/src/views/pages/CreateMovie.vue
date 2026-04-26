@@ -18,7 +18,7 @@ const userMoviesStore = useUserMoviesStore();
 const actorsStore = useActorsStore();
 const mainStore = useMainStore();
 
-const userId = computed(() => mainStore.user?.id || "");
+const userId = computed(() => mainStore.userData?.id || "");
 
 const handleActorSelection = async (selectedValues: string[]) => {
   const processedValues: string[] = [];
@@ -338,18 +338,11 @@ const addNewMovie = async () => {
 </template>
 
 <style scoped lang="scss">
-@use "../../styles/screen-sizes" as *;
 @use "../../styles/media" as *;
+@use "@/styles/layout" as *;
 
 .create-movie {
-  min-height: 100vh;
-  background: linear-gradient(
-    135deg,
-    var(--bg-primary) 0%,
-    var(--bg-secondary) 100%
-  );
-  color: var(--text-primary);
-  padding: 0 0 4rem 0;
+  @include pageShell(4rem);
   display: flex;
   flex-direction: column;
 

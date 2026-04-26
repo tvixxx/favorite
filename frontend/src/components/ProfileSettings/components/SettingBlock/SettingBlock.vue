@@ -20,7 +20,7 @@ const props = defineProps<SettingBlockProps>();
 const isTheme = computed(() => props.type === "theme");
 const isStats = computed(() => props.type === "stats");
 
-const userId = computed(() => mainStore.user?.id || "");
+const userId = computed(() => mainStore.userData?.id || "");
 
 const themeOptions: SelectProps["options"] = themes.map((theme) => ({
   label: theme.charAt(0).toUpperCase() + theme.slice(1),
@@ -105,6 +105,8 @@ const retryStats = async () => {
 </template>
 
 <style lang="scss" scoped>
+@use "../../../../styles/antd-overrides" as *;
+
 .setting-block {
   display: flex;
   flex-direction: column;
@@ -138,9 +140,7 @@ const retryStats = async () => {
 
   &__stats {
     padding: 1rem;
-    background: color-mix(in srgb, var(--bg-secondary) 50%, transparent);
-    border-radius: 8px;
-    border: 1px solid color-mix(in srgb, var(--border-color) 30%, transparent);
+    @include mutedInsetPanel;
   }
 
   &__stats-loading {
@@ -157,19 +157,7 @@ const retryStats = async () => {
   &__loader {
     width: 40px;
     height: 40px;
-    border: 3px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-    border-top: 3px solid var(--ant-color-primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
+    @include spinnerRing;
   }
 
   &__stats-error {

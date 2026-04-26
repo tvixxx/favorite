@@ -107,24 +107,11 @@ const login = async ({ email, password }: FormState) => {
 </template>
 
 <style lang="scss">
-@use "../../styles/screen-sizes" as *;
 @use "../../styles/media" as *;
+@use "@/styles/auth" as *;
 
 .signin {
-  min-height: 450px;
-  height: 100%;
-  background: linear-gradient(
-    135deg,
-    var(--bg-primary) 0%,
-    var(--bg-secondary) 100%
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem;
-  border-radius: 12px;
-  box-shadow: 0px 5px 6px -1px rgba(0, 0, 0, 0.1),
-    0px -1px 40px rgba(0, 0, 0, 0.1);
+  @include authShell;
 
   &__container {
     max-width: 420px;
@@ -138,84 +125,10 @@ const login = async ({ email, password }: FormState) => {
   }
 
   &__title {
-    font-size: clamp(2rem, 5vw, 2.75rem);
-    font-weight: 800;
-    margin: 0;
-    background: linear-gradient(
-      135deg,
-      var(--ant-color-primary),
-      var(--text-primary)
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-
-    .signin__title-icon {
-      color: var(--ant-color-primary);
-      width: 32px;
-      height: 32px;
-    }
+    @include authTitle("signin");
   }
 
-  :deep(.ant-form) {
-    background: var(--bg-primary);
-    padding: 2.5rem 2rem;
-    border-radius: 24px;
-    box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--border-color);
-
-    .ant-form-item {
-      margin-bottom: 1.5rem;
-
-      &.signin__field {
-        .ant-form-item-label {
-          > label {
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 0.95rem;
-          }
-        }
-
-        .ant-form-item-control-input-content {
-          .ant-input {
-            border-radius: 12px;
-            border: 2px solid var(--border-color);
-            height: 52px;
-            padding: 0 1rem;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: var(--bg-secondary);
-
-            &:focus,
-            &:hover {
-              border-color: var(--ant-color-primary);
-              box-shadow: 0 0 0 3px
-                color-mix(in srgb, var(--ant-color-primary), transparent 90%);
-              background: var(--bg-primary);
-            }
-
-            &::placeholder {
-              color: var(--text-secondary);
-            }
-          }
-
-          .ant-input-password {
-            .ant-input {
-              @extend .ant-input;
-            }
-
-            .ant-input-password-icon {
-              color: var(--text-secondary);
-            }
-          }
-        }
-      }
-    }
-  }
+  @include authAntForm("signin");
 
   &__submit {
     margin-bottom: 0 !important;
@@ -256,10 +169,6 @@ const login = async ({ email, password }: FormState) => {
 
     &__container {
       max-width: 480px;
-    }
-
-    :deep(.ant-form) {
-      padding: 3rem 2.5rem;
     }
   }
 

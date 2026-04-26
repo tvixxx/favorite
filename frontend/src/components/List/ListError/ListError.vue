@@ -30,7 +30,7 @@ defineProps<Props>();
 </template>
 
 <style scoped lang="scss">
-@use "../../../styles/screen-sizes" as *;
+@use "../../../styles/card" as *;
 @use "../../../styles/media" as *;
 
 .list-error {
@@ -43,8 +43,11 @@ defineProps<Props>();
   width: 100%;
 
   &__container {
-    background: var(--bg-primary);
-    border-radius: 24px;
+    @include elevatedPanel(
+      var(--radius-lg),
+      var(--shadow-elevated),
+      1px solid color-mix(in srgb, var(--border-color) 50%, transparent)
+    );
     padding: 3rem 2.5rem;
     max-width: 500px;
     width: 100%;
@@ -53,8 +56,6 @@ defineProps<Props>();
     justify-content: center;
     flex-direction: column;
     text-align: center;
-    box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
-    border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
   }
 
   &__icon {
@@ -90,9 +91,8 @@ defineProps<Props>();
     font-weight: 600;
     font-size: 1rem;
     padding: 0.875rem 2rem !important;
-    border-radius: 12px !important;
-    box-shadow: 0 4px 16px
-      color-mix(in srgb, var(--ant-color-primary) 30%, transparent);
+    border-radius: var(--radius-sm) !important;
+    box-shadow: var(--shadow-primary-sm);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:hover {
@@ -103,8 +103,7 @@ defineProps<Props>();
       ) !important;
       border-color: var(--ant-color-primary) !important;
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px
-        color-mix(in srgb, var(--ant-color-primary) 40%, transparent);
+      box-shadow: var(--shadow-primary-md);
     }
 
     svg {

@@ -21,7 +21,7 @@ const mainStore = useMainStore();
 
 const imageErrors = ref<Set<string>>(new Set());
 
-const userId = computed(() => mainStore.user?.id || "");
+const userId = computed(() => mainStore.userData?.id || "");
 const hasMovies = computed(() => userMoviesStore.currentList.length !== 0);
 const totalMovies = computed(() => userMoviesStore.currentList.length);
 const shouldFetchMovies = computed(
@@ -118,13 +118,18 @@ const goToMovie = (item: UserMovie) => {
 const handleFiltersUpdate = async (filters: UserMoviesFilters) => {
   userMoviesStore.setFilters(filters);
 
+  if (!userId.value) {
+    return;
+  }
+
   try {
-    if (userMoviesStore.searchQuery) {
+    if (userMoviesStore.searchQuery.trim()) {
       await userMoviesStore.searchUserMovies(
         userId.value,
         userMoviesStore.searchQuery
       );
     } else {
+      userMoviesStore.clearSearch();
       await userMoviesStore.fetchUserMovies(userId.value);
     }
   } catch {
@@ -133,12 +138,12 @@ const handleFiltersUpdate = async (filters: UserMoviesFilters) => {
 };
 
 const findMovie = async (value: string) => {
+  if (!userId.value) {
+    return;
+  }
+
   try {
-    if (value) {
-      await userMoviesStore.searchUserMovies(userId.value, value);
-    } else {
-      await userMoviesStore.fetchUserMovies(userId.value);
-    }
+    await userMoviesStore.searchUserMovies(userId.value, value);
   } catch {
     message.error(ERROR_FETCH_MOVIES_TEXT);
   }
@@ -153,6 +158,12 @@ onMounted(async () => {
     }
   }
 });
+
+const repeatFetchMovies = () => {
+  if (userId.value) {
+    return userMoviesStore.fetchUserMovies(userId.value);
+  }
+};
 
 watch(
   () => userMoviesStore.searchQuery,
@@ -180,7 +191,7 @@ watch(
       <ListError
         v-if="userMoviesStore.isError"
         :is-error="userMoviesStore.isError"
-        :repeat-fn="() => userMoviesStore.fetchUserMovies(userId)"
+        :repeat-fn="repeatFetchMovies"
         repeat-text="Повторить"
       />
 
@@ -267,17 +278,17 @@ watch(
       </div>
 
       <div
-        v-if="showPaginator && totalMovies > moviesStore.pageSize"
+        v-if="showPaginator && totalMovies > userMoviesStore.pageSize"
         class="movie-list__pagination"
       >
         <a-pagination
-          v-model:current="moviesStore.currentPage"
-          :page-size="moviesStore.pageSize"
+          v-model:current="userMoviesStore.currentPage"
+          :page-size="userMoviesStore.pageSize"
           :page-size-options="['6', '12', '18', '24']"
           :total="totalMovies"
           show-size-changer
-          @change="moviesStore.setCurrentPage"
-          @showSizeChange="(_, size: number) => moviesStore.setPageSize(size)"
+          @change="userMoviesStore.setCurrentPage"
+          @showSizeChange="(_, size: number) => userMoviesStore.setPageSize(size)"
         />
       </div>
     </div>
@@ -285,57 +296,23 @@ watch(
 </template>
 
 <style lang="scss" scoped>
-@use "../../styles/screen-sizes" as *;
 @use "../../styles/media" as *;
+@use "@/styles/layout" as *;
+@use "@/styles/card" as *;
+@use "@/styles/antd-overrides" as *;
 
 .movie-list {
-  min-height: 100vh;
-  background: linear-gradient(
-    135deg,
-    var(--bg-primary) 0%,
-    var(--bg-secondary) 100%
-  );
-  color: var(--text-primary);
-  padding: 0 0 4rem 0;
+  @include pageShell(4rem);
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
 
   &__content {
-    width: 100%;
-    max-width: 1800px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    @include mediaDesktopS {
-      padding: 0 3rem;
-    }
+    @include pageContentContainer;
   }
 
   &__grid {
-    display: grid;
-    gap: 2rem;
-    margin: 2rem 0;
-    width: 100%;
-    max-width: 1400px;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-
-    @include mediaTablet {
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    }
-
-    @include mediaDesktopXS {
-      grid-template-columns: repeat(auto-fill, minmax(360px, 420px));
-      justify-content: center;
-    }
-
-    @media (max-width: 500px) {
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-    }
+    @include cardsGrid;
   }
 
   &__pagination {
@@ -355,57 +332,12 @@ watch(
     color: var(--text-secondary);
     width: 100%;
 
-    .ant-empty {
-      max-width: 400px;
-    }
-
-    .ant-empty-description {
-      margin-top: 1rem;
-      font-size: 1.1rem;
-    }
-  }
-}
-
-.movie-list__grid {
-  display: grid;
-  gap: 2.5rem;
-  margin: 2rem 0;
-  justify-content: center;
-  max-width: 1800px;
-
-  @media (min-width: 1900px) {
-    grid-template-columns: repeat(4, 430px);
-  }
-  @media (min-width: 1600px) {
-    grid-template-columns: repeat(4, 380px);
-  }
-  @media (min-width: 1200px) and (max-width: 1680px) {
-    grid-template-columns: repeat(3, minmax(380px, 430px));
-  }
-  @media (min-width: 900px) and (max-width: 1199px) {
-    grid-template-columns: repeat(2, 430px);
-  }
-  @media (max-width: 899px) {
-    grid-template-columns: minmax(350px, 430px);
-    gap: 2rem;
-  }
-  @media (max-width: 500px) {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+    @include antEmptyTypography;
   }
 }
 
 .movie-card {
-  background: var(--bg-primary);
-  border-radius: 16px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-  box-shadow: var(--shadow);
+  @include clickableCard(var(--radius-md));
 
   &::before {
     content: "";

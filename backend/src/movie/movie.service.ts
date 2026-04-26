@@ -12,14 +12,8 @@ import { MoviesStatsResponse } from './dto/movies-stats.dto';
 
 interface MovieFilters {
   genre?: Genre;
-  rateMin?: number;
-  rateMax?: number;
-  dateFrom?: string;
-  dateTo?: string;
   publishDateFrom?: string;
   publishDateTo?: string;
-  seeLater?: boolean;
-  userId?: string;
 }
 
 @Injectable()
@@ -338,11 +332,16 @@ class MovieService {
     query: string,
     filters: MovieFilters = {},
   ): Promise<Movie[]> {
-    if (!query && !Object.values(filters).some(Boolean)) {
+    const hasQuery = !!query?.trim();
+    const hasFilters = Object.values(filters).some(
+      (v) => v !== undefined && v !== '',
+    );
+
+    if (!hasQuery && !hasFilters) {
       return this.findAll();
     }
 
-    const where = this.buildWhereClause(filters, query);
+    const where = this.buildWhereClause(filters, hasQuery ? query.trim() : undefined);
 
     const movies = await this.prismaService.movie.findMany({
       where,
