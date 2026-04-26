@@ -373,6 +373,10 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     }
   };
 
+  const removeFromSearchResults = (movieId: string) => {
+    searchResults.value = searchResults.value.filter(um => um.movieId !== movieId);
+  };
+
   return {
     // State
     userMovies,
@@ -415,5 +419,6 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     updateUserMovie,
     removeUserMovie,
     fetchUserMovieById,
+    removeFromSearchResults,
   };
 });

@@ -15,6 +15,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { LoggerMiddleware } from './common/middlewares';
 import { AuthModule } from './auth/auth.module';
 import { UserMovieModule } from './user-movie/user-movie.module';
+import { BadgeModule } from './badge/badge.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UserMovieModule } from './user-movie/user-movie.module';
     ActorModule,
     AuthModule,
     UserMovieModule,
+    BadgeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

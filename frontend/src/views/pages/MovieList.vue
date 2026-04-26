@@ -96,9 +96,7 @@ const toggleSeeLater = async (item: UserMovie) => {
     });
 
     if (userMoviesStore.filters.seeLater && !newValue) {
-      userMoviesStore.searchResults = userMoviesStore.searchResults.filter(
-        (um) => um.movieId !== item.movieId
-      );
+      userMoviesStore.removeFromSearchResults(item.movieId);
     }
 
     message.success(

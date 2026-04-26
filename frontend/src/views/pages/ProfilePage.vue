@@ -2,20 +2,23 @@
 import { useMainStore } from "@/state/state";
 import { useRouter } from "vue-router";
 
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import type { UserData } from "@/state/types";
 import ProfileSettings from "@/components/ProfileSettings/ProfileSettings.vue";
+import BadgesList from "@/components/Badges/BadgesList.vue";
 import { message } from "ant-design-vue";
 import {
   ERROR_UPDATE_USER_NAME_TEXT,
   SUCCESS_UPDATE_USER_NAME_TEXT,
 } from "@/state/constants";
+import { useBadgesStore } from "@/stores";
 
 const store = useMainStore();
 const router = useRouter();
+const badgesStore = useBadgesStore();
 
 const isModalVisible = ref(false);
 const editForm = ref({ fullName: "" });
@@ -24,6 +27,7 @@ const user = computed<UserData | null>(() => store.userData ?? null);
 const fullName = computed(() => store.userData?.fullName || "");
 const showCard = computed(() => store.isLoggedIn);
 const showContent = computed(() => showCard.value && user.value);
+const userId = computed(() => store.userData?.id || "");
 
 const initials = computed(() => {
   if (!user.value?.fullName) {
@@ -62,6 +66,12 @@ const updateName = async () => {
 const showEditDisplayNameModal = () => {
   isModalVisible.value = true;
 };
+
+onMounted(async () => {
+  if (userId.value) {
+    await badgesStore.fetchUserBadges(userId.value);
+  }
+});
 </script>
 
 <template>
@@ -98,6 +108,34 @@ const showEditDisplayNameModal = () => {
                 </div>
               </template>
             </div>
+          </div>
+        </article>
+
+        <article class="badges-card">
+          <div class="badges-card__header">
+            <BaseIcon name="mdi:trophy" class="badges-card__icon" />
+            <h3 class="badges-card__title">Достижения</h3>
+          </div>
+
+          <div v-if="badgesStore.isLoading" class="badges-card__loading">
+            <div class="badges-card__loader"></div>
+            <span>Загрузка достижений...</span>
+          </div>
+
+          <div v-else-if="badgesStore.isError" class="badges-card__error">
+            <BaseIcon name="mdi:alert-circle" class="badges-card__error-icon" />
+            <span>Ошибка загрузки достижений</span>
+          </div>
+
+          <div v-else class="badges-card__content">
+            <a-tabs default-active-key="unlocked">
+              <a-tab-pane key="unlocked" tab="Открытые">
+                <BadgesList :badges="badgesStore.unlockedBadges" />
+              </a-tab-pane>
+              <a-tab-pane key="locked" tab="Закрытые">
+                <BadgesList :badges="badgesStore.lockedBadges" :show-locked="true" />
+              </a-tab-pane>
+            </a-tabs>
           </div>
         </article>
 
@@ -193,12 +231,12 @@ const showEditDisplayNameModal = () => {
     }
 
     @include mediaTablet {
-      grid-template-columns: 430px 280px;
+      grid-template-columns: 1fr;
       gap: 2.5rem;
     }
 
     @include mediaDesktopXS {
-      grid-template-columns: 480px 1fr;
+      grid-template-columns: 430px 1fr 280px;
       gap: 3rem;
     }
   }
@@ -379,6 +417,86 @@ const showEditDisplayNameModal = () => {
       width: 20px;
       height: 20px;
     }
+  }
+}
+
+.badges-card {
+  background: var(--bg-primary);
+  border-radius: 24px;
+  box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  padding: 2rem;
+
+  @include mediaMobileXL {
+    padding: 1.5rem;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  &__icon {
+    width: 28px;
+    height: 28px;
+    color: var(--ant-color-warning);
+  }
+
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  &__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--text-secondary);
+  }
+
+  &__loader {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--ant-color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  &__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--ant-color-error);
+  }
+
+  &__error-icon {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  &__content {
+    :deep(.ant-tabs-nav) {
+      margin-bottom: 1rem;
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
