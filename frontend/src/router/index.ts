@@ -55,6 +55,22 @@ const routes: Array<RouteRecordRaw> = [
     },
   },
   {
+    path: "/friends",
+    name: "friends",
+    component: () => import("@/views/pages/FriendsPage.vue"),
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
+    path: "/chat/:userId?",
+    name: "chat",
+    component: () => import("@/views/pages/ChatPage.vue"),
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
     path: "/:pathMatch(.*)*",
     name: "not-found",
     redirect: "/list",

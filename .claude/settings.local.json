@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npx prisma *)",
       "Bash(npm list *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(yarn add *)",
+      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"да делай как все нужно\" npx prisma migrate reset --force)",
+      "Bash(npm run *)"
     ]
   }
 }

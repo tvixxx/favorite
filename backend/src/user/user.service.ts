@@ -29,6 +29,25 @@ export class UserService {
     return user;
   }
 
+  public async findByEmail(email: string) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        email,
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
+
   public async create(dto: CreateUserDto) {
     const { email, fullName, tags, password } = dto;
 

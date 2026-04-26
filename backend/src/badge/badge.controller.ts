@@ -1,7 +1,7 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BadgeService } from './badge.service';
-import { Authorization } from '../auth/decorators/authorization.decorator';
+import { Authorization } from '../common/decorators/authorization.decorator';
 
 @ApiTags('Badges')
 @Controller('users/:userId/badges')

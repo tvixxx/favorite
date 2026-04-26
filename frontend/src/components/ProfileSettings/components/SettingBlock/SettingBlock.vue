@@ -2,23 +2,27 @@
 import { currentTheme, themes } from "@/composable";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import type { SelectProps } from "ant-design-vue";
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import {
   type SettingBlockProps,
   type StatsBlockItem,
   StatsBlockType,
 } from "@/shared/profile/profile.types";
 import StatsBlock from "@/components/ProfileSettings/components/Stats/StatsBlock.vue";
-import { useUserMoviesStore } from "@/stores";
+import { useUserMoviesStore, useFriendsStore } from "@/stores";
 import { useMainStore } from "@/state/state";
 import { STAT_BLOCK_TITLES } from "@/components/ProfileSettings/constants";
+import { useRouter } from "vue-router";
 
 const userMoviesStore = useUserMoviesStore();
+const friendsStore = useFriendsStore();
 const mainStore = useMainStore();
+const router = useRouter();
 
 const props = defineProps<SettingBlockProps>();
 const isTheme = computed(() => props.type === "theme");
 const isStats = computed(() => props.type === "stats");
+const isFriends = computed(() => props.type === "friends");
 
 const userId = computed(() => mainStore.userData?.id || "");
 
@@ -53,6 +57,20 @@ const retryStats = async () => {
     await userMoviesStore.fetchUserMoviesStats(userId.value);
   }
 };
+
+const goToFriendsPage = () => {
+  router.push('/friends');
+};
+
+const goToChatPage = () => {
+  router.push('/chat');
+};
+
+onMounted(async () => {
+  if (isFriends.value && userId.value) {
+    await friendsStore.fetchStats(userId.value);
+  }
+});
 </script>
 
 <template>
@@ -98,6 +116,48 @@ const retryStats = async () => {
         </div>
         <div v-else class="setting-block__stats-content">
           <StatsBlock :items="stats" />
+        </div>
+      </div>
+    </div>
+
+    <div v-if="isFriends" class="setting-block__friends">
+      <div v-if="friendsStore.isLoading" class="setting-block__stats-loading">
+        <div class="setting-block__loader"></div>
+        <span>Загрузка...</span>
+      </div>
+      <div v-else-if="friendsStore.stats" class="setting-block__friends-content">
+        <div class="friends-stats">
+          <div class="friends-stats__item">
+            <BaseIcon name="mdi:account-multiple" class="friends-stats__icon" />
+            <div class="friends-stats__info">
+              <span class="friends-stats__value">{{ friendsStore.stats.friendsCount }}</span>
+              <span class="friends-stats__label">Друзей</span>
+            </div>
+          </div>
+          <div class="friends-stats__item">
+            <BaseIcon name="mdi:account-heart" class="friends-stats__icon" />
+            <div class="friends-stats__info">
+              <span class="friends-stats__value">{{ friendsStore.stats.subscribersCount }}</span>
+              <span class="friends-stats__label">Подписчиков</span>
+            </div>
+          </div>
+          <div class="friends-stats__item">
+            <BaseIcon name="mdi:account-star" class="friends-stats__icon" />
+            <div class="friends-stats__info">
+              <span class="friends-stats__value">{{ friendsStore.stats.subscriptionsCount }}</span>
+              <span class="friends-stats__label">Подписок</span>
+            </div>
+          </div>
+        </div>
+        <div class="friends-actions">
+          <a-button type="primary" size="large" block @click="goToFriendsPage">
+            <BaseIcon name="mdi:account-group" />
+            Управление друзьями
+          </a-button>
+          <a-button size="large" block @click="goToChatPage">
+            <BaseIcon name="mdi:message-text" />
+            Сообщения
+          </a-button>
         </div>
       </div>
     </div>
@@ -180,5 +240,60 @@ const retryStats = async () => {
   &__retry-btn {
     margin-top: 1rem;
   }
+
+  &__friends {
+    padding: 1rem;
+    @include mutedInsetPanel;
+  }
+
+  &__friends-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+}
+
+.friends-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--bg-primary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+  }
+
+  &__icon {
+    width: 32px;
+    height: 32px;
+    color: var(--ant-color-primary);
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  &__label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+}
+
+.friends-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 </style>

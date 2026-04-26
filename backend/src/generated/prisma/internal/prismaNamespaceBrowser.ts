@@ -56,7 +56,10 @@ export const ModelName = {
   MoviePoster: 'MoviePoster',
   Review: 'Review',
   Actor: 'Actor',
-  UserMovie: 'UserMovie'
+  UserMovie: 'UserMovie',
+  Friendship: 'Friendship',
+  Message: 'Message',
+  UserStatus: 'UserStatus'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -156,6 +159,43 @@ export const UserMovieScalarFieldEnum = {
 } as const
 
 export type UserMovieScalarFieldEnum = (typeof UserMovieScalarFieldEnum)[keyof typeof UserMovieScalarFieldEnum]
+
+
+export const FriendshipScalarFieldEnum = {
+  id: 'id',
+  requesterId: 'requesterId',
+  addresseeId: 'addresseeId',
+  status: 'status',
+  type: 'type',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FriendshipScalarFieldEnum = (typeof FriendshipScalarFieldEnum)[keyof typeof FriendshipScalarFieldEnum]
+
+
+export const MessageScalarFieldEnum = {
+  id: 'id',
+  senderId: 'senderId',
+  receiverId: 'receiverId',
+  content: 'content',
+  isRead: 'isRead',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum]
+
+
+export const UserStatusScalarFieldEnum = {
+  userId: 'userId',
+  isOnline: 'isOnline',
+  lastSeenAt: 'lastSeenAt',
+  socketId: 'socketId',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserStatusScalarFieldEnum = (typeof UserStatusScalarFieldEnum)[keyof typeof UserStatusScalarFieldEnum]
 
 
 export const SortOrder = {

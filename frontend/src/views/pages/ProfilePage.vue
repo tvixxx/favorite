@@ -232,12 +232,12 @@ onMounted(async () => {
 
     @include mediaTablet {
       grid-template-columns: 1fr;
-      gap: 2.5rem;
+      gap: 1.5rem;
     }
 
     @include mediaDesktopXS {
-      grid-template-columns: 430px 1fr 280px;
-      gap: 3rem;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
     }
   }
 }

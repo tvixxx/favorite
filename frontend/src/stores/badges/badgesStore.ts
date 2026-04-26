@@ -32,7 +32,7 @@ export const useBadgesStore = defineStore('badges', () => {
     try {
       const response = await useFetch<Badge[]>(
         `/users/${userId}/badges`,
-        FETCH_METHOD.GET
+        { method: FETCH_METHOD.get }
       );
 
       if (isSuccessStatus(response.status)) {

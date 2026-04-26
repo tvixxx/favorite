@@ -13,6 +13,12 @@ export const SETTING_BLOCKS: SettingBlockProps[] = [
     description: "Информация по фильмам и сериалам",
     icon: "mdi:information-slab-symbol",
   },
+  {
+    type: "friends",
+    title: "Друзья",
+    description: "Управление друзьями и подписками",
+    icon: "mdi:account-group",
+  },
 ];
 
 export const STAT_BLOCK_TITLES: Record<StatsBlockType, StatsBlockTitle> = {
