@@ -1,4 +1,4 @@
-export type SettingBlockType = "theme" | "stats";
+export type SettingBlockType = "theme" | "stats" | "friends";
 
 export interface SettingBlockProps {
   type: SettingBlockType;

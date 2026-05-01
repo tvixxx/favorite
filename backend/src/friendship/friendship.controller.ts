@@ -109,10 +109,7 @@ export class FriendshipController {
   @Authorization()
   @ApiOperation({ summary: 'Get user subscriptions' })
   @ApiResponse({ status: 200, description: 'List of subscriptions' })
-  async getSubscriptions(
-    @Param('userId') userId: string,
-    @Request() req: any,
-  ) {
+  async getSubscriptions(@Param('userId') userId: string, @Request() req: any) {
     if (req.user.id !== userId) {
       throw new BadRequestException('Unauthorized');
     }

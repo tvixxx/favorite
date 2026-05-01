@@ -9,6 +9,7 @@ import {
   Put,
 } from '@nestjs/common';
 import {
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -40,13 +41,16 @@ export class ReviewController {
   }
 
   @ApiOperation({
-    summary: 'Получить список отзывов',
-    description: 'Возвращает список всех отзывов',
+    summary: 'Получить отзыв по ID',
+    description: 'Возвращает один отзыв по идентификатору',
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Отзывы найдены',
-    type: [ReviewResponse],
+    description: 'Отзыв найден',
+    type: ReviewResponse,
+  })
+  @ApiNotFoundResponse({
+    description: 'Отзыв не найден',
   })
   @Get(':id')
   public findById(@Param('id') id: string) {
@@ -58,11 +62,14 @@ export class ReviewController {
     description: 'Обновляет отзыв по ID',
   })
   @ApiOkResponse({
-    description: 'Отзыв обновлен',
-    type: Boolean,
+    description: 'Отзыв обновлён',
+    type: ReviewResponse,
   })
   @ApiNotFoundResponse({
     description: 'Отзыв не найден',
+  })
+  @ApiForbiddenResponse({
+    description: 'Нельзя редактировать чужой отзыв',
   })
   @Authorization()
   @Put(':id')
@@ -79,11 +86,18 @@ export class ReviewController {
     description: 'Удаляет отзыв по ID',
   })
   @ApiOkResponse({
-    description: 'Отзыв удален',
-    type: Boolean,
+    description: 'Идентификатор удалённого отзыва',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+      example: '550e8400-e29b-41d4-a716-446655440000',
+    },
   })
   @ApiNotFoundResponse({
     description: 'Отзыв не найден',
+  })
+  @ApiForbiddenResponse({
+    description: 'Нельзя удалить чужой отзыв',
   })
   @Authorization()
   @Delete(':id')
