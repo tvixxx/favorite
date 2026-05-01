@@ -13,7 +13,11 @@ async function bootstrap() {
   initSwaggerDocs(app);
 
   app.use(cookieParser());
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+    }),
+  );
   app.use(LoggerMiddlewareFn);
   app.enableCors();
   await app.listen(3005);

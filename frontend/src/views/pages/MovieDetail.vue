@@ -150,15 +150,18 @@ const hasSerialProgress = computed(() => {
 const isSerialCompleted = computed(() => {
   if (!movie.value?.isSerial || !currentUserMovie.value) return false;
 
-  const seasonsComplete =
-    movie.value.seasonCount && currentUserMovie.value.currentSeason
-      ? currentUserMovie.value.currentSeason >= movie.value.seasonCount
-      : false;
-
-  const episodesComplete =
-    movie.value.episodeCount && currentUserMovie.value.currentEpisode
-      ? currentUserMovie.value.currentEpisode >= movie.value.episodeCount
-      : false;
+  const m = movie.value;
+  const um = currentUserMovie.value;
+  const seasonsComplete = !!(
+    m.seasonCount &&
+    um.currentSeason &&
+    um.currentSeason >= m.seasonCount
+  );
+  const episodesComplete = !!(
+    m.episodeCount &&
+    um.currentEpisode &&
+    um.currentEpisode >= m.episodeCount
+  );
 
   return seasonsComplete && episodesComplete;
 });
