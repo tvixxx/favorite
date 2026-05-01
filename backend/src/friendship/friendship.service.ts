@@ -11,12 +11,10 @@ export class FriendshipService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async sendRequest(requesterId: string, dto: CreateFriendshipDto) {
-    // Проверка что пользователь не отправляет запрос самому себе
     if (requesterId === dto.addresseeId) {
       throw new ConflictException('Cannot send request to yourself');
     }
 
-    // Проверка существования получателя
     const addressee = await this.prismaService.user.findUnique({
       where: { id: dto.addresseeId },
     });
@@ -25,7 +23,6 @@ export class FriendshipService {
       throw new NotFoundException('User not found');
     }
 
-    // Проверка существующих отношений
     const existing = await this.prismaService.friendship.findFirst({
       where: {
         OR: [
@@ -39,7 +36,6 @@ export class FriendshipService {
       throw new ConflictException('Friendship already exists');
     }
 
-    // Создание запроса/подписки
     return this.prismaService.friendship.create({
       data: {
         requesterId,
@@ -224,37 +220,41 @@ export class FriendshipService {
   }
 
   async getStats(userId: string) {
-    const [friendsCount, subscribersCount, subscriptionsCount, pendingRequestsCount] =
-      await Promise.all([
-        this.prismaService.friendship.count({
-          where: {
-            OR: [{ requesterId: userId }, { addresseeId: userId }],
-            status: 'ACCEPTED',
-            type: 'FRIEND_REQUEST',
-          },
-        }),
-        this.prismaService.friendship.count({
-          where: {
-            addresseeId: userId,
-            status: 'ACCEPTED',
-            type: 'SUBSCRIPTION',
-          },
-        }),
-        this.prismaService.friendship.count({
-          where: {
-            requesterId: userId,
-            status: 'ACCEPTED',
-            type: 'SUBSCRIPTION',
-          },
-        }),
-        this.prismaService.friendship.count({
-          where: {
-            addresseeId: userId,
-            status: 'PENDING',
-            type: 'FRIEND_REQUEST',
-          },
-        }),
-      ]);
+    const [
+      friendsCount,
+      subscribersCount,
+      subscriptionsCount,
+      pendingRequestsCount,
+    ] = await Promise.all([
+      this.prismaService.friendship.count({
+        where: {
+          OR: [{ requesterId: userId }, { addresseeId: userId }],
+          status: 'ACCEPTED',
+          type: 'FRIEND_REQUEST',
+        },
+      }),
+      this.prismaService.friendship.count({
+        where: {
+          addresseeId: userId,
+          status: 'ACCEPTED',
+          type: 'SUBSCRIPTION',
+        },
+      }),
+      this.prismaService.friendship.count({
+        where: {
+          requesterId: userId,
+          status: 'ACCEPTED',
+          type: 'SUBSCRIPTION',
+        },
+      }),
+      this.prismaService.friendship.count({
+        where: {
+          addresseeId: userId,
+          status: 'PENDING',
+          type: 'FRIEND_REQUEST',
+        },
+      }),
+    ]);
 
     return {
       friendsCount,

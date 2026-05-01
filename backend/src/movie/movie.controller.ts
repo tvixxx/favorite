@@ -21,6 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { MoviesStatsResponse } from './dto/movies-stats.dto';
 import { Genre } from '../generated/prisma/enums';
+import { ReviewResponse } from '../review/dto/review.dto';
 
 @ApiTags('Movies')
 @Controller('movies')
@@ -136,10 +137,9 @@ export class MovieController {
     description: 'Возвращает информацию об отзывах у фильма',
   })
   @ApiOkResponse({
-    description: 'Отзывы найдены',
-  })
-  @ApiNotFoundResponse({
-    description: 'Отзывы не найдены',
+    description:
+      'Список отзывов к фильму. Пустой массив, если отзывов нет или фильма с таким id нет в связке.',
+    type: [ReviewResponse],
   })
   @Get(':id/reviews')
   public getReviewsByMovieId(

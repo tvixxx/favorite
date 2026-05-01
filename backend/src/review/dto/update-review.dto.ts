@@ -21,8 +21,9 @@ export class UpdateReviewDto {
 
   @ApiProperty({
     description: 'Рейтинг отзыва',
-    example: '7',
-    type: Number,
+    example: 7,
+    minimum: 0,
+    maximum: 10,
   })
   @IsNumber()
   @Min(0)

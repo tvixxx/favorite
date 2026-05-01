@@ -4,12 +4,6 @@ import { MOVIES_ENDPOINTS, REVIEWS_ENDPOINT } from "@/constants";
 import { FETCH_METHOD, useFetch } from "@/composable/useFetch";
 import { isSuccessStatus } from "@/utils";
 
-interface CreateReviewPayload {
-  text: string;
-  rate: number;
-  movieId: string;
-}
-
 interface UpdateReviewPayload {
   text: string;
   rate: number;
@@ -20,28 +14,39 @@ const isLoading = ref<boolean>(false);
 const isLoaded = ref<boolean>(false);
 const isError = ref<boolean>(false);
 const totalReviews = ref(0);
+const loadedMovieId = ref<string | null>(null);
+let fetchGeneration = 0;
 
 export function useReviews() {
   const setReviews = (newReviews: Review[]) => {
     reviews.value = newReviews;
     totalReviews.value = newReviews.length;
-    setIsLoaded(true);
+    isLoaded.value = true;
   };
 
   const setIsLoading = (loading: boolean) => {
     isLoading.value = loading;
   };
 
-  const setIsLoaded = (loaded: boolean) => {
-    isLoaded.value = loaded;
-  };
-
-  const setIsError = (error: any) => {
+  const setIsError = (error: unknown) => {
     isError.value = !!error;
-    setIsLoaded(false);
+
+    if (error) {
+      isLoaded.value = false;
+    }
   };
 
   const fetchReviews = async (movieId: string, take: number = 10) => {
+    const gen = ++fetchGeneration;
+
+    if (loadedMovieId.value !== movieId) {
+      reviews.value = [];
+      totalReviews.value = 0;
+      isLoaded.value = false;
+    }
+
+    loadedMovieId.value = movieId;
+
     setIsLoading(true);
     setIsError(false);
 
@@ -53,39 +58,61 @@ export function useReviews() {
         }
       );
 
+      if (gen !== fetchGeneration) {
+        return;
+      }
+
       if (!isSuccessStatus(status)) {
         throw new Error("Ошибка загрузки отзывов");
       }
 
-      setReviews(data);
+      setReviews(data ?? []);
     } catch (err) {
-      setIsError(true);
+      if (gen !== fetchGeneration) {
+        return;
+      }
+
+      setIsError(err);
       throw err;
     } finally {
-      setIsLoading(false);
+      if (gen === fetchGeneration) {
+        setIsLoading(false);
+      }
     }
   };
 
   const createReview = async (payload: Partial<Review>): Promise<void> => {
+    const requestedMovieId = payload.movieId;
     try {
       const { data, status } = await useFetch<Review>(`${REVIEWS_ENDPOINT}`, {
         method: FETCH_METHOD.post,
         data: payload,
       });
 
-      console.log("createReview response:", {
-        data,
-        status,
-        isSuccess: isSuccessStatus(status),
-      });
-
-      if (isSuccessStatus(status) && data) {
-        reviews.value = [data, ...reviews.value];
-        totalReviews.value += 1;
-        console.log("reviews after update:", reviews.value);
+      if (!isSuccessStatus(status) || !data) {
+        return;
       }
-    } catch (err) {
-      console.error("createReview error:", err);
+
+      const reviewMovieId = data.movieId ?? requestedMovieId;
+      const sameMovie = (a: string | null, b: string | undefined | null) =>
+        !!a &&
+        !!b &&
+        String(a).trim() === String(b).trim();
+
+      if (
+        reviewMovieId &&
+        (loadedMovieId.value === null ||
+          sameMovie(loadedMovieId.value, reviewMovieId))
+      ) {
+        reviews.value = [
+          data,
+          ...reviews.value.filter((r) => r.id !== data.id),
+        ];
+        totalReviews.value = reviews.value.length;
+        isLoaded.value = true;
+        isError.value = false;
+      }
+    } catch {
       throw new Error("Не удалось создать отзыв");
     }
   };
@@ -108,7 +135,7 @@ export function useReviews() {
           return review.id === reviewId ? data : review;
         });
       }
-    } catch (err) {
+    } catch {
       throw new Error("Не удалось обновить отзыв");
     }
   };
@@ -128,7 +155,7 @@ export function useReviews() {
         );
         totalReviews.value -= 1;
       }
-    } catch (err) {
+    } catch {
       throw new Error("Не удалось удалить отзыв");
     }
   };
@@ -140,9 +167,7 @@ export function useReviews() {
     isError,
     totalReviews,
 
-    setReviews,
     setIsLoading,
-    setIsLoaded,
     setIsError,
 
     fetchReviews,

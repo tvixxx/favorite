@@ -38,10 +38,6 @@ watch(
 
 const handleSubmit = () => {
   emit("submit", reviewForm.text, reviewForm.rate);
-
-  if (!props.isEditing) {
-    resetForm();
-  }
 };
 
 const resetForm = () => {
@@ -49,6 +45,10 @@ const resetForm = () => {
   reviewForm.rate = 0;
   reviewFormRef.value?.resetFields();
 };
+
+defineExpose({
+  resetForm,
+});
 
 const handleCancel = () => {
   resetForm();

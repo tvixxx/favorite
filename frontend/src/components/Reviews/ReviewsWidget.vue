@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useReviews } from "@/composable/useReviews";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
@@ -9,8 +9,13 @@ import { showErrorRequest } from "@/state/utils";
 import type { Review } from "@/stores";
 import { message } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import { useMainStore } from "@/state/state";
 
 const { movieId } = defineProps<{ movieId: string }>();
+
+const mainStore = useMainStore();
+const currentUserId = computed(() => mainStore.userData?.id ?? null);
+const isLoggedIn = computed(() => mainStore.isLoggedIn);
 
 const reviewsStore = useReviews();
 const { reviews, isLoading, isLoaded, isError, totalReviews } = reviewsStore;
@@ -22,15 +27,25 @@ const MIN_REVIEW_TEXT_LENGTH = 10;
 const editingReview = ref<Review | null>(null);
 const isEditing = ref(false);
 
-onMounted(async () => {
-  if (!isLoaded.value) {
-    try {
-      await fetchReviews(movieId);
-    } catch {
-      // ошибка обработана в fetchReviews
+type ReviewFormExpose = { resetForm: () => void };
+const reviewFormRef = ref<ReviewFormExpose | null>(null);
+
+const canEditReview = (review: Review) =>
+  !!currentUserId.value && review.userId === currentUserId.value;
+
+watch(
+  () => movieId,
+  async (id) => {
+    if (!id) {
+      return;
     }
-  }
-});
+    cancelEdit();
+    try {
+      await fetchReviews(id);
+    } catch {}
+  },
+  { immediate: true }
+);
 
 const startEdit = (review: Review) => {
   editingReview.value = review;
@@ -58,6 +73,7 @@ const handleSubmit = async (text: string, rate: number) => {
     } else {
       await createReview({ text, rate, movieId });
       message.success("Отзыв добавлен");
+      reviewFormRef.value?.resetForm();
     }
   } catch (error) {
     showErrorRequest(error);
@@ -116,6 +132,7 @@ const handleDelete = async (reviewId: string) => {
           v-for="review in reviews"
           :key="review.id"
           :review="review"
+          :can-edit="canEditReview(review)"
           :is-editing="editingReview?.id === review.id"
           @edit="startEdit(review)"
           @delete="handleDelete(review.id)"
@@ -128,7 +145,7 @@ const handleDelete = async (reviewId: string) => {
       </div>
     </template>
 
-    <div class="reviews-widget__form-section">
+    <div v-if="isLoggedIn" class="reviews-widget__form-section">
       <div class="reviews-widget__form-header">
         <h4 class="reviews-widget__form-title">
           {{ isEditing ? "Редактировать отзыв" : "Написать отзыв" }}
@@ -144,7 +161,9 @@ const handleDelete = async (reviewId: string) => {
       </div>
 
       <ReviewForm
+        ref="reviewFormRef"
         :key="editingReview?.id ?? 'new'"
+        :is-editing="isEditing"
         :initial-text="editingReview?.text ?? ''"
         :initial-rate="editingReview?.rate ?? 0"
         @submit="handleSubmit"

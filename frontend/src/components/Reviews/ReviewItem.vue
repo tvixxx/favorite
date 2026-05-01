@@ -3,10 +3,14 @@ import type { Review } from "@/stores";
 import { computed } from "vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 
-const props = defineProps<{
-  review: Review;
-  isEditing?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    review: Review;
+    isEditing?: boolean;
+    canEdit?: boolean;
+  }>(),
+  { canEdit: false },
+);
 
 const emit = defineEmits<{
   edit: [review: Review];
@@ -30,7 +34,7 @@ const ratePercent = computed(() => (props.review.rate / 10) * 100);
         </div>
       </div>
 
-      <div class="review-item__actions">
+      <div v-if="props.canEdit" class="review-item__actions">
         <button
           class="review-item__action-btn"
           :class="{ 'review-item__action-btn--active': isEditing }"
