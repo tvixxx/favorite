@@ -19,6 +19,7 @@ import { BadgeModule } from './badge/badge.module';
 import { FriendshipModule } from './friendship/friendship.module';
 import { MessageModule } from './message/message.module';
 import { UserStatusModule } from './user-status/user-status.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { UserStatusModule } from './user-status/user-status.module';
     FriendshipModule,
     MessageModule,
     UserStatusModule,
+    LeaderboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

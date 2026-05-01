@@ -7,13 +7,24 @@ export interface Badge {
   title: string;
   description: string;
   icon: string;
-  category: 'movies' | 'favorites' | 'completed' | 'serials' | 'ratings' | 'time';
+  category:
+    | 'movies'
+    | 'favorites'
+    | 'completed'
+    | 'serials'
+    | 'ratings'
+    | 'time';
   tier: 'bronze' | 'silver' | 'gold' | 'platinum';
   isUnlocked: boolean;
   progress?: number;
   requirement: number;
   currentValue: number;
 }
+
+export type LeaderboardBadgePreview = Pick<
+  Badge,
+  'id' | 'title' | 'icon' | 'tier' | 'category'
+>;
 
 interface BadgeDefinition {
   id: string;
@@ -198,6 +209,38 @@ export class BadgeService {
     };
 
     return this.calculateBadges(extendedStats, timeStats);
+  }
+
+  async getTopUnlockedBadges(
+    userId: string,
+    limit = 6,
+  ): Promise<LeaderboardBadgePreview[]> {
+    const tierRank: Record<Badge['tier'], number> = {
+      platinum: 4,
+      gold: 3,
+      silver: 2,
+      bronze: 1,
+    };
+
+    const badges = await this.getUserBadges(userId);
+
+    return badges
+      .filter((b) => b.isUnlocked)
+      .sort((a, b) => {
+        const tr = tierRank[b.tier] - tierRank[a.tier];
+        if (tr !== 0) {
+          return tr;
+        }
+        return b.requirement - a.requirement;
+      })
+      .slice(0, limit)
+      .map(({ id, title, icon, tier, category }) => ({
+        id,
+        title,
+        icon,
+        tier,
+        category,
+      }));
   }
 
   private async getTimeBasedStats(userId: string) {

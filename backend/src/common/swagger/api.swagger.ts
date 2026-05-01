@@ -13,6 +13,7 @@ import {
 } from './swagger.constants';
 import { AuthModule } from '../../auth/auth.module';
 import { UserMovieModule } from '../../user-movie/user-movie.module';
+import { LeaderboardModule } from '../../leaderboard/leaderboard.module';
 
 const getSwaggerDocumentConfig = (): Omit<OpenAPIObject, 'paths'> => {
   const { title, description, version, contact } = SWAGGER_CONFIG_DATA;
@@ -40,6 +41,7 @@ const SWAGGER_DOCUMENT_INCLUDE_MODULES = [
   UserModule,
   AuthModule,
   UserMovieModule,
+  LeaderboardModule,
 ];
 
 const getSwaggerDocument = (app: INestApplication): OpenAPIObject => {

@@ -47,6 +47,14 @@ const routes: Array<RouteRecordRaw> = [
     },
   },
   {
+    path: "/leaderboard",
+    name: "leaderboard",
+    component: () => import("@/views/pages/LeaderboardUsersPage.vue"),
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
     path: "/profile",
     name: "profile",
     component: () => import("@/views/pages/ProfilePage.vue"),

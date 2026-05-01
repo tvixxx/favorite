@@ -28,6 +28,10 @@ const selectedKeys = computed(() => {
     return ["favorites"];
   }
 
+  if (path.startsWith("/leaderboard")) {
+    return ["leaderboard"];
+  }
+
   return [];
 });
 
@@ -61,6 +65,10 @@ const signOut = (): void => {
 
       <a-menu-item key="favorites" @click="router.push('/favorites')">
         Избранное
+      </a-menu-item>
+
+      <a-menu-item key="leaderboard" @click="router.push('/leaderboard')">
+        Топ
       </a-menu-item>
 
       <a-menu-item class="navigation__sign-out" key="signout">
