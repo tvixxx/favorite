@@ -1,24 +1,32 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { useChatStore, useUserStatusStore } from '@/stores';
-import { useMainStore } from '@/state/state';
-import { Input, Button, List, ListItem, Empty, Badge, Avatar } from 'ant-design-vue';
-import { SendOutlined } from '@ant-design/icons-vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
+import { useRoute } from "vue-router";
+import { useChatStore, useUserStatusStore } from "@/stores";
+import { useMainStore } from "@/state/state";
+import {
+  Input,
+  Button,
+  List,
+  ListItem,
+  Empty,
+  Badge,
+  Avatar,
+} from "ant-design-vue";
+import { SendOutlined } from "@ant-design/icons-vue";
 
 const route = useRoute();
 const chatStore = useChatStore();
 const userStatusStore = useUserStatusStore();
 const mainStore = useMainStore();
 
-const userId = computed(() => mainStore.userData?.id || '');
-const messageInput = ref('');
+const userId = computed(() => mainStore.userData?.id || "");
+const messageInput = ref("");
 const messagesContainer = ref<HTMLElement | null>(null);
 
 const selectedConversation = computed(() => {
   if (!chatStore.currentChatUserId) return null;
   return chatStore.conversations.find(
-    c => c.otherUser.id === chatStore.currentChatUserId
+    (c) => c.otherUser.id === chatStore.currentChatUserId,
   );
 });
 
@@ -44,7 +52,7 @@ const sendMessage = () => {
   if (!messageInput.value.trim() || !chatStore.currentChatUserId) return;
 
   chatStore.sendMessage(chatStore.currentChatUserId, messageInput.value.trim());
-  messageInput.value = '';
+  messageInput.value = "";
   scrollToBottom();
 };
 
@@ -55,15 +63,25 @@ const formatTime = (dateString: string) => {
   const hours = Math.floor(diff / (1000 * 60 * 60));
 
   if (hours < 24) {
-    return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString("ru-RU", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   } else {
-    return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+    return date.toLocaleDateString("ru-RU", {
+      day: "2-digit",
+      month: "2-digit",
+    });
   }
 };
 
-watch(() => chatStore.currentMessages, () => {
-  scrollToBottom();
-}, { deep: true });
+watch(
+  () => chatStore.currentMessages,
+  () => {
+    scrollToBottom();
+  },
+  { deep: true },
+);
 
 onMounted(async () => {
   if (!userId.value) return;
@@ -71,10 +89,27 @@ onMounted(async () => {
   chatStore.connect(userId.value);
   await chatStore.fetchConversations(userId.value);
 
-  // Если есть userId в route params, открыть чат с ним
-  const otherUserId = route.params.userId as string;
-  if (otherUserId) {
-    await selectConversation(otherUserId);
+  const paramPeerId = route.params.userId as string | undefined;
+
+  if (paramPeerId) {
+    await selectConversation(paramPeerId);
+    return;
+  }
+
+  const rememberedPeer = chatStore.currentChatUserId;
+  if (rememberedPeer) {
+    const stillPresent = chatStore.conversations.some(
+      (c) => c.otherUser.id === rememberedPeer,
+    );
+    if (stillPresent) {
+      await selectConversation(rememberedPeer);
+      return;
+    }
+    chatStore.closeChat();
+  }
+
+  if (chatStore.conversations.length === 1) {
+    await selectConversation(chatStore.conversations[0].otherUser.id);
   }
 });
 
@@ -98,31 +133,54 @@ onUnmounted(() => {
       <List
         v-else-if="chatStore.conversations.length > 0"
         :data-source="chatStore.conversations"
+        :row-key="(item: { otherUser: { id: string } }) => item.otherUser.id"
         class="chat-page__conversations"
       >
         <template #renderItem="{ item }">
-          <ListItem
-            class="conversation-item"
-            :class="{ 'conversation-item--active': chatStore.currentChatUserId === item.otherUser.id }"
-            @click="selectConversation(item.otherUser.id)"
-          >
-            <div class="conversation-item__avatar">
-              <Badge :dot="userStatusStore.isUserOnline(item.otherUser.id)" color="green">
-                <Avatar :size="48">
-                  {{ item.otherUser.fullName[0].toUpperCase() }}
-                </Avatar>
-              </Badge>
-            </div>
-            <div class="conversation-item__content">
-              <div class="conversation-item__header">
-                <span class="conversation-item__username">{{ item.otherUser.fullName }}</span>
-                <span class="conversation-item__time">{{ formatTime(item.lastMessage.createdAt) }}</span>
+          <ListItem class="conversation-list-item">
+            <div
+              class="conversation-item"
+              :class="{
+                'conversation-item--active':
+                  chatStore.currentChatUserId === item.otherUser.id,
+              }"
+              role="button"
+              tabindex="0"
+              @click="selectConversation(item.otherUser.id)"
+            >
+              <div class="conversation-item__avatar">
+                <Badge
+                  :dot="userStatusStore.isUserOnline(item.otherUser.id)"
+                  color="green"
+                >
+                  <Avatar :size="48">
+                    {{ (item.otherUser.fullName || "?")[0].toUpperCase() }}
+                  </Avatar>
+                </Badge>
               </div>
-              <div class="conversation-item__message">
-                <span :class="{ 'conversation-item__message--unread': item.unreadCount > 0 }">
-                  {{ item.lastMessage.content }}
-                </span>
-                <Badge v-if="item.unreadCount > 0" :count="item.unreadCount" />
+              <div class="conversation-item__content">
+                <div class="conversation-item__header">
+                  <span class="conversation-item__username">{{
+                    item.otherUser.fullName
+                  }}</span>
+                  <span class="conversation-item__time">{{
+                    formatTime(item.lastMessage.createdAt)
+                  }}</span>
+                </div>
+                <div class="conversation-item__message">
+                  <span
+                    :class="{
+                      'conversation-item__message--unread':
+                        item.unreadCount > 0,
+                    }"
+                  >
+                    {{ item.lastMessage.content }}
+                  </span>
+                  <Badge
+                    v-if="item.unreadCount > 0"
+                    :count="item.unreadCount"
+                  />
+                </div>
               </div>
             </div>
           </ListItem>
@@ -150,7 +208,7 @@ onUnmounted(() => {
                 {{ selectedConversation?.otherUser.fullName }}
               </span>
               <span class="chat-page__header-status">
-                {{ isOtherUserOnline ? 'онлайн' : 'не в сети' }}
+                {{ isOtherUserOnline ? "онлайн" : "не в сети" }}
               </span>
             </div>
           </div>
@@ -170,7 +228,11 @@ onUnmounted(() => {
               <p class="message__content">{{ message.content }}</p>
               <span class="message__time">
                 {{ formatTime(message.createdAt) }}
-                <span v-if="message.senderId === userId && message.isRead" class="message__read">✓✓</span>
+                <span
+                  v-if="message.senderId === userId && message.isRead"
+                  class="message__read"
+                  >✓✓</span
+                >
               </span>
             </div>
           </div>
@@ -231,6 +293,27 @@ onUnmounted(() => {
   &__conversations {
     flex: 1;
     overflow-y: auto;
+    min-width: 0;
+
+    :deep(.ant-list) {
+      width: 100%;
+    }
+
+    :deep(.ant-spin-nested-loading),
+    :deep(.ant-spin-container) {
+      width: 100%;
+    }
+
+    :deep(.ant-list-items) {
+      width: 100%;
+    }
+
+    :deep(.ant-list-item) {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      padding: 0;
+    }
   }
 
   &__loading {
@@ -300,18 +383,34 @@ onUnmounted(() => {
   }
 }
 
+.conversation-list-item {
+  width: 100%;
+  max-width: 100%;
+  padding: 0 !important;
+  border-block-end: 1px solid var(--border-color);
+}
+
 .conversation-item {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 1rem 1.5rem;
   cursor: pointer;
   transition: background 0.2s;
-  border-bottom: 1px solid var(--border-color);
 
   &:hover {
     background: var(--bg-secondary);
   }
 
   &--active {
-    background: var(--bg-secondary);
+    background: color-mix(
+      in srgb,
+      var(--ant-color-primary) 8%,
+      var(--bg-secondary)
+    );
+    box-shadow: inset 3px 0 0 0 var(--ant-color-primary);
   }
 
   &__avatar {
@@ -321,23 +420,35 @@ onUnmounted(() => {
   &__content {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   &__header {
     display: flex;
-    justify-content: space-between;
+    flex-direction: row;
     align-items: center;
-    margin-bottom: 0.25rem;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+    min-width: 0;
   }
 
   &__username {
+    min-width: 0;
     font-weight: 600;
     color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__time {
+    flex-shrink: 0;
     font-size: 0.75rem;
     color: var(--text-secondary);
+    white-space: nowrap;
   }
 
   &__message {

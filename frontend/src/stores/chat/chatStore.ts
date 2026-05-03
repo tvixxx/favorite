@@ -1,9 +1,9 @@
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import { io, Socket } from 'socket.io-client';
-import { useFetch, FETCH_METHOD } from '@/composable';
-import { isSuccessStatus } from '@/utils';
-import { useUserStatusStore } from '../userStatus/userStatusStore';
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import { io, Socket } from "socket.io-client";
+import { useFetch, FETCH_METHOD } from "@/composable";
+import { isSuccessStatus } from "@/utils";
+import { useUserStatusStore } from "../userStatus/userStatusStore";
 
 export interface Message {
   id: string;
@@ -27,14 +27,15 @@ export interface Message {
 export interface Conversation {
   otherUser: {
     id: string;
-    username: string;
     email: string;
+    fullName?: string;
+    username?: string;
   };
   lastMessage: Message;
   unreadCount: number;
 }
 
-export const useChatStore = defineStore('chat', () => {
+export const useChatStore = defineStore("chat", () => {
   const socket = ref<Socket | null>(null);
   const conversations = ref<Conversation[]>([]);
   const messages = ref<Map<string, Message[]>>(new Map());
@@ -46,6 +47,33 @@ export const useChatStore = defineStore('chat', () => {
 
   const userStatusStore = useUserStatusStore();
 
+  const markAsRead = (otherUserId: string) => {
+    const me = currentUserId.value;
+    if (!me) {
+      return;
+    }
+
+    const conversation = conversations.value.find(
+      (c) => c.otherUser.id === otherUserId,
+    );
+    if (conversation) {
+      conversation.unreadCount = 0;
+    }
+
+    const thread = messages.value.get(otherUserId);
+    if (thread) {
+      thread.forEach((msg) => {
+        if (msg.senderId === otherUserId && msg.receiverId === me) {
+          msg.isRead = true;
+        }
+      });
+    }
+
+    if (socket.value?.connected) {
+      socket.value.emit("message:read", { otherUserId });
+    }
+  };
+
   const connect = (userId: string) => {
     if (socket.value?.connected) {
       return;
@@ -53,55 +81,78 @@ export const useChatStore = defineStore('chat', () => {
 
     currentUserId.value = userId;
 
-    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
     socket.value = io(`${backendUrl}/chat`, {
       auth: { userId },
       query: { userId },
     });
 
-    socket.value.on('connect', () => {
+    socket.value.on("connect", () => {
       isConnected.value = true;
-      console.log('WebSocket connected');
+      console.log("WebSocket connected");
+      if (currentChatUserId.value) {
+        markAsRead(currentChatUserId.value);
+      }
     });
 
-    socket.value.on('disconnect', () => {
+    socket.value.on("disconnect", () => {
       isConnected.value = false;
-      console.log('WebSocket disconnected');
+      console.log("WebSocket disconnected");
     });
 
-    socket.value.on('message:received', (message: Message) => {
-      const otherUserId = message.senderId;
+    socket.value.on("message:received", async (message: Message) => {
+      const me = userId;
+      const peerId =
+        message.senderId === me ? message.receiverId : message.senderId;
 
-      // Добавить сообщение в историю
-      if (!messages.value.has(otherUserId)) {
-        messages.value.set(otherUserId, []);
+      if (!peerId || peerId === me) {
+        return;
       }
-      messages.value.get(otherUserId)?.push(message);
 
-      // Обновить список диалогов
-      fetchConversations(userId);
-    });
+      if (!messages.value.has(peerId)) {
+        messages.value.set(peerId, []);
+      }
 
-    socket.value.on('messages:read', ({ userId: readByUserId }: { userId: string }) => {
-      // Пометить сообщения как прочитанные
-      const userMessages = messages.value.get(readByUserId);
-      if (userMessages) {
-        userMessages.forEach(msg => {
-          if (msg.senderId === userId) {
-            msg.isRead = true;
-          }
-        });
+      messages.value.get(peerId)?.push(message);
+
+      await fetchConversations(userId);
+
+      const openPeer = currentChatUserId.value;
+
+      if (openPeer) {
+        markAsRead(openPeer);
       }
     });
 
-    socket.value.on('user:online', ({ userId: onlineUserId }: { userId: string }) => {
-      userStatusStore.setUserOnline(onlineUserId, '');
-    });
+    socket.value.on(
+      "messages:read",
+      ({ userId: readByUserId }: { userId: string }) => {
+        const userMessages = messages.value.get(readByUserId);
 
-    socket.value.on('user:offline', ({ userId: offlineUserId }: { userId: string }) => {
-      userStatusStore.setUserOffline(offlineUserId);
-    });
+        if (userMessages) {
+          userMessages.forEach((msg) => {
+            if (msg.senderId === userId) {
+              msg.isRead = true;
+            }
+          });
+        }
+      },
+    );
+
+    socket.value.on(
+      "user:online",
+      ({ userId: onlineUserId }: { userId: string }) => {
+        userStatusStore.setUserOnline(onlineUserId, "");
+      },
+    );
+
+    socket.value.on(
+      "user:offline",
+      ({ userId: offlineUserId }: { userId: string }) => {
+        userStatusStore.setUserOffline(offlineUserId);
+      },
+    );
   };
 
   const disconnect = () => {
@@ -119,15 +170,15 @@ export const useChatStore = defineStore('chat', () => {
     isError.value = null;
 
     try {
-      const response = await useFetch(
+      const response = await useFetch<Conversation[]>(
         `/users/${userId}/messages/conversations`,
-        { method: FETCH_METHOD.get }
+        { method: FETCH_METHOD.get },
       );
 
       if (isSuccessStatus(response.status)) {
         conversations.value = response.data;
       } else {
-        isError.value = 'Failed to load conversations';
+        isError.value = "Failed to load conversations";
       }
     } catch (error: any) {
       isError.value = error.message;
@@ -136,11 +187,15 @@ export const useChatStore = defineStore('chat', () => {
     }
   };
 
-  const fetchMessages = async (userId: string, otherUserId: string, limit = 50) => {
+  const fetchMessages = async (
+    userId: string,
+    otherUserId: string,
+    limit = 50,
+  ) => {
     try {
-      const response = await useFetch(
+      const response = await useFetch<Message[]>(
         `/users/${userId}/messages/${otherUserId}?limit=${limit}`,
-        { method: FETCH_METHOD.get }
+        { method: FETCH_METHOD.get },
       );
 
       if (isSuccessStatus(response.status)) {
@@ -148,20 +203,19 @@ export const useChatStore = defineStore('chat', () => {
         return response.data;
       }
     } catch (error: any) {
-      console.error('Failed to load messages:', error);
+      console.error("Failed to load messages:", error);
     }
   };
 
   const sendMessage = (receiverId: string, content: string) => {
     if (!socket.value?.connected) {
-      throw new Error('WebSocket not connected');
+      throw new Error("WebSocket not connected");
     }
 
     if (!currentUserId.value) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
-    // Оптимистичное добавление сообщения в UI
     const optimisticMessage: Message = {
       id: `temp-${Date.now()}`,
       senderId: currentUserId.value,
@@ -174,35 +228,10 @@ export const useChatStore = defineStore('chat', () => {
     if (!messages.value.has(receiverId)) {
       messages.value.set(receiverId, []);
     }
+
     messages.value.get(receiverId)?.push(optimisticMessage);
 
-    socket.value.emit('message:send', { receiverId, content });
-  };
-
-  const markAsRead = (otherUserId: string) => {
-    if (!socket.value?.connected) {
-      return;
-    }
-
-    socket.value.emit('message:read', { otherUserId });
-
-    // Локально пометить как прочитанные
-    const userMessages = messages.value.get(otherUserId);
-    if (userMessages) {
-      userMessages.forEach(msg => {
-        if (msg.receiverId === otherUserId) {
-          msg.isRead = true;
-        }
-      });
-    }
-
-    // Обновить счётчик непрочитанных в диалогах
-    const conversation = conversations.value.find(
-      c => c.otherUser.id === otherUserId
-    );
-    if (conversation) {
-      conversation.unreadCount = 0;
-    }
+    socket.value.emit("message:send", { receiverId, content });
   };
 
   const openChat = async (userId: string, otherUserId: string) => {
