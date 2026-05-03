@@ -10,8 +10,12 @@ export const buildSearchParams = (
     params.append("q", query);
   }
 
-  if (filters.genre) {
-    params.append("genre", filters.genre);
+  for (const g of filters.genres ?? []) {
+    params.append("genres", g);
+  }
+
+  for (const c of filters.countryCodes ?? []) {
+    params.append("countryCode", c);
   }
 
   if (filters.publishDateFrom) {

@@ -40,7 +40,6 @@ export type MovieMinAggregateOutputType = {
   id: string | null
   title: string | null
   description: string | null
-  genre: $Enums.Genre | null
   publishDate: Date | null
   isSerial: boolean | null
   seasonCount: number | null
@@ -54,7 +53,6 @@ export type MovieMaxAggregateOutputType = {
   id: string | null
   title: string | null
   description: string | null
-  genre: $Enums.Genre | null
   publishDate: Date | null
   isSerial: boolean | null
   seasonCount: number | null
@@ -68,7 +66,8 @@ export type MovieCountAggregateOutputType = {
   id: number
   title: number
   description: number
-  genre: number
+  countryCodes: number
+  genres: number
   publishDate: number
   isSerial: number
   seasonCount: number
@@ -94,7 +93,6 @@ export type MovieMinAggregateInputType = {
   id?: true
   title?: true
   description?: true
-  genre?: true
   publishDate?: true
   isSerial?: true
   seasonCount?: true
@@ -108,7 +106,6 @@ export type MovieMaxAggregateInputType = {
   id?: true
   title?: true
   description?: true
-  genre?: true
   publishDate?: true
   isSerial?: true
   seasonCount?: true
@@ -122,7 +119,8 @@ export type MovieCountAggregateInputType = {
   id?: true
   title?: true
   description?: true
-  genre?: true
+  countryCodes?: true
+  genres?: true
   publishDate?: true
   isSerial?: true
   seasonCount?: true
@@ -223,7 +221,8 @@ export type MovieGroupByOutputType = {
   id: string
   title: string
   description: string
-  genre: $Enums.Genre | null
+  countryCodes: string[]
+  genres: $Enums.Genre[]
   publishDate: Date | null
   isSerial: boolean
   seasonCount: number | null
@@ -260,7 +259,8 @@ export type MovieWhereInput = {
   id?: Prisma.StringFilter<"Movie"> | string
   title?: Prisma.StringFilter<"Movie"> | string
   description?: Prisma.StringFilter<"Movie"> | string
-  genre?: Prisma.EnumGenreNullableFilter<"Movie"> | $Enums.Genre | null
+  countryCodes?: Prisma.StringNullableListFilter<"Movie">
+  genres?: Prisma.EnumGenreNullableListFilter<"Movie">
   publishDate?: Prisma.DateTimeNullableFilter<"Movie"> | Date | string | null
   isSerial?: Prisma.BoolFilter<"Movie"> | boolean
   seasonCount?: Prisma.IntNullableFilter<"Movie"> | number | null
@@ -278,7 +278,8 @@ export type MovieOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
-  genre?: Prisma.SortOrderInput | Prisma.SortOrder
+  countryCodes?: Prisma.SortOrder
+  genres?: Prisma.SortOrder
   publishDate?: Prisma.SortOrderInput | Prisma.SortOrder
   isSerial?: Prisma.SortOrder
   seasonCount?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -300,7 +301,8 @@ export type MovieWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.MovieWhereInput | Prisma.MovieWhereInput[]
   title?: Prisma.StringFilter<"Movie"> | string
   description?: Prisma.StringFilter<"Movie"> | string
-  genre?: Prisma.EnumGenreNullableFilter<"Movie"> | $Enums.Genre | null
+  countryCodes?: Prisma.StringNullableListFilter<"Movie">
+  genres?: Prisma.EnumGenreNullableListFilter<"Movie">
   publishDate?: Prisma.DateTimeNullableFilter<"Movie"> | Date | string | null
   isSerial?: Prisma.BoolFilter<"Movie"> | boolean
   seasonCount?: Prisma.IntNullableFilter<"Movie"> | number | null
@@ -317,7 +319,8 @@ export type MovieOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
-  genre?: Prisma.SortOrderInput | Prisma.SortOrder
+  countryCodes?: Prisma.SortOrder
+  genres?: Prisma.SortOrder
   publishDate?: Prisma.SortOrderInput | Prisma.SortOrder
   isSerial?: Prisma.SortOrder
   seasonCount?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -339,7 +342,8 @@ export type MovieScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Movie"> | string
   title?: Prisma.StringWithAggregatesFilter<"Movie"> | string
   description?: Prisma.StringWithAggregatesFilter<"Movie"> | string
-  genre?: Prisma.EnumGenreNullableWithAggregatesFilter<"Movie"> | $Enums.Genre | null
+  countryCodes?: Prisma.StringNullableListFilter<"Movie">
+  genres?: Prisma.EnumGenreNullableListFilter<"Movie">
   publishDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Movie"> | Date | string | null
   isSerial?: Prisma.BoolWithAggregatesFilter<"Movie"> | boolean
   seasonCount?: Prisma.IntNullableWithAggregatesFilter<"Movie"> | number | null
@@ -353,7 +357,8 @@ export type MovieCreateInput = {
   id?: string
   title: string
   description: string
-  genre?: $Enums.Genre | null
+  countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
+  genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
   publishDate?: Date | string | null
   isSerial?: boolean
   seasonCount?: number | null
@@ -370,7 +375,8 @@ export type MovieUncheckedCreateInput = {
   id?: string
   title: string
   description: string
-  genre?: $Enums.Genre | null
+  countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
+  genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
   publishDate?: Date | string | null
   isSerial?: boolean
   seasonCount?: number | null
@@ -387,7 +393,8 @@ export type MovieUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
-  genre?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
   publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -404,7 +411,8 @@ export type MovieUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
-  genre?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
   publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -421,7 +429,8 @@ export type MovieCreateManyInput = {
   id?: string
   title: string
   description: string
-  genre?: $Enums.Genre | null
+  countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
+  genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
   publishDate?: Date | string | null
   isSerial?: boolean
   seasonCount?: number | null
@@ -435,7 +444,8 @@ export type MovieUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
-  genre?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
   publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -448,7 +458,8 @@ export type MovieUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
-  genre?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
   publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -458,11 +469,28 @@ export type MovieUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type StringNullableListFilter<$PrismaModel = never> = {
+  equals?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
+  has?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
+  hasEvery?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
+  hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
+}
+
+export type EnumGenreNullableListFilter<$PrismaModel = never> = {
+  equals?: $Enums.Genre[] | Prisma.ListEnumGenreFieldRefInput<$PrismaModel> | null
+  has?: $Enums.Genre | Prisma.EnumGenreFieldRefInput<$PrismaModel> | null
+  hasEvery?: $Enums.Genre[] | Prisma.ListEnumGenreFieldRefInput<$PrismaModel>
+  hasSome?: $Enums.Genre[] | Prisma.ListEnumGenreFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
+}
+
 export type MovieCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
-  genre?: Prisma.SortOrder
+  countryCodes?: Prisma.SortOrder
+  genres?: Prisma.SortOrder
   publishDate?: Prisma.SortOrder
   isSerial?: Prisma.SortOrder
   seasonCount?: Prisma.SortOrder
@@ -481,7 +509,6 @@ export type MovieMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
-  genre?: Prisma.SortOrder
   publishDate?: Prisma.SortOrder
   isSerial?: Prisma.SortOrder
   seasonCount?: Prisma.SortOrder
@@ -495,7 +522,6 @@ export type MovieMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
-  genre?: Prisma.SortOrder
   publishDate?: Prisma.SortOrder
   isSerial?: Prisma.SortOrder
   seasonCount?: Prisma.SortOrder
@@ -528,6 +554,24 @@ export type MovieListRelationFilter = {
 
 export type MovieOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type MovieCreatecountryCodesInput = {
+  set: string[]
+}
+
+export type MovieCreategenresInput = {
+  set: $Enums.Genre[]
+}
+
+export type MovieUpdatecountryCodesInput = {
+  set?: string[]
+  push?: string | string[]
+}
+
+export type MovieUpdategenresInput = {
+  set?: $Enums.Genre[]
+  push?: $Enums.Genre | $Enums.Genre[]
 }
 
 export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -652,7 +696,8 @@ export type MovieCreateWithoutPosterInput = {
   id?: string
   title: string
   description: string
-  genre?: $Enums.Genre | null
+  countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
+  genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
   publishDate?: Date | string | null
   isSerial?: boolean
   seasonCount?: number | null
@@ -668,7 +713,8 @@ export type MovieUncheckedCreateWithoutPosterInput = {
   id?: string
   title: string
   description: string
-  genre?: $Enums.Genre | null
+  countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
+  genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
   publishDate?: Date | string | null
   isSerial?: boolean
   seasonCount?: number | null
@@ -700,7 +746,8 @@ export type MovieUpdateWithoutPosterInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
-  genre?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
   publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -716,7 +763,8 @@ export type MovieUncheckedUpdateWithoutPosterInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
-  genre?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
   publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -732,7 +780,8 @@ export type MovieCreateWithoutReviewsInput = {
   id?: string
   title: string
   description: string
-  genre?: $Enums.Genre | null
+  countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
+  genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
   publishDate?: Date | string | null
   isSerial?: boolean
   seasonCount?: number | null
@@ -748,7 +797,8 @@ export type MovieUncheckedCreateWithoutReviewsInput = {
   id?: string
   title: string
   description: string
-  genre?: $Enums.Genre | null
+  countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
+  genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
   publishDate?: Date | string | null
   isSerial?: boolean
   seasonCount?: number | null
@@ -780,7 +830,8 @@ export type MovieUpdateWithoutReviewsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
-  genre?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
   publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -796,7 +847,8 @@ export type MovieUncheckedUpdateWithoutReviewsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
-  genre?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
   publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -812,7 +864,8 @@ export type MovieCreateWithoutActorsInput = {
   id?: string
   title: string
   description: string
-  genre?: $Enums.Genre | null
+  countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
+  genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
   publishDate?: Date | string | null
   isSerial?: boolean
   seasonCount?: number | null
@@ -828,7 +881,8 @@ export type MovieUncheckedCreateWithoutActorsInput = {
   id?: string
   title: string
   description: string
-  genre?: $Enums.Genre | null
+  countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
+  genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
   publishDate?: Date | string | null
   isSerial?: boolean
   seasonCount?: number | null
@@ -868,7 +922,8 @@ export type MovieScalarWhereInput = {
   id?: Prisma.StringFilter<"Movie"> | string
   title?: Prisma.StringFilter<"Movie"> | string
   description?: Prisma.StringFilter<"Movie"> | string
-  genre?: Prisma.EnumGenreNullableFilter<"Movie"> | $Enums.Genre | null
+  countryCodes?: Prisma.StringNullableListFilter<"Movie">
+  genres?: Prisma.EnumGenreNullableListFilter<"Movie">
   publishDate?: Prisma.DateTimeNullableFilter<"Movie"> | Date | string | null
   isSerial?: Prisma.BoolFilter<"Movie"> | boolean
   seasonCount?: Prisma.IntNullableFilter<"Movie"> | number | null
@@ -882,7 +937,8 @@ export type MovieCreateWithoutUserMoviesInput = {
   id?: string
   title: string
   description: string
-  genre?: $Enums.Genre | null
+  countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
+  genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
   publishDate?: Date | string | null
   isSerial?: boolean
   seasonCount?: number | null
@@ -898,7 +954,8 @@ export type MovieUncheckedCreateWithoutUserMoviesInput = {
   id?: string
   title: string
   description: string
-  genre?: $Enums.Genre | null
+  countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
+  genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
   publishDate?: Date | string | null
   isSerial?: boolean
   seasonCount?: number | null
@@ -930,7 +987,8 @@ export type MovieUpdateWithoutUserMoviesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
-  genre?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
   publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -946,7 +1004,8 @@ export type MovieUncheckedUpdateWithoutUserMoviesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
-  genre?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
   publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -962,7 +1021,8 @@ export type MovieUpdateWithoutActorsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
-  genre?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
   publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -978,7 +1038,8 @@ export type MovieUncheckedUpdateWithoutActorsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
-  genre?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
   publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -994,7 +1055,8 @@ export type MovieUncheckedUpdateManyWithoutActorsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
-  genre?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
   publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1057,7 +1119,8 @@ export type MovieSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   id?: boolean
   title?: boolean
   description?: boolean
-  genre?: boolean
+  countryCodes?: boolean
+  genres?: boolean
   publishDate?: boolean
   isSerial?: boolean
   seasonCount?: boolean
@@ -1076,7 +1139,8 @@ export type MovieSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   id?: boolean
   title?: boolean
   description?: boolean
-  genre?: boolean
+  countryCodes?: boolean
+  genres?: boolean
   publishDate?: boolean
   isSerial?: boolean
   seasonCount?: boolean
@@ -1091,7 +1155,8 @@ export type MovieSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   id?: boolean
   title?: boolean
   description?: boolean
-  genre?: boolean
+  countryCodes?: boolean
+  genres?: boolean
   publishDate?: boolean
   isSerial?: boolean
   seasonCount?: boolean
@@ -1106,7 +1171,8 @@ export type MovieSelectScalar = {
   id?: boolean
   title?: boolean
   description?: boolean
-  genre?: boolean
+  countryCodes?: boolean
+  genres?: boolean
   publishDate?: boolean
   isSerial?: boolean
   seasonCount?: boolean
@@ -1116,7 +1182,7 @@ export type MovieSelectScalar = {
   updatedAt?: boolean
 }
 
-export type MovieOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "genre" | "publishDate" | "isSerial" | "seasonCount" | "episodeCount" | "posterId" | "createdAt" | "updatedAt", ExtArgs["result"]["movie"]>
+export type MovieOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "countryCodes" | "genres" | "publishDate" | "isSerial" | "seasonCount" | "episodeCount" | "posterId" | "createdAt" | "updatedAt", ExtArgs["result"]["movie"]>
 export type MovieInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   poster?: boolean | Prisma.Movie$posterArgs<ExtArgs>
   reviews?: boolean | Prisma.Movie$reviewsArgs<ExtArgs>
@@ -1143,7 +1209,8 @@ export type $MoviePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     id: string
     title: string
     description: string
-    genre: $Enums.Genre | null
+    countryCodes: string[]
+    genres: $Enums.Genre[]
     publishDate: Date | null
     isSerial: boolean
     seasonCount: number | null
@@ -1581,7 +1648,8 @@ export interface MovieFieldRefs {
   readonly id: Prisma.FieldRef<"Movie", 'String'>
   readonly title: Prisma.FieldRef<"Movie", 'String'>
   readonly description: Prisma.FieldRef<"Movie", 'String'>
-  readonly genre: Prisma.FieldRef<"Movie", 'Genre'>
+  readonly countryCodes: Prisma.FieldRef<"Movie", 'String[]'>
+  readonly genres: Prisma.FieldRef<"Movie", 'Genre[]'>
   readonly publishDate: Prisma.FieldRef<"Movie", 'DateTime'>
   readonly isSerial: Prisma.FieldRef<"Movie", 'Boolean'>
   readonly seasonCount: Prisma.FieldRef<"Movie", 'Int'>

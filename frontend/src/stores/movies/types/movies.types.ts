@@ -18,7 +18,8 @@ export interface MovieApiResponse {
   id: string;
   title: string;
   description: string;
-  genre: Genre | null;
+  countryCodes: string[];
+  genres: Genre[];
   publishDate: string | null;
   isSerial: boolean;
   seasonCount?: number;
@@ -40,7 +41,8 @@ export interface Movie {
   id: string;
   title: string;
   description: string;
-  genre?: Genre;
+  countryCodes: string[];
+  genres: Genre[];
   publishDate: string | null;
   isSerial: boolean;
   seasonCount?: number;
@@ -117,13 +119,15 @@ export interface UserMoviesStats {
 }
 
 export interface MoviesFilters {
-  genre?: Genre;
+  genres?: Genre[];
+  countryCodes?: string[];
   publishDateFrom?: string;
   publishDateTo?: string;
 }
 
 export interface UserMoviesFilters {
-  genre?: Genre;
+  genres?: Genre[];
+  countryCodes?: string[];
   personalRateMin?: number;
   personalRateMax?: number;
   publishDateFrom?: string;

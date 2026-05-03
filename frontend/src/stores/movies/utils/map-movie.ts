@@ -5,9 +5,6 @@ import {
   UserMovieApiResponse,
 } from "@/stores";
 
-// Преобразует ответ API в FE модель Movie.
-// Извлекает poster.url → imageUrl.
-// Убирает null из genre (фронт использует undefined).
 export function mapMovieFromApi(raw: MovieApiResponse): Movie {
   return {
     id: raw.id,
@@ -16,7 +13,8 @@ export function mapMovieFromApi(raw: MovieApiResponse): Movie {
     isSerial: raw.isSerial,
     seasonCount: raw.seasonCount ?? undefined,
     episodeCount: raw.episodeCount ?? undefined,
-    genre: raw.genre ?? undefined,
+    countryCodes: raw.countryCodes ?? [],
+    genres: raw.genres ?? [],
     publishDate: raw.publishDate,
     imageUrl: raw.poster?.url ?? "",
     createdAt: raw.createdAt,
@@ -51,8 +49,6 @@ export function mapUserMovieFromApi(raw: UserMovieApiResponse): UserMovie {
 }
 
 // Маппит массив UserMovie
-export function mapUserMoviesFromApi(
-  raw: UserMovieApiResponse[]
-): UserMovie[] {
+export function mapUserMoviesFromApi(raw: UserMovieApiResponse[]): UserMovie[] {
   return raw.map(mapUserMovieFromApi);
 }

@@ -33,6 +33,16 @@ const reviewFormRef = ref<ReviewFormExpose | null>(null);
 const canEditReview = (review: Review) =>
   !!currentUserId.value && review.userId === currentUserId.value;
 
+const startEdit = (review: Review) => {
+  editingReview.value = review;
+  isEditing.value = true;
+};
+
+const cancelEdit = () => {
+  editingReview.value = null;
+  isEditing.value = false;
+};
+
 watch(
   () => movieId,
   async (id) => {
@@ -46,16 +56,6 @@ watch(
   },
   { immediate: true }
 );
-
-const startEdit = (review: Review) => {
-  editingReview.value = review;
-  isEditing.value = true;
-};
-
-const cancelEdit = () => {
-  editingReview.value = null;
-  isEditing.value = false;
-};
 
 const handleSubmit = async (text: string, rate: number) => {
   if (!text || text.length < MIN_REVIEW_TEXT_LENGTH) {

@@ -19,7 +19,11 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Genre, WatchStatus } from '../generated/prisma/enums';
+import { WatchStatus } from '../generated/prisma/enums';
+import {
+  parseCountryFilters,
+  parseGenreFilters,
+} from '../common/utils/parse-query-filters';
 import { Authorization, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
 
@@ -46,7 +50,8 @@ export class UserMovieController {
   public findAllByUser(
     @Param('userId') userId: string,
     @Authorized() user: User,
-    @Query('genre') genre?: string,
+    @Query('genres') genres?: string | string[],
+    @Query('countryCode') countryCode?: string | string[],
     @Query('personalRateMin') personalRateMin?: string,
     @Query('personalRateMax') personalRateMax?: string,
     @Query('publishDateFrom') publishDateFrom?: string,
@@ -57,7 +62,8 @@ export class UserMovieController {
   ) {
     this.ensureSelf(userId, user);
     return this.userMovieService.findAllByUser(userId, {
-      genre: genre ? (genre as Genre) : undefined,
+      genres: parseGenreFilters(genres),
+      countryCodes: parseCountryFilters(countryCode),
       personalRateMin: personalRateMin ? Number(personalRateMin) : undefined,
       personalRateMax: personalRateMax ? Number(personalRateMax) : undefined,
       publishDateFrom,
@@ -81,7 +87,8 @@ export class UserMovieController {
     @Param('userId') userId: string,
     @Authorized() user: User,
     @Query('q') query: string,
-    @Query('genre') genre?: string,
+    @Query('genres') genres?: string | string[],
+    @Query('countryCode') countryCode?: string | string[],
     @Query('personalRateMin') personalRateMin?: string,
     @Query('personalRateMax') personalRateMax?: string,
     @Query('publishDateFrom') publishDateFrom?: string,
@@ -92,7 +99,8 @@ export class UserMovieController {
   ) {
     this.ensureSelf(userId, user);
     return this.userMovieService.searchUserMovies(userId, query, {
-      genre: genre ? (genre as Genre) : undefined,
+      genres: parseGenreFilters(genres),
+      countryCodes: parseCountryFilters(countryCode),
       personalRateMin: personalRateMin ? Number(personalRateMin) : undefined,
       personalRateMax: personalRateMax ? Number(personalRateMax) : undefined,
       publishDateFrom,

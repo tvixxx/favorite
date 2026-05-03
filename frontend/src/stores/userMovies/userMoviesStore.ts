@@ -70,7 +70,8 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   const hasActiveFilters = computed(() => {
     return (
       !!searchQuery.value ||
-      !!filters.value.genre ||
+      !!filters.value.genres?.length ||
+      !!filters.value.countryCodes?.length ||
       filters.value.personalRateMin !== undefined ||
       filters.value.personalRateMax !== undefined ||
       !!filters.value.publishDateFrom ||
@@ -128,7 +129,12 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     try {
       const params = new URLSearchParams();
 
-      if (filters.value.genre) params.append("genre", filters.value.genre);
+      for (const g of filters.value.genres ?? []) {
+        params.append("genres", g);
+      }
+      for (const c of filters.value.countryCodes ?? []) {
+        params.append("countryCode", c);
+      }
       if (filters.value.personalRateMin !== undefined)
         params.append("personalRateMin", String(filters.value.personalRateMin));
       if (filters.value.personalRateMax !== undefined)
@@ -187,7 +193,12 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     try {
       const params = new URLSearchParams({ q });
 
-      if (filters.value.genre) params.append("genre", filters.value.genre);
+      for (const g of filters.value.genres ?? []) {
+        params.append("genres", g);
+      }
+      for (const c of filters.value.countryCodes ?? []) {
+        params.append("countryCode", c);
+      }
       if (filters.value.personalRateMin !== undefined)
         params.append("personalRateMin", String(filters.value.personalRateMin));
       if (filters.value.personalRateMax !== undefined)

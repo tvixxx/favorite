@@ -9,7 +9,8 @@ import type { UserMovie, Prisma } from '../generated/prisma/client';
 import { Genre, WatchStatus } from '../generated/prisma/enums';
 
 interface UserMovieFilters {
-  genre?: Genre;
+  genres?: Genre[];
+  countryCodes?: string[];
   personalRateMin?: number;
   personalRateMax?: number;
   publishDateFrom?: string;
@@ -78,15 +79,20 @@ export class UserMovieService {
 
     const where = this.buildWhereClause(userId, filters);
 
-    // Добавляем поиск по названию фильма
-    if (!where.movie) {
-      where.movie = {};
-    }
-
-    where.movie.title = {
-      contains: query.trim(),
-      mode: 'insensitive',
+    const titleFilter: Prisma.MovieWhereInput = {
+      title: {
+        contains: query.trim(),
+        mode: 'insensitive',
+      },
     };
+
+    if (!where.movie) {
+      where.movie = titleFilter;
+    } else {
+      where.movie = {
+        AND: [where.movie, titleFilter],
+      };
+    }
 
     return this.prismaService.userMovie.findMany({
       where,
@@ -104,6 +110,41 @@ export class UserMovieService {
     });
   }
 
+  private buildMovieWhereFromFilters(
+    filters: UserMovieFilters,
+  ): Prisma.MovieWhereInput | undefined {
+    const parts: Prisma.MovieWhereInput[] = [];
+
+    if (filters.genres?.length) {
+      parts.push({
+        genres: { hasSome: filters.genres },
+      });
+    }
+
+    if (filters.countryCodes?.length) {
+      parts.push({
+        countryCodes: { hasSome: filters.countryCodes },
+      });
+    }
+
+    if (filters.publishDateFrom || filters.publishDateTo) {
+      const publishDate: Prisma.DateTimeNullableFilter = {};
+      if (filters.publishDateFrom) {
+        publishDate.gte = new Date(filters.publishDateFrom);
+      }
+      if (filters.publishDateTo) {
+        publishDate.lte = new Date(filters.publishDateTo);
+      }
+      parts.push({ publishDate });
+    }
+
+    if (!parts.length) {
+      return undefined;
+    }
+
+    return parts.length === 1 ? parts[0] : { AND: parts };
+  }
+
   private buildWhereClause(
     userId: string,
     filters: UserMovieFilters,
@@ -112,8 +153,10 @@ export class UserMovieService {
       userId,
     };
 
-    // Фильтры по персональным данным UserMovie
-    if (filters.personalRateMin !== undefined || filters.personalRateMax !== undefined) {
+    if (
+      filters.personalRateMin !== undefined ||
+      filters.personalRateMax !== undefined
+    ) {
       where.personalRate = {};
       if (filters.personalRateMin !== undefined) {
         where.personalRate.gte = filters.personalRateMin;
@@ -135,23 +178,9 @@ export class UserMovieService {
       where.watchStatus = filters.watchStatus;
     }
 
-    // Фильтры по данным Movie (через вложенный where)
-    if (filters.genre || filters.publishDateFrom || filters.publishDateTo) {
-      where.movie = {};
-
-      if (filters.genre) {
-        where.movie.genre = filters.genre;
-      }
-
-      if (filters.publishDateFrom || filters.publishDateTo) {
-        where.movie.publishDate = {};
-        if (filters.publishDateFrom) {
-          where.movie.publishDate.gte = new Date(filters.publishDateFrom);
-        }
-        if (filters.publishDateTo) {
-          where.movie.publishDate.lte = new Date(filters.publishDateTo);
-        }
-      }
+    const movieWhere = this.buildMovieWhereFromFilters(filters);
+    if (movieWhere) {
+      where.movie = movieWhere;
     }
 
     return where;
