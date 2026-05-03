@@ -2,17 +2,19 @@ import {
   IsArray,
   IsBoolean,
   IsEnum,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
+  ArrayMinSize,
   Max,
   Min,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Genre as PrismaGenre } from '../../generated/prisma/enums';
-import { Genre } from '../../constants';
+import { PRODUCTION_COUNTRY_CODES } from '../../constants/production-countries';
 
 export class CreateMovieRequest {
   @ApiProperty({
@@ -53,9 +55,31 @@ export class CreateMovieRequest {
   @IsNotEmpty()
   description: string;
 
-  @IsOptional()
-  @IsEnum(Genre, { message: 'Неверный жанр' })
-  genre?: PrismaGenre;
+  @ApiProperty({
+    description:
+      'ISO 3166-1 alpha-2 — страны производства (несколько при ко-продукции)',
+    example: ['US', 'GB'],
+    type: [String],
+    isArray: true,
+  })
+  @IsArray()
+  @ArrayMinSize(1, { message: 'Укажите хотя бы одну страну' })
+  @IsIn([...PRODUCTION_COUNTRY_CODES], {
+    each: true,
+    message: 'Недопустимый код страны',
+  })
+  countryCodes: string[];
+
+  @ApiProperty({
+    description: 'Жанры (минимум один)',
+    example: ['ACTION', 'DRAMA'],
+    type: [String],
+    isArray: true,
+  })
+  @IsArray()
+  @ArrayMinSize(1, { message: 'Укажите хотя бы один жанр' })
+  @IsEnum(PrismaGenre, { each: true, message: 'Неверный жанр' })
+  genres: PrismaGenre[];
 
   @ApiProperty({
     description: 'Признак сериала',

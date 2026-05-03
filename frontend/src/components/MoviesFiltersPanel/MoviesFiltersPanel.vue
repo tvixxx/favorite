@@ -4,6 +4,7 @@ import dayjs, { Dayjs } from "dayjs";
 
 import InputSearch from "@/components/Input/InputSearch/InputSearch.vue";
 import GenreFilter from "@/components/Genres/GenreFilter.vue";
+import CountryFilter from "@/components/Countries/CountryFilter.vue";
 import RateFilter from "@/components/Filters/RateFilter.vue";
 import DateRangeFilter from "@/components/Filters/DateRangeFilter.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
@@ -25,7 +26,8 @@ const emit = defineEmits<{
 const { width } = useWindowSize();
 
 const searchQuery = ref<string>("");
-const selectedGenre = ref<Genre | undefined>(undefined);
+const selectedGenres = ref<Genre[]>([]);
+const selectedCountries = ref<string[]>([]);
 const rateRange = ref<[number, number]>([...DEFAULT_RATE_RANGE]);
 const publishDateRange = ref<[Dayjs, Dayjs] | null>(null);
 const seeLater = ref(false);
@@ -48,7 +50,8 @@ const hasAdvancedFilters = computed(() => {
 
 const clearFilters = () => {
   searchQuery.value = "";
-  selectedGenre.value = undefined;
+  selectedGenres.value = [];
+  selectedCountries.value = [];
   rateRange.value = [...DEFAULT_RATE_RANGE];
   publishDateRange.value = null;
   seeLater.value = false;
@@ -57,7 +60,8 @@ const clearFilters = () => {
 const hasAnyFilters = computed(() => {
   return (
     searchQuery.value.length > 0 ||
-    !!selectedGenre.value ||
+    selectedGenres.value.length > 0 ||
+    selectedCountries.value.length > 0 ||
     seeLater.value ||
     hasAdvancedFilters.value
   );
@@ -67,7 +71,10 @@ const buildFilters = (): UserMoviesFilters => {
   const [rateMin, rateMax] = rateRange.value;
 
   return {
-    genre: selectedGenre.value,
+    genres: selectedGenres.value.length ? selectedGenres.value : undefined,
+    countryCodes: selectedCountries.value.length
+      ? selectedCountries.value
+      : undefined,
     personalRateMin: rateMin > 0 ? rateMin : undefined,
     personalRateMax: rateMax < 10 ? rateMax : undefined,
     publishDateFrom: publishDateRange.value?.[0]
@@ -85,7 +92,7 @@ const emitFilters = () => {
 };
 
 watch(
-  [selectedGenre, rateRange, publishDateRange, seeLater],
+  [selectedGenres, selectedCountries, rateRange, publishDateRange, seeLater],
   emitFilters,
   { deep: true }
 );
@@ -101,7 +108,11 @@ watch(
         class="filters-panel__search"
         placeholder="Введите название"
       />
-      <GenreFilter v-model="selectedGenre" class="filters-panel__genre" />
+      <GenreFilter v-model="selectedGenres" class="filters-panel__genre" />
+      <CountryFilter
+        v-model="selectedCountries"
+        class="filters-panel__country"
+      />
       <div class="filters-panel__see-later">
         <a-switch v-model:checked="seeLater" size="small" />
         <span class="filters-panel__see-later-label">Смотреть позже</span>
@@ -181,7 +192,8 @@ watch(
     }
   }
 
-  &__genre {
+  &__genre,
+  &__country {
     width: 100%;
 
     @include mediaTablet {

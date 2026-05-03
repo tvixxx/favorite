@@ -11,7 +11,11 @@ import {
   Query,
 } from '@nestjs/common';
 import MovieService from './movie.service';
-import { CreateMovieRequest, MovieResponse } from './dto';
+import { CreateMovieRequest, MovieResponse, PatchMovieDto } from './dto';
+import {
+  parseCountryFilters,
+  parseGenreFilters,
+} from '../common/utils/parse-query-filters';
 import {
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -20,7 +24,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { MoviesStatsResponse } from './dto/movies-stats.dto';
-import { Genre } from '../generated/prisma/enums';
 import { ReviewResponse } from '../review/dto/review.dto';
 
 @ApiTags('Movies')
@@ -39,12 +42,14 @@ export class MovieController {
   })
   @Get()
   public findAll(
-    @Query('genre') genre?: string,
+    @Query('genres') genres?: string | string[],
+    @Query('countryCode') countryCode?: string | string[],
     @Query('publishDateFrom') publishDateFrom?: string,
     @Query('publishDateTo') publishDateTo?: string,
   ) {
     return this.movieService.findAll({
-      genre: genre ? (genre as Genre) : undefined,
+      genres: parseGenreFilters(genres),
+      countryCodes: parseCountryFilters(countryCode),
       publishDateFrom,
       publishDateTo,
     });
@@ -63,13 +68,15 @@ export class MovieController {
   })
   @Get('search')
   public search(
-    @Query('q') query: string,
-    @Query('genre') genre?: string,
+    @Query('q') query?: string,
+    @Query('genres') genres?: string | string[],
+    @Query('countryCode') countryCode?: string | string[],
     @Query('publishDateFrom') publishDateFrom?: string,
     @Query('publishDateTo') publishDateTo?: string,
   ) {
     return this.movieService.search(query, {
-      genre: genre ? (genre as Genre) : undefined,
+      genres: parseGenreFilters(genres),
+      countryCodes: parseCountryFilters(countryCode),
       publishDateFrom,
       publishDateTo,
     });
@@ -190,10 +197,7 @@ export class MovieController {
     description: 'Фильм не найден',
   })
   @Patch(':id')
-  public patch(
-    @Param('id') id: string,
-    @Body() dto: Partial<CreateMovieRequest>,
-  ) {
+  public patch(@Param('id') id: string, @Body() dto: PatchMovieDto) {
     return this.movieService.patch(id, dto);
   }
 

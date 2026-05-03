@@ -117,7 +117,8 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   const hasActiveFilters = computed(() => {
     return (
       !!searchQuery.value ||
-      !!filters.value.genre ||
+      !!filters.value.genres?.length ||
+      !!filters.value.countryCodes?.length ||
       !!filters.value.publishDateFrom ||
       !!filters.value.publishDateTo
     );

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Genre } from '../../constants';
+import { Genre } from '../../generated/prisma/enums';
 
 export class MovieResponse {
   @ApiProperty({
@@ -41,18 +41,27 @@ export class MovieResponse {
   description: string;
 
   @ApiProperty({
+    description: 'ISO 3166-1 alpha-2 — страны производства',
+    example: ['US', 'GB'],
+    type: [String],
+    isArray: true,
+  })
+  countryCodes: string[];
+
+  @ApiProperty({
+    description: 'Жанры',
+    enum: Genre,
+    isArray: true,
+    example: ['ACTION', 'DRAMA'],
+  })
+  genres: Genre[];
+
+  @ApiProperty({
     description: 'Рейтинг',
     example: '7',
     type: Number,
   })
   rate: number;
-
-  @ApiProperty({
-    description: 'Жанр',
-    example: 'ACTION',
-    type: String,
-  })
-  genre?: Genre;
 
   @ApiProperty({
     description: 'Добавлен в избранное',

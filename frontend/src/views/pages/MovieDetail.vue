@@ -8,6 +8,7 @@ import { useUserMoviesStore } from "@/stores";
 import { formatDate, formatYear } from "@/utils";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { GenreLabels } from "@/components/Genres/constants/genres.constants";
+import { countriesLabelsRu } from "@/constants/countries/production-countries";
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
@@ -70,11 +71,6 @@ const editEpisode = ref<number | undefined>(undefined);
 
 const movie = computed(() => currentUserMovie.value?.movie);
 const posterSrc = computed(() => movie.value?.imageUrl || FALLBACK_IMAGE_URL);
-
-const genreLabel = computed(() => {
-  const genre = movie.value?.genre;
-  return genre ? GenreLabels[genre] : null;
-});
 
 const ratePercent = computed(() => ((currentUserMovie.value?.personalRate ?? 0) / 10) * 100);
 
@@ -255,8 +251,12 @@ const saveProgress = async () => {
             </div>
 
             <div class="detail-card__tags">
-              <span v-if="genreLabel" class="detail-card__tag">
-                {{ genreLabel }}
+              <span
+                v-for="g in movie.genres ?? []"
+                :key="g"
+                class="detail-card__tag"
+              >
+                {{ GenreLabels[g] ?? g }}
               </span>
               <span v-if="movie.publishDate" class="detail-card__tag">
                 {{ formatYear(movie.publishDate) }}
@@ -308,6 +308,17 @@ const saveProgress = async () => {
                 <span class="detail-card__meta-label">Дата выхода</span>
                 <span class="detail-card__meta-value">
                   {{ formatYear(movie.publishDate) }}
+                </span>
+              </div>
+
+              <div
+                v-if="movie.countryCodes?.length"
+                class="detail-card__meta-item"
+              >
+                <BaseIcon name="mdi:earth" :width="18" :height="18" />
+                <span class="detail-card__meta-label">Страны производства</span>
+                <span class="detail-card__meta-value">
+                  {{ countriesLabelsRu(movie.countryCodes) }}
                 </span>
               </div>
 

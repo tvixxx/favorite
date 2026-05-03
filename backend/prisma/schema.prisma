@@ -29,17 +29,18 @@ model User {
 }
 
 model Movie {
-  id           String       @id @default(uuid())
-  title        String
-  description  String
-  genre        Genre?
-  publishDate  DateTime?    @map("publish_date")
-  isSerial     Boolean      @default(false) @map("is_serial")
-  seasonCount  Int?         @map("season_count")
-  episodeCount Int?         @map("episode_count")
-  posterId     String?      @unique @map("poster_id")
-  createdAt    DateTime     @default(now()) @map("created_at")
-  updatedAt    DateTime     @updatedAt @map("updated_at")
+  id                    String    @id @default(uuid())
+  title                 String
+  description           String
+  countryCodes          String[]  @default(["US"]) @map("country_codes")
+  genres                Genre[]
+  publishDate           DateTime? @map("publish_date")
+  isSerial              Boolean   @default(false) @map("is_serial")
+  seasonCount           Int?      @map("season_count")
+  episodeCount          Int?      @map("episode_count")
+  posterId              String?   @unique @map("poster_id")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   poster     MoviePoster? @relation("movie_poster", fields: [posterId], references: [id])
   reviews    Review[]     @relation("movie_reviews")

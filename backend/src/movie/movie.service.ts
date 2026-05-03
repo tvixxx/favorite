@@ -11,7 +11,8 @@ import type {
 import { MoviesStatsResponse } from './dto/movies-stats.dto';
 
 interface MovieFilters {
-  genre?: Genre;
+  genres?: Genre[];
+  countryCodes?: string[];
   publishDateFrom?: string;
   publishDateTo?: string;
 }
@@ -53,7 +54,8 @@ class MovieService {
       title,
       publishDate,
       description,
-      genre,
+      countryCodes,
+      genres,
       isSerial,
       seasonCount,
       episodeCount,
@@ -77,7 +79,8 @@ class MovieService {
           title,
           publishDate,
           description,
-          genre,
+          countryCodes,
+          genres,
           isSerial,
           seasonCount,
           episodeCount,
@@ -168,7 +171,8 @@ class MovieService {
       title,
       publishDate,
       description,
-      genre,
+      countryCodes,
+      genres,
       isSerial,
       seasonCount,
       episodeCount,
@@ -199,7 +203,8 @@ class MovieService {
           title,
           publishDate,
           description,
-          genre,
+          countryCodes,
+          genres,
           isSerial,
           seasonCount,
           episodeCount,
@@ -231,7 +236,8 @@ class MovieService {
         title,
         publishDate,
         description,
-        genre,
+        countryCodes,
+        genres,
         isSerial,
         seasonCount,
         episodeCount,
@@ -251,8 +257,12 @@ class MovieService {
         updateData.description = description;
       }
 
-      if (genre !== undefined) {
-        updateData.genre = genre;
+      if (countryCodes !== undefined) {
+        updateData.countryCodes = { set: countryCodes };
+      }
+
+      if (genres !== undefined) {
+        updateData.genres = { set: genres };
       }
 
       if (isSerial !== undefined) {
@@ -329,19 +339,20 @@ class MovieService {
   }
 
   public async search(
-    query: string,
+    query?: string,
     filters: MovieFilters = {},
   ): Promise<Movie[]> {
     const hasQuery = !!query?.trim();
-    const hasFilters = Object.values(filters).some(
-      (v) => v !== undefined && v !== '',
-    );
+    const hasFilters = this.filtersNonEmpty(filters);
 
     if (!hasQuery && !hasFilters) {
       return this.findAll();
     }
 
-    const where = this.buildWhereClause(filters, hasQuery ? query.trim() : undefined);
+    const where = this.buildWhereClause(
+      filters,
+      hasQuery && query ? query.trim() : undefined,
+    );
 
     const movies = await this.prismaService.movie.findMany({
       where,
@@ -358,34 +369,58 @@ class MovieService {
     return movies;
   }
 
+  private filtersNonEmpty(filters: MovieFilters): boolean {
+    return !!(
+      filters.genres?.length ||
+      filters.countryCodes?.length ||
+      filters.publishDateFrom ||
+      filters.publishDateTo
+    );
+  }
+
   private buildWhereClause(
     filters: MovieFilters,
     query?: string,
   ): Prisma.MovieWhereInput {
-    const where: Prisma.MovieWhereInput = {};
+    const and: Prisma.MovieWhereInput[] = [];
 
     if (query) {
-      where.title = {
-        contains: query,
-        mode: 'insensitive',
-      };
+      and.push({
+        title: {
+          contains: query,
+          mode: 'insensitive',
+        },
+      });
     }
 
-    if (filters.genre) {
-      where.genre = filters.genre;
+    if (filters.genres?.length) {
+      and.push({
+        genres: { hasSome: filters.genres },
+      });
+    }
+
+    if (filters.countryCodes?.length) {
+      and.push({
+        countryCodes: { hasSome: filters.countryCodes },
+      });
     }
 
     if (filters.publishDateFrom || filters.publishDateTo) {
-      where.publishDate = {};
+      const publishDate: Prisma.DateTimeNullableFilter = {};
       if (filters.publishDateFrom) {
-        where.publishDate.gte = new Date(filters.publishDateFrom);
+        publishDate.gte = new Date(filters.publishDateFrom);
       }
       if (filters.publishDateTo) {
-        where.publishDate.lte = new Date(filters.publishDateTo);
+        publishDate.lte = new Date(filters.publishDateTo);
       }
+      and.push({ publishDate });
     }
 
-    return where;
+    if (!and.length) {
+      return {};
+    }
+
+    return and.length === 1 ? and[0] : { AND: and };
   }
 }
 

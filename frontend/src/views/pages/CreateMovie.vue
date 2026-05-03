@@ -8,9 +8,14 @@ import { useActorsStore } from "@/stores/actors/actorsStore";
 import { useMainStore } from "@/state/state";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import { showErrorRequest } from "@/state/utils";
-import { Genre } from "@/components/Genres/constants/genres.constants";
-import GenresList from "@/components/Genres/GenresList.vue";
+import {
+  Genre,
+  GenreLabels,
+  GenreValues,
+} from "@/components/Genres/constants/genres.constants";
+import { PRODUCTION_COUNTRIES } from "@/constants/countries/production-countries";
 import { Movie } from "@/stores";
+import type { SelectProps } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 
 const moviesStore = useMoviesStore();
@@ -46,7 +51,8 @@ interface CreateMovieForm {
   title: string;
   publishDate: string;
   description: string;
-  genre?: Genre;
+  countryCodes: string[];
+  genres: Genre[];
   seeLater: boolean;
   isSerial: boolean;
   seasonCount?: number;
@@ -63,7 +69,8 @@ const formData = reactive<CreateMovieForm>({
   title: "",
   publishDate: "",
   description: "",
-  genre: Genre.ACTION,
+  countryCodes: ["US"],
+  genres: [Genre.ACTION],
   seeLater: false,
   isSerial: false,
   seasonCount: undefined,
@@ -76,6 +83,24 @@ const formData = reactive<CreateMovieForm>({
   actorIds: [],
 });
 const formRef = ref<FormInstance | null>(null);
+
+const countrySelectOptions: SelectProps["options"] = PRODUCTION_COUNTRIES.map(
+  (c) => ({
+    label: `${c.label} (${c.code})`,
+    value: c.code,
+  })
+);
+
+const genreFormOptions: SelectProps["options"] = GenreValues.map((g) => ({
+  label: GenreLabels[g],
+  value: g,
+}));
+
+const filterCountryOption = (input: string, option: { label?: string }) =>
+  (option?.label ?? "").toLowerCase().includes(input.toLowerCase());
+
+const filterGenreFormOption = (input: string, option: { label?: string }) =>
+  (option?.label ?? "").toLowerCase().includes(input.toLowerCase());
 
 onMounted(async () => {
   try {
@@ -92,7 +117,8 @@ const addNewMovie = async () => {
     const moviePayload: Partial<Movie> = {
       title: formData.title,
       description: formData.description,
-      genre: formData.genre ?? undefined,
+      countryCodes: formData.countryCodes,
+      genres: formData.genres,
       publishDate: formData.publishDate
         ? new Date(formData.publishDate).toISOString()
         : null,
@@ -117,6 +143,7 @@ const addNewMovie = async () => {
 
     formRef?.value?.resetFields();
     formData.actorIds = [];
+    formData.countryCodes = ["US"];
     message.success(`${title} добавлен`);
   } catch (error) {
     showErrorRequest(error);
@@ -198,6 +225,54 @@ const addNewMovie = async () => {
                   placeholder="Выберите дату выхода"
                 />
               </a-form-item>
+
+              <a-form-item
+                label="Страны производства"
+                name="countryCodes"
+                :rules="[
+                  {
+                    type: 'array',
+                    required: true,
+                    min: 1,
+                    message: 'Выберите хотя бы одну страну',
+                  },
+                ]"
+              >
+                <a-select
+                  v-model:value="formData.countryCodes"
+                  mode="multiple"
+                  show-search
+                  :filter-option="filterCountryOption"
+                  :max-tag-count="3"
+                  :options="countrySelectOptions"
+                  placeholder="Страны съёмок / ко-продукция"
+                  size="large"
+                  allow-clear
+                />
+              </a-form-item>
+
+              <a-form-item
+                label="Жанры"
+                name="genres"
+                :rules="[
+                  {
+                    type: 'array',
+                    required: true,
+                    min: 1,
+                    message: 'Выберите хотя бы один жанр',
+                  },
+                ]"
+              >
+                <a-select
+                  v-model:value="formData.genres"
+                  mode="multiple"
+                  :filter-option="filterGenreFormOption"
+                  :options="genreFormOptions"
+                  placeholder="Выберите жанры"
+                  size="large"
+                  show-search
+                />
+              </a-form-item>
             </div>
 
             <div class="form-grid__col">
@@ -230,10 +305,6 @@ const addNewMovie = async () => {
               </div>
             </div>
           </div>
-
-          <a-form-item label="Жанр" name="genre">
-            <GenresList v-model="formData.genre" />
-          </a-form-item>
 
           <a-form-item label="Смотреть позже?" name="seeLater">
             <a-switch v-model:checked="formData.seeLater" />

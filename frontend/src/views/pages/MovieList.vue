@@ -13,6 +13,7 @@ import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
 import { formatDate, formatYear } from "@/utils";
 import { ERROR_FETCH_MOVIES_TEXT } from "@/state/constants";
 import type { UserMoviesFilters } from "@/stores";
+import { countriesLabelsRu } from "@/constants/countries/production-countries";
 import MoviesFiltersPanel from "@/components/MoviesFiltersPanel/MoviesFiltersPanel.vue";
 
 const router = useRouter();
@@ -260,6 +261,15 @@ watch(
                 <span class="movie-card__meta-item-text"
                   >Дата выхода: {{ formatYear(item.movie.publishDate) }}</span
                 >
+              </div>
+              <div
+                v-if="item.movie.countryCodes?.length"
+                class="movie-card__meta-item"
+              >
+                <BaseIcon class="movie-card__meta-icon" name="mdi:earth" />
+                <span class="movie-card__meta-item-text">{{
+                  countriesLabelsRu(item.movie.countryCodes)
+                }}</span>
               </div>
             </div>
 

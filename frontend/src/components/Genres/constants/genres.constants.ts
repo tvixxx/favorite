@@ -15,21 +15,22 @@ export enum Genre {
   SCI_FI = "Sci_fi",
 }
 
+/** Подписи для UI (русский); значения enum при отправке на API без изменений */
 export const GenreLabels: Record<Genre, string> = {
-  [Genre.ACTION]: "Action",
-  [Genre.DRAMA]: "Drama",
-  [Genre.COMEDY]: "Comedy",
-  [Genre.DETECTIVE]: "Detective",
-  [Genre.FAMILY]: "Family",
-  [Genre.FANTASY]: "Fantasy",
-  [Genre.HORROR]: "Horror",
-  [Genre.MUSICAL]: "Musical",
-  [Genre.ROMANCE]: "Romance",
-  [Genre.THRILLER]: "Thriller",
-  [Genre.WAR]: "War",
-  [Genre.WESTERN]: "Western",
-  [Genre.DOCUMENTARY]: "Documentary",
-  [Genre.SCI_FI]: "Sci-Fi",
+  [Genre.ACTION]: "Боевик",
+  [Genre.DRAMA]: "Драма",
+  [Genre.COMEDY]: "Комедия",
+  [Genre.DETECTIVE]: "Детектив",
+  [Genre.FAMILY]: "Семейный",
+  [Genre.FANTASY]: "Фэнтези",
+  [Genre.HORROR]: "Ужасы",
+  [Genre.MUSICAL]: "Мюзикл",
+  [Genre.ROMANCE]: "Мелодрама",
+  [Genre.THRILLER]: "Триллер",
+  [Genre.WAR]: "Военный",
+  [Genre.WESTERN]: "Вестерн",
+  [Genre.DOCUMENTARY]: "Документальный",
+  [Genre.SCI_FI]: "Научная фантастика",
 };
 
 export const GenreValues = Object.values(Genre);
