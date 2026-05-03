@@ -57,33 +57,63 @@ export class MessageService {
       },
     });
 
-    const conversationsMap = new Map();
+    const latestByPeer = new Map<string, (typeof messages)[number]>();
 
     for (const message of messages) {
-      const otherUserId =
+      const peerId =
         message.senderId === userId ? message.receiverId : message.senderId;
 
-      if (!conversationsMap.has(otherUserId)) {
-        const otherUser =
-          message.senderId === userId ? message.receiver : message.sender;
+      if (!peerId || peerId === userId) {
+        continue;
+      }
 
-        const unreadCount = await this.prismaService.message.count({
-          where: {
-            senderId: otherUserId,
-            receiverId: userId,
-            isRead: false,
-          },
-        });
-
-        conversationsMap.set(otherUserId, {
-          otherUser,
-          lastMessage: message,
-          unreadCount,
-        });
+      if (!latestByPeer.has(peerId)) {
+        latestByPeer.set(peerId, message);
       }
     }
 
-    return Array.from(conversationsMap.values());
+    const result: Array<{
+      otherUser: {
+        id: string;
+        email: string;
+        fullName: string;
+      };
+      lastMessage: (typeof messages)[number];
+      unreadCount: number;
+    }> = [];
+
+    for (const [peerId, lastMessage] of latestByPeer) {
+      const otherUser =
+        lastMessage.senderId === userId
+          ? lastMessage.receiver
+          : lastMessage.sender;
+
+      if (!otherUser || otherUser.id !== peerId) {
+        continue;
+      }
+
+      const unreadCount = await this.prismaService.message.count({
+        where: {
+          senderId: peerId,
+          receiverId: userId,
+          isRead: false,
+        },
+      });
+
+      result.push({
+        otherUser,
+        lastMessage,
+        unreadCount,
+      });
+    }
+
+    result.sort(
+      (a, b) =>
+        new Date(b.lastMessage.createdAt).getTime() -
+        new Date(a.lastMessage.createdAt).getTime(),
+    );
+
+    return result;
   }
 
   async getMessages(userId: string, otherUserId: string, limit = 50) {
