@@ -94,6 +94,7 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 export const MovieScalarFieldEnum = {
   id: 'id',
   title: 'title',
+  titleNormalized: 'titleNormalized',
   description: 'description',
   countryCodes: 'countryCodes',
   genres: 'genres',

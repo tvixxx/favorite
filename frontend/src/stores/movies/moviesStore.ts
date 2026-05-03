@@ -99,9 +99,10 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   };
 
   const currentMoviesList = computed(() => {
-    return (
-      (hasActiveFilters.value ? searchResults.value : moviesList.value) ?? []
-    );
+    if (searchQuery.value.trim()) {
+      return searchResults.value;
+    }
+    return moviesList.value;
   });
 
   const paginatedMovies = computed(() => {
@@ -124,9 +125,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     );
   });
 
-  const createMovie = async (
-    movieData: Partial<Movie>
-  ): Promise<Movie> => {
+  const createMovie = async (movieData: Partial<Movie>): Promise<Movie> => {
     const response = await useFetch<MovieApiResponse>(MOVIES_ENDPOINTS, {
       method: FETCH_METHOD.post,
       data: movieData,
@@ -149,17 +148,17 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
       {
         method: FETCH_METHOD.patch,
         data: requestData,
-      }
+      },
     );
 
     if (isSuccessStatus(response.status)) {
       const movies = moviesList.value.map((movie: Movie) =>
-        movie.id === movieData.id ? { ...movie, ...requestData } : movie
+        movie.id === movieData.id ? { ...movie, ...requestData } : movie,
       );
       setMovies(movies);
 
       searchResults.value = searchResults.value.map((movie: Movie) =>
-        movie.id === movieData.id ? { ...movie, ...requestData } : movie
+        movie.id === movieData.id ? { ...movie, ...requestData } : movie,
       );
     } else {
       throw new Error("Не удалось обновить фильм");
@@ -168,7 +167,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
   const patchMovie = async (
     movieId: string,
-    data: Partial<Movie>
+    data: Partial<Movie>,
   ): Promise<void> => {
     const response = await useFetch<boolean>(`${MOVIES_ENDPOINTS}/${movieId}`, {
       method: FETCH_METHOD.patch,
@@ -179,11 +178,11 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
       const updatedMovie = { ...data };
 
       moviesList.value = moviesList.value.map((movie: Movie) =>
-        movie.id === movieId ? { ...movie, ...updatedMovie } : movie
+        movie.id === movieId ? { ...movie, ...updatedMovie } : movie,
       );
 
       searchResults.value = searchResults.value.map((movie: Movie) =>
-        movie.id === movieId ? { ...movie, ...updatedMovie } : movie
+        movie.id === movieId ? { ...movie, ...updatedMovie } : movie,
       );
     } else {
       throw new Error("Не удалось обновить фильм");
@@ -197,11 +196,11 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
     if (isSuccessStatus(response.status)) {
       moviesList.value = moviesList.value.filter(
-        (movie) => movie.id !== movieId
+        (movie) => movie.id !== movieId,
       );
 
       searchResults.value = searchResults.value.filter(
-        (movie) => movie.id !== movieId
+        (movie) => movie.id !== movieId,
       );
     } else {
       throw new Error("Не удалось удалить фильм");
@@ -233,7 +232,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
         throw new Error(ERROR_FETCH_MOVIES_TEXT);
       }
 
-      if (query || hasActiveFilters.value) {
+      if (query.trim()) {
         searchResults.value = mapMoviesFromApi(data);
       } else {
         setMovies(mapMoviesFromApi(data));
@@ -307,7 +306,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
     try {
       const { data, status } = await useFetch<MoviesStats>(
-        `${MOVIES_ENDPOINTS}/stats`
+        `${MOVIES_ENDPOINTS}/stats`,
       );
 
       if (status !== 200) {
@@ -332,44 +331,35 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   };
 
   const getMovieDetail = async (movieId: string | null) => {
-    if (!isMoviesLoaded.value) {
-      setLoadingMovie(true);
-      setErrorMovie(null);
-
-      const start = Date.now();
-
-      try {
-        const { data, status } = await useFetch<MovieApiResponse>(
-          `${MOVIES_ENDPOINTS}/${movieId}`,
-          {
-            method: FETCH_METHOD.get,
-          }
-        );
-
-        if (status !== 200) {
-          throw new Error("Ошибка загрузки фильма");
-        }
-
-        setCurrentMovie(mapMovieFromApi(data));
-      } catch (error) {
-        setErrorMovie("Ошибка загрузки фильма");
-        throw error;
-      } finally {
-        setTimeout(() => {
-          setLoadingMovie(false);
-        }, getDefaultLoaderDelayTime(start));
-      }
-
+    if (!movieId) {
       return;
     }
 
-    if (movieId) {
-      const foundMovie = getMovieById(`${movieId}`);
+    setLoadingMovie(true);
+    setErrorMovie(null);
 
-      if (foundMovie) {
-        setCurrentMovie(foundMovie);
-        return;
+    const start = Date.now();
+
+    try {
+      const { data, status } = await useFetch<MovieApiResponse>(
+        `${MOVIES_ENDPOINTS}/${movieId}`,
+        {
+          method: FETCH_METHOD.get,
+        },
+      );
+
+      if (status !== 200) {
+        throw new Error("Ошибка загрузки фильма");
       }
+
+      setCurrentMovie(mapMovieFromApi(data));
+    } catch (error) {
+      setErrorMovie("Ошибка загрузки фильма");
+      throw error;
+    } finally {
+      setTimeout(() => {
+        setLoadingMovie(false);
+      }, getDefaultLoaderDelayTime(start));
     }
   };
 

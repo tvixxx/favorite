@@ -39,6 +39,7 @@ export type MovieSumAggregateOutputType = {
 export type MovieMinAggregateOutputType = {
   id: string | null
   title: string | null
+  titleNormalized: string | null
   description: string | null
   publishDate: Date | null
   isSerial: boolean | null
@@ -52,6 +53,7 @@ export type MovieMinAggregateOutputType = {
 export type MovieMaxAggregateOutputType = {
   id: string | null
   title: string | null
+  titleNormalized: string | null
   description: string | null
   publishDate: Date | null
   isSerial: boolean | null
@@ -65,6 +67,7 @@ export type MovieMaxAggregateOutputType = {
 export type MovieCountAggregateOutputType = {
   id: number
   title: number
+  titleNormalized: number
   description: number
   countryCodes: number
   genres: number
@@ -92,6 +95,7 @@ export type MovieSumAggregateInputType = {
 export type MovieMinAggregateInputType = {
   id?: true
   title?: true
+  titleNormalized?: true
   description?: true
   publishDate?: true
   isSerial?: true
@@ -105,6 +109,7 @@ export type MovieMinAggregateInputType = {
 export type MovieMaxAggregateInputType = {
   id?: true
   title?: true
+  titleNormalized?: true
   description?: true
   publishDate?: true
   isSerial?: true
@@ -118,6 +123,7 @@ export type MovieMaxAggregateInputType = {
 export type MovieCountAggregateInputType = {
   id?: true
   title?: true
+  titleNormalized?: true
   description?: true
   countryCodes?: true
   genres?: true
@@ -220,6 +226,7 @@ export type MovieGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type MovieGroupByOutputType = {
   id: string
   title: string
+  titleNormalized: string
   description: string
   countryCodes: string[]
   genres: $Enums.Genre[]
@@ -258,6 +265,7 @@ export type MovieWhereInput = {
   NOT?: Prisma.MovieWhereInput | Prisma.MovieWhereInput[]
   id?: Prisma.StringFilter<"Movie"> | string
   title?: Prisma.StringFilter<"Movie"> | string
+  titleNormalized?: Prisma.StringFilter<"Movie"> | string
   description?: Prisma.StringFilter<"Movie"> | string
   countryCodes?: Prisma.StringNullableListFilter<"Movie">
   genres?: Prisma.EnumGenreNullableListFilter<"Movie">
@@ -277,6 +285,7 @@ export type MovieWhereInput = {
 export type MovieOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  titleNormalized?: Prisma.SortOrder
   description?: Prisma.SortOrder
   countryCodes?: Prisma.SortOrder
   genres?: Prisma.SortOrder
@@ -300,6 +309,7 @@ export type MovieWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.MovieWhereInput[]
   NOT?: Prisma.MovieWhereInput | Prisma.MovieWhereInput[]
   title?: Prisma.StringFilter<"Movie"> | string
+  titleNormalized?: Prisma.StringFilter<"Movie"> | string
   description?: Prisma.StringFilter<"Movie"> | string
   countryCodes?: Prisma.StringNullableListFilter<"Movie">
   genres?: Prisma.EnumGenreNullableListFilter<"Movie">
@@ -318,6 +328,7 @@ export type MovieWhereUniqueInput = Prisma.AtLeast<{
 export type MovieOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  titleNormalized?: Prisma.SortOrder
   description?: Prisma.SortOrder
   countryCodes?: Prisma.SortOrder
   genres?: Prisma.SortOrder
@@ -341,6 +352,7 @@ export type MovieScalarWhereWithAggregatesInput = {
   NOT?: Prisma.MovieScalarWhereWithAggregatesInput | Prisma.MovieScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Movie"> | string
   title?: Prisma.StringWithAggregatesFilter<"Movie"> | string
+  titleNormalized?: Prisma.StringWithAggregatesFilter<"Movie"> | string
   description?: Prisma.StringWithAggregatesFilter<"Movie"> | string
   countryCodes?: Prisma.StringNullableListFilter<"Movie">
   genres?: Prisma.EnumGenreNullableListFilter<"Movie">
@@ -356,6 +368,7 @@ export type MovieScalarWhereWithAggregatesInput = {
 export type MovieCreateInput = {
   id?: string
   title: string
+  titleNormalized?: string
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -374,6 +387,7 @@ export type MovieCreateInput = {
 export type MovieUncheckedCreateInput = {
   id?: string
   title: string
+  titleNormalized?: string
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -392,6 +406,7 @@ export type MovieUncheckedCreateInput = {
 export type MovieUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -410,6 +425,7 @@ export type MovieUpdateInput = {
 export type MovieUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -428,6 +444,7 @@ export type MovieUncheckedUpdateInput = {
 export type MovieCreateManyInput = {
   id?: string
   title: string
+  titleNormalized?: string
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -443,6 +460,7 @@ export type MovieCreateManyInput = {
 export type MovieUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -457,6 +475,7 @@ export type MovieUpdateManyMutationInput = {
 export type MovieUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -488,6 +507,7 @@ export type EnumGenreNullableListFilter<$PrismaModel = never> = {
 export type MovieCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  titleNormalized?: Prisma.SortOrder
   description?: Prisma.SortOrder
   countryCodes?: Prisma.SortOrder
   genres?: Prisma.SortOrder
@@ -508,6 +528,7 @@ export type MovieAvgOrderByAggregateInput = {
 export type MovieMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  titleNormalized?: Prisma.SortOrder
   description?: Prisma.SortOrder
   publishDate?: Prisma.SortOrder
   isSerial?: Prisma.SortOrder
@@ -521,6 +542,7 @@ export type MovieMaxOrderByAggregateInput = {
 export type MovieMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  titleNormalized?: Prisma.SortOrder
   description?: Prisma.SortOrder
   publishDate?: Prisma.SortOrder
   isSerial?: Prisma.SortOrder
@@ -695,6 +717,7 @@ export type MovieUpdateOneRequiredWithoutUserMoviesNestedInput = {
 export type MovieCreateWithoutPosterInput = {
   id?: string
   title: string
+  titleNormalized?: string
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -712,6 +735,7 @@ export type MovieCreateWithoutPosterInput = {
 export type MovieUncheckedCreateWithoutPosterInput = {
   id?: string
   title: string
+  titleNormalized?: string
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -745,6 +769,7 @@ export type MovieUpdateToOneWithWhereWithoutPosterInput = {
 export type MovieUpdateWithoutPosterInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -762,6 +787,7 @@ export type MovieUpdateWithoutPosterInput = {
 export type MovieUncheckedUpdateWithoutPosterInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -779,6 +805,7 @@ export type MovieUncheckedUpdateWithoutPosterInput = {
 export type MovieCreateWithoutReviewsInput = {
   id?: string
   title: string
+  titleNormalized?: string
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -796,6 +823,7 @@ export type MovieCreateWithoutReviewsInput = {
 export type MovieUncheckedCreateWithoutReviewsInput = {
   id?: string
   title: string
+  titleNormalized?: string
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -829,6 +857,7 @@ export type MovieUpdateToOneWithWhereWithoutReviewsInput = {
 export type MovieUpdateWithoutReviewsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -846,6 +875,7 @@ export type MovieUpdateWithoutReviewsInput = {
 export type MovieUncheckedUpdateWithoutReviewsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -863,6 +893,7 @@ export type MovieUncheckedUpdateWithoutReviewsInput = {
 export type MovieCreateWithoutActorsInput = {
   id?: string
   title: string
+  titleNormalized?: string
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -880,6 +911,7 @@ export type MovieCreateWithoutActorsInput = {
 export type MovieUncheckedCreateWithoutActorsInput = {
   id?: string
   title: string
+  titleNormalized?: string
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -921,6 +953,7 @@ export type MovieScalarWhereInput = {
   NOT?: Prisma.MovieScalarWhereInput | Prisma.MovieScalarWhereInput[]
   id?: Prisma.StringFilter<"Movie"> | string
   title?: Prisma.StringFilter<"Movie"> | string
+  titleNormalized?: Prisma.StringFilter<"Movie"> | string
   description?: Prisma.StringFilter<"Movie"> | string
   countryCodes?: Prisma.StringNullableListFilter<"Movie">
   genres?: Prisma.EnumGenreNullableListFilter<"Movie">
@@ -936,6 +969,7 @@ export type MovieScalarWhereInput = {
 export type MovieCreateWithoutUserMoviesInput = {
   id?: string
   title: string
+  titleNormalized?: string
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -953,6 +987,7 @@ export type MovieCreateWithoutUserMoviesInput = {
 export type MovieUncheckedCreateWithoutUserMoviesInput = {
   id?: string
   title: string
+  titleNormalized?: string
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -986,6 +1021,7 @@ export type MovieUpdateToOneWithWhereWithoutUserMoviesInput = {
 export type MovieUpdateWithoutUserMoviesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1003,6 +1039,7 @@ export type MovieUpdateWithoutUserMoviesInput = {
 export type MovieUncheckedUpdateWithoutUserMoviesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1020,6 +1057,7 @@ export type MovieUncheckedUpdateWithoutUserMoviesInput = {
 export type MovieUpdateWithoutActorsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1037,6 +1075,7 @@ export type MovieUpdateWithoutActorsInput = {
 export type MovieUncheckedUpdateWithoutActorsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1054,6 +1093,7 @@ export type MovieUncheckedUpdateWithoutActorsInput = {
 export type MovieUncheckedUpdateManyWithoutActorsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1118,6 +1158,7 @@ export type MovieCountOutputTypeCountUserMoviesArgs<ExtArgs extends runtime.Type
 export type MovieSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  titleNormalized?: boolean
   description?: boolean
   countryCodes?: boolean
   genres?: boolean
@@ -1138,6 +1179,7 @@ export type MovieSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type MovieSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  titleNormalized?: boolean
   description?: boolean
   countryCodes?: boolean
   genres?: boolean
@@ -1154,6 +1196,7 @@ export type MovieSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type MovieSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  titleNormalized?: boolean
   description?: boolean
   countryCodes?: boolean
   genres?: boolean
@@ -1170,6 +1213,7 @@ export type MovieSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type MovieSelectScalar = {
   id?: boolean
   title?: boolean
+  titleNormalized?: boolean
   description?: boolean
   countryCodes?: boolean
   genres?: boolean
@@ -1182,7 +1226,7 @@ export type MovieSelectScalar = {
   updatedAt?: boolean
 }
 
-export type MovieOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "countryCodes" | "genres" | "publishDate" | "isSerial" | "seasonCount" | "episodeCount" | "posterId" | "createdAt" | "updatedAt", ExtArgs["result"]["movie"]>
+export type MovieOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "titleNormalized" | "description" | "countryCodes" | "genres" | "publishDate" | "isSerial" | "seasonCount" | "episodeCount" | "posterId" | "createdAt" | "updatedAt", ExtArgs["result"]["movie"]>
 export type MovieInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   poster?: boolean | Prisma.Movie$posterArgs<ExtArgs>
   reviews?: boolean | Prisma.Movie$reviewsArgs<ExtArgs>
@@ -1208,6 +1252,7 @@ export type $MoviePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     title: string
+    titleNormalized: string
     description: string
     countryCodes: string[]
     genres: $Enums.Genre[]
@@ -1647,6 +1692,7 @@ export interface Prisma__MovieClient<T, Null = never, ExtArgs extends runtime.Ty
 export interface MovieFieldRefs {
   readonly id: Prisma.FieldRef<"Movie", 'String'>
   readonly title: Prisma.FieldRef<"Movie", 'String'>
+  readonly titleNormalized: Prisma.FieldRef<"Movie", 'String'>
   readonly description: Prisma.FieldRef<"Movie", 'String'>
   readonly countryCodes: Prisma.FieldRef<"Movie", 'String[]'>
   readonly genres: Prisma.FieldRef<"Movie", 'Genre[]'>

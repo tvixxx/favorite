@@ -3,6 +3,10 @@ import { nextTick, ref, watch } from "vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 
 const modelValue = defineModel<boolean>();
+
+defineProps<{
+  layout?: "default" | "detail";
+}>();
 const emit = defineEmits<{ confirm: [] }>();
 
 const modal = ref<HTMLElement | null>(null);
@@ -58,6 +62,7 @@ const handleConfirm = () => {
         <div
           ref="modal"
           class="modal"
+          :class="{ 'modal--detail': layout === 'detail' }"
           role="dialog"
           aria-modal="true"
           tabindex="-1"
@@ -115,6 +120,24 @@ const handleConfirm = () => {
   box-shadow: var(--shadow-modal);
   border: 1px solid var(--border-color);
   animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &--detail {
+    max-width: min(96vw, 720px);
+
+    .modal__body {
+      max-height: min(78vh, 880px);
+      padding: 1rem 1.25rem;
+
+      @include mediaTablet {
+        padding: 1.25rem 1.75rem;
+      }
+    }
+
+    .modal__footer {
+      padding-top: 1rem;
+      padding-bottom: 1.75rem;
+    }
+  }
 }
 
 .modal__header {

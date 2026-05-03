@@ -18,6 +18,7 @@ import type {
   UserProfileResponse,
 } from "@/state/types";
 import { DEFAULT_MAIN_STATE, MAIN_STORE_NAME } from "@/state/constants";
+import { useUserMoviesStore } from "@/stores/userMovies/userMoviesStore";
 
 export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
   const userDataRaw = useStorage<UserData | null>(
@@ -215,6 +216,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     accessToken.value = null;
     state.value.user.data = null;
     state.value.user.loggedIn = false;
+    useUserMoviesStore().resetSession();
   }
 
   function logOut(): void {

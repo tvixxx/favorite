@@ -17,6 +17,7 @@ import {
   parseGenreFilters,
 } from '../common/utils/parse-query-filters';
 import {
+  ApiConflictResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -163,6 +164,10 @@ export class MovieController {
   @ApiOkResponse({
     description: 'Фильм создан',
     type: MovieResponse,
+  })
+  @ApiConflictResponse({
+    description:
+      'Фильм с таким же названием (с учётом регистра и пробелов) уже есть в каталоге',
   })
   @Post()
   public create(@Body() dto: CreateMovieRequest) {
