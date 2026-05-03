@@ -20,6 +20,7 @@ export function mapMovieFromApi(raw: MovieApiResponse): Movie {
     createdAt: raw.createdAt,
     actors: raw.actors,
     reviews: raw.reviews,
+    averageRating: raw.averageRating ?? null,
     _count: raw._count,
   };
 }

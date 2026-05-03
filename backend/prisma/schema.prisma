@@ -31,6 +31,7 @@ model User {
 model Movie {
   id                    String    @id @default(uuid())
   title                 String
+  titleNormalized       String    @default("") @map("title_normalized")
   description           String
   countryCodes          String[]  @default(["US"]) @map("country_codes")
   genres                Genre[]
@@ -48,6 +49,7 @@ model Movie {
   userMovies UserMovie[]  @relation("movie_users")
 
   @@index([publishDate, title])
+  @@index([titleNormalized])
   @@map("movies")
 }
 

@@ -150,7 +150,7 @@ const goToMovie = (item: UserMovie) => {
 };
 
 const goToMovies = () => {
-  router.push("/list");
+  router.push("/my-collection");
 };
 
 onMounted(async () => {

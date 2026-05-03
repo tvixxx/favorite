@@ -30,6 +30,8 @@ export interface MovieApiResponse {
   poster: MoviePoster | null;
   actors?: Actor[];
   reviews?: Review[];
+  /** Средний балл отзывов (1–10), с бэкенда на списках и деталях */
+  averageRating?: number | null;
   _count?: {
     reviews: number;
     actors: number;
@@ -52,6 +54,7 @@ export interface Movie {
   actorIds?: string[];
   actors?: Actor[];
   reviews?: Review[];
+  averageRating?: number | null;
   _count?: {
     reviews: number;
     actors: number;
@@ -100,6 +103,7 @@ export interface Review {
   rate: number;
   userId: string;
   movieId: string;
+  createdAt?: string;
 }
 
 export interface MoviesStats {

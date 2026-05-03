@@ -9,7 +9,10 @@ import type {
   UserMoviesFilters,
   UserMoviesStats,
 } from "@/stores/movies/types";
-import { mapUserMovieFromApi, mapUserMoviesFromApi } from "@/stores/movies/utils";
+import {
+  mapUserMovieFromApi,
+  mapUserMoviesFromApi,
+} from "@/stores/movies/utils";
 
 export const useUserMoviesStore = defineStore("userMovies", () => {
   // State
@@ -60,11 +63,11 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   });
 
   const favoriteUserMovies = computed(() =>
-    userMovies.value.filter((um) => um.isFavorite)
+    userMovies.value.filter((um) => um.isFavorite),
   );
 
   const seeLaterUserMovies = computed(() =>
-    userMovies.value.filter((um) => um.seeLater)
+    userMovies.value.filter((um) => um.seeLater),
   );
 
   const hasActiveFilters = computed(() => {
@@ -151,11 +154,16 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
         params.append("watchStatus", filters.value.watchStatus);
 
       const queryString = params.toString();
-      const endpoint = `/users/${userId}/movies${queryString ? `?${queryString}` : ""}`;
+      const endpoint = `/users/${userId}/movies${
+        queryString ? `?${queryString}` : ""
+      }`;
 
-      const { data, status } = await useFetch<UserMovieApiResponse[]>(endpoint, {
-        method: FETCH_METHOD.get,
-      });
+      const { data, status } = await useFetch<UserMovieApiResponse[]>(
+        endpoint,
+        {
+          method: FETCH_METHOD.get,
+        },
+      );
 
       if (status !== 200) {
         throw new Error("Ошибка загрузки фильмов");
@@ -216,9 +224,12 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
       const endpoint = `/users/${userId}/movies/search?${params.toString()}`;
 
-      const { data, status } = await useFetch<UserMovieApiResponse[]>(endpoint, {
-        method: FETCH_METHOD.get,
-      });
+      const { data, status } = await useFetch<UserMovieApiResponse[]>(
+        endpoint,
+        {
+          method: FETCH_METHOD.get,
+        },
+      );
 
       if (status !== 200) {
         throw new Error("Ошибка поиска");
@@ -248,7 +259,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
     try {
       const { data, status } = await useFetch<UserMoviesStats>(
-        `/users/${userId}/movies/stats`
+        `/users/${userId}/movies/stats`,
       );
 
       if (status !== 200) {
@@ -266,7 +277,11 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     }
   };
 
-  const addUserMovie = async (userId: string, movieId: string, data: Partial<UserMovie>) => {
+  const addUserMovie = async (
+    userId: string,
+    movieId: string,
+    data: Partial<UserMovie>,
+  ) => {
     if (!userId?.trim()) {
       throw new Error("Не указан пользователь");
     }
@@ -279,7 +294,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
           movieId,
           ...data,
         },
-      }
+      },
     );
 
     if (response?.data && isSuccessStatus(response.status)) {
@@ -294,7 +309,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   const updateUserMovie = async (
     userId: string,
     movieId: string,
-    data: Partial<UserMovie>
+    data: Partial<UserMovie>,
   ) => {
     if (!userId?.trim()) {
       throw new Error("Не указан пользователь");
@@ -305,18 +320,18 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       {
         method: FETCH_METHOD.patch,
         data,
-      }
+      },
     );
 
     if (isSuccessStatus(response.status)) {
       const updatedUserMovie = mapUserMovieFromApi(response.data);
 
       userMovies.value = userMovies.value.map((um) =>
-        um.movieId === movieId ? updatedUserMovie : um
+        um.movieId === movieId ? updatedUserMovie : um,
       );
 
       searchResults.value = searchResults.value.map((um) =>
-        um.movieId === movieId ? updatedUserMovie : um
+        um.movieId === movieId ? updatedUserMovie : um,
       );
 
       return updatedUserMovie;
@@ -327,7 +342,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
   const fetchUserMovieById = async (
     userId: string,
-    movieId: string
+    movieId: string,
   ): Promise<UserMovie | null> => {
     if (!userId?.trim()) {
       return null;
@@ -341,7 +356,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
         `/users/${userId}/movies/${movieId}`,
         {
           method: FETCH_METHOD.get,
-        }
+        },
       );
 
       if (status !== 200 || !data) {
@@ -371,13 +386,15 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       `/users/${userId}/movies/${movieId}`,
       {
         method: FETCH_METHOD.delete,
-      }
+      },
     );
 
     if (isSuccessStatus(response.status)) {
-      userMovies.value = userMovies.value.filter((um) => um.movieId !== movieId);
+      userMovies.value = userMovies.value.filter(
+        (um) => um.movieId !== movieId,
+      );
       searchResults.value = searchResults.value.filter(
-        (um) => um.movieId !== movieId
+        (um) => um.movieId !== movieId,
       );
     } else {
       throw new Error("Не удалось удалить фильм");
@@ -385,7 +402,28 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   };
 
   const removeFromSearchResults = (movieId: string) => {
-    searchResults.value = searchResults.value.filter(um => um.movieId !== movieId);
+    searchResults.value = searchResults.value.filter(
+      (um) => um.movieId !== movieId,
+    );
+  };
+
+  const resetSession = () => {
+    userMovies.value = [];
+    isLoaded.value = false;
+    isLoading.value = false;
+    isError.value = null;
+    searchResults.value = [];
+    searchQuery.value = "";
+    isSearching.value = false;
+    filters.value = {};
+    currentUserMovie.value = null;
+    isCurrentLoading.value = false;
+    isCurrentError.value = null;
+    currentPage.value = 1;
+    pageSize.value = 6;
+    stats.value = null;
+    isStatsLoading.value = false;
+    isStatsError.value = null;
   };
 
   return {
@@ -431,5 +469,6 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     removeUserMovie,
     fetchUserMovieById,
     removeFromSearchResults,
+    resetSession,
   };
 });

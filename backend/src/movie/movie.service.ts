@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateMovieRequest } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
 import type {
@@ -9,6 +13,7 @@ import type {
   Review,
 } from '../generated/prisma/client';
 import { MoviesStatsResponse } from './dto/movies-stats.dto';
+import { normalizeMovieTitle } from '../common/utils';
 
 interface MovieFilters {
   genres?: Genre[];
@@ -17,11 +22,57 @@ interface MovieFilters {
   publishDateTo?: string;
 }
 
+export type MovieWithAverageRating = Movie & {
+  averageRating: number | null;
+};
+
 @Injectable()
 class MovieService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  public async findAll(filters: MovieFilters = {}): Promise<Movie[]> {
+  private async findDuplicateMovieIdByNormalizedTitle(
+    title: string,
+    excludeMovieId?: string,
+  ): Promise<string | null> {
+    const normalized = normalizeMovieTitle(title);
+
+    if (!normalized.length) {
+      return null;
+    }
+
+    const existing = await this.prismaService.movie.findFirst({
+      where: {
+        titleNormalized: normalized,
+        ...(excludeMovieId ? { NOT: { id: excludeMovieId } } : {}),
+      },
+      select: { id: true },
+    });
+
+    return existing?.id ?? null;
+  }
+
+  private async withAverageRatings<M extends { id: string }>(
+    movies: M[],
+  ): Promise<Array<M & { averageRating: number | null }>> {
+    if (!movies.length) {
+      return [];
+    }
+    const ids = movies.map((m) => m.id);
+    const grouped = await this.prismaService.review.groupBy({
+      by: ['movieId'],
+      where: { movieId: { in: ids } },
+      _avg: { rate: true },
+    });
+    const map = new Map(grouped.map((g) => [g.movieId, g._avg.rate]));
+    return movies.map((m) => ({
+      ...m,
+      averageRating: map.get(m.id) ?? null,
+    }));
+  }
+
+  public async findAll(
+    filters: MovieFilters = {},
+  ): Promise<MovieWithAverageRating[]> {
     const where = this.buildWhereClause(filters);
 
     const movies = await this.prismaService.movie.findMany({
@@ -44,10 +95,12 @@ class MovieService {
       },
     });
 
-    return movies;
+    return this.withAverageRatings(movies);
   }
 
-  public async create(dto: CreateMovieRequest): Promise<Movie> {
+  public async create(
+    dto: CreateMovieRequest,
+  ): Promise<MovieWithAverageRating> {
     const {
       actorIds,
       imageUrl,
@@ -61,7 +114,15 @@ class MovieService {
       episodeCount,
     } = dto;
 
-    return this.prismaService.$transaction(async (tx) => {
+    const duplicateOnCreate =
+      await this.findDuplicateMovieIdByNormalizedTitle(title);
+    if (duplicateOnCreate) {
+      throw new ConflictException(
+        'Фильм с таким названием уже есть в общем каталоге. Измените название или добавьте существующую позицию из каталога.',
+      );
+    }
+
+    const created = await this.prismaService.$transaction(async (tx) => {
       const actors = await tx.actor.findMany({
         where: {
           id: {
@@ -77,6 +138,7 @@ class MovieService {
       return tx.movie.create({
         data: {
           title,
+          titleNormalized: normalizeMovieTitle(title),
           publishDate,
           description,
           countryCodes,
@@ -106,9 +168,11 @@ class MovieService {
         },
       });
     });
+
+    return (await this.withAverageRatings([created]))[0];
   }
 
-  public async findById(id: string): Promise<Movie> {
+  public async findById(id: string): Promise<MovieWithAverageRating> {
     const movie = await this.prismaService.movie.findUnique({
       where: {
         id,
@@ -124,7 +188,15 @@ class MovieService {
       throw new NotFoundException(`Фильм с айди: ${id} не найден`);
     }
 
-    return movie;
+    const avg = await this.prismaService.review.aggregate({
+      where: { movieId: id },
+      _avg: { rate: true },
+    });
+
+    return {
+      ...movie,
+      averageRating: avg._avg.rate ?? null,
+    };
   }
 
   public async getActorsByMovieId(
@@ -197,10 +269,21 @@ class MovieService {
         throw new NotFoundException('Один или несколько актеров не найдены');
       }
 
+      const duplicateId = await this.findDuplicateMovieIdByNormalizedTitle(
+        title,
+        id,
+      );
+      if (duplicateId) {
+        throw new ConflictException(
+          'Фильм с таким названием уже есть в общем каталоге.',
+        );
+      }
+
       await tx.movie.update({
         where: { id },
         data: {
           title,
+          titleNormalized: normalizeMovieTitle(title),
           publishDate,
           description,
           countryCodes,
@@ -246,7 +329,17 @@ class MovieService {
       const updateData: Prisma.MovieUpdateInput = {};
 
       if (title !== undefined) {
+        const duplicateId = await this.findDuplicateMovieIdByNormalizedTitle(
+          title,
+          id,
+        );
+        if (duplicateId) {
+          throw new ConflictException(
+            'Фильм с таким названием уже есть в общем каталоге.',
+          );
+        }
         updateData.title = title;
+        updateData.titleNormalized = normalizeMovieTitle(title);
       }
 
       if (publishDate !== undefined) {
@@ -341,7 +434,7 @@ class MovieService {
   public async search(
     query?: string,
     filters: MovieFilters = {},
-  ): Promise<Movie[]> {
+  ): Promise<MovieWithAverageRating[]> {
     const hasQuery = !!query?.trim();
     const hasFilters = this.filtersNonEmpty(filters);
 
@@ -362,11 +455,16 @@ class MovieService {
       include: {
         actors: true,
         poster: true,
-        reviews: true,
+        _count: {
+          select: {
+            reviews: true,
+            actors: true,
+          },
+        },
       },
     });
 
-    return movies;
+    return this.withAverageRatings(movies);
   }
 
   private filtersNonEmpty(filters: MovieFilters): boolean {

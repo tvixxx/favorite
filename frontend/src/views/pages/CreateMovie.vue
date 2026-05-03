@@ -17,6 +17,10 @@ import { PRODUCTION_COUNTRIES } from "@/constants/countries/production-countries
 import { Movie } from "@/stores";
 import type { SelectProps } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import {
+  getApiResponseMessage,
+  isApiConflictError,
+} from "@/services/api";
 
 const moviesStore = useMoviesStore();
 const userMoviesStore = useUserMoviesStore();
@@ -145,7 +149,13 @@ const addNewMovie = async () => {
     formData.actorIds = [];
     formData.countryCodes = ["US"];
     message.success(`${title} добавлен`);
-  } catch (error) {
+  } catch (error: unknown) {
+    if (isApiConflictError(error)) {
+      message.warning(
+        getApiResponseMessage(error) ?? "Такой фильм уже есть в каталоге."
+      );
+      return;
+    }
     showErrorRequest(error);
   }
 };

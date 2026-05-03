@@ -23,9 +23,21 @@ const routes: Array<RouteRecordRaw> = [
     },
   },
   {
-    path: "/list",
-    name: "list",
+    path: "/my-collection",
+    name: "my-collection",
     component: () => import("@/views/pages/MovieList.vue"),
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
+    path: "/list",
+    redirect: "/my-collection",
+  },
+  {
+    path: "/catalog",
+    name: "catalog",
+    component: () => import("@/views/pages/CatalogPage.vue"),
     meta: {
       requiresAuth: true,
     },
@@ -81,7 +93,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/:pathMatch(.*)*",
     name: "not-found",
-    redirect: "/list",
+    redirect: "/my-collection",
   },
 ];
 

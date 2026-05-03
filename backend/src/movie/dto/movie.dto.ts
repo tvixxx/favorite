@@ -57,6 +57,14 @@ export class MovieResponse {
   genres: Genre[];
 
   @ApiProperty({
+    description: 'Средний балл отзывов (по шкале 1–10)',
+    example: 8.4,
+    nullable: true,
+    type: Number,
+  })
+  averageRating: number | null;
+
+  @ApiProperty({
     description: 'Рейтинг',
     example: '7',
     type: Number,

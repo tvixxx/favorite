@@ -1,18 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import dayjs, { Dayjs } from "dayjs";
 
-import InputSearch from "@/components/Input/InputSearch/InputSearch.vue";
-import GenreFilter from "@/components/Genres/GenreFilter.vue";
-import CountryFilter from "@/components/Countries/CountryFilter.vue";
+import MoviesFiltersShared from "@/components/MoviesFiltersPanel/MoviesFiltersShared.vue";
 import RateFilter from "@/components/Filters/RateFilter.vue";
-import DateRangeFilter from "@/components/Filters/DateRangeFilter.vue";
-import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import { useWindowSize } from "@vueuse/core";
 import type { UserMoviesFilters } from "@/stores";
-import { Genre } from "@/components/Genres/constants/genres.constants";
+import type { MoviesFilters } from "@/stores/movies/types";
 
-const TABLET_WIDTH = 768;
 const DEFAULT_RATE_RANGE: [number, number] = [0, 10];
 
 defineProps<{
@@ -23,66 +16,48 @@ const emit = defineEmits<{
   "update:filters": [filters: UserMoviesFilters];
 }>();
 
-const { width } = useWindowSize();
-
-const searchQuery = ref<string>("");
-const selectedGenres = ref<Genre[]>([]);
-const selectedCountries = ref<string[]>([]);
+const moviesPart = ref<MoviesFilters>({});
+const searchQuery = ref("");
 const rateRange = ref<[number, number]>([...DEFAULT_RATE_RANGE]);
-const publishDateRange = ref<[Dayjs, Dayjs] | null>(null);
 const seeLater = ref(false);
-const isExpanded = ref(false);
 
-const isMobile = computed(() => width.value < TABLET_WIDTH);
+const rateAdvanced = computed(() => {
+  const [min, max] = rateRange.value;
+  return min > 0 || max < 10;
+});
 
-const toggleExpanded = () => {
-  isExpanded.value = !isExpanded.value;
-};
+const extraAdvancedActive = computed(() => rateAdvanced.value || seeLater.value);
+
+const extraFiltersActive = computed(() => extraAdvancedActive.value);
 
 const hasAdvancedFilters = computed(() => {
-  const [rateMin, rateMax] = rateRange.value;
-  return (
-    rateMin > 0 ||
-    rateMax < 10 ||
-    !!publishDateRange.value
-  );
+  const mp = moviesPart.value;
+  const dateAdv = !!(mp.publishDateFrom || mp.publishDateTo);
+  return rateAdvanced.value || dateAdv;
 });
 
-const clearFilters = () => {
-  searchQuery.value = "";
-  selectedGenres.value = [];
-  selectedCountries.value = [];
+function onMoviesFilters(f: MoviesFilters) {
+  moviesPart.value = f;
+  emitFilters();
+}
+
+function onSharedCleared() {
   rateRange.value = [...DEFAULT_RATE_RANGE];
-  publishDateRange.value = null;
   seeLater.value = false;
-};
+  emitFilters();
+}
 
-const hasAnyFilters = computed(() => {
-  return (
-    searchQuery.value.length > 0 ||
-    selectedGenres.value.length > 0 ||
-    selectedCountries.value.length > 0 ||
-    seeLater.value ||
-    hasAdvancedFilters.value
-  );
-});
+function onSearchQuery(q: string) {
+  searchQuery.value = q;
+}
 
 const buildFilters = (): UserMoviesFilters => {
   const [rateMin, rateMax] = rateRange.value;
 
   return {
-    genres: selectedGenres.value.length ? selectedGenres.value : undefined,
-    countryCodes: selectedCountries.value.length
-      ? selectedCountries.value
-      : undefined,
+    ...moviesPart.value,
     personalRateMin: rateMin > 0 ? rateMin : undefined,
     personalRateMax: rateMax < 10 ? rateMax : undefined,
-    publishDateFrom: publishDateRange.value?.[0]
-      ? dayjs(publishDateRange.value[0]).startOf("month").toISOString()
-      : undefined,
-    publishDateTo: publishDateRange.value?.[1]
-      ? dayjs(publishDateRange.value[1]).endOf("month").toISOString()
-      : undefined,
     seeLater: seeLater.value || undefined,
   };
 };
@@ -91,271 +66,52 @@ const emitFilters = () => {
   emit("update:filters", buildFilters());
 };
 
-watch(
-  [selectedGenres, selectedCountries, rateRange, publishDateRange, seeLater],
-  emitFilters,
-  { deep: true }
-);
+watch([rateRange, seeLater], emitFilters, { deep: true });
 </script>
 
 <template>
-  <div class="filters-panel">
-    <div class="filters-panel__main">
-      <InputSearch
-        v-model="searchQuery"
-        :search-handler="searchHandler"
-        btn-label="Искать"
-        class="filters-panel__search"
-        placeholder="Введите название"
-      />
-      <GenreFilter v-model="selectedGenres" class="filters-panel__genre" />
-      <CountryFilter
-        v-model="selectedCountries"
-        class="filters-panel__country"
-      />
+  <MoviesFiltersShared
+    :search-handler="searchHandler"
+    :extra-advanced-active="extraAdvancedActive"
+    :extra-filters-active="extraFiltersActive"
+    @update:movies-filters="onMoviesFilters"
+    @update:search-query="onSearchQuery"
+    @cleared="onSharedCleared"
+  >
+    <template #after-country>
       <div class="filters-panel__see-later">
         <a-switch v-model:checked="seeLater" size="small" />
         <span class="filters-panel__see-later-label">Смотреть позже</span>
       </div>
-      <button
-        class="filters-panel__toggle"
-        :class="{
-          'filters-panel__toggle--active': isExpanded || hasAdvancedFilters,
-        }"
-        @click="toggleExpanded"
-      >
-        <BaseIcon
-          :name="isExpanded ? 'mdi:filter-off' : 'mdi:filter'"
-          :width="18"
-          :height="18"
-        />
-        <span class="filters-panel__toggle-text">Фильтры</span>
-        <span
-          v-if="hasAdvancedFilters && !isExpanded"
-          class="filters-panel__badge"
-        />
-      </button>
-
-      <a-button
-        type="primary"
-        size="large"
-        class="filters-panel__clear"
-        :disabled="!hasAnyFilters"
-        @click="clearFilters"
-      >
-        <BaseIcon name="mdi:trash" />
-        <span class="filters-panel__clear-text">Очистить</span>
-      </a-button>
-    </div>
-
-    <Transition name="filters-slide">
-      <div v-if="isExpanded || isMobile" class="filters-panel__advanced">
-        <RateFilter v-model="rateRange" />
-        <DateRangeFilter
-          v-model="publishDateRange"
-          label="Дата выхода"
-          :placeholder="['От', 'До']"
-        />
-      </div>
-    </Transition>
-  </div>
+    </template>
+    <template #advanced-extra>
+      <RateFilter v-model="rateRange" />
+    </template>
+  </MoviesFiltersShared>
 </template>
 
 <style lang="scss" scoped>
 @use "@/styles/media" as *;
 
-.filters-panel {
+.filters-panel__see-later {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 16px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  height: 40px;
+  white-space: nowrap;
+}
 
-  &__main {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+.filters-panel__see-later-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
 
-    @include mediaTablet {
-      flex-direction: row;
-      align-items: center;
-      gap: 12px;
-    }
-  }
-
-  &__search {
-    max-width: 100%;
-    min-width: 100%;
-
-    @include mediaTablet {
-      max-width: 500px;
-      min-width: 500px;
-    }
-  }
-
-  &__genre,
-  &__country {
-    width: 100%;
-
-    @include mediaTablet {
-      width: 220px;
-    }
-  }
-
-  &__see-later {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-primary);
-    height: 40px;
-    white-space: nowrap;
-  }
-
-  &__see-later-label {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-
-    @media (max-width: 1100px) {
-      display: none;
-    }
-  }
-
-  &__toggle {
+  @media (max-width: 1100px) {
     display: none;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-primary);
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    position: relative;
-    white-space: nowrap;
-    height: 40px;
-
-    @include mediaTablet {
-      display: flex;
-    }
-
-    &:hover {
-      border-color: var(--ant-color-primary);
-      color: var(--ant-color-primary);
-    }
-
-    &--active {
-      border-color: var(--ant-color-primary);
-      color: var(--ant-color-primary);
-      background: color-mix(
-        in srgb,
-        var(--ant-color-primary) 5%,
-        var(--bg-primary)
-      );
-    }
   }
-
-  &__toggle-text {
-    @media (max-width: 1100px) {
-      display: none;
-    }
-  }
-
-  &__badge {
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--ant-color-primary);
-  }
-
-  &__advanced {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 16px;
-    background: color-mix(in srgb, var(--bg-secondary) 50%, var(--bg-primary));
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-
-    @include mediaTablet {
-      flex-direction: row;
-      align-items: flex-end;
-      gap: 16px;
-    }
-  }
-
-  &__clear {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-primary);
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-    height: 40px;
-
-    &:not(:disabled) {
-      background: color-mix(
-        in srgb,
-        var(--ant-color-primary) 5%,
-        var(--bg-primary)
-      );
-    }
-
-    &:disabled {
-      cursor: default;
-      border: 1px solid var(--border-color);
-      background: var(--bg-primary);
-      color: var(--text-secondary);
-    }
-
-    &:hover:not(:disabled) {
-      border-color: var(--ant-color-primary);
-      color: var(--ant-color-primary);
-    }
-  }
-
-  &__clear-text {
-    //@media (max-width: 1100px) {
-    //  display: none;
-    //}
-  }
-}
-
-.filters-slide-enter-active,
-.filters-slide-leave-active {
-  transition: all 0.3s ease;
-  overflow: hidden;
-  will-change: opacity, height, padding, margin;
-}
-
-.filters-slide-enter-from,
-.filters-slide-leave-to {
-  opacity: 0;
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  margin-top: 0;
-}
-
-.filters-slide-enter-to,
-.filters-slide-leave-from {
-  opacity: 1;
-  max-height: 200px;
 }
 </style>

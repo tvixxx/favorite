@@ -1,8 +1,7 @@
-import axios from "axios";
+import axios, { isAxiosError } from "axios";
 import { API_BASE_URL } from "@/constants/api/endpoints";
 import { useAuthToken } from "@/composable";
 import router from "@/router";
-import { CURRENT_USER, CURRENT_USER_TOKEN } from "@/constants";
 
 const UNAUTHORIZED_STATUS = 401;
 const LOGIN_ROUTE = "/login";
@@ -33,8 +32,7 @@ api.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === UNAUTHORIZED_STATUS) {
-      localStorage.removeItem(CURRENT_USER);
-      localStorage.removeItem(CURRENT_USER_TOKEN);
+      window.dispatchEvent(new CustomEvent("auth:logout"));
 
       const currentRoute = router.currentRoute.value.path;
       if (currentRoute !== LOGIN_ROUTE) {
@@ -45,5 +43,35 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+function extractNestMessage(data: unknown): string | undefined {
+  if (!data || typeof data !== "object") {
+    return undefined;
+  }
+
+  const m = (data as { message?: unknown }).message;
+
+  if (typeof m === "string") {
+    return m;
+  }
+
+  if (Array.isArray(m) && m.length > 0) {
+    return String(m[0]);
+  }
+
+  return undefined;
+}
+
+export function getApiResponseMessage(error: unknown): string | undefined {
+  if (!isAxiosError(error)) {
+    return undefined;
+  }
+
+  return extractNestMessage(error.response?.data);
+}
+
+export function isApiConflictError(error: unknown): boolean {
+  return isAxiosError(error) && error.response?.status === 409;
+}
 
 export default api;
