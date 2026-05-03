@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Authorization } from '../common/decorators';
-import { LeaderboardQueryDto } from './dto';
+import { LeaderboardQueryDto, LeaderboardTopMoviesQueryDto } from './dto';
 import { LeaderboardService } from './leaderboard.service';
 
 @ApiTags('Leaderboard')
@@ -19,5 +19,17 @@ export class LeaderboardController {
   @ApiOkResponse({ description: 'Страница рейтинга' })
   public getTopUsers(@Query() query: LeaderboardQueryDto) {
     return this.leaderboardService.getTopUsers(query);
+  }
+
+  @Get('top-movies')
+  @Authorization()
+  @ApiOperation({
+    summary: 'Топ фильмов и сериалов по пользовательской оценке',
+    description:
+      'Среднее personal_rate по user_movies; без оценок считается 0 для фильтра и сортировки. Фильтры: жанры, страны, дата выхода, актёры (любой из списка).',
+  })
+  @ApiOkResponse({ description: 'Страница топа фильмов' })
+  public getTopMovies(@Query() query: LeaderboardTopMoviesQueryDto) {
+    return this.leaderboardService.getTopMovies(query);
   }
 }

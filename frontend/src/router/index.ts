@@ -1,5 +1,9 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import { useMainStore } from "@/state/state";
+import {
+  LEADERBOARD_HERO_MOVIES,
+  LEADERBOARD_HERO_USERS,
+} from "@/router/leaderboardHeroMeta";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -61,10 +65,29 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/leaderboard",
     name: "leaderboard",
-    component: () => import("@/views/pages/LeaderboardUsersPage.vue"),
+    component: () => import("@/views/pages/LeaderboardLayout.vue"),
     meta: {
       requiresAuth: true,
     },
+    redirect: { name: "leaderboard-users" },
+    children: [
+      {
+        path: "users",
+        name: "leaderboard-users",
+        component: () => import("@/views/pages/LeaderboardUsersPage.vue"),
+        meta: {
+          leaderboardHero: LEADERBOARD_HERO_USERS,
+        },
+      },
+      {
+        path: "movies",
+        name: "leaderboard-movies",
+        component: () => import("@/views/pages/LeaderboardMoviesPage.vue"),
+        meta: {
+          leaderboardHero: LEADERBOARD_HERO_MOVIES,
+        },
+      },
+    ],
   },
   {
     path: "/profile",

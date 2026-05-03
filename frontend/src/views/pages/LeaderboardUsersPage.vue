@@ -2,7 +2,6 @@
 import { storeToRefs } from "pinia";
 import { onMounted } from "vue";
 import LeaderboardFiltersBar from "@/components/Leaderboard/LeaderboardFiltersBar.vue";
-import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
 import {
@@ -46,14 +45,6 @@ onMounted(() => {
 
 <template>
   <div class="leaderboard-page">
-    <HeroHeader
-      title="Топ пользователей"
-      subtitle="Кто больше всего смотрит до конца: фильмы сразу в зачёт, сериалы — только после последней серии"
-      badge-text="Участников"
-      :badge-count="total"
-      icon-name="mdi:podium-gold"
-    />
-
     <div class="leaderboard-page__content">
       <LeaderboardFiltersBar
         :sort-by="sortBy"
@@ -158,7 +149,7 @@ onMounted(() => {
 @use "@/styles/layout" as *;
 
 .leaderboard-page {
-  @include pageShell(4rem);
+  width: 100%;
 
   &__content {
     @include pageContentContainer;
