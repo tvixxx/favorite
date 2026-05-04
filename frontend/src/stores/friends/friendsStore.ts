@@ -70,8 +70,9 @@ export const useFriendsStore = defineStore('friends', () => {
       } else {
         isError.value = 'Failed to load friends';
       }
-    } catch (error: any) {
-      isError.value = error.message;
+    } catch (error: unknown) {
+      isError.value =
+        error instanceof Error ? error.message : 'Failed to load friends';
     } finally {
       isLoading.value = false;
     }
@@ -87,7 +88,7 @@ export const useFriendsStore = defineStore('friends', () => {
       if (isSuccessStatus(response.status)) {
         subscribers.value = response.data;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load subscribers:', error);
     }
   };
@@ -102,7 +103,7 @@ export const useFriendsStore = defineStore('friends', () => {
       if (isSuccessStatus(response.status)) {
         subscriptions.value = response.data;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load subscriptions:', error);
     }
   };
@@ -117,7 +118,7 @@ export const useFriendsStore = defineStore('friends', () => {
       if (isSuccessStatus(response.status)) {
         requests.value = response.data;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load requests:', error);
     }
   };
@@ -132,7 +133,7 @@ export const useFriendsStore = defineStore('friends', () => {
       if (isSuccessStatus(response.status)) {
         stats.value = response.data;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load stats:', error);
     }
   };
@@ -154,11 +155,15 @@ export const useFriendsStore = defineStore('friends', () => {
           // Подписка сразу добавляется в subscriptions
           await fetchSubscriptions(userId);
         }
+
         await fetchStats(userId);
+
         return response.data;
       }
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to send request');
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to send request';
+      throw new Error(message, { cause: error });
     }
   };
 
@@ -173,10 +178,13 @@ export const useFriendsStore = defineStore('friends', () => {
         await fetchFriends(userId);
         await fetchRequests(userId);
         await fetchStats(userId);
+
         return response.data;
       }
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to accept request');
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to accept request';
+      throw new Error(message, { cause: error });
     }
   };
 
@@ -190,10 +198,13 @@ export const useFriendsStore = defineStore('friends', () => {
       if (isSuccessStatus(response.status)) {
         await fetchRequests(userId);
         await fetchStats(userId);
+
         return response.data;
       }
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to reject request');
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to reject request';
+      throw new Error(message, { cause: error });
     }
   };
 
@@ -208,10 +219,13 @@ export const useFriendsStore = defineStore('friends', () => {
         await fetchFriends(userId);
         await fetchSubscriptions(userId);
         await fetchStats(userId);
+
         return response.data;
       }
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to remove friendship');
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to remove friendship';
+      throw new Error(message, { cause: error });
     }
   };
 

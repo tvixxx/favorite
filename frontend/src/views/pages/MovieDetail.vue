@@ -36,6 +36,7 @@ const detailBackFallback = computed((): RouteLocationRaw => {
   if (actorId) {
     return { path: `/library/actors/${actorId}` };
   }
+
   return { path: "/library/collection" };
 });
 

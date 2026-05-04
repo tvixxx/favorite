@@ -37,6 +37,7 @@ export function alignChipsToQuotedTitles(
       seenMovieIds.add(chip.movieId);
     }
   }
+
   return result;
 }
 
@@ -91,8 +92,10 @@ export function stripMovieUrlsFromText(text: string): {
       } catch {
         /* ignore */
       }
+
       return `«${title}»`;
     }
   );
+
   return { cleaned, extracted };
 }

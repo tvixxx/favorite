@@ -33,21 +33,25 @@ const register = async ({ email, password, name }: FormState) => {
 
   if (!trimmedName) {
     message.error("Имя обязательно для заполнения");
+
     return;
   }
 
   if (!trimmedEmail) {
     message.error("Email обязателен для заполнения");
+
     return;
   }
 
   if (!trimmedPassword) {
     message.error("Пароль обязателен для заполнения");
+
     return;
   }
 
   if (!EMAIL_REGEX.test(trimmedEmail)) {
     message.error("Введите корректный email");
+
     return;
   }
 
@@ -55,6 +59,7 @@ const register = async ({ email, password, name }: FormState) => {
     message.error(
       "Пароль должен содержать минимум 6 символов, включая буквы и цифры"
     );
+
     return;
   }
 

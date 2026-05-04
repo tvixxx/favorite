@@ -50,11 +50,13 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     if (searchQuery.value.trim()) {
       return searchResults.value;
     }
+
     return userMovies.value;
   });
 
   const paginatedUserMovies = computed(() => {
     const start = (currentPage.value - 1) * pageSize.value;
+
     return currentList.value.slice(start, start + pageSize.value);
   });
 
@@ -135,9 +137,11 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       for (const g of filters.value.genres ?? []) {
         params.append("genres", g);
       }
+
       for (const c of filters.value.countryCodes ?? []) {
         params.append("countryCode", c);
       }
+
       if (filters.value.personalRateMin !== undefined)
         params.append("personalRateMin", String(filters.value.personalRateMin));
       if (filters.value.personalRateMax !== undefined)
@@ -188,6 +192,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     const q = query.trim();
     if (!q) {
       clearSearch();
+
       return fetchUserMovies(userId);
     }
 
@@ -204,9 +209,11 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       for (const g of filters.value.genres ?? []) {
         params.append("genres", g);
       }
+
       for (const c of filters.value.countryCodes ?? []) {
         params.append("countryCode", c);
       }
+
       if (filters.value.personalRateMin !== undefined)
         params.append("personalRateMin", String(filters.value.personalRateMin));
       if (filters.value.personalRateMax !== undefined)
@@ -300,6 +307,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     if (response?.data && isSuccessStatus(response.status)) {
       const userMovie = mapUserMovieFromApi(response.data);
       userMovies.value.push(userMovie);
+
       return userMovie;
     } else {
       throw new Error("Не удалось добавить фильм");

@@ -200,6 +200,7 @@ export const useChatStore = defineStore("chat", () => {
 
       if (isSuccessStatus(response.status)) {
         messages.value.set(otherUserId, response.data);
+
         return response.data;
       }
     } catch (error: any) {

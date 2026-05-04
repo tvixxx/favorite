@@ -49,6 +49,7 @@ const refetchFavorites = async () => {
   if (!userId.value) {
     return;
   }
+
   applyFavoriteScopeToStore();
   await userMoviesStore.fetchUserMovies(userId.value);
 };
@@ -100,12 +101,14 @@ const favoritesForView = computed(() => {
   if (userMoviesStore.searchQuery.trim()) {
     return userMoviesStore.searchResults.filter((um) => um.isFavorite);
   }
+
   return favoriteUserMovies.value;
 });
 
 const paginatedFavorites = computed(() => {
   const favorites = favoritesForView.value;
   const start = (userMoviesStore.currentPage - 1) * userMoviesStore.pageSize;
+
   return favorites.slice(start, start + userMoviesStore.pageSize);
 });
 

@@ -155,8 +155,10 @@ const addNewMovie = async () => {
       message.warning(
         getApiResponseMessage(error) ?? "Такой фильм уже есть в каталоге."
       );
+
       return;
     }
+
     showErrorRequest(error);
   }
 };

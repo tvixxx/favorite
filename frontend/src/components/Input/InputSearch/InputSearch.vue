@@ -33,6 +33,7 @@ watch(inputValue, (value) => {
 
   if (query.length === 0) {
     searchHandler(DEFAULT_SEARCH_QUERY_TEXT);
+
     return;
   }
 

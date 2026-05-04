@@ -23,8 +23,10 @@ const groupedBadges = computed(() => {
     if (!groups[badge.category]) {
       groups[badge.category] = [];
     }
+
     groups[badge.category].push(badge);
   });
+
   return groups;
 });
 </script>

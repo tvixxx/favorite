@@ -8,6 +8,7 @@ function getErrorReqMsg(error: any): string {
 
   if (data?.message != null && typeof status === "number" && status >= 400) {
     const msg = data.message;
+
     return Array.isArray(msg) ? String(msg[0]) : String(msg);
   }
 

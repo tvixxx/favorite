@@ -30,6 +30,7 @@ const formatAvg = (avg: number | null, ratingsCount: number): string => {
   if (ratingsCount === 0 || avg === null) {
     return "—";
   }
+
   return avg.toFixed(1);
 };
 

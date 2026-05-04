@@ -15,7 +15,9 @@ function detailIdFromUrl(url: string): string | null {
     if (u.origin !== window.location.origin) {
       return null;
     }
+
     const m = u.pathname.match(/^\/detail\/([^/]+)\/?$/);
+
     return m ? m[1] : null;
   } catch {
     return null;
