@@ -6,6 +6,7 @@ import { useMoviesStore } from "@/stores/movies/moviesStore";
 import { useUserMoviesStore } from "@/stores";
 import { useActorsStore } from "@/stores/actors/actorsStore";
 import { useMainStore } from "@/state/state";
+import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import { showErrorRequest } from "@/state/utils";
 import {
@@ -166,6 +167,7 @@ const addNewMovie = async () => {
     <HeroHeader title="Добавить" badge-text="Создание" icon-name="mdi:create" />
 
     <div class="create-movie__content">
+      <AppBackButton :fallback="{ path: '/profile' }" />
       <div class="form-card">
         <a-form
           ref="formRef"

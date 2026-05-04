@@ -26,5 +26,9 @@ export const buildSearchParams = (
     params.append("publishDateTo", filters.publishDateTo);
   }
 
+  for (const id of filters.actorIds ?? []) {
+    params.append("actorIds", id);
+  }
+
   return params;
 };

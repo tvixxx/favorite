@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { storeToRefs } from "pinia";
 import { onMounted } from "vue";
+import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
 import LeaderboardFiltersBar from "@/components/Leaderboard/LeaderboardFiltersBar.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
@@ -46,6 +47,10 @@ onMounted(() => {
 <template>
   <div class="leaderboard-page">
     <div class="leaderboard-page__content">
+      <AppBackButton
+        class="leaderboard-page__back"
+        :fallback="{ path: '/profile' }"
+      />
       <LeaderboardFiltersBar
         :sort-by="sortBy"
         :sort-order="sortOrder"
@@ -153,6 +158,13 @@ onMounted(() => {
 
   &__content {
     @include pageContentContainer;
+  }
+
+  &__back {
+    align-self: flex-start;
+    :deep(.app-back-btn) {
+      margin: 0 0 1rem 0;
+    }
   }
 
   &__loading,

@@ -1,9 +1,18 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
+import {
+  createRouter,
+  createWebHistory,
+  type RouteRecordRaw,
+} from "vue-router";
 import { useMainStore } from "@/state/state";
 import {
   LEADERBOARD_HERO_MOVIES,
   LEADERBOARD_HERO_USERS,
 } from "@/router/leaderboardHeroMeta";
+import {
+  LIBRARY_HERO_ACTORS,
+  LIBRARY_HERO_CATALOG,
+  LIBRARY_HERO_COLLECTION,
+} from "@/router/libraryHeroMeta";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -28,23 +37,56 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: "/my-collection",
-    name: "my-collection",
-    component: () => import("@/views/pages/MovieList.vue"),
-    meta: {
-      requiresAuth: true,
-    },
+    redirect: { name: "library-collection" },
   },
   {
     path: "/list",
-    redirect: "/my-collection",
+    redirect: "/library/collection",
   },
   {
     path: "/catalog",
-    name: "catalog",
-    component: () => import("@/views/pages/CatalogPage.vue"),
+    redirect: { name: "library-catalog" },
+  },
+  {
+    path: "/library",
+    name: "library",
+    component: () => import("@/views/pages/LibraryLayout.vue"),
     meta: {
       requiresAuth: true,
     },
+    redirect: "/library/collection",
+    children: [
+      {
+        path: "collection",
+        name: "library-collection",
+        component: () => import("@/views/pages/MovieList.vue"),
+        meta: {
+          libraryHero: LIBRARY_HERO_COLLECTION,
+        },
+      },
+      {
+        path: "catalog",
+        name: "library-catalog",
+        component: () => import("@/views/pages/CatalogPage.vue"),
+        meta: {
+          libraryHero: LIBRARY_HERO_CATALOG,
+        },
+      },
+      {
+        path: "actors",
+        name: "library-actors",
+        component: () => import("@/views/pages/ActorsPage.vue"),
+        meta: {
+          libraryHero: LIBRARY_HERO_ACTORS,
+        },
+      },
+      {
+        path: "actors/:actorId",
+        name: "library-actor",
+        component: () => import("@/views/pages/CatalogPage.vue"),
+        props: true,
+      },
+    ],
   },
   {
     path: "/detail/:id",
@@ -116,13 +158,22 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/:pathMatch(.*)*",
     name: "not-found",
-    redirect: "/my-collection",
+    redirect: "/library/collection",
   },
 ];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+  scrollBehavior(to, _from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    }
+    if (to.hash) {
+      return { el: to.hash, behavior: "smooth" };
+    }
+    return { top: 0, left: 0 };
+  },
 });
 
 router.beforeEach(async (to, _, next) => {

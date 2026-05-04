@@ -7,6 +7,7 @@ import { useMainStore } from "@/state/state";
 import { message } from "ant-design-vue";
 import { useUserMoviesStore } from "@/stores";
 
+import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
@@ -150,7 +151,7 @@ const goToMovie = (item: UserMovie) => {
 };
 
 const goToMovies = () => {
-  router.push("/my-collection");
+  router.push("/library/collection");
 };
 
 onMounted(async () => {
@@ -186,6 +187,7 @@ onBeforeUnmount(() => {
     />
 
     <div class="favorites__content">
+      <AppBackButton :fallback="{ path: '/profile' }" />
       <MoviesFiltersPanel
         :search-handler="handleSearch"
         @update:filters="handleFiltersUpdate"

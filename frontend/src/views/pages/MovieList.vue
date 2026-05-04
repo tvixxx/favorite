@@ -7,7 +7,6 @@ import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { type UserMovie, useUserMoviesStore } from "@/stores";
 import { useMainStore } from "@/state/state";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
-import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
 import { formatDate, formatYear } from "@/utils";
@@ -174,14 +173,6 @@ watch(
 
 <template>
   <div class="movie-list">
-    <HeroHeader
-      :badge-count="totalMovies"
-      badge-text="Фильмотека"
-      icon-name="mdi:filmstrip"
-      subtitle="Все хиты и новинки которые вы смотрели"
-      title="Кинотеатр у вас дома"
-    />
-
     <div class="movie-list__content">
       <MoviesFiltersPanel
         :search-handler="findMovie"
@@ -310,7 +301,7 @@ watch(
 @use "@/styles/antd-overrides" as *;
 
 .movie-list {
-  @include pageShell(4rem);
+  width: 100%;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;

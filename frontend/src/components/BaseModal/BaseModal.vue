@@ -103,10 +103,13 @@ const handleConfirm = () => {
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  min-height: 100%;
   z-index: 9999;
-  padding: 2rem;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  overflow-y: auto;
+  overflow-x: hidden;
   backdrop-filter: blur(4px);
 }
 
@@ -114,8 +117,13 @@ const handleConfirm = () => {
   background: var(--bg-primary);
   border-radius: var(--radius-lg);
   max-width: min(90vw, 500px);
-  max-height: 90vh;
+  max-height: min(90vh, 100dvh);
   width: 100%;
+  margin: auto;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   overflow: hidden;
   box-shadow: var(--shadow-modal);
   border: 1px solid var(--border-color);
@@ -125,7 +133,6 @@ const handleConfirm = () => {
     max-width: min(96vw, 720px);
 
     .modal__body {
-      max-height: min(78vh, 880px);
       padding: 1rem 1.25rem;
 
       @include mediaTablet {
@@ -141,6 +148,7 @@ const handleConfirm = () => {
 }
 
 .modal__header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -184,17 +192,26 @@ const handleConfirm = () => {
 }
 
 .modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 16px 20px;
-  max-height: 400px;
+  max-height: min(400px, calc(100dvh - 11rem));
+  overflow-x: hidden;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal__footer {
+  flex-shrink: 0;
   padding: 1.5rem 2.5rem 2.5rem;
   border-top: 1px solid var(--border-color);
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
+}
+
+.modal--detail .modal__body {
+  max-height: none;
 }
 
 .modal__btn-cancel,

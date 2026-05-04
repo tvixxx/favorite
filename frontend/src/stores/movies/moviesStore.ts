@@ -121,7 +121,8 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
       !!filters.value.genres?.length ||
       !!filters.value.countryCodes?.length ||
       !!filters.value.publishDateFrom ||
-      !!filters.value.publishDateTo
+      !!filters.value.publishDateTo ||
+      !!filters.value.actorIds?.length
     );
   });
 

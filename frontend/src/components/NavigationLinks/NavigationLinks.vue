@@ -20,12 +20,13 @@ const selectedKeys = computed(() => {
     return ["create"];
   }
 
-  if (path.startsWith("/my-collection") || path.startsWith("/list")) {
-    return ["my-collection"];
-  }
-
-  if (path.startsWith("/catalog")) {
-    return ["catalog"];
+  if (
+    path.startsWith("/library") ||
+    path.startsWith("/my-collection") ||
+    path.startsWith("/list") ||
+    path.startsWith("/catalog")
+  ) {
+    return ["library"];
   }
 
   if (path.startsWith("/favorites")) {
@@ -63,12 +64,8 @@ const signOut = (): void => {
         Добавить
       </a-menu-item>
 
-      <a-menu-item key="my-collection" @click="router.push('/my-collection')">
-        Моя коллекция
-      </a-menu-item>
-
-      <a-menu-item key="catalog" @click="router.push('/catalog')">
-        Каталог
+      <a-menu-item key="library" @click="router.push('/library/collection')">
+        Медиатека
       </a-menu-item>
 
       <a-menu-item key="favorites" @click="router.push('/favorites')">

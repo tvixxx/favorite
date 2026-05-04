@@ -1,18 +1,41 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateActorDto } from './dto/create-actor.dto';
+import type { ActorsListResponseDto } from './dto/actors-list-response.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import type { Actor } from '../generated/prisma/client';
+import type { Actor, Prisma } from '../generated/prisma/client';
 
 @Injectable()
 export class ActorService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  public async findAll(): Promise<Actor[]> {
-    return this.prismaService.actor.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+  public async findMany(params: {
+    q?: string;
+    limit: number;
+    offset: number;
+  }): Promise<ActorsListResponseDto> {
+    const { q, limit, offset } = params;
+    const trimmed = q?.trim();
+
+    const where: Prisma.ActorWhereInput = trimmed
+      ? {
+          name: {
+            contains: trimmed,
+            mode: 'insensitive',
+          },
+        }
+      : {};
+
+    const [items, total] = await Promise.all([
+      this.prismaService.actor.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip: offset,
+        take: limit,
+      }),
+      this.prismaService.actor.count({ where }),
+    ]);
+
+    return { items, total, limit, offset };
   }
 
   public async findById(id: string) {

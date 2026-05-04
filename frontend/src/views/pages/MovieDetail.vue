@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+import type { RouteLocationRaw } from "vue-router";
 import { message } from "ant-design-vue";
 
 import { useMainStore } from "@/state/state";
@@ -10,6 +11,7 @@ import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { GenreLabels } from "@/components/Genres/constants/genres.constants";
 import { countriesLabelsRu } from "@/constants/countries/production-countries";
 
+import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
@@ -20,6 +22,21 @@ import ReviewsWidget from "@/components/Reviews/ReviewsWidget.vue";
 const mainStore = useMainStore();
 const userMoviesStore = useUserMoviesStore();
 const router = useRouter();
+const route = useRoute();
+
+const detailBackFallback = computed((): RouteLocationRaw => {
+  const raw = route.query.libActor;
+  const actorId =
+    typeof raw === "string"
+      ? raw
+      : Array.isArray(raw) && typeof raw[0] === "string"
+        ? raw[0]
+        : "";
+  if (actorId) {
+    return { path: `/library/actors/${actorId}` };
+  }
+  return { path: "/library/collection" };
+});
 
 const currentMovieId = router.currentRoute.value.params.id as string | null;
 const userId = computed(() => mainStore.userData?.id || "");
@@ -118,10 +135,6 @@ const toggleSeeLater = async () => {
   }
 };
 
-const goBack = () => {
-  router.back();
-};
-
 const seasonProgress = computed(() => {
   if (!movie.value?.seasonCount || !currentUserMovie.value?.currentSeason) return 0;
   return Math.round(
@@ -205,10 +218,7 @@ const saveProgress = async () => {
     />
 
     <div class="movie-detail__content">
-      <button class="movie-detail__back" @click="goBack">
-        <BaseIcon name="mdi:arrow-left" :width="20" :height="20" />
-        <span>Назад</span>
-      </button>
+      <AppBackButton :fallback="detailBackFallback" />
 
       <ListError
         v-if="isError"
@@ -510,27 +520,6 @@ const saveProgress = async () => {
     padding: 0 1rem;
   }
 
-  &__back {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin: 1.5rem 0;
-    padding: 10px 20px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-primary);
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-      border-color: var(--ant-color-primary);
-      color: var(--ant-color-primary);
-      transform: translateX(-4px);
-    }
-  }
 }
 
 .detail-card {
