@@ -8,6 +8,7 @@ import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
 import CatalogFiltersBar from "@/components/MoviesFiltersPanel/CatalogFiltersBar.vue";
 import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
+import MovieShareButton from "@/components/MovieShareButton/MovieShareButton.vue";
 import CatalogMoviePreviewModal from "@/components/Catalog/CatalogMoviePreviewModal.vue";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { ERROR_FETCH_MOVIES_TEXT } from "@/state/constants";
@@ -207,6 +208,13 @@ const repeatFetch = () => moviesStore.fetchMovies();
                 <span>{{ formatYear(item.publishDate) }}</span>
               </div>
             </div>
+
+            <div class="catalog-card__share" @click.stop>
+              <MovieShareButton
+                :movie-id="item.id"
+                :movie-title="item.title"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -404,6 +412,13 @@ const repeatFetch = () => moviesStore.fetchMovies();
     flex-shrink: 0;
     opacity: 0.75;
     color: var(--ant-color-primary);
+  }
+
+  &__share {
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+    padding-top: 0.35rem;
   }
 }
 </style>

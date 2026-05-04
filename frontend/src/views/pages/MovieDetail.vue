@@ -13,6 +13,7 @@ import { countriesLabelsRu } from "@/constants/countries/production-countries";
 
 import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import MovieShareButton from "@/components/MovieShareButton/MovieShareButton.vue";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
@@ -365,6 +366,17 @@ const saveProgress = async () => {
                   size="small"
                   class="detail-card__meta-switch"
                   @change="toggleSeeLater"
+                />
+              </div>
+
+              <div
+                v-if="currentMovieId && movie"
+                class="detail-card__meta-item detail-card__meta-item_interactive detail-card__meta-item_share"
+                @click.stop
+              >
+                <MovieShareButton
+                  :movie-id="currentMovieId"
+                  :movie-title="movie.title"
                 />
               </div>
             </div>
