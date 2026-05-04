@@ -13,6 +13,7 @@ import { formatDate, formatYear } from "@/utils";
 import { ERROR_FETCH_MOVIES_TEXT } from "@/state/constants";
 import type { UserMoviesFilters } from "@/stores";
 import { countriesLabelsRu } from "@/constants/countries/production-countries";
+import MovieShareButton from "@/components/MovieShareButton/MovieShareButton.vue";
 import MoviesFiltersPanel from "@/components/MoviesFiltersPanel/MoviesFiltersPanel.vue";
 
 const router = useRouter();
@@ -272,6 +273,13 @@ watch(
               />
               <span class="movie-card__see-later-label">Смотреть позже</span>
             </div>
+
+            <div class="movie-card__share" @click.stop>
+              <MovieShareButton
+                :movie-id="item.movieId"
+                :movie-title="item.movie.title"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -529,6 +537,15 @@ watch(
     font-size: 0.8rem;
     font-weight: 500;
     color: var(--text-secondary);
+  }
+
+  &__share {
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+    padding-top: 0.5rem;
+    border-top: 1px solid
+      color-mix(in srgb, var(--border-color) 40%, transparent);
   }
 }
 </style>

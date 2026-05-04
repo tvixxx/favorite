@@ -249,7 +249,10 @@ export const useChatStore = defineStore("chat", () => {
   });
 
   const currentMessages = computed(() => {
-    if (!currentChatUserId.value) return [];
+    if (!currentChatUserId.value) {
+      return [];
+    }
+
     return messages.value.get(currentChatUserId.value) || [];
   });
 

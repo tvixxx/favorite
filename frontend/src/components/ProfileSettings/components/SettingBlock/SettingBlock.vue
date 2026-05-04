@@ -38,7 +38,9 @@ const filterOption = (input: string, option: any) => {
 const stats = computed(() => {
   const data = userMoviesStore.stats;
 
-  if (!data) return null;
+  if (!data) {
+    return null;
+  }
 
   const keys = Object.keys(StatsBlockType) as StatsBlockType[];
 

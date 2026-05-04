@@ -42,7 +42,10 @@ const newFriendEmail = ref('');
 const requestType = ref<FriendshipType>(FriendshipType.FRIEND_REQUEST);
 
 const filteredFriends = computed(() => {
-  if (!searchQuery.value) return friendsStore.friends;
+  if (!searchQuery.value) {
+    return friendsStore.friends;
+  }
+
   const query = searchQuery.value.toLowerCase();
   return friendsStore.friends.filter(f =>
     f.friend.fullName.toLowerCase().includes(query) ||
@@ -134,7 +137,9 @@ const isUserOnline = (otherUserId: string) => {
 };
 
 onMounted(async () => {
-  if (!userId.value) return;
+  if (!userId.value) {
+    return;
+  }
 
   await Promise.all([
     friendsStore.fetchFriends(userId.value),

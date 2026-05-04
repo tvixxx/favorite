@@ -24,7 +24,10 @@ export function useNavigateBack() {
 
     if (beforeNavigate) {
       const ok = await beforeNavigate();
-      if (!ok) return;
+
+      if (!ok) {
+        return;
+      }
     }
 
     if (mode === "replace") {
