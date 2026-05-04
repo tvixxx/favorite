@@ -68,6 +68,7 @@ function syncMentionFromValue(text: string, caret: number) {
   const m = findHashMention(text, caret);
   if (!m) {
     closeMention();
+
     return;
   }
 
@@ -85,6 +86,7 @@ function syncMentionFromValue(text: string, caret: number) {
   if (q.length < 1) {
     suggestions.value = [];
     mentionLoading.value = false;
+
     return;
   }
 
@@ -221,8 +223,10 @@ function removeChipAt(displayIndex: number) {
   const chip = chips.value[displayIndex];
   if (!chip) {
     chips.value = alignChipsToQuotedTitles(props.modelValue, chips.value);
+
     return;
   }
+
   const escaped = chip.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const newText = props.modelValue.replace(
     new RegExp(`«${escaped}»\\s*`, "g"),

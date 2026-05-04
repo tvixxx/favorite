@@ -57,6 +57,7 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
     if (opts.q?.trim()) {
       params.set("q", opts.q.trim());
     }
+
     return params.toString();
   }
 
@@ -69,9 +70,11 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
     if (opts?.q !== undefined) {
       actorsSearchQ.value = opts.q;
     }
+
     if (opts?.pageSize !== undefined) {
       actorsPageSize.value = opts.pageSize;
     }
+
     if (opts?.page !== undefined) {
       actorsPageCurrent.value = opts.page;
     }
@@ -156,12 +159,15 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
       );
       if (status === 200 && data) {
         detailActor.value = data;
+
         return data;
       }
     } catch {
       /* */
     }
+
     detailActor.value = null;
+
     return null;
   };
 
@@ -180,6 +186,7 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
       if (!pickerActors.value.some((a) => a.id === newActor.id)) {
         pickerActors.value.push(newActor);
       }
+
       return newActor;
     }
 

@@ -30,16 +30,19 @@ const login = async ({ email, password }: FormState) => {
 
   if (!trimmedEmail) {
     message.error("Email пропущен!");
+
     return;
   }
 
   if (!trimmedPassword) {
     message.error("Пароль пропущен!");
+
     return;
   }
 
   if (!EMAIL_REGEX.test(trimmedEmail)) {
     message.error("Введите корректный email");
+
     return;
   }
 

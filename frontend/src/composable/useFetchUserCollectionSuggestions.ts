@@ -45,6 +45,7 @@ export async function findUserMovieByQuotedTitle(
   }
 
   const list = await fetchUserCollectionSuggestions(userId, q, 25);
+
   return (
     list.find((um) => formatUserMovieShareTitle(um) === quotedTitle) ?? null
   );

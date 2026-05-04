@@ -55,6 +55,7 @@ const emptyDescription = computed(() => {
   if (actorsStore.actorsSearchQ.trim()) {
     return "Никого не нашли — попробуйте другой запрос";
   }
+
   return "Пока нет ни одного актёра в каталоге.";
 });
 

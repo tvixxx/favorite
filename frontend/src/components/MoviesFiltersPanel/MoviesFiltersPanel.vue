@@ -23,18 +23,13 @@ const seeLater = ref(false);
 
 const rateAdvanced = computed(() => {
   const [min, max] = rateRange.value;
+
   return min > 0 || max < 10;
 });
 
 const extraAdvancedActive = computed(() => rateAdvanced.value || seeLater.value);
 
 const extraFiltersActive = computed(() => extraAdvancedActive.value);
-
-const hasAdvancedFilters = computed(() => {
-  const mp = moviesPart.value;
-  const dateAdv = !!(mp.publishDateFrom || mp.publishDateTo);
-  return rateAdvanced.value || dateAdv;
-});
 
 function onMoviesFilters(f: MoviesFilters) {
   moviesPart.value = f;

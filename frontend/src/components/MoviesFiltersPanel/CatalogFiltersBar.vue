@@ -24,6 +24,7 @@ function mergeFilters(f: MoviesFilters): MoviesFilters {
   if (locked?.length) {
     return { ...f, actorIds: locked };
   }
+
   return f;
 }
 

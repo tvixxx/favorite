@@ -1,3 +1,4 @@
+/** Заменено на eslint.config.mjs (ESLint 10 flat config). Файл сохранён для справки. */
 module.exports = {
   root: true,
   env: {

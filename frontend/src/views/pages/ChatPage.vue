@@ -105,6 +105,7 @@ onMounted(async () => {
 
   if (paramPeerId) {
     await selectConversation(paramPeerId);
+
     return;
   }
 
@@ -115,8 +116,10 @@ onMounted(async () => {
     );
     if (stillPresent) {
       await selectConversation(rememberedPeer);
+
       return;
     }
+
     chatStore.closeChat();
   }
 

@@ -8,7 +8,8 @@
     "preview": "vite preview",
     "test:unit": "vitest",
     "test:ui": "vitest --ui",
-    "lint": "eslint . --ext .vue,.js,.jsx,.ts,.tsx"
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@vuepic/vue-datepicker": "^10.0.0",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@iconify/vue": "5.0.0",
+    "@stylistic/eslint-plugin": "^5.10.0",
     "@types/node": "^25.3.5",
     "@vitejs/plugin-vue": "^6.0.4",
     "@vitest/coverage-v8": "^4.0.18",
@@ -32,6 +34,7 @@
     "@vue/test-utils": "^2.4.6",
     "eslint": "^10.0.3",
     "eslint-plugin-vue": "^10.8.0",
+    "globals": "^17.6.0",
     "jsdom": "^28.1.0",
     "prettier": "^2.4.1",
     "sass": "^1.32.7",

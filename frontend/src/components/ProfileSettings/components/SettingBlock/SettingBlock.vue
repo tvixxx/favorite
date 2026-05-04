@@ -74,6 +74,7 @@ const loadFriendsStats = async () => {
   if (!userId.value) {
     return;
   }
+
   friendsStatsLoading.value = true;
   try {
     await friendsStore.fetchStats(userId.value);
@@ -103,7 +104,9 @@ const isFriendsEmptySocial = computed(() => {
   if (!s) {
     return false;
   }
+
   const n = (v: number | undefined) => v ?? 0;
+
   return (
     n(s.friendsCount) === 0 &&
     n(s.subscribersCount) === 0 &&

@@ -34,10 +34,12 @@ const avgLabel = computed(() =>
 
 const previewReviews = computed(() => {
   const list = movie.value?.reviews ?? [];
+
   return [...list]
     .sort((a, b) => {
       const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+
       return tb - ta;
     })
     .slice(0, 10);
@@ -87,6 +89,7 @@ async function addToCollection() {
   } catch (err: unknown) {
     if (axios.isAxiosError(err) && err.response?.status === 409) {
       message.warning("Этот фильм уже есть в вашей коллекции");
+
       return;
     }
 

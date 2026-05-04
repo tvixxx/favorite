@@ -13,6 +13,7 @@ const tierColor = computed(() => {
     gold: '#FFD700',
     platinum: '#E5E4E2',
   };
+
   return colors[props.badge.tier];
 });
 </script>

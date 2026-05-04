@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { useFriendsStore, useChatStore, useUserStatusStore } from '@/stores';
+import { useFriendsStore, useUserStatusStore } from '@/stores';
 import { useMainStore } from '@/state/state';
 import { FriendshipType } from '@/stores/friends/friendsStore';
 import { useRouter } from 'vue-router';
@@ -30,7 +30,6 @@ import {
 
 const router = useRouter();
 const friendsStore = useFriendsStore();
-const chatStore = useChatStore();
 const userStatusStore = useUserStatusStore();
 const mainStore = useMainStore();
 
@@ -47,6 +46,7 @@ const filteredFriends = computed(() => {
   }
 
   const query = searchQuery.value.toLowerCase();
+
   return friendsStore.friends.filter(f =>
     f.friend.fullName.toLowerCase().includes(query) ||
     f.friend.email.toLowerCase().includes(query)
@@ -66,6 +66,7 @@ const closeAddModal = () => {
 const sendFriendRequest = async () => {
   if (!newFriendEmail.value.trim()) {
     message.error('Введите email пользователя');
+
     return;
   }
 
@@ -80,6 +81,7 @@ const sendFriendRequest = async () => {
 
     if (!isSuccessStatus(searchResponse.status)) {
       message.error('Пользователь с таким email не найден');
+
       return;
     }
 

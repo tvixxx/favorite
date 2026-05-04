@@ -169,9 +169,11 @@ const router = createRouter({
     if (savedPosition) {
       return savedPosition;
     }
+
     if (to.hash) {
       return { el: to.hash, behavior: "smooth" };
     }
+
     return { top: 0, left: 0 };
   },
 });
@@ -191,11 +193,13 @@ router.beforeEach(async (to, _, next) => {
 
   if (requiresAuth && !store.isLoggedIn) {
     next("/login");
+
     return;
   }
 
   if (guestOnly && store.isLoggedIn) {
     next("/profile");
+
     return;
   }
 

@@ -18,9 +18,11 @@ function pushTextWithUrls(chunk: string, out: ChatMessageSegment[]): void {
     if (m.index > last) {
       out.push({ type: "text", text: chunk.slice(last, m.index) });
     }
+
     out.push({ type: "link", url: m[1] });
     last = m.index + m[0].length;
   }
+
   if (last < chunk.length) {
     out.push({ type: "text", text: chunk.slice(last) });
   }
@@ -39,9 +41,11 @@ export function parseChatMessageContent(text: string): ChatMessageSegment[] {
     if (m.index > lastIndex) {
       pushTextWithUrls(text.slice(lastIndex, m.index), segments);
     }
+
     segments.push({ type: "movie", title: m[1], url: m[2] });
     lastIndex = m.index + m[0].length;
   }
+
   if (lastIndex < text.length) {
     pushTextWithUrls(text.slice(lastIndex), segments);
   }
@@ -65,5 +69,6 @@ function mergeAdjacentText(
       out.push(s);
     }
   }
+
   return out;
 }

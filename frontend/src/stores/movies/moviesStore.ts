@@ -102,16 +102,19 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     if (searchQuery.value.trim()) {
       return searchResults.value;
     }
+
     return moviesList.value;
   });
 
   const paginatedMovies = computed(() => {
     const start = (currentPage.value - 1) * pageSize.value;
+
     return currentMoviesList.value.slice(start, start + pageSize.value);
   });
 
   const totalPages = computed(() => {
     const list = currentMoviesList.value;
+
     return Math.ceil(list.length / pageSize.value);
   });
 
@@ -135,6 +138,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     if (response?.data && isSuccessStatus(response.status)) {
       const movie = mapMovieFromApi(response.data);
       moviesList.value.push(movie);
+
       return movie;
     } else {
       throw new Error("Не удалось создать фильм");

@@ -24,6 +24,7 @@ watch(
     const name = route.name;
     const raw = route.params.actorId;
     const actorId = typeof raw === "string" ? raw : "";
+
     return { name, actorId };
   },
   async ({ name, actorId }) => {
@@ -42,6 +43,7 @@ const heroMeta = computed((): LibraryHeroMeta | undefined => {
     const actorId = typeof id === "string" ? id : "";
     const actor =
       actorsStore.detailActor?.id === actorId ? actorsStore.detailActor : null;
+
     return {
       title: actor ? `Фильмы: ${actor.name}` : "Фильмы актёра",
       subtitle:
@@ -55,6 +57,7 @@ const heroMeta = computed((): LibraryHeroMeta | undefined => {
   if (raw && typeof raw === "object") {
     return raw as LibraryHeroMeta;
   }
+
   return undefined;
 });
 
@@ -63,12 +66,15 @@ const heroBadgeCount = computed(() => {
   if (name === "library-collection") {
     return currentList.value.length;
   }
+
   if (name === "library-catalog" || name === "library-actor") {
     return moviesStore.currentMoviesList.length;
   }
+
   if (name === "library-actors") {
     return actorsStore.actorsPageTotal;
   }
+
   return undefined;
 });
 
@@ -76,6 +82,7 @@ function isLibraryNavActive(to: string): boolean {
   if (to === "/library/actors") {
     return route.path.startsWith("/library/actors");
   }
+
   return route.path === to;
 }
 </script>

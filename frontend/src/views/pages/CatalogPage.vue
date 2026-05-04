@@ -57,9 +57,11 @@ const emptyDescription = computed(() => {
   ) {
     return "Ничего не найдено — попробуйте изменить фильтры";
   }
+
   if (props.actorId && moviesStore.currentMoviesList.length === 0) {
     return "В каталоге пока нет фильмов с этим актёром";
   }
+
   return "В каталоге пока нет фильмов";
 });
 
@@ -81,8 +83,10 @@ function openPreview(movieId: string) {
       path: `/detail/${movieId}`,
       query: { libActor: props.actorId },
     });
+
     return;
   }
+
   previewMovieId.value = movieId;
   previewOpen.value = true;
 }

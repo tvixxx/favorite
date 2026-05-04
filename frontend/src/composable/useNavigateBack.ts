@@ -36,6 +36,7 @@ export function useNavigateBack() {
       } else {
         router.back();
       }
+
       return;
     }
 
@@ -45,6 +46,7 @@ export function useNavigateBack() {
       } else {
         router.back();
       }
+
       return;
     }
 
@@ -55,6 +57,7 @@ export function useNavigateBack() {
 
     if (fallback && !canGoBackInApp) {
       await router.push(fallback);
+
       return;
     }
 

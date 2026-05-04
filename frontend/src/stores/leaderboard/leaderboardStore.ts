@@ -61,6 +61,7 @@ export const useLeaderboardStore = defineStore("leaderboard", () => {
     params.set("offset", String(offset.value));
     params.set("sortBy", sortBy.value);
     params.set("sortOrder", sortOrder.value);
+
     return params.toString();
   };
 

@@ -20,6 +20,7 @@ const heroBadgeCount = computed(() => {
   if (!meta) {
     return undefined;
   }
+
   return meta.kind === "movies" ? moviesTotal.value : usersTotal.value;
 });
 </script>

@@ -49,10 +49,13 @@ watch(
     if (!id) {
       return;
     }
+
     cancelEdit();
     try {
       await fetchReviews(id);
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   },
   { immediate: true }
 );
@@ -62,6 +65,7 @@ const handleSubmit = async (text: string, rate: number) => {
     message.error(
       `Минимальная длина отзыва — ${MIN_REVIEW_TEXT_LENGTH} символов`
     );
+
     return;
   }
 

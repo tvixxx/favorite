@@ -33,5 +33,6 @@ export function getLeaderboardHeroMeta(
   if (!raw || typeof raw !== "object") {
     return undefined;
   }
+
   return raw as LeaderboardHeroMeta;
 }

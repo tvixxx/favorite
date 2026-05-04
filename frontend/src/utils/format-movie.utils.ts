@@ -4,5 +4,6 @@ export function formatAverageRating(
   if (value == null || Number.isNaN(Number(value))) {
     return null;
   }
+
   return Number(value).toFixed(1);
 }

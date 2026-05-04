@@ -25,6 +25,7 @@ const shareUrl = computed(() => {
   if (typeof window === "undefined") {
     return fullPath;
   }
+
   return `${window.location.origin}${fullPath}`;
 });
 
@@ -48,6 +49,7 @@ async function copyLink(e?: Event) {
       document.execCommand("copy");
       document.body.removeChild(ta);
     }
+
     message.success("Ссылка скопирована в буфер");
   } catch {
     message.error("Не удалось скопировать ссылку");
