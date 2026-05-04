@@ -27,6 +27,7 @@ import {
 } from '@nestjs/swagger';
 import { MoviesStatsResponse } from './dto/movies-stats.dto';
 import { ReviewResponse } from '../review/dto/review.dto';
+import { AuthCatalogWrite } from '../common/decorators';
 
 @ApiTags('Movies')
 @Controller('movies')
@@ -164,7 +165,7 @@ export class MovieController {
 
   @ApiOperation({
     summary: 'Создать фильм',
-    description: 'Создает новый фильм',
+    description: 'Создаёт фильм в каталоге (нужен вход; лимит запросов)',
   })
   @ApiOkResponse({
     description: 'Фильм создан',
@@ -174,6 +175,7 @@ export class MovieController {
     description:
       'Фильм с таким же названием (с учётом регистра и пробелов) уже есть в каталоге',
   })
+  @AuthCatalogWrite()
   @Post()
   public create(@Body() dto: CreateMovieRequest) {
     return this.movieService.create(dto);
@@ -190,6 +192,7 @@ export class MovieController {
   @ApiNotFoundResponse({
     description: 'Фильм не найден',
   })
+  @AuthCatalogWrite()
   @Put(':id')
   public update(@Param('id') id: string, @Body() dto: CreateMovieRequest) {
     return this.movieService.update(id, dto);
@@ -206,6 +209,7 @@ export class MovieController {
   @ApiNotFoundResponse({
     description: 'Фильм не найден',
   })
+  @AuthCatalogWrite()
   @Patch(':id')
   public patch(@Param('id') id: string, @Body() dto: PatchMovieDto) {
     return this.movieService.patch(id, dto);
@@ -222,6 +226,7 @@ export class MovieController {
   @ApiNotFoundResponse({
     description: 'Фильм не найден',
   })
+  @AuthCatalogWrite()
   @Delete(':id')
   public delete(@Param('id') id: string) {
     return this.movieService.delete(id);

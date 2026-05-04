@@ -18,7 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { ReviewService } from './review.service';
 import { ReviewResponse, CreateReviewDto, UpdateReviewDto } from './dto';
-import { Authorization, Authorized } from '../common/decorators';
+import { AuthProtected, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
 
 @ApiTags('Reviews')
@@ -34,7 +34,7 @@ export class ReviewController {
     description: 'Отзыв создан',
     type: ReviewResponse,
   })
-  @Authorization()
+  @AuthProtected()
   @Post()
   public create(@Body() dto: CreateReviewDto, @Authorized() user: User) {
     return this.reviewService.create(dto, user.id);
@@ -71,7 +71,7 @@ export class ReviewController {
   @ApiForbiddenResponse({
     description: 'Нельзя редактировать чужой отзыв',
   })
-  @Authorization()
+  @AuthProtected()
   @Put(':id')
   public update(
     @Param('id') id: string,
@@ -99,7 +99,7 @@ export class ReviewController {
   @ApiForbiddenResponse({
     description: 'Нельзя удалить чужой отзыв',
   })
-  @Authorization()
+  @AuthProtected()
   @Delete(':id')
   public delete(@Param('id') id: string, @Authorized() user: User) {
     return this.reviewService.delete(id, user.id);

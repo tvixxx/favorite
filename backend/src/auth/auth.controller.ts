@@ -7,7 +7,9 @@ import {
   Post,
   Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle, Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response, Request } from 'express';
 import {
   ApiBadRequestResponse,
@@ -23,11 +25,12 @@ import { AuthService } from './auth.service';
 import { RegisterRequest } from './dto/register.dto';
 import { LoginRequest } from './dto/login.dto';
 import { AuthResponse } from './dto/auth.dto';
-import { Authorization, Authorized } from '../common/decorators';
+import { AuthProtected, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
 
 @ApiTags('Authorization')
 @Controller('auth')
+@UseGuards(ThrottlerGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -44,6 +47,7 @@ export class AuthController {
   @ApiConflictResponse({
     description: 'Пользователь с такой почтой уже существует',
   })
+  @Throttle({ default: { limit: 15, ttl: 60000 } })
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   public async register(
@@ -66,6 +70,7 @@ export class AuthController {
   @ApiNotFoundResponse({
     description: 'Пользователь с такой почтой не найден',
   })
+  @Throttle({ default: { limit: 25, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   public async login(
@@ -85,6 +90,7 @@ export class AuthController {
   @ApiUnauthorizedResponse({
     description: 'Не действительный refresh-token',
   })
+  @Throttle({ default: { limit: 45, ttl: 60000 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   public async refresh(
@@ -97,13 +103,15 @@ export class AuthController {
   @ApiOperation({
     summary: 'Выход из системы',
   })
+  @SkipThrottle()
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   public async logout(@Res({ passthrough: true }) res: Response) {
     return await this.authService.logout(res);
   }
 
-  @Authorization()
+  @SkipThrottle()
+  @AuthProtected()
   @Get('@me')
   @HttpCode(HttpStatus.OK)
   public async me(@Authorized() user: User) {

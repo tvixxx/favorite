@@ -1,1 +1,4 @@
-export { CreateFriendshipDto, FriendshipTypeDto } from './create-friendship.dto';
+export {
+  CreateFriendshipDto,
+  FriendshipTypeDto,
+} from './create-friendship.dto';

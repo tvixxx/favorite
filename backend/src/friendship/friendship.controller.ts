@@ -6,7 +6,6 @@ import {
   Delete,
   Body,
   Param,
-  UseGuards,
   Request,
   HttpCode,
   HttpStatus,
@@ -14,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { FriendshipService } from './friendship.service';
 import { CreateFriendshipDto } from './dto';
-import { Authorization } from '../common/decorators/authorization.decorator';
+import { AuthProtected } from '../common/decorators';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('Friendship')
@@ -23,7 +22,7 @@ export class FriendshipController {
   constructor(private readonly friendshipService: FriendshipService) {}
 
   @Post('request')
-  @Authorization()
+  @AuthProtected()
   @ApiOperation({ summary: 'Send friend request or subscribe' })
   @ApiResponse({ status: 201, description: 'Request sent successfully' })
   async sendRequest(
@@ -38,7 +37,7 @@ export class FriendshipController {
   }
 
   @Patch(':friendshipId/accept')
-  @Authorization()
+  @AuthProtected()
   @ApiOperation({ summary: 'Accept friend request' })
   @ApiResponse({ status: 200, description: 'Request accepted' })
   async acceptRequest(
@@ -53,7 +52,7 @@ export class FriendshipController {
   }
 
   @Patch(':friendshipId/reject')
-  @Authorization()
+  @AuthProtected()
   @ApiOperation({ summary: 'Reject friend request' })
   @ApiResponse({ status: 200, description: 'Request rejected' })
   async rejectRequest(
@@ -68,7 +67,7 @@ export class FriendshipController {
   }
 
   @Delete(':friendshipId')
-  @Authorization()
+  @AuthProtected()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove friendship or unsubscribe' })
   @ApiResponse({ status: 204, description: 'Friendship removed' })
@@ -84,7 +83,7 @@ export class FriendshipController {
   }
 
   @Get()
-  @Authorization()
+  @AuthProtected()
   @ApiOperation({ summary: 'Get user friends' })
   @ApiResponse({ status: 200, description: 'List of friends' })
   async getFriends(@Param('userId') userId: string, @Request() req: any) {
@@ -95,7 +94,7 @@ export class FriendshipController {
   }
 
   @Get('subscribers')
-  @Authorization()
+  @AuthProtected()
   @ApiOperation({ summary: 'Get user subscribers' })
   @ApiResponse({ status: 200, description: 'List of subscribers' })
   async getSubscribers(@Param('userId') userId: string, @Request() req: any) {
@@ -106,7 +105,7 @@ export class FriendshipController {
   }
 
   @Get('subscriptions')
-  @Authorization()
+  @AuthProtected()
   @ApiOperation({ summary: 'Get user subscriptions' })
   @ApiResponse({ status: 200, description: 'List of subscriptions' })
   async getSubscriptions(@Param('userId') userId: string, @Request() req: any) {
@@ -117,7 +116,7 @@ export class FriendshipController {
   }
 
   @Get('requests')
-  @Authorization()
+  @AuthProtected()
   @ApiOperation({ summary: 'Get incoming friend requests' })
   @ApiResponse({ status: 200, description: 'List of incoming requests' })
   async getRequests(@Param('userId') userId: string, @Request() req: any) {
@@ -128,7 +127,7 @@ export class FriendshipController {
   }
 
   @Get('stats')
-  @Authorization()
+  @AuthProtected()
   @ApiOperation({ summary: 'Get friendship statistics' })
   @ApiResponse({ status: 200, description: 'Friendship stats' })
   async getStats(@Param('userId') userId: string, @Request() req: any) {

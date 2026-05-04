@@ -9,6 +9,7 @@ import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { MovieModule } from './movie/movie.module';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ReviewModule } from './review/review.module';
 import { ActorModule } from './actor/actor.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -23,6 +24,13 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60000,
+        limit: 200,
+      },
+    ]),
     ConfigModule.forRoot({
       isGlobal: true,
     }),

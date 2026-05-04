@@ -13,10 +13,7 @@ import type { Review } from '../generated/prisma/client';
 export class ReviewService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  public async create(
-    dto: CreateReviewDto,
-    userId: string,
-  ): Promise<Review> {
+  public async create(dto: CreateReviewDto, userId: string): Promise<Review> {
     const { movieId, text, rate } = dto;
 
     return this.prismaService.review.create({

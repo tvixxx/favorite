@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorization } from '../common/decorators';
+import { AuthProtected } from '../common/decorators';
 import { LeaderboardQueryDto, LeaderboardTopMoviesQueryDto } from './dto';
 import { LeaderboardService } from './leaderboard.service';
 
@@ -10,7 +10,7 @@ export class LeaderboardController {
   constructor(private readonly leaderboardService: LeaderboardService) {}
 
   @Get('top-users')
-  @Authorization()
+  @AuthProtected()
   @ApiOperation({
     summary: 'Топ пользователей',
     description:
@@ -22,7 +22,7 @@ export class LeaderboardController {
   }
 
   @Get('top-movies')
-  @Authorization()
+  @AuthProtected()
   @ApiOperation({
     summary: 'Топ фильмов и сериалов по пользовательской оценке',
     description:
