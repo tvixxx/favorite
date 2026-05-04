@@ -1,7 +1,7 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BadgeService } from './badge.service';
-import { Authorization } from '../common/decorators/authorization.decorator';
+import { AuthProtected } from '../common/decorators';
 
 @ApiTags('Badges')
 @Controller('users/:userId/badges')
@@ -9,7 +9,7 @@ export class BadgeController {
   constructor(private readonly badgeService: BadgeService) {}
 
   @Get()
-  @Authorization()
+  @AuthProtected()
   @ApiOperation({ summary: 'Получить все бейджи пользователя' })
   @ApiParam({ name: 'userId', description: 'ID пользователя' })
   @ApiResponse({

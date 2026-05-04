@@ -4,7 +4,6 @@ import {
   Delete,
   ForbiddenException,
   Get,
-  HttpStatus,
   NotFoundException,
   Param,
   Patch,
@@ -24,7 +23,7 @@ import {
   parseCountryFilters,
   parseGenreFilters,
 } from '../common/utils/parse-query-filters';
-import { Authorization, Authorized } from '../common/decorators';
+import { AuthProtected, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
 
 @ApiTags('User Movies')
@@ -32,7 +31,7 @@ import type { User } from '../generated/prisma/client';
 export class UserMovieController {
   constructor(private readonly userMovieService: UserMovieService) {}
 
-  private ensureSelf(paramUserId: string, user: User): void {
+  private ensureSelf(paramUserId: string, user: { id: string }): void {
     if (paramUserId !== user.id) {
       throw new ForbiddenException();
     }
@@ -40,12 +39,13 @@ export class UserMovieController {
 
   @ApiOperation({
     summary: 'Получить все фильмы пользователя',
-    description: 'Возвращает все фильмы пользователя с персональными данными и фильтрами',
+    description:
+      'Возвращает все фильмы пользователя с персональными данными и фильтрами',
   })
   @ApiOkResponse({
     description: 'Фильмы найдены',
   })
-  @Authorization()
+  @AuthProtected()
   @Get()
   public findAllByUser(
     @Param('userId') userId: string,
@@ -81,7 +81,7 @@ export class UserMovieController {
   @ApiOkResponse({
     description: 'Фильмы найдены',
   })
-  @Authorization()
+  @AuthProtected()
   @Get('search')
   public searchUserMovies(
     @Param('userId') userId: string,
@@ -118,7 +118,7 @@ export class UserMovieController {
   @ApiOkResponse({
     description: 'Избранные фильмы найдены',
   })
-  @Authorization()
+  @AuthProtected()
   @Get('favorites')
   public findFavorites(
     @Param('userId') userId: string,
@@ -135,7 +135,7 @@ export class UserMovieController {
   @ApiOkResponse({
     description: 'Фильмы найдены',
   })
-  @Authorization()
+  @AuthProtected()
   @Get('see-later')
   public findSeeLater(
     @Param('userId') userId: string,
@@ -152,7 +152,7 @@ export class UserMovieController {
   @ApiOkResponse({
     description: 'Статистика получена',
   })
-  @Authorization()
+  @AuthProtected()
   @Get('stats')
   public getUserStats(
     @Param('userId') userId: string,
@@ -164,7 +164,8 @@ export class UserMovieController {
 
   @ApiOperation({
     summary: 'Получить персональные данные о фильме',
-    description: 'Возвращает персональные данные пользователя о конкретном фильме',
+    description:
+      'Возвращает персональные данные пользователя о конкретном фильме',
   })
   @ApiOkResponse({
     description: 'Данные найдены',
@@ -172,7 +173,7 @@ export class UserMovieController {
   @ApiNotFoundResponse({
     description: 'Данные не найдены',
   })
-  @Authorization()
+  @AuthProtected()
   @Get(':movieId')
   public async findByUserAndMovie(
     @Param('userId') userId: string,
@@ -180,10 +181,7 @@ export class UserMovieController {
     @Authorized() user: User,
   ) {
     this.ensureSelf(userId, user);
-    const row = await this.userMovieService.findByUserAndMovie(
-      userId,
-      movieId,
-    );
+    const row = await this.userMovieService.findByUserAndMovie(userId, movieId);
 
     if (!row) {
       throw new NotFoundException();
@@ -199,7 +197,7 @@ export class UserMovieController {
   @ApiOkResponse({
     description: 'Фильм добавлен',
   })
-  @Authorization()
+  @AuthProtected()
   @Post()
   public create(
     @Param('userId') userId: string,
@@ -220,7 +218,7 @@ export class UserMovieController {
   @ApiNotFoundResponse({
     description: 'Данные не найдены',
   })
-  @Authorization()
+  @AuthProtected()
   @Patch(':movieId')
   public update(
     @Param('userId') userId: string,
@@ -242,7 +240,7 @@ export class UserMovieController {
   @ApiNotFoundResponse({
     description: 'Данные не найдены',
   })
-  @Authorization()
+  @AuthProtected()
   @Delete(':movieId')
   public delete(
     @Param('userId') userId: string,

@@ -25,7 +25,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     CURRENT_USER,
     null,
     undefined,
-    { serializer: StorageSerializers.object }
+    { serializer: StorageSerializers.object },
   );
   const accessToken = useStorage<string | null>(
     CURRENT_USER_TOKEN,
@@ -33,7 +33,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     undefined,
     {
       serializer: StorageSerializers.string,
-    }
+    },
   );
 
   const state = ref<State>(DEFAULT_MAIN_STATE);
@@ -57,7 +57,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
         data: {
           fullName: displayName,
         },
-      }
+      },
     );
 
     if (userProfileData?.data && isSuccessStatus(userProfileData.status)) {
@@ -147,7 +147,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
 
     try {
       const { data, status } = await useFetch<UserProfileResponse>(
-        AUTH_ME_ENDPOINT
+        AUTH_ME_ENDPOINT,
       );
 
       if (isSuccessStatus(status)) {
@@ -223,6 +223,20 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     clearAuthState();
   }
 
+  function applyAccessToken(newToken: string): void {
+    accessToken.value = newToken;
+
+    if (userDataRaw.value) {
+      const next: UserData = {
+        ...userDataRaw.value,
+        accessToken: newToken,
+      };
+      userDataRaw.value = next;
+      state.value.user.data = next;
+      state.value.user.loggedIn = true;
+    }
+  }
+
   if (typeof window !== "undefined") {
     window.addEventListener("auth:logout", clearAuthState);
 
@@ -246,5 +260,6 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     logIn,
     logOut,
     fetchUser,
+    applyAccessToken,
   };
 });

@@ -8,7 +8,7 @@ export function BlackListNames(
   list: string[],
   validationOptions?: ValidationOptions,
 ) {
-  return (object: Object, propertyName: string) => {
+  return (object: object, propertyName: string) => {
     registerDecorator({
       name: 'BlackListNames',
       target: object.constructor,

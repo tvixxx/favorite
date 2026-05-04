@@ -128,16 +128,16 @@ export class MessageGateway
         return { error: 'Unauthorized' };
       }
 
-      await this.messageService.markConversationAsRead(userId, data.otherUserId);
+      await this.messageService.markConversationAsRead(
+        userId,
+        data.otherUserId,
+      );
 
-      // Уведомить отправителя что сообщения прочитаны
       const senderStatus = await this.userStatusService.getStatus(
         data.otherUserId,
       );
       if (senderStatus?.isOnline && senderStatus.socketId) {
-        this.server
-          .to(senderStatus.socketId)
-          .emit('messages:read', { userId });
+        this.server.to(senderStatus.socketId).emit('messages:read', { userId });
       }
 
       return { success: true };
@@ -148,8 +148,8 @@ export class MessageGateway
   }
 
   private extractUserId(client: Socket): string | null {
-    // Извлечение userId из handshake (можно передать через auth token)
-    const userId = client.handshake.auth?.userId || client.handshake.query?.userId;
+    const userId =
+      client.handshake.auth?.userId || client.handshake.query?.userId;
     return userId as string | null;
   }
 }

@@ -4,7 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateFriendshipDto } from './dto';
+import { FriendshipStatus } from '../generated/prisma/enums';
+import { CreateFriendshipDto, FriendshipTypeDto } from './dto';
 
 @Injectable()
 export class FriendshipService {
@@ -41,7 +42,10 @@ export class FriendshipService {
         requesterId,
         addresseeId: dto.addresseeId,
         type: dto.type,
-        status: dto.type === 'SUBSCRIPTION' ? 'ACCEPTED' : 'PENDING',
+        status:
+          dto.type === FriendshipTypeDto.SUBSCRIPTION
+            ? FriendshipStatus.ACCEPTED
+            : FriendshipStatus.PENDING,
       },
       include: {
         requester: true,

@@ -6,9 +6,12 @@ import {
   Request,
   BadRequestException,
 } from '@nestjs/common';
+import type { Request as ExpressRequest } from 'express';
 import { MessageService } from './message.service';
-import { Authorization } from '../common/decorators/authorization.decorator';
+import { AuthProtected } from '../common/decorators';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+
+type RequestWithUser = ExpressRequest & { user: { id: string } };
 
 @ApiTags('Messages')
 @Controller('users/:userId/messages')
@@ -16,44 +19,53 @@ export class MessageController {
   constructor(private readonly messageService: MessageService) {}
 
   @Get('conversations')
-  @Authorization()
+  @AuthProtected()
   @ApiOperation({ summary: 'Get all conversations' })
   @ApiResponse({ status: 200, description: 'List of conversations' })
-  async getConversations(@Param('userId') userId: string, @Request() req: any) {
+  async getConversations(
+    @Param('userId') userId: string,
+    @Request() req: RequestWithUser,
+  ) {
     if (req.user.id !== userId) {
       throw new BadRequestException('Unauthorized');
     }
+
     return this.messageService.getConversations(userId);
   }
 
+  @Get('unread/count')
+  @AuthProtected()
+  @ApiOperation({ summary: 'Get unread messages count' })
+  @ApiResponse({ status: 200, description: 'Unread count' })
+  async getUnreadCount(
+    @Param('userId') userId: string,
+    @Request() req: RequestWithUser,
+  ) {
+    if (req.user.id !== userId) {
+      throw new BadRequestException('Unauthorized');
+    }
+
+    return this.messageService.getUnreadCount(userId);
+  }
+
   @Get(':otherUserId')
-  @Authorization()
+  @AuthProtected()
   @ApiOperation({ summary: 'Get messages with specific user' })
   @ApiResponse({ status: 200, description: 'List of messages' })
   async getMessages(
     @Param('userId') userId: string,
     @Param('otherUserId') otherUserId: string,
+    @Request() req: RequestWithUser,
     @Query('limit') limit?: string,
-    @Request() req?: any,
   ) {
     if (req.user.id !== userId) {
       throw new BadRequestException('Unauthorized');
     }
+
     return this.messageService.getMessages(
       userId,
       otherUserId,
-      limit ? parseInt(limit) : 50,
+      limit ? parseInt(limit, 10) : 50,
     );
-  }
-
-  @Get('unread/count')
-  @Authorization()
-  @ApiOperation({ summary: 'Get unread messages count' })
-  @ApiResponse({ status: 200, description: 'Unread count' })
-  async getUnreadCount(@Param('userId') userId: string, @Request() req: any) {
-    if (req.user.id !== userId) {
-      throw new BadRequestException('Unauthorized');
-    }
-    return this.messageService.getUnreadCount(userId);
   }
 }
