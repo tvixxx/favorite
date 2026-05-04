@@ -4,16 +4,10 @@ import { useRoute } from "vue-router";
 import { useChatStore, useUserStatusStore } from "@/stores";
 import { useMainStore } from "@/state/state";
 import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
-import {
-  Input,
-  Button,
-  List,
-  ListItem,
-  Empty,
-  Badge,
-  Avatar,
-} from "ant-design-vue";
+import { Button, List, ListItem, Empty, Badge, Avatar } from "ant-design-vue";
 import { SendOutlined } from "@ant-design/icons-vue";
+import ChatMessageInput from "@/components/ChatMessageInput/ChatMessageInput.vue";
+import ChatMessageContent from "@/components/ChatMessageContent/ChatMessageContent.vue";
 
 const route = useRoute();
 const chatStore = useChatStore();
@@ -22,6 +16,7 @@ const mainStore = useMainStore();
 
 const userId = computed(() => mainStore.userData?.id || "");
 const messageInput = ref("");
+const chatInputRef = ref<InstanceType<typeof ChatMessageInput> | null>(null);
 const messagesContainer = ref<HTMLElement | null>(null);
 
 const selectedConversation = computed(() => {
@@ -49,10 +44,15 @@ const selectConversation = async (otherUserId: string) => {
   scrollToBottom();
 };
 
-const sendMessage = () => {
-  if (!messageInput.value.trim() || !chatStore.currentChatUserId) return;
+const sendMessage = (wireFromEnter?: string) => {
+  const content = (
+    wireFromEnter ??
+    chatInputRef.value?.composeWire?.() ??
+    messageInput.value
+  ).trim();
+  if (!content || !chatStore.currentChatUserId) return;
 
-  chatStore.sendMessage(chatStore.currentChatUserId, messageInput.value.trim());
+  chatStore.sendMessage(chatStore.currentChatUserId, content);
   messageInput.value = "";
   scrollToBottom();
 };
@@ -233,7 +233,9 @@ onUnmounted(() => {
             }"
           >
             <div class="message__bubble">
-              <p class="message__content">{{ message.content }}</p>
+              <p class="message__content">
+                <ChatMessageContent :content="message.content" />
+              </p>
               <span class="message__time">
                 {{ formatTime(message.createdAt) }}
                 <span
@@ -247,17 +249,17 @@ onUnmounted(() => {
         </div>
 
         <div class="chat-page__input">
-          <Input
-            v-model:value="messageInput"
-            placeholder="Введите сообщение..."
-            size="large"
-            @press-enter="sendMessage"
+          <ChatMessageInput
+            ref="chatInputRef"
+            v-model="messageInput"
+            :user-id="userId"
+            @send="sendMessage"
           />
           <Button
             type="primary"
             size="large"
             :disabled="!messageInput.trim()"
-            @click="sendMessage"
+            @click="sendMessage()"
           >
             <SendOutlined />
           </Button>
@@ -401,6 +403,7 @@ onUnmounted(() => {
     padding: 1.5rem;
     border-top: 1px solid var(--border-color);
     display: flex;
+    align-items: flex-end;
     gap: 0.75rem;
   }
 }
@@ -500,6 +503,10 @@ onUnmounted(() => {
     .message__bubble {
       background: var(--ant-color-primary);
       color: white;
+    }
+
+    :deep(.chat-msg-content__link) {
+      color: rgba(255, 255, 255, 0.95);
     }
   }
 
