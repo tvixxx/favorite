@@ -20,14 +20,20 @@ const chatInputRef = ref<InstanceType<typeof ChatMessageInput> | null>(null);
 const messagesContainer = ref<HTMLElement | null>(null);
 
 const selectedConversation = computed(() => {
-  if (!chatStore.currentChatUserId) return null;
+  if (!chatStore.currentChatUserId) {
+    return null;
+  }
+
   return chatStore.conversations.find(
     (c) => c.otherUser.id === chatStore.currentChatUserId,
   );
 });
 
 const isOtherUserOnline = computed(() => {
-  if (!chatStore.currentChatUserId) return false;
+  if (!chatStore.currentChatUserId) {
+    return false;
+  }
+
   return userStatusStore.isUserOnline(chatStore.currentChatUserId);
 });
 
@@ -50,7 +56,10 @@ const sendMessage = (wireFromEnter?: string) => {
     chatInputRef.value?.composeWire?.() ??
     messageInput.value
   ).trim();
-  if (!content || !chatStore.currentChatUserId) return;
+
+  if (!content || !chatStore.currentChatUserId) {
+    return;
+  }
 
   chatStore.sendMessage(chatStore.currentChatUserId, content);
   messageInput.value = "";
@@ -85,7 +94,9 @@ watch(
 );
 
 onMounted(async () => {
-  if (!userId.value) return;
+  if (!userId.value) {
+    return;
+  }
 
   chatStore.connect(userId.value);
   await chatStore.fetchConversations(userId.value);

@@ -7,7 +7,10 @@ const MOVIE_PAIR_RE = /«([^»]+)»\s+(https?:\/\/[^\s<>"']+)/gi;
 const URL_RE = /(https?:\/\/[^\s<>"']+)/gi;
 
 function pushTextWithUrls(chunk: string, out: ChatMessageSegment[]): void {
-  if (!chunk) return;
+  if (!chunk) {
+    return;
+  }
+
   let last = 0;
   let m: RegExpExecArray | null;
   URL_RE.lastIndex = 0;
@@ -24,7 +27,9 @@ function pushTextWithUrls(chunk: string, out: ChatMessageSegment[]): void {
 }
 
 export function parseChatMessageContent(text: string): ChatMessageSegment[] {
-  if (!text) return [];
+  if (!text) {
+    return [];
+  }
 
   const segments: ChatMessageSegment[] = [];
   let lastIndex = 0;
@@ -49,7 +54,10 @@ function mergeAdjacentText(
 ): ChatMessageSegment[] {
   const out: ChatMessageSegment[] = [];
   for (const s of segments) {
-    if (s.type === "text" && !s.text) continue;
+    if (s.type === "text" && !s.text) {
+      continue;
+    }
+
     const prev = out[out.length - 1];
     if (s.type === "text" && prev?.type === "text") {
       prev.text += s.text;

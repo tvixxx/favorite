@@ -5,9 +5,13 @@ export type MovieChip = { movieId: string; title: string };
 
 export function dedupeMovieChipsById(pool: MovieChip[]): MovieChip[] {
   const byId = new Map<string, MovieChip>();
+
   for (const c of pool) {
-    if (!byId.has(c.movieId)) byId.set(c.movieId, c);
+    if (!byId.has(c.movieId)) {
+      byId.set(c.movieId, c);
+    }
   }
+
   return [...byId.values()];
 }
 
@@ -16,16 +20,18 @@ export function dedupeMovieChipsById(pool: MovieChip[]): MovieChip[] {
  */
 export function alignChipsToQuotedTitles(
   text: string,
-  pool: MovieChip[],
+  pool: MovieChip[]
 ): MovieChip[] {
   const dedupedPool = dedupeMovieChipsById(pool);
   const result: MovieChip[] = [];
   const seenMovieIds = new Set<string>();
   const re = /«([^»]+)»/g;
   let m: RegExpExecArray | null;
+
   while ((m = re.exec(text)) !== null) {
     const title = m[1];
     const chip = dedupedPool.find((c) => c.title === title);
+
     if (chip && !seenMovieIds.has(chip.movieId)) {
       result.push(chip);
       seenMovieIds.add(chip.movieId);
@@ -40,22 +46,30 @@ export function alignChipsToQuotedTitles(
 export function expandMessageWithMovieUrls(
   text: string,
   chips: MovieChip[],
-  router: Router,
+  router: Router
 ): string {
   const byTitle = new Map<string, MovieChip>();
+
   for (const c of dedupeMovieChipsById(chips)) {
-    if (!byTitle.has(c.title)) byTitle.set(c.title, c);
+    if (!byTitle.has(c.title)) {
+      byTitle.set(c.title, c);
+    }
   }
+
   return text.replace(/«([^»]+)»/g, (full, titleInner: string) => {
     const chip = byTitle.get(titleInner);
-    if (!chip) return full;
+
+    if (!chip) {
+      return full;
+    }
+
     const url = buildMovieDetailAbsoluteUrl(router, chip.movieId);
+
     return `«${chip.title}» ${url}`;
   });
 }
 
-const MOVIE_PAIR_IN_TEXT =
-  /«([^»]+)»\s+(https?:\/\/[^\s<>"']+)/g;
+const MOVIE_PAIR_IN_TEXT = /«([^»]+)»\s+(https?:\/\/[^\s<>"']+)/g;
 
 /**
  * Убирает из текста URL после «title», возвращает очищенный текст и movieId из /detail/:id.
@@ -78,7 +92,7 @@ export function stripMovieUrlsFromText(text: string): {
         /* ignore */
       }
       return `«${title}»`;
-    },
+    }
   );
   return { cleaned, extracted };
 }

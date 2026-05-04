@@ -45,7 +45,11 @@ let searchSeq = 0;
 
 function getNativeTextarea(): HTMLTextAreaElement | null {
   const root = textareaRef.value?.$el;
-  if (!root) return null;
+
+  if (!root) {
+    return null;
+  }
+
   return root.querySelector("textarea");
 }
 
@@ -89,11 +93,15 @@ function syncMentionFromValue(text: string, caret: number) {
     const seq = ++searchSeq;
     try {
       const list = await fetchUserCollectionSuggestions(props.userId, q);
-      if (seq !== searchSeq) return;
+
+      if (seq !== searchSeq) {
+        return;
+      }
+
       suggestions.value = list;
       activeIndex.value = Math.min(
         activeIndex.value,
-        Math.max(0, list.length - 1),
+        Math.max(0, list.length - 1)
       );
     } finally {
       if (seq === searchSeq) {
@@ -108,7 +116,10 @@ function onUpdateValue(v: string) {
 }
 
 function scheduleEnrichMissing(text: string) {
-  if (enrichTimer) clearTimeout(enrichTimer);
+  if (enrichTimer) {
+    clearTimeout(enrichTimer);
+  }
+
   enrichTimer = setTimeout(() => void enrichMissingChips(text), 400);
 }
 
@@ -125,11 +136,13 @@ watch(
       }
     });
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 async function enrichMissingChips(text: string) {
-  if (!props.userId?.trim() || !text.includes("«")) return;
+  if (!props.userId?.trim() || !text.includes("«")) {
+    return;
+  }
 
   const uniqueTitles = new Set<string>();
   const re = /«([^»]+)»/g;
@@ -139,9 +152,14 @@ async function enrichMissingChips(text: string) {
   }
 
   const additions: MovieChip[] = [];
+
   for (const title of uniqueTitles) {
-    if (chips.value.some((c) => c.title === title)) continue;
+    if (chips.value.some((c) => c.title === title)) {
+      continue;
+    }
+
     const um = await findUserMovieByQuotedTitle(props.userId, title);
+
     if (um) {
       additions.push({
         movieId: um.movieId,
@@ -150,14 +168,21 @@ async function enrichMissingChips(text: string) {
     }
   }
 
-  if (additions.length === 0) return;
+  if (additions.length === 0) {
+    return;
+  }
+
   chips.value = alignChipsToQuotedTitles(text, [...chips.value, ...additions]);
 }
 
 function onCaretSync() {
   nextTick(() => {
     const ta = getNativeTextarea();
-    if (!ta) return;
+
+    if (!ta) {
+      return;
+    }
+
     syncMentionFromValue(props.modelValue, ta.selectionStart ?? 0);
   });
 }
@@ -167,7 +192,10 @@ function pickSuggestion(um: UserMovie) {
   const caret = ta?.selectionStart ?? props.modelValue.length;
   const text = props.modelValue;
   const state = findHashMention(text, caret);
-  if (!state) return;
+
+  if (!state) {
+    return;
+  }
 
   const before = text.slice(0, state.hashIndex);
   const after = text.slice(caret);
@@ -198,17 +226,26 @@ function removeChipAt(displayIndex: number) {
   const escaped = chip.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const newText = props.modelValue.replace(
     new RegExp(`«${escaped}»\\s*`, "g"),
-    "",
+    ""
   );
   emit("update:modelValue", newText);
 }
 
 function onPaste(e: ClipboardEvent) {
   const pasted = e.clipboardData?.getData("text/plain");
-  if (pasted == null) return;
+
+  if (pasted == null) {
+    return;
+  }
+
   e.preventDefault();
+
   const ta = getNativeTextarea();
-  if (!ta) return;
+
+  if (!ta) {
+    return;
+  }
+
   const start = ta.selectionStart ?? 0;
   const end = ta.selectionEnd ?? 0;
   const before = props.modelValue.slice(0, start);
@@ -217,9 +254,13 @@ function onPaste(e: ClipboardEvent) {
   const { cleaned, extracted } = stripMovieUrlsFromText(merged);
   const { cleaned: pastedClean } = stripMovieUrlsFromText(pasted);
   const pool = [...chips.value, ...extracted];
+
   chips.value = alignChipsToQuotedTitles(cleaned, pool);
+
   emit("update:modelValue", cleaned);
+
   const newCaret = start + pastedClean.length;
+
   nextTick(() => {
     const el = getNativeTextarea();
     el?.focus();
@@ -232,7 +273,7 @@ function emitSend() {
   const wire = expandMessageWithMovieUrls(
     props.modelValue,
     chips.value,
-    router,
+    router
   );
   emit("send", wire);
 }

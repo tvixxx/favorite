@@ -97,7 +97,9 @@ const hasActors = computed(
 );
 
 const toggleFavorite = async () => {
-  if (!currentUserMovie.value) return;
+  if (!currentUserMovie.value) {
+    return;
+  }
 
   try {
     const newValue = !currentUserMovie.value.isFavorite;
@@ -116,7 +118,9 @@ const toggleFavorite = async () => {
 };
 
 const toggleSeeLater = async () => {
-  if (!currentUserMovie.value) return;
+  if (!currentUserMovie.value) {
+    return;
+  }
 
   const newValue = !currentUserMovie.value.seeLater;
 
@@ -137,14 +141,20 @@ const toggleSeeLater = async () => {
 };
 
 const seasonProgress = computed(() => {
-  if (!movie.value?.seasonCount || !currentUserMovie.value?.currentSeason) return 0;
+  if (!movie.value?.seasonCount || !currentUserMovie.value?.currentSeason) {
+    return 0;
+  }
+
   return Math.round(
     (currentUserMovie.value.currentSeason / movie.value.seasonCount) * 100
   );
 });
 
 const episodeProgress = computed(() => {
-  if (!movie.value?.episodeCount || !currentUserMovie.value?.currentEpisode) return 0;
+  if (!movie.value?.episodeCount || !currentUserMovie.value?.currentEpisode) {
+    return 0;
+  }
+
   return Math.round(
     (currentUserMovie.value.currentEpisode / movie.value.episodeCount) * 100
   );
@@ -158,7 +168,9 @@ const hasSerialProgress = computed(() => {
 });
 
 const isSerialCompleted = computed(() => {
-  if (!movie.value?.isSerial || !currentUserMovie.value) return false;
+  if (!movie.value?.isSerial || !currentUserMovie.value) {
+    return false;
+  }
 
   const m = movie.value;
   const um = currentUserMovie.value;
@@ -187,7 +199,9 @@ const cancelEditProgress = () => {
 };
 
 const saveProgress = async () => {
-  if (!currentUserMovie.value) return;
+  if (!currentUserMovie.value) {
+    return;
+  }
 
   try {
     await userMoviesStore.updateUserMovie(userId.value, currentUserMovie.value.movieId, {
