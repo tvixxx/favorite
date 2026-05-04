@@ -20,6 +20,7 @@ interface MovieFilters {
   countryCodes?: string[];
   publishDateFrom?: string;
   publishDateTo?: string;
+  actorIds?: string[];
 }
 
 export type MovieWithAverageRating = Movie & {
@@ -472,7 +473,8 @@ class MovieService {
       filters.genres?.length ||
       filters.countryCodes?.length ||
       filters.publishDateFrom ||
-      filters.publishDateTo
+      filters.publishDateTo ||
+      filters.actorIds?.length
     );
   }
 
@@ -512,6 +514,12 @@ class MovieService {
         publishDate.lte = new Date(filters.publishDateTo);
       }
       and.push({ publishDate });
+    }
+
+    if (filters.actorIds?.length) {
+      and.push({
+        actors: { some: { id: { in: filters.actorIds } } },
+      });
     }
 
     if (!and.length) {

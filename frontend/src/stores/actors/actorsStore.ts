@@ -10,14 +10,33 @@ export interface Actor {
   name: string;
 }
 
+export interface ActorsListResponse {
+  items: Actor[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+const PICKER_LIMIT = 500;
+
 export const ACTORS_STORE_NAME = "actorsStore";
 
 export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
-  // Actors
-  const actorsList = ref<Actor[]>([]);
-  const isActorsLoaded = ref<boolean>(false);
+  /** Список на странице «Актёры» (серверная пагинация / поиск). */
+  const actorsPageItems = ref<Actor[]>([]);
+  const actorsPageTotal = ref(0);
+  const actorsPageSize = ref(20);
+  const actorsPageCurrent = ref(1);
+  const actorsSearchQ = ref("");
+
+  /** Актёры для селектов (создание фильма, топ и т.д.). */
+  const pickerActors = ref<Actor[]>([]);
+
+  const detailActor = ref<Actor | null>(null);
+
   const isActorsLoading = ref(false);
   const isActorsError = ref<string | null>(null);
+  const isActorsLoaded = ref(false);
 
   const setLoadingActors = (value: boolean) => {
     isActorsLoading.value = value;
@@ -27,33 +46,127 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
     isActorsError.value = errorText;
   };
 
-  const setActors = (items: Actor[]): void => {
-    actorsList.value = items;
-    isActorsLoaded.value = true;
-  };
+  function buildListParams(opts: {
+    q?: string;
+    limit: number;
+    offset: number;
+  }): string {
+    const params = new URLSearchParams();
+    params.set("limit", String(opts.limit));
+    params.set("offset", String(opts.offset));
+    if (opts.q?.trim()) {
+      params.set("q", opts.q.trim());
+    }
+    return params.toString();
+  }
 
-  const getAllActors = computed(() => actorsList.value);
+  /** Список с пагинацией и поиском по имени (для страницы «Актёры»). */
+  const fetchActorsPage = async (opts?: {
+    q?: string;
+    page?: number;
+    pageSize?: number;
+  }) => {
+    if (opts?.q !== undefined) {
+      actorsSearchQ.value = opts.q;
+    }
+    if (opts?.pageSize !== undefined) {
+      actorsPageSize.value = opts.pageSize;
+    }
+    if (opts?.page !== undefined) {
+      actorsPageCurrent.value = opts.page;
+    }
 
-  const fetchActors = async () => {
+    const limit = actorsPageSize.value;
+    const offset = (actorsPageCurrent.value - 1) * limit;
+
     setLoadingActors(true);
     setErrorActors(null);
 
     try {
-      const { data, status } = await useFetch<Actor[]>(
-        `${API_BASE_URL}/actors`
+      const qs = buildListParams({
+        q: actorsSearchQ.value,
+        limit,
+        offset,
+      });
+      const { data, status } = await useFetch<ActorsListResponse>(
+        `${API_BASE_URL}/actors?${qs}`,
       );
 
       if (status !== 200) {
-        throw new Error("Ошибка загрузки актеров");
+        throw new Error("Ошибка загрузки актёров");
       }
 
-      setActors(data);
+      actorsPageItems.value = data.items;
+      actorsPageTotal.value = data.total;
+    } catch {
+      setErrorActors("Ошибка загрузки актёров");
+      throw new Error("Ошибка загрузки актёров");
+    } finally {
+      setLoadingActors(false);
+    }
+  };
+
+  /** Лёгкий запрос только для обновления total (например, бейдж в шапке медиатеки). */
+  const prefetchActorsTotal = async () => {
+    try {
+      const qs = buildListParams({ limit: 1, offset: 0 });
+      const { data, status } = await useFetch<ActorsListResponse>(
+        `${API_BASE_URL}/actors?${qs}`,
+      );
+      if (status === 200) {
+        actorsPageTotal.value = data.total;
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
+  /** Загрузка среза для выпадающих списков (до PICKER_LIMIT записей). */
+  const fetchActorsForPickers = async () => {
+    setLoadingActors(true);
+    setErrorActors(null);
+
+    try {
+      const qs = buildListParams({ limit: PICKER_LIMIT, offset: 0 });
+      const { data, status } = await useFetch<ActorsListResponse>(
+        `${API_BASE_URL}/actors?${qs}`,
+      );
+
+      if (status !== 200) {
+        throw new Error("Ошибка загрузки актёров");
+      }
+
+      pickerActors.value = data.items;
+      isActorsLoaded.value = true;
     } catch (err) {
-      setErrorActors("Ошибка загрузки актеров");
+      setErrorActors("Ошибка загрузки актёров");
       throw err;
     } finally {
       setLoadingActors(false);
     }
+  };
+
+  /** Совместимость: старый вызов fetchActors → загрузка для селектов. */
+  const fetchActors = fetchActorsForPickers;
+
+  const fetchActorById = async (id: string): Promise<Actor | null> => {
+    try {
+      const { data, status } = await useFetch<Actor>(
+        `${ACTORS_ENDPOINT}/${id}`,
+      );
+      if (status === 200 && data) {
+        detailActor.value = data;
+        return data;
+      }
+    } catch {
+      /* */
+    }
+    detailActor.value = null;
+    return null;
+  };
+
+  const clearDetailActor = () => {
+    detailActor.value = null;
   };
 
   const createActor = async (actorData: Omit<Actor, "id">): Promise<Actor> => {
@@ -64,7 +177,9 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
 
     if (isSuccessStatus(response.status) && response.data) {
       const newActor = response.data;
-      actorsList.value.push(newActor);
+      if (!pickerActors.value.some((a) => a.id === newActor.id)) {
+        pickerActors.value.push(newActor);
+      }
       return newActor;
     }
 
@@ -72,8 +187,8 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
   };
 
   const addActorByName = async (name: string): Promise<Actor> => {
-    const existingActor = actorsList.value.find(
-      (actor) => actor.name.toLowerCase() === name.toLowerCase()
+    const existingActor = pickerActors.value.find(
+      (actor) => actor.name.toLowerCase() === name.toLowerCase(),
     );
 
     if (existingActor) {
@@ -83,23 +198,33 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
     return await createActor({ name });
   };
 
+  const getAllActors = computed(() => pickerActors.value);
+
   return {
-    // Actors refs
-    actorsList,
+    actorsPageItems,
+    actorsPageTotal,
+    actorsPageSize,
+    actorsPageCurrent,
+    actorsSearchQ,
+    pickerActors,
+    detailActor,
+
     isActorsLoaded,
     isActorsLoading,
     isActorsError,
 
     getAllActors,
 
-    setActors,
     setLoadingActors,
     setErrorActors,
 
-    // Actors
+    fetchActorsPage,
+    prefetchActorsTotal,
+    fetchActorsForPickers,
     fetchActors,
+    fetchActorById,
+    clearDetailActor,
 
-    // Actor handlers
     createActor,
     addActorByName,
   };

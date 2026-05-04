@@ -1,12 +1,13 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import { message } from "ant-design-vue";
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
 import CatalogFiltersBar from "@/components/MoviesFiltersPanel/CatalogFiltersBar.vue";
+import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
 import CatalogMoviePreviewModal from "@/components/Catalog/CatalogMoviePreviewModal.vue";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { ERROR_FETCH_MOVIES_TEXT } from "@/state/constants";
@@ -14,7 +15,25 @@ import { formatAverageRating, formatYear } from "@/utils";
 import { useMoviesStore } from "@/stores";
 import type { Movie } from "@/stores/movies/types";
 
+const props = defineProps<{
+  actorId?: string;
+}>();
+
+const router = useRouter();
 const moviesStore = useMoviesStore();
+
+function applyActorFilter(): void {
+  if (props.actorId) {
+    moviesStore.setFilters({
+      ...moviesStore.filters,
+      actorIds: [props.actorId],
+    });
+  } else {
+    const next = { ...moviesStore.filters };
+    delete next.actorIds;
+    moviesStore.setFilters(next);
+  }
+}
 
 const imageErrors = ref<Set<string>>(new Set());
 
@@ -37,6 +56,9 @@ const emptyDescription = computed(() => {
   ) {
     return "Ничего не найдено — попробуйте изменить фильтры";
   }
+  if (props.actorId && moviesStore.currentMoviesList.length === 0) {
+    return "В каталоге пока нет фильмов с этим актёром";
+  }
   return "В каталоге пока нет фильмов";
 });
 
@@ -53,6 +75,13 @@ const handleImageError = (movieId: string) => {
 const ratingLabel = (m: Movie) => formatAverageRating(m.averageRating);
 
 function openPreview(movieId: string) {
+  if (props.actorId) {
+    void router.push({
+      path: `/detail/${movieId}`,
+      query: { libActor: props.actorId },
+    });
+    return;
+  }
   previewMovieId.value = movieId;
   previewOpen.value = true;
 }
@@ -70,11 +99,25 @@ watch(
   }
 );
 
-onMounted(async () => {
-  try {
-    await moviesStore.fetchMovies();
-  } catch {
-    message.error(ERROR_FETCH_MOVIES_TEXT);
+watch(
+  () => props.actorId,
+  async () => {
+    applyActorFilter();
+    moviesStore.setCurrentPage(1);
+    try {
+      await moviesStore.fetchMovies();
+    } catch {
+      message.error(ERROR_FETCH_MOVIES_TEXT);
+    }
+  },
+  { immediate: true },
+);
+
+onBeforeUnmount(() => {
+  if (props.actorId) {
+    const next = { ...moviesStore.filters };
+    delete next.actorIds;
+    moviesStore.setFilters(next);
   }
 });
 
@@ -83,16 +126,17 @@ const repeatFetch = () => moviesStore.fetchMovies();
 
 <template>
   <div class="catalog-page">
-    <HeroHeader
-      :badge-count="totalMovies"
-      badge-text="Каталог"
-      icon-name="mdi:movie-search"
-      subtitle="Все фильмы и сериалы в приложении — добавляйте понравившееся к себе"
-      title="Общий каталог"
-    />
-
     <div class="catalog-page__content">
-      <CatalogFiltersBar />
+      <div v-if="actorId" class="catalog-page__back-wrap">
+        <AppBackButton
+          label="К списку актёров"
+          mode="replace"
+          :fallback="{ path: '/library/actors' }"
+        />
+      </div>
+      <CatalogFiltersBar
+        :locked-actor-ids="actorId ? [actorId] : undefined"
+      />
 
       <ListError
         v-if="moviesStore.isMoviesError"
@@ -184,6 +228,7 @@ const repeatFetch = () => moviesStore.fetchMovies();
     </div>
 
     <CatalogMoviePreviewModal
+      v-if="!actorId"
       v-model="previewOpen"
       :movie-id="previewMovieId"
     />
@@ -197,13 +242,23 @@ const repeatFetch = () => moviesStore.fetchMovies();
 @use "@/styles/antd-overrides" as *;
 
 .catalog-page {
-  @include pageShell(4rem);
+  width: 100%;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
 
   &__content {
     @include pageContentContainer;
+  }
+
+  &__back-wrap {
+    align-self: stretch;
+    width: 100%;
+    max-width: var(--page-max-width);
+
+    :deep(.app-back-btn) {
+      margin: 0 0 0.75rem;
+    }
   }
 
   &__grid {

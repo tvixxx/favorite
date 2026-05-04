@@ -127,6 +127,7 @@ export interface MoviesFilters {
   countryCodes?: string[];
   publishDateFrom?: string;
   publishDateTo?: string;
+  actorIds?: string[];
 }
 
 export interface UserMoviesFilters {

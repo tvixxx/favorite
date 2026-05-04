@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useChatStore, useUserStatusStore } from "@/stores";
 import { useMainStore } from "@/state/state";
+import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
 import {
   Input,
   Button,
@@ -122,8 +123,15 @@ onUnmounted(() => {
   <div class="chat-page">
     <div class="chat-page__sidebar">
       <div class="chat-page__sidebar-header">
-        <h2 class="chat-page__title">Сообщения</h2>
-        <Badge :count="chatStore.totalUnreadCount" :overflow-count="99" />
+        <AppBackButton
+          class="chat-page__nav-back"
+          label="К друзьям"
+          :fallback="{ path: '/friends' }"
+        />
+        <div class="chat-page__sidebar-title-row">
+          <h2 class="chat-page__title">Сообщения</h2>
+          <Badge :count="chatStore.totalUnreadCount" :overflow-count="99" />
+        </div>
       </div>
 
       <div v-if="chatStore.isLoading" class="chat-page__loading">
@@ -278,10 +286,24 @@ onUnmounted(() => {
 
   &__sidebar-header {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
     padding: 1.5rem;
     border-bottom: 1px solid var(--border-color);
+  }
+
+  &__nav-back {
+    :deep(.app-back-btn) {
+      margin: 0;
+    }
+  }
+
+  &__sidebar-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
   }
 
   &__title {

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { onMounted } from "vue";
+import { onMounted, ref, watch } from "vue";
+import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
+import CatalogMoviePreviewModal from "@/components/Catalog/CatalogMoviePreviewModal.vue";
 import LeaderboardMoviesFiltersBar from "@/components/Leaderboard/LeaderboardMoviesFiltersBar.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
@@ -9,6 +11,20 @@ import { formatDate } from "@/utils";
 
 const store = useLeaderboardMoviesStore();
 const { items, total, isLoading, isError, currentPage } = storeToRefs(store);
+
+const previewOpen = ref(false);
+const previewMovieId = ref<string | null>(null);
+
+function openPreview(movieId: string) {
+  previewMovieId.value = movieId;
+  previewOpen.value = true;
+}
+
+watch(previewOpen, (open) => {
+  if (!open) {
+    previewMovieId.value = null;
+  }
+});
 
 const formatAvg = (avg: number | null, ratingsCount: number): string => {
   if (ratingsCount === 0 || avg === null) {
@@ -25,6 +41,10 @@ onMounted(() => {
 <template>
   <div class="leaderboard-movies-page">
     <div class="leaderboard-movies-page__content">
+      <AppBackButton
+        class="leaderboard-movies-page__back"
+        :fallback="{ path: '/profile' }"
+      />
       <LeaderboardMoviesFiltersBar />
 
       <ListError
@@ -60,16 +80,19 @@ onMounted(() => {
           class="leaderboard-movies-page__spin"
         >
           <div class="leaderboard-movies-page__grid">
-            <RouterLink
+            <div
               v-for="row in items"
               :key="row.movieId"
-              :to="`/detail/${row.movieId}`"
               class="lb-movie-card"
+              role="button"
+              tabindex="0"
               :class="{
                 'lb-movie-card--gold': row.rank === 1,
                 'lb-movie-card--silver': row.rank === 2,
                 'lb-movie-card--bronze': row.rank === 3,
               }"
+              @click="openPreview(row.movieId)"
+              @keydown.enter.prevent="openPreview(row.movieId)"
             >
               <div class="lb-movie-card__rank">#{{ row.rank }}</div>
               <div class="lb-movie-card__poster-wrap">
@@ -103,7 +126,7 @@ onMounted(() => {
                   Оценок: {{ row.ratingsCount }}
                 </span>
               </div>
-            </RouterLink>
+            </div>
           </div>
 
           <div
@@ -121,6 +144,11 @@ onMounted(() => {
         </a-spin>
       </div>
     </div>
+
+    <CatalogMoviePreviewModal
+      v-model="previewOpen"
+      :movie-id="previewMovieId"
+    />
   </div>
 </template>
 
@@ -132,6 +160,13 @@ onMounted(() => {
 
   &__content {
     @include pageContentContainer;
+  }
+
+  &__back {
+    align-self: flex-start;
+    :deep(.app-back-btn) {
+      margin: 0 0 1rem 0;
+    }
   }
 
   &__loading,
@@ -184,11 +219,16 @@ onMounted(() => {
   box-shadow: var(--shadow-card);
   border: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
   padding: 1rem 1rem 1.25rem;
-  text-decoration: none;
   color: inherit;
+  cursor: pointer;
   transition:
     transform 0.25s ease,
     box-shadow 0.25s ease;
+
+  &:focus-visible {
+    outline: 2px solid var(--ant-color-primary);
+    outline-offset: 2px;
+  }
 
   &:hover {
     transform: translateY(-4px);

@@ -4,6 +4,7 @@ import { useFriendsStore, useChatStore, useUserStatusStore } from '@/stores';
 import { useMainStore } from '@/state/state';
 import { FriendshipType } from '@/stores/friends/friendsStore';
 import { useRouter } from 'vue-router';
+import AppBackButton from '@/components/AppBackButton/AppBackButton.vue';
 import { useFetch, FETCH_METHOD } from '@/composable';
 import { isSuccessStatus } from '@/utils';
 import {
@@ -148,11 +149,17 @@ onMounted(async () => {
 <template>
   <div class="friends-page">
     <div class="friends-page__header">
-      <h1 class="friends-page__title">Друзья и подписки</h1>
-      <Button type="primary" size="large" @click="openAddModal">
-        <UserAddOutlined />
-        Добавить
-      </Button>
+      <AppBackButton
+        class="friends-page__back"
+        :fallback="{ path: '/profile' }"
+      />
+      <div class="friends-page__header-main">
+        <h1 class="friends-page__title">Друзья и подписки</h1>
+        <Button type="primary" size="large" @click="openAddModal">
+          <UserAddOutlined />
+          Добавить
+        </Button>
+      </div>
     </div>
 
     <div class="friends-page__stats" v-if="friendsStore.stats">
@@ -363,9 +370,24 @@ onMounted(async () => {
 
   &__header {
     display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  &__back {
+    :deep(.app-back-btn) {
+      margin: 0;
+    }
+  }
+
+  &__header-main {
+    display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
   }
 
   &__title {

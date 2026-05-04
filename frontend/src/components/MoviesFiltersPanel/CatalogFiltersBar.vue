@@ -3,6 +3,10 @@ import MoviesFiltersShared from "@/components/MoviesFiltersPanel/MoviesFiltersSh
 import { useMoviesStore } from "@/stores";
 import type { MoviesFilters } from "@/stores/movies/types";
 
+const props = defineProps<{
+  lockedActorIds?: string[];
+}>();
+
 const moviesStore = useMoviesStore();
 
 async function runFetch() {
@@ -15,8 +19,16 @@ async function runFetch() {
   }
 }
 
+function mergeFilters(f: MoviesFilters): MoviesFilters {
+  const locked = props.lockedActorIds;
+  if (locked?.length) {
+    return { ...f, actorIds: locked };
+  }
+  return f;
+}
+
 function onMoviesFilters(f: MoviesFilters) {
-  moviesStore.setFilters(f);
+  moviesStore.setFilters(mergeFilters(f));
   moviesStore.setCurrentPage(1);
 
   runFetch();

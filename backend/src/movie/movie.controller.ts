@@ -14,6 +14,7 @@ import MovieService from './movie.service';
 import { CreateMovieRequest, MovieResponse, PatchMovieDto } from './dto';
 import {
   parseCountryFilters,
+  parseCsvOrRepeated,
   parseGenreFilters,
 } from '../common/utils/parse-query-filters';
 import {
@@ -47,12 +48,14 @@ export class MovieController {
     @Query('countryCode') countryCode?: string | string[],
     @Query('publishDateFrom') publishDateFrom?: string,
     @Query('publishDateTo') publishDateTo?: string,
+    @Query('actorIds') actorIds?: string | string[],
   ) {
     return this.movieService.findAll({
       genres: parseGenreFilters(genres),
       countryCodes: parseCountryFilters(countryCode),
       publishDateFrom,
       publishDateTo,
+      actorIds: parseCsvOrRepeated(actorIds),
     });
   }
 
@@ -74,12 +77,14 @@ export class MovieController {
     @Query('countryCode') countryCode?: string | string[],
     @Query('publishDateFrom') publishDateFrom?: string,
     @Query('publishDateTo') publishDateTo?: string,
+    @Query('actorIds') actorIds?: string | string[],
   ) {
     return this.movieService.search(query, {
       genres: parseGenreFilters(genres),
       countryCodes: parseCountryFilters(countryCode),
       publishDateFrom,
       publishDateTo,
+      actorIds: parseCsvOrRepeated(actorIds),
     });
   }
 
