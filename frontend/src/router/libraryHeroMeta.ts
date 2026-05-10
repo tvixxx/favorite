@@ -27,3 +27,11 @@ export const LIBRARY_HERO_ACTORS: LibraryHeroMeta = {
   badgeText: "В списке",
   iconName: "mdi:account-group",
 };
+
+export const LIBRARY_HERO_LISTS: LibraryHeroMeta = {
+  title: "Мои списки",
+  subtitle:
+    "Подборки под настроение и сценарии просмотра: открывайте список и управляйте его содержимым",
+  badgeText: "Списков",
+  iconName: "mdi:playlist-star",
+};

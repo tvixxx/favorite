@@ -6,6 +6,7 @@ import { isSuccessStatus } from "@/utils";
 import type {
   UserMovie,
   UserMovieApiResponse,
+  UserMoviesAnalytics,
   UserMoviesFilters,
   UserMoviesStats,
 } from "@/stores/movies/types";
@@ -42,6 +43,9 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   const stats = ref<UserMoviesStats | null>(null);
   const isStatsLoading = ref<boolean>(false);
   const isStatsError = ref<string | null>(null);
+  const analytics = ref<UserMoviesAnalytics | null>(null);
+  const isAnalyticsLoading = ref<boolean>(false);
+  const isAnalyticsError = ref<string | null>(null);
 
   // Computed
   const currentList = computed(() => {
@@ -83,7 +87,8 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       !!filters.value.publishDateTo ||
       filters.value.isFavorite !== undefined ||
       filters.value.seeLater !== undefined ||
-      !!filters.value.watchStatus
+      !!filters.value.watchStatus ||
+      filters.value.isSerial !== undefined
     );
   });
 
@@ -156,6 +161,8 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
         params.append("seeLater", String(filters.value.seeLater));
       if (filters.value.watchStatus)
         params.append("watchStatus", filters.value.watchStatus);
+      if (filters.value.isSerial !== undefined)
+        params.append("isSerial", String(filters.value.isSerial));
 
       const queryString = params.toString();
       const endpoint = `/users/${userId}/movies${
@@ -228,6 +235,8 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
         params.append("seeLater", String(filters.value.seeLater));
       if (filters.value.watchStatus)
         params.append("watchStatus", filters.value.watchStatus);
+      if (filters.value.isSerial !== undefined)
+        params.append("isSerial", String(filters.value.isSerial));
 
       const endpoint = `/users/${userId}/movies/search?${params.toString()}`;
 
@@ -280,6 +289,36 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     } finally {
       setTimeout(() => {
         isStatsLoading.value = false;
+      }, getDefaultLoaderDelayTime(start));
+    }
+  };
+
+  const fetchUserMoviesAnalytics = async (userId: string) => {
+    if (!userId?.trim()) {
+      return;
+    }
+
+    isAnalyticsLoading.value = true;
+    isAnalyticsError.value = null;
+
+    const start = Date.now();
+
+    try {
+      const { data, status } = await useFetch<UserMoviesAnalytics>(
+        `/users/${userId}/movies/analytics`,
+      );
+
+      if (status !== 200) {
+        throw new Error("Ошибка загрузки аналитики");
+      }
+
+      analytics.value = data;
+    } catch (err) {
+      isAnalyticsError.value = "Ошибка загрузки аналитики";
+      throw err;
+    } finally {
+      setTimeout(() => {
+        isAnalyticsLoading.value = false;
       }, getDefaultLoaderDelayTime(start));
     }
   };
@@ -432,6 +471,9 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     stats.value = null;
     isStatsLoading.value = false;
     isStatsError.value = null;
+    analytics.value = null;
+    isAnalyticsLoading.value = false;
+    isAnalyticsError.value = null;
   };
 
   return {
@@ -452,6 +494,9 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     stats,
     isStatsLoading,
     isStatsError,
+    analytics,
+    isAnalyticsLoading,
+    isAnalyticsError,
 
     // Computed
     currentList,
@@ -472,6 +517,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     fetchUserMovies,
     searchUserMovies,
     fetchUserMoviesStats,
+    fetchUserMoviesAnalytics,
     addUserMovie,
     updateUserMovie,
     removeUserMovie,

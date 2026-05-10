@@ -61,11 +61,11 @@ const retryStats = async () => {
 };
 
 const goToFriendsPage = () => {
-  router.push('/friends');
+  router.push("/friends");
 };
 
 const goToChatPage = () => {
-  router.push('/chat');
+  router.push("/chat");
 };
 
 const friendsStatsLoading = ref(false);
@@ -171,7 +171,10 @@ const isFriendsEmptySocial = computed(() => {
         <div class="setting-block__loader"></div>
         <span>Загрузка...</span>
       </div>
-      <div v-else-if="friendsStore.stats" class="setting-block__friends-content">
+      <div
+        v-else-if="friendsStore.stats"
+        class="setting-block__friends-content"
+      >
         <div
           v-if="isFriendsEmptySocial"
           class="setting-block__friends-empty-hint"
@@ -181,13 +184,17 @@ const isFriendsEmptySocial = computed(() => {
             class="setting-block__friends-empty-icon"
           />
           <p class="setting-block__friends-empty-text">
-            Пока нет друзей и подписок — добавьте людей в разделе ниже или примите входящие запросы.
+            Пока нет друзей и подписок — добавьте людей в разделе ниже или
+            примите входящие запросы.
           </p>
         </div>
         <div class="friends-stats">
           <div class="friends-stats__item">
             <div class="friends-stats__icon-wrap" aria-hidden="true">
-              <BaseIcon name="mdi:account-multiple" class="friends-stats__icon" />
+              <BaseIcon
+                name="mdi:account-multiple"
+                class="friends-stats__icon"
+              />
             </div>
             <div class="friends-stats__info">
               <span class="friends-stats__label">Друзей</span>
@@ -222,7 +229,10 @@ const isFriendsEmptySocial = computed(() => {
         <div class="friends-actions">
           <a-button type="primary" size="large" block @click="goToFriendsPage">
             <template #icon>
-              <BaseIcon name="mdi:account-group" class="friends-actions__icon" />
+              <BaseIcon
+                name="mdi:account-group"
+                class="friends-actions__icon"
+              />
             </template>
             Управление друзьями
           </a-button>
@@ -240,7 +250,8 @@ const isFriendsEmptySocial = computed(() => {
           class="setting-block__friends-fallback-icon"
         />
         <p class="setting-block__friends-fallback-text">
-          Не удалось загрузить данные о друзьях. Проверьте соединение и попробуйте снова.
+          Не удалось загрузить данные о друзьях. Проверьте соединение и
+          попробуйте снова.
         </p>
         <a-button type="primary" @click="retryFriendsStats">
           Повторить
@@ -287,6 +298,7 @@ const isFriendsEmptySocial = computed(() => {
   &__stats {
     padding: 1rem;
     @include mutedInsetPanel;
+    border: 0;
   }
 
   &__stats-loading {
@@ -411,7 +423,8 @@ const isFriendsEmptySocial = computed(() => {
     background: var(--bg-primary);
     border-radius: 14px;
     border: 1px solid var(--border-color);
-    box-shadow: 0 1px 2px color-mix(in srgb, var(--text-primary) 4%, transparent);
+    box-shadow: 0 1px 2px
+      color-mix(in srgb, var(--text-primary) 4%, transparent);
   }
 
   &__icon-wrap {
@@ -427,7 +440,8 @@ const isFriendsEmptySocial = computed(() => {
       var(--ant-color-primary) 12%,
       var(--bg-secondary)
     );
-    border: 1px solid color-mix(in srgb, var(--ant-color-primary) 18%, transparent);
+    border: 1px solid
+      color-mix(in srgb, var(--ant-color-primary) 18%, transparent);
   }
 
   &__icon {

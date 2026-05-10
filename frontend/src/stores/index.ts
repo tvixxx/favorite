@@ -6,3 +6,4 @@ export * from "./friends";
 export * from "./chat";
 export * from "./userStatus";
 export * from "./leaderboard";
+export * from "./userLists";

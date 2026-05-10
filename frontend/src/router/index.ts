@@ -12,6 +12,7 @@ import {
   LIBRARY_HERO_ACTORS,
   LIBRARY_HERO_CATALOG,
   LIBRARY_HERO_COLLECTION,
+  LIBRARY_HERO_LISTS,
 } from "@/router/libraryHeroMeta";
 
 const routes: Array<RouteRecordRaw> = [
@@ -85,6 +86,14 @@ const routes: Array<RouteRecordRaw> = [
         name: "library-actor",
         component: () => import("@/views/pages/CatalogPage.vue"),
         props: true,
+      },
+      {
+        path: "lists",
+        name: "library-lists",
+        component: () => import("@/views/pages/MyListsPage.vue"),
+        meta: {
+          libraryHero: LIBRARY_HERO_LISTS,
+        },
       },
     ],
   },

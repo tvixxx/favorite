@@ -6,11 +6,17 @@ import { storeToRefs } from "pinia";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import { LIBRARY_NAV_ITEMS } from "@/constants/libraryNav";
 import type { LibraryHeroMeta } from "@/router/libraryHeroMeta";
-import { useActorsStore, useMoviesStore, useUserMoviesStore } from "@/stores";
+import {
+  useActorsStore,
+  useMoviesStore,
+  useUserListsStore,
+  useUserMoviesStore,
+} from "@/stores";
 
 const route = useRoute();
 const moviesStore = useMoviesStore();
 const userMoviesStore = useUserMoviesStore();
+const userListsStore = useUserListsStore();
 const actorsStore = useActorsStore();
 
 const { currentList } = storeToRefs(userMoviesStore);
@@ -73,6 +79,10 @@ const heroBadgeCount = computed(() => {
 
   if (name === "library-actors") {
     return actorsStore.actorsPageTotal;
+  }
+
+  if (name === "library-lists") {
+    return userListsStore.lists.length;
   }
 
   return undefined;

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDate,
@@ -49,11 +50,13 @@ export class UpdateUserMovieDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @Type(() => Date)
   @IsDate()
   lastWatchedAt?: Date;
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @Type(() => Date)
   @IsDate()
   completedAt?: Date;
 }

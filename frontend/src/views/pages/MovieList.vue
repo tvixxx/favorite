@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch } from "vue";
-import { useRouter } from "vue-router";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 import { message } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import { type UserMovie, useUserMoviesStore } from "@/stores";
+import { type UserMovie, useUserMoviesStore, WatchStatus } from "@/stores";
+import type { MovieApiResponse } from "@/stores/movies/types";
 import { useMainStore } from "@/state/state";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import ListError from "@/components/List/ListError/ListError.vue";
@@ -15,16 +16,38 @@ import type { UserMoviesFilters } from "@/stores";
 import { countriesLabelsRu } from "@/constants/countries/production-countries";
 import MovieShareButton from "@/components/MovieShareButton/MovieShareButton.vue";
 import MoviesFiltersPanel from "@/components/MoviesFiltersPanel/MoviesFiltersPanel.vue";
+import { FETCH_METHOD, useFetch } from "@/composable";
+import { getApiResponseMessage, isApiConflictError } from "@/services/api";
 
 const router = useRouter();
+const route = useRoute();
 const userMoviesStore = useUserMoviesStore();
 const mainStore = useMainStore();
 
+interface QuickAddOption {
+  value: string;
+  label: string;
+  disabled?: boolean;
+}
+
+const QUICK_ADD_MIN_QUERY_LENGTH = 2;
+const QUICK_ADD_DEBOUNCE_MS = 280;
+const QUICK_ADD_OPTIONS_LIMIT = 10;
+
 const imageErrors = ref<Set<string>>(new Set());
+const quickAddQuery = ref("");
+const quickAddOptions = ref<QuickAddOption[]>([]);
+const isQuickAddLoading = ref(false);
+const isQuickAddPanelOpen = ref(false);
+const quickAddFabRoot = ref<HTMLElement | null>(null);
+let quickAddDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const userId = computed(() => mainStore.userData?.id || "");
 const hasMovies = computed(() => userMoviesStore.currentList.length !== 0);
 const totalMovies = computed(() => userMoviesStore.currentList.length);
+const userMovieIds = computed(() => {
+  return new Set(userMoviesStore.userMovies.map((item) => item.movieId));
+});
 const shouldFetchMovies = computed(
   () => !hasMovies.value && mainStore.isLoggedIn && userId.value
 );
@@ -110,8 +133,218 @@ const toggleSeeLater = async (item: UserMovie) => {
   }
 };
 
+const getQueryValue = (value: unknown): string | null => {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (Array.isArray(value) && typeof value[0] === "string") {
+    return value[0];
+  }
+
+  return null;
+};
+
+const normalizeWatchStatus = (value: string | null): WatchStatus | undefined => {
+  if (!value) {
+    return undefined;
+  }
+
+  const allowed = Object.values(WatchStatus);
+
+  if (allowed.includes(value as WatchStatus)) {
+    return value as WatchStatus;
+  }
+
+  return undefined;
+};
+
+const applyRoutePresetFilters = async () => {
+  const watchStatus = normalizeWatchStatus(getQueryValue(route.query.watchStatus));
+  const isSerialRaw = getQueryValue(route.query.isSerial);
+  const seeLaterRaw = getQueryValue(route.query.seeLater);
+  const hasPreset =
+    watchStatus !== undefined || isSerialRaw !== null || seeLaterRaw !== null;
+
+  if (!hasPreset || !userId.value) {
+    return;
+  }
+
+  const isSerial =
+    isSerialRaw === null
+      ? undefined
+      : isSerialRaw === "true"
+        ? true
+        : isSerialRaw === "false"
+          ? false
+          : undefined;
+  const seeLater =
+    seeLaterRaw === null
+      ? undefined
+      : seeLaterRaw === "true"
+        ? true
+        : seeLaterRaw === "false"
+          ? false
+          : undefined;
+
+  userMoviesStore.setFilters({
+    ...userMoviesStore.filters,
+    watchStatus,
+    isSerial,
+    seeLater,
+  });
+
+  try {
+    await userMoviesStore.fetchUserMovies(userId.value);
+  } catch {
+    message.error(ERROR_FETCH_MOVIES_TEXT);
+  }
+};
+
 const goToMovie = (item: UserMovie) => {
   router.push(`/detail/${item.movieId}`);
+};
+
+const resetQuickAddState = () => {
+  quickAddQuery.value = "";
+  quickAddOptions.value = [];
+  isQuickAddLoading.value = false;
+
+  if (quickAddDebounceTimer) {
+    clearTimeout(quickAddDebounceTimer);
+    quickAddDebounceTimer = null;
+  }
+};
+
+const openQuickAddPanel = () => {
+  isQuickAddPanelOpen.value = true;
+};
+
+const closeQuickAddPanel = () => {
+  isQuickAddPanelOpen.value = false;
+};
+
+const toggleQuickAddPanel = () => {
+  if (isQuickAddPanelOpen.value) {
+    closeQuickAddPanel();
+  } else {
+    openQuickAddPanel();
+  }
+};
+
+const buildQuickAddOptionLabel = (movie: MovieApiResponse, isExisting: boolean) => {
+  const mediaType = movie.isSerial ? "сериал" : "фильм";
+  const year = movie.publishDate ? formatYear(movie.publishDate) : "год не указан";
+  const suffix = isExisting ? " • уже в коллекции" : "";
+
+  return `${movie.title} • ${mediaType} • ${year}${suffix}`;
+};
+
+const fetchQuickAddOptions = async (query: string) => {
+  const q = query.trim();
+
+  if (!q || q.length < QUICK_ADD_MIN_QUERY_LENGTH) {
+    quickAddOptions.value = [];
+    isQuickAddLoading.value = false;
+
+    return;
+  }
+
+  isQuickAddLoading.value = true;
+
+  try {
+    const endpoint = `/movies/search?q=${encodeURIComponent(q)}`;
+    const { data, status } = await useFetch<MovieApiResponse[]>(endpoint, {
+      method: FETCH_METHOD.get,
+    });
+
+    if (status !== 200) {
+      throw new Error("Не удалось загрузить подсказки");
+    }
+
+    const prepared = data.slice(0, QUICK_ADD_OPTIONS_LIMIT).map((movie) => {
+      const isExisting = userMovieIds.value.has(movie.id);
+
+      return {
+        value: movie.id,
+        label: buildQuickAddOptionLabel(movie, isExisting),
+        disabled: isExisting,
+      };
+    });
+
+    quickAddOptions.value = prepared;
+  } catch {
+    quickAddOptions.value = [];
+  } finally {
+    isQuickAddLoading.value = false;
+  }
+};
+
+const handleQuickAddSearch = (value: string) => {
+  quickAddQuery.value = value;
+
+  if (quickAddDebounceTimer) {
+    clearTimeout(quickAddDebounceTimer);
+    quickAddDebounceTimer = null;
+  }
+
+  const q = value.trim();
+  if (!q || q.length < QUICK_ADD_MIN_QUERY_LENGTH) {
+    quickAddOptions.value = [];
+    isQuickAddLoading.value = false;
+
+    return;
+  }
+
+  quickAddDebounceTimer = setTimeout(() => {
+    void fetchQuickAddOptions(value);
+  }, QUICK_ADD_DEBOUNCE_MS);
+};
+
+const handleQuickAddSelect = async (movieId: string) => {
+  if (!userId.value) {
+    return;
+  }
+
+  try {
+    await userMoviesStore.addUserMovie(userId.value, movieId, {});
+    message.success("Тайтл добавлен в коллекцию");
+    resetQuickAddState();
+    closeQuickAddPanel();
+  } catch (error: unknown) {
+    if (isApiConflictError(error)) {
+      message.warning(
+        getApiResponseMessage(error) ?? "Этот тайтл уже есть в коллекции"
+      );
+
+      return;
+    }
+
+    message.error(getApiResponseMessage(error) ?? "Не удалось добавить тайтл");
+  }
+};
+
+const onGlobalPointerDown = (event: MouseEvent) => {
+  if (!isQuickAddPanelOpen.value) {
+    return;
+  }
+
+  const root = quickAddFabRoot.value;
+  const target = event.target;
+
+  if (!root || !(target instanceof Node)) {
+    return;
+  }
+
+  if (!root.contains(target)) {
+    closeQuickAddPanel();
+  }
+};
+
+const onGlobalKeydown = (event: KeyboardEvent) => {
+  if (event.key === "Escape" && isQuickAddPanelOpen.value) {
+    closeQuickAddPanel();
+  }
 };
 
 const handleFiltersUpdate = async (filters: UserMoviesFilters) => {
@@ -149,12 +382,27 @@ const findMovie = async (value: string) => {
 };
 
 onMounted(async () => {
+  window.addEventListener("mousedown", onGlobalPointerDown);
+  window.addEventListener("keydown", onGlobalKeydown);
+
   if (shouldFetchMovies.value) {
     try {
       await userMoviesStore.fetchUserMovies(userId.value);
     } catch {
       message.error(ERROR_FETCH_MOVIES_TEXT);
     }
+  }
+
+  await applyRoutePresetFilters();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("mousedown", onGlobalPointerDown);
+  window.removeEventListener("keydown", onGlobalKeydown);
+
+  if (quickAddDebounceTimer) {
+    clearTimeout(quickAddDebounceTimer);
+    quickAddDebounceTimer = null;
   }
 });
 
@@ -168,6 +416,13 @@ watch(
   () => userMoviesStore.searchQuery,
   () => {
     userMoviesStore.setCurrentPage(1);
+  }
+);
+
+watch(
+  () => route.query,
+  () => {
+    void applyRoutePresetFilters();
   }
 );
 </script>
@@ -299,6 +554,60 @@ watch(
         />
       </div>
     </div>
+
+    <div ref="quickAddFabRoot" class="quick-add-fab">
+      <Transition name="quick-add-fab-panel">
+        <div
+          v-if="isQuickAddPanelOpen"
+          class="quick-add-fab__panel"
+          @click.stop
+        >
+          <div class="quick-add-fab__panel-head">
+            <h3 class="quick-add-fab__panel-title">Быстрый ввод</h3>
+            <span class="quick-add-fab__panel-hint">
+              Добавление тайтла из каталога
+            </span>
+          </div>
+          <a-auto-complete
+            v-model:value="quickAddQuery"
+            :options="quickAddOptions"
+            :filter-option="false"
+            :not-found-content="
+              quickAddQuery.trim().length >= QUICK_ADD_MIN_QUERY_LENGTH &&
+              !isQuickAddLoading
+                ? 'Ничего не найдено'
+                : undefined
+            "
+            @search="handleQuickAddSearch"
+            @select="handleQuickAddSelect"
+          >
+            <a-input
+              size="large"
+              :maxlength="120"
+              placeholder="Например: Рекрут, Интерстеллар, Dark..."
+            >
+              <template #prefix>
+                <BaseIcon name="mdi:magnify" :width="16" :height="16" />
+              </template>
+            </a-input>
+          </a-auto-complete>
+        </div>
+      </Transition>
+
+      <button
+        type="button"
+        class="quick-add-fab__button"
+        :class="{ 'quick-add-fab__button_active': isQuickAddPanelOpen }"
+        @click.stop="toggleQuickAddPanel"
+      >
+        <BaseIcon
+          :name="isQuickAddPanelOpen ? 'mdi:close' : 'mdi:plus'"
+          :width="22"
+          :height="22"
+        />
+        <span class="quick-add-fab__button-text">Быстрый ввод</span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -341,6 +650,108 @@ watch(
 
     @include antEmptyTypography;
   }
+}
+
+.quick-add-fab {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 1000;
+  display: grid;
+  gap: 0.7rem;
+  justify-items: end;
+
+  &__panel {
+    width: min(420px, calc(100vw - 2rem));
+    display: grid;
+    gap: 0.6rem;
+    padding: 0.9rem;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
+    box-shadow: var(--shadow-elevated);
+    backdrop-filter: blur(8px);
+
+    :deep(.ant-select) {
+      width: 100%;
+    }
+  }
+
+  &__panel-head {
+    display: grid;
+    gap: 0.1rem;
+  }
+
+  &__panel-title {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  &__panel-hint {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+  }
+
+  &__button {
+    border: 1px solid color-mix(in srgb, var(--ant-color-primary) 35%, transparent);
+    background: linear-gradient(
+      135deg,
+      var(--ant-color-primary),
+      color-mix(in srgb, var(--ant-color-primary) 85%, #6a8dff)
+    );
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.58rem 0.92rem;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-primary-md);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px color-mix(in srgb, var(--ant-color-primary) 40%, transparent);
+    }
+
+    &_active {
+      background: color-mix(in srgb, var(--ant-color-primary) 92%, #1f3b87);
+    }
+  }
+
+  &__button-text {
+    font-size: 0.86rem;
+    font-weight: 700;
+  }
+
+  @include mediaMax(767px) {
+    right: 0.85rem;
+    bottom: 0.95rem;
+
+    &__button {
+      padding: 0.55rem 0.8rem;
+    }
+
+    &__button-text {
+      display: none;
+    }
+  }
+}
+
+.quick-add-fab-panel-enter-active,
+.quick-add-fab-panel-leave-active {
+  transition: all 0.2s ease;
+}
+
+.quick-add-fab-panel-enter-from,
+.quick-add-fab-panel-leave-to {
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
 }
 
 .movie-card {

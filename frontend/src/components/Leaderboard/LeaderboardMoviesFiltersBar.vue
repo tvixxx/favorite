@@ -90,56 +90,46 @@ watch(
 </script>
 
 <template>
-  <div class="lb-movies-filters">
-    <div class="lb-movies-filters__row lb-movies-filters__row--sort">
-      <div class="lb-movies-filters__field">
-        <span class="lb-movies-filters__label">Сортировка</span>
-        <a-select
-          :value="sortBy"
-          :options="sortByOptions"
-          class="lb-movies-filters__select"
-          size="large"
-          @update:value="onSortByChange"
-        />
-      </div>
-      <div class="lb-movies-filters__field">
-        <span class="lb-movies-filters__label">Порядок</span>
-        <a-select
-          :value="sortOrder"
-          :options="sortOrderOptions"
-          class="lb-movies-filters__select lb-movies-filters__select--narrow"
-          size="large"
-          @update:value="onSortOrderChange"
-        />
-      </div>
-    </div>
-
-    <div class="lb-movies-filters__row lb-movies-filters__row--filters">
-      <GenreFilter v-model="selectedGenres" class="lb-movies-filters__genre" />
-      <CountryFilter
-        v-model="selectedCountries"
-        class="lb-movies-filters__country"
+  <div class="filters-panel filters-shared lb-movies-filters">
+    <div class="filters-panel__main">
+      <a-select
+        :value="sortBy"
+        :options="sortByOptions"
+        placeholder="Сортировка"
+        class="lb-movies-filters__sort lb-movies-filters__sort--wide"
+        size="large"
+        @update:value="onSortByChange"
       />
-      <div class="lb-movies-filters__field lb-movies-filters__field--actors">
-        <span class="lb-movies-filters__label">Актёры</span>
-        <a-select
-          v-model:value="actorIds"
-          mode="multiple"
-          allow-clear
-          show-search
-          option-filter-prop="label"
-          placeholder="Любой из выбранных"
-          class="lb-movies-filters__select lb-movies-filters__select--actors"
-          size="large"
-          :loading="actorsStore.isActorsLoading"
-          :options="
-            actorsStore.getAllActors.map((a) => ({
-              value: a.id,
-              label: a.name,
-            }))
-          "
-        />
-      </div>
+      <a-select
+        :value="sortOrder"
+        :options="sortOrderOptions"
+        placeholder="Порядок"
+        class="lb-movies-filters__sort lb-movies-filters__sort--narrow"
+        size="large"
+        @update:value="onSortOrderChange"
+      />
+
+      <GenreFilter v-model="selectedGenres" class="filters-panel__genre" />
+      <CountryFilter v-model="selectedCountries" class="filters-panel__country" />
+
+      <a-select
+        v-model:value="actorIds"
+        mode="multiple"
+        allow-clear
+        show-search
+        option-filter-prop="label"
+        placeholder="Актёры"
+        class="lb-movies-filters__actors"
+        size="large"
+        :loading="actorsStore.isActorsLoading"
+        :options="
+          actorsStore.getAllActors.map((a) => ({
+            value: a.id,
+            label: a.name,
+          }))
+        "
+      />
+
       <DateRangeFilter
         v-model="publishDateRange"
         label="Дата выхода"
@@ -147,15 +137,16 @@ watch(
         class="lb-movies-filters__dates"
       />
       <RateFilter v-model="personalRateRange" class="lb-movies-filters__rate" />
+
       <a-button
-        type="default"
+        type="primary"
         size="large"
-        class="lb-movies-filters__clear"
+        class="filters-panel__clear"
         :disabled="!hasFilters"
         @click="clearFilters"
       >
         <BaseIcon name="mdi:trash" />
-        Сбросить фильтры
+        <span class="filters-panel__clear-text">Сбросить фильтры</span>
       </a-button>
     </div>
   </div>
@@ -164,93 +155,134 @@ watch(
 <style lang="scss" scoped>
 @use "@/styles/media" as *;
 
-.lb-movies-filters {
-  margin-top: 1.5rem;
+.filters-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
   margin-bottom: 2rem;
   width: 100%;
   max-width: var(--grid-max-width);
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
 
-  &__row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem 1.25rem;
-    width: 100%;
-    justify-content: center;
-    align-items: flex-end;
-
-    &--sort {
-      border-bottom: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
-      padding-bottom: 1.25rem;
-    }
-
-    &--filters {
-      align-items: flex-end;
-    }
-  }
-
-  &__field {
+  &__main {
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
-    min-width: min(100%, 200px);
+    gap: 8px;
 
-    &--actors {
-      min-width: min(100%, 260px);
-      flex: 1;
-    }
-  }
-
-  &__label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-  }
-
-  &__select {
-    width: min(100%, 380px);
-
-    &--narrow {
-      width: min(100%, 200px);
-    }
-
-    &--actors {
-      width: 100%;
+    @include mediaTablet {
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
     }
   }
 
   &__genre,
   &__country {
-    width: min(100%, 220px);
-  }
+    width: 100%;
 
-  &__dates {
-    min-width: min(100%, 260px);
-  }
-
-  &__rate {
-    min-width: min(100%, 220px);
+    @include mediaTablet {
+      width: 220px;
+    }
   }
 
   &__clear {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 0.35rem;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    height: 40px;
+
+    &:not(:disabled) {
+      background: color-mix(
+        in srgb,
+        var(--ant-color-primary) 5%,
+        var(--bg-primary)
+      );
+    }
+
+    &:disabled {
+      cursor: default;
+      border: 1px solid var(--border-color);
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+    }
+
+    &:hover:not(:disabled) {
+      border-color: var(--ant-color-primary);
+      color: var(--ant-color-primary);
+    }
+  }
+
+  &__clear-text {
+    @media (max-width: 520px) {
+      display: none;
+    }
+  }
+}
+
+.lb-movies-filters {
+  &__sort {
+    width: 100%;
+
+    @include mediaTablet {
+      &--wide {
+        flex: 1 1 260px;
+        max-width: min(100%, 400px);
+        min-width: 200px;
+      }
+
+      &--narrow {
+        flex: 0 0 auto;
+        width: 200px;
+        min-width: 180px;
+      }
+    }
+  }
+
+  &__actors {
+    width: 100%;
+
+    @include mediaTablet {
+      flex: 1 1 240px;
+      max-width: min(100%, 320px);
+      min-width: 200px;
+    }
+  }
+
+  &__dates {
+    width: 100%;
+
+    @include mediaTablet {
+      flex: 1 1 260px;
+      max-width: min(100%, 320px);
+      min-width: 220px;
+    }
+  }
+
+  &__rate {
+    width: 100%;
+
+    @include mediaTablet {
+      width: 220px;
+      flex-shrink: 0;
+    }
   }
 
   @include mediaMax(600px) {
-    &__row--filters {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    &__genre,
-    &__country,
-    &__select,
-    &__select--narrow {
+    .filters-panel__main > * {
       width: 100%;
+      max-width: 100%;
     }
   }
 }

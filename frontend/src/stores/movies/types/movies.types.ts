@@ -122,6 +122,39 @@ export interface UserMoviesStats {
   totalSerials: number;
 }
 
+export interface UserMoviesAnalyticsTopGenre {
+  genre: Genre;
+  count: number;
+}
+
+export interface UserMoviesAnalyticsContinueWatchingItem {
+  movieId: string;
+  title: string;
+  currentSeason: number | null;
+  currentEpisode: number | null;
+  seasonCount: number | null;
+  episodeCount: number | null;
+}
+
+export interface UserMoviesAnalytics {
+  totalTitles: number;
+  totalMovies: number;
+  totalSerials: number;
+  addedLast7Days: number;
+  addedLast30Days: number;
+  watchingSerialsCount: number;
+  seeLaterCount: number;
+  statusBreakdown: {
+    notStarted: number;
+    watching: number;
+    completed: number;
+    dropped: number;
+  };
+  completionRate: number;
+  topGenres: UserMoviesAnalyticsTopGenre[];
+  continueWatching: UserMoviesAnalyticsContinueWatchingItem[];
+}
+
 export interface MoviesFilters {
   genres?: Genre[];
   countryCodes?: string[];
@@ -140,4 +173,5 @@ export interface UserMoviesFilters {
   isFavorite?: boolean;
   seeLater?: boolean;
   watchStatus?: WatchStatus;
+  isSerial?: boolean;
 }

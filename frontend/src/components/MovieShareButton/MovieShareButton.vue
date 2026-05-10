@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { message } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import { buildMovieDetailAbsoluteUrl } from "@/utils/movieShareLink";
 
 const props = withDefaults(
   defineProps<{
@@ -18,15 +19,7 @@ const props = withDefaults(
 const router = useRouter();
 
 const shareUrl = computed(() => {
-  const { fullPath } = router.resolve({
-    name: "detail",
-    params: { id: props.movieId },
-  });
-  if (typeof window === "undefined") {
-    return fullPath;
-  }
-
-  return `${window.location.origin}${fullPath}`;
+  return buildMovieDetailAbsoluteUrl(router, props.movieId, props.movieTitle);
 });
 
 const ariaLabel = computed(() => `Скопировать ссылку на «${props.movieTitle}»`);

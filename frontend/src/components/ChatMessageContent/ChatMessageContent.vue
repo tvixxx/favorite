@@ -9,7 +9,7 @@ const props = defineProps<{
 
 const segments = computed(() => parseChatMessageContent(props.content));
 
-function detailIdFromUrl(url: string): string | null {
+function parseDetailLink(url: string): { id: string; title: string | null } | null {
   try {
     const u = new URL(url, window.location.origin);
     if (u.origin !== window.location.origin) {
@@ -17,8 +17,11 @@ function detailIdFromUrl(url: string): string | null {
     }
 
     const m = u.pathname.match(/^\/detail\/([^/]+)\/?$/);
+    if (!m) {
+      return null;
+    }
 
-    return m ? m[1] : null;
+    return { id: m[1], title: u.searchParams.get("shareTitle") };
   } catch {
     return null;
   }
@@ -33,9 +36,9 @@ function detailIdFromUrl(url: string): string | null {
       }}</span>
       <template v-else-if="seg.type === 'movie'">
         <RouterLink
-          v-if="detailIdFromUrl(seg.url)"
+          v-if="parseDetailLink(seg.url)"
           class="chat-msg-content__link"
-          :to="{ name: 'detail', params: { id: detailIdFromUrl(seg.url)! } }"
+          :to="{ name: 'detail', params: { id: parseDetailLink(seg.url)!.id } }"
         >
           {{ seg.title }}
         </RouterLink>
@@ -50,11 +53,11 @@ function detailIdFromUrl(url: string): string | null {
       </template>
       <template v-else-if="seg.type === 'link'">
         <RouterLink
-          v-if="detailIdFromUrl(seg.url)"
+          v-if="parseDetailLink(seg.url)"
           class="chat-msg-content__link"
-          :to="{ name: 'detail', params: { id: detailIdFromUrl(seg.url)! } }"
+          :to="{ name: 'detail', params: { id: parseDetailLink(seg.url)!.id } }"
         >
-          {{ seg.url }}
+          {{ parseDetailLink(seg.url)?.title || seg.url }}
         </RouterLink>
         <a
           v-else

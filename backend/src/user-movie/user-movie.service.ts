@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -18,11 +19,167 @@ interface UserMovieFilters {
   isFavorite?: boolean;
   seeLater?: boolean;
   watchStatus?: WatchStatus;
+  isSerial?: boolean;
 }
+
+type UserMovieAnalytics = {
+  totalTitles: number;
+  totalMovies: number;
+  totalSerials: number;
+  addedLast7Days: number;
+  addedLast30Days: number;
+  watchingSerialsCount: number;
+  seeLaterCount: number;
+  statusBreakdown: {
+    notStarted: number;
+    watching: number;
+    completed: number;
+    dropped: number;
+  };
+  completionRate: number;
+  topGenres: Array<{
+    genre: Genre;
+    count: number;
+  }>;
+  continueWatching: Array<{
+    movieId: string;
+    title: string;
+    currentSeason: number | null;
+    currentEpisode: number | null;
+    seasonCount: number | null;
+    episodeCount: number | null;
+  }>;
+};
+
+type MovieProgressMeta = {
+  isSerial: boolean;
+  seasonCount: number | null;
+  episodeCount: number | null;
+};
 
 @Injectable()
 export class UserMovieService {
   constructor(private readonly prismaService: PrismaService) {}
+
+  private clampToRange(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  private normalizeProgressPayload(
+    movie: MovieProgressMeta,
+    dto: UpdateUserMovieDto,
+    current?: Pick<
+      UserMovie,
+      'watchStatus' | 'currentSeason' | 'currentEpisode' | 'completedAt'
+    >,
+  ): UpdateUserMovieDto {
+    const result: UpdateUserMovieDto = { ...dto };
+    const now = new Date();
+
+    const seasonCap = movie.seasonCount ?? null;
+    const episodeCap = movie.episodeCount ?? null;
+
+    const hasSeason = seasonCap !== null && seasonCap > 0;
+    const hasEpisode = episodeCap !== null && episodeCap > 0;
+    const isSerial = movie.isSerial;
+
+    if (!isSerial) {
+      if (result.currentSeason !== undefined || result.currentEpisode !== undefined) {
+        result.currentSeason = null as unknown as number;
+        result.currentEpisode = null as unknown as number;
+      }
+
+      if (result.watchStatus === WatchStatus.COMPLETED && result.completedAt === undefined) {
+        result.completedAt = now;
+      }
+
+      return result;
+    }
+
+    if (result.currentSeason !== undefined) {
+      const seasonValue = Math.max(result.currentSeason, 0);
+      result.currentSeason = hasSeason
+        ? this.clampToRange(seasonValue, 0, seasonCap)
+        : seasonValue;
+    }
+
+    if (result.currentEpisode !== undefined) {
+      const episodeValue = Math.max(result.currentEpisode, 0);
+      result.currentEpisode = hasEpisode
+        ? this.clampToRange(episodeValue, 0, episodeCap)
+        : episodeValue;
+    }
+
+    const effectiveSeason =
+      result.currentSeason ?? current?.currentSeason ?? null;
+    const effectiveEpisode =
+      result.currentEpisode ?? current?.currentEpisode ?? null;
+    const hasAnyProgress = (effectiveSeason ?? 0) > 0 || (effectiveEpisode ?? 0) > 0;
+    const hasExplicitWatchStatus = result.watchStatus !== undefined;
+
+    const reachedSeasonEnd = hasSeason && (effectiveSeason ?? 0) >= seasonCap;
+    const reachedEpisodeEnd = hasEpisode && (effectiveEpisode ?? 0) >= episodeCap;
+    const canBeCompleted = hasSeason || hasEpisode;
+    const reachedEnd = canBeCompleted
+      ? (hasSeason ? reachedSeasonEnd : true) && (hasEpisode ? reachedEpisodeEnd : true)
+      : false;
+
+    if (result.watchStatus === WatchStatus.NOT_STARTED) {
+      result.currentSeason = null as unknown as number;
+      result.currentEpisode = null as unknown as number;
+      result.completedAt = null as unknown as Date;
+
+      return result;
+    }
+
+    if (result.watchStatus === WatchStatus.COMPLETED) {
+      result.watchStatus = WatchStatus.COMPLETED;
+
+      if (hasSeason && result.currentSeason === undefined) {
+        result.currentSeason = seasonCap;
+      }
+
+      if (hasEpisode && result.currentEpisode === undefined) {
+        result.currentEpisode = episodeCap;
+      }
+
+      if (result.completedAt === undefined) {
+        result.completedAt = now;
+      }
+    } else if (result.watchStatus === WatchStatus.WATCHING) {
+      result.watchStatus = WatchStatus.WATCHING;
+      result.completedAt = null as unknown as Date;
+    } else if (result.watchStatus === WatchStatus.DROPPED) {
+      result.watchStatus = WatchStatus.DROPPED;
+      result.completedAt = null as unknown as Date;
+    } else if (!hasExplicitWatchStatus && reachedEnd) {
+      result.watchStatus = WatchStatus.COMPLETED;
+
+      if (hasSeason && result.currentSeason === undefined) {
+        result.currentSeason = seasonCap;
+      }
+
+      if (hasEpisode && result.currentEpisode === undefined) {
+        result.currentEpisode = episodeCap;
+      }
+
+      if (result.completedAt === undefined) {
+        result.completedAt = now;
+      }
+    } else if (!hasExplicitWatchStatus && hasAnyProgress) {
+      result.watchStatus = WatchStatus.WATCHING;
+      result.completedAt = null as unknown as Date;
+    }
+
+    if (
+      (result.currentSeason !== undefined || result.currentEpisode !== undefined) &&
+      result.lastWatchedAt === undefined
+    ) {
+      result.lastWatchedAt = now;
+    }
+
+    return result;
+  }
 
   public async findByUserAndMovie(
     userId: string,
@@ -138,6 +295,10 @@ export class UserMovieService {
       parts.push({ publishDate });
     }
 
+    if (filters.isSerial !== undefined) {
+      parts.push({ isSerial: filters.isSerial });
+    }
+
     if (!parts.length) {
       return undefined;
     }
@@ -237,11 +398,37 @@ export class UserMovieService {
       throw new ConflictException('User already has this movie');
     }
 
+    const movie = await this.prismaService.movie.findUnique({
+      where: { id: movieId },
+      select: {
+        isSerial: true,
+        seasonCount: true,
+        episodeCount: true,
+      },
+    });
+
+    if (!movie) {
+      throw new NotFoundException('Movie not found');
+    }
+
+    if ((data.currentSeason ?? 0) > 0 && !movie.isSerial) {
+      throw new BadRequestException('Season progress is available only for serials');
+    }
+
+    if ((data.currentEpisode ?? 0) > 0 && !movie.isSerial) {
+      throw new BadRequestException('Episode progress is available only for serials');
+    }
+
+    const normalizedData = this.normalizeProgressPayload(
+      movie,
+      data as UpdateUserMovieDto,
+    );
+
     return this.prismaService.userMovie.create({
       data: {
         userId,
         movieId,
-        ...data,
+        ...normalizedData,
       },
       include: {
         movie: {
@@ -265,6 +452,26 @@ export class UserMovieService {
       throw new NotFoundException('UserMovie not found');
     }
 
+    const movie = await this.prismaService.movie.findUnique({
+      where: { id: movieId },
+      select: {
+        isSerial: true,
+        seasonCount: true,
+        episodeCount: true,
+      },
+    });
+
+    if (!movie) {
+      throw new NotFoundException('Movie not found');
+    }
+
+    const normalizedDto = this.normalizeProgressPayload(movie, dto, {
+      watchStatus: userMovie.watchStatus,
+      currentSeason: userMovie.currentSeason,
+      currentEpisode: userMovie.currentEpisode,
+      completedAt: userMovie.completedAt,
+    });
+
     return this.prismaService.userMovie.update({
       where: {
         userId_movieId: {
@@ -272,7 +479,7 @@ export class UserMovieService {
           movieId,
         },
       },
-      data: dto,
+      data: normalizedDto,
       include: {
         movie: {
           include: {
@@ -344,6 +551,146 @@ export class UserMovieService {
       totalWatching,
       totalCompleted,
       totalSerials,
+    };
+  }
+
+  public async getUserAnalytics(userId: string): Promise<UserMovieAnalytics> {
+    const since7 = new Date();
+    since7.setDate(since7.getDate() - 7);
+
+    const since = new Date();
+    since.setDate(since.getDate() - 30);
+
+    const [
+      totalTitles,
+      totalSerials,
+      addedLast7Days,
+      addedLast30Days,
+      watchingSerialsCount,
+      seeLaterCount,
+      notStarted,
+      watching,
+      completed,
+      dropped,
+      genreRows,
+      continueRows,
+    ] = await Promise.all([
+      this.prismaService.userMovie.count({ where: { userId } }),
+      this.prismaService.userMovie.count({
+        where: { userId, movie: { isSerial: true } },
+      }),
+      this.prismaService.userMovie.count({
+        where: { userId, addedAt: { gte: since7 } },
+      }),
+      this.prismaService.userMovie.count({
+        where: { userId, addedAt: { gte: since } },
+      }),
+      this.prismaService.userMovie.count({
+        where: {
+          userId,
+          watchStatus: WatchStatus.WATCHING,
+          movie: {
+            isSerial: true,
+          },
+        },
+      }),
+      this.prismaService.userMovie.count({
+        where: {
+          userId,
+          seeLater: true,
+        },
+      }),
+      this.prismaService.userMovie.count({
+        where: { userId, watchStatus: WatchStatus.NOT_STARTED },
+      }),
+      this.prismaService.userMovie.count({
+        where: { userId, watchStatus: WatchStatus.WATCHING },
+      }),
+      this.prismaService.userMovie.count({
+        where: { userId, watchStatus: WatchStatus.COMPLETED },
+      }),
+      this.prismaService.userMovie.count({
+        where: { userId, watchStatus: WatchStatus.DROPPED },
+      }),
+      this.prismaService.userMovie.findMany({
+        where: { userId },
+        select: {
+          movie: {
+            select: {
+              genres: true,
+            },
+          },
+        },
+      }),
+      this.prismaService.userMovie.findMany({
+        where: {
+          userId,
+          watchStatus: WatchStatus.WATCHING,
+          movie: {
+            isSerial: true,
+          },
+        },
+        select: {
+          movieId: true,
+          currentSeason: true,
+          currentEpisode: true,
+          movie: {
+            select: {
+              title: true,
+              seasonCount: true,
+              episodeCount: true,
+            },
+          },
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+        take: 4,
+      }),
+    ]);
+
+    const genreCounters = new Map<Genre, number>();
+
+    for (const row of genreRows) {
+      for (const genre of row.movie.genres) {
+        const prev = genreCounters.get(genre) ?? 0;
+        genreCounters.set(genre, prev + 1);
+      }
+    }
+
+    const topGenres = Array.from(genreCounters.entries())
+      .map(([genre, count]) => ({ genre, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+
+    const totalMovies = totalTitles - totalSerials;
+    const completionRate =
+      totalTitles > 0 ? Math.round((completed / totalTitles) * 100) : 0;
+
+    return {
+      totalTitles,
+      totalMovies,
+      totalSerials,
+      addedLast7Days,
+      addedLast30Days,
+      watchingSerialsCount,
+      seeLaterCount,
+      statusBreakdown: {
+        notStarted,
+        watching,
+        completed,
+        dropped,
+      },
+      completionRate,
+      topGenres,
+      continueWatching: continueRows.map((row) => ({
+        movieId: row.movieId,
+        title: row.movie.title,
+        currentSeason: row.currentSeason,
+        currentEpisode: row.currentEpisode,
+        seasonCount: row.movie.seasonCount,
+        episodeCount: row.movie.episodeCount,
+      })),
     };
   }
 }

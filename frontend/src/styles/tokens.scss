@@ -18,3 +18,7 @@
   --shadow-primary-md: 0 8px 24px color-mix(in srgb, var(--ant-color-primary) 40%, transparent);
 }
 
+:where(.ant-message) {
+  z-index: 12000 !important;
+}
+

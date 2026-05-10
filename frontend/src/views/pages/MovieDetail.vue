@@ -5,23 +5,28 @@ import type { RouteLocationRaw } from "vue-router";
 import { message } from "ant-design-vue";
 
 import { useMainStore } from "@/state/state";
-import { useUserMoviesStore } from "@/stores";
+import { useUserListsStore, useUserMoviesStore } from "@/stores";
 import { formatDate, formatYear } from "@/utils";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { GenreLabels } from "@/components/Genres/constants/genres.constants";
 import { countriesLabelsRu } from "@/constants/countries/production-countries";
+import { getApiResponseMessage, isApiConflictError } from "@/services/api";
+import { FETCH_METHOD, useFetch } from "@/composable";
 
 import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
+import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import MovieShareButton from "@/components/MovieShareButton/MovieShareButton.vue";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import ListError from "@/components/List/ListError/ListError.vue";
 import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
-import type { UserMovie } from "@/stores";
+import { WatchStatus, type UserMovie } from "@/stores";
 import ReviewsWidget from "@/components/Reviews/ReviewsWidget.vue";
+import type { UserListDetail, UserListSummary } from "@/stores/userLists/types";
 
 const mainStore = useMainStore();
 const userMoviesStore = useUserMoviesStore();
+const userListsStore = useUserListsStore();
 const router = useRouter();
 const route = useRoute();
 
@@ -44,13 +49,18 @@ const currentMovieId = router.currentRoute.value.params.id as string | null;
 const userId = computed(() => mainStore.userData?.id || "");
 
 const isLoading = ref(false);
-const isError = ref(false);
+const isError = ref<string | null>(null);
 const currentUserMovie = ref<UserMovie | null>(null);
+const isListsModalVisible = ref(false);
+const newListName = ref("");
+const newListLabelsInput = ref("");
+const isListActionLoading = ref(false);
+const listIdsWithCurrentMovie = ref<Set<string>>(new Set());
 
 onMounted(async () => {
   if (mainStore.isLoggedIn && userId.value && currentMovieId) {
     isLoading.value = true;
-    isError.value = false;
+    isError.value = null;
 
     try {
       const userMovie = userMoviesStore.userMovies.find(
@@ -68,12 +78,12 @@ onMounted(async () => {
         if (loaded) {
           currentUserMovie.value = loaded;
         } else {
-          isError.value = true;
+          isError.value = "Фильм не найден в вашей коллекции";
         }
       }
     } catch {
       message.error("Не удалось загрузить фильм");
-      isError.value = true;
+      isError.value = "Не удалось загрузить фильм";
     } finally {
       isLoading.value = false;
     }
@@ -87,6 +97,33 @@ onBeforeUnmount(() => {
 const isEditingProgress = ref<boolean>(false);
 const editSeason = ref<number | undefined>(undefined);
 const editEpisode = ref<number | undefined>(undefined);
+const isProgressSaving = ref(false);
+
+const WATCH_STATUS_OPTIONS: Array<{ value: WatchStatus; label: string }> = [
+  { value: WatchStatus.NOT_STARTED, label: "Не начато" },
+  { value: WatchStatus.WATCHING, label: "Смотрю" },
+  { value: WatchStatus.COMPLETED, label: "Завершено" },
+  { value: WatchStatus.DROPPED, label: "Брошено" },
+];
+
+const WATCH_STATUS_LABELS: Record<WatchStatus, string> = {
+  [WatchStatus.NOT_STARTED]: "Не начато",
+  [WatchStatus.WATCHING]: "Смотрю",
+  [WatchStatus.COMPLETED]: "Завершено",
+  [WatchStatus.DROPPED]: "Брошено",
+};
+
+type ProgressPreset = {
+  id: "start" | "complete" | "drop";
+  label: string;
+  status: WatchStatus;
+};
+
+const PROGRESS_PRESETS: ProgressPreset[] = [
+  { id: "start", label: "Начал смотреть", status: WatchStatus.WATCHING },
+  { id: "complete", label: "Досмотрел", status: WatchStatus.COMPLETED },
+  { id: "drop", label: "Бросил", status: WatchStatus.DROPPED },
+];
 
 const movie = computed(() => currentUserMovie.value?.movie);
 const posterSrc = computed(() => movie.value?.imageUrl || FALLBACK_IMAGE_URL);
@@ -96,6 +133,14 @@ const ratePercent = computed(() => ((currentUserMovie.value?.personalRate ?? 0) 
 const hasActors = computed(
   () => movie.value?.actors && movie.value.actors.length > 0
 );
+
+const availableUserLists = computed<UserListSummary[]>(() => {
+  return userListsStore.sortedLists;
+});
+
+const isMovieAlreadyInList = (listId: string): boolean => {
+  return listIdsWithCurrentMovie.value.has(listId);
+};
 
 const toggleFavorite = async () => {
   if (!currentUserMovie.value) {
@@ -169,29 +214,39 @@ const hasSerialProgress = computed(() => {
 });
 
 const isSerialCompleted = computed(() => {
-  if (!movie.value?.isSerial || !currentUserMovie.value) {
+  if (!currentUserMovie.value) {
     return false;
   }
 
-  const m = movie.value;
-  const um = currentUserMovie.value;
-  const seasonsComplete = !!(
-    m.seasonCount &&
-    um.currentSeason &&
-    um.currentSeason >= m.seasonCount
-  );
-  const episodesComplete = !!(
-    m.episodeCount &&
-    um.currentEpisode &&
-    um.currentEpisode >= m.episodeCount
-  );
+  return currentUserMovie.value.watchStatus === WatchStatus.COMPLETED;
+});
 
-  return seasonsComplete && episodesComplete;
+const currentWatchStatusLabel = computed(() => {
+  const status = currentUserMovie.value?.watchStatus ?? WatchStatus.NOT_STARTED;
+
+  return WATCH_STATUS_LABELS[status];
+});
+
+const activeProgressPresetId = computed<ProgressPreset["id"] | null>(() => {
+  if (!currentUserMovie.value) {
+    return null;
+  }
+
+  switch (currentUserMovie.value.watchStatus) {
+    case WatchStatus.WATCHING:
+      return "start";
+    case WatchStatus.COMPLETED:
+      return "complete";
+    case WatchStatus.DROPPED:
+      return "drop";
+    default:
+      return null;
+  }
 });
 
 const startEditProgress = () => {
-  editSeason.value = currentUserMovie.value?.currentSeason;
-  editEpisode.value = currentUserMovie.value?.currentEpisode;
+  editSeason.value = currentUserMovie.value?.currentSeason ?? undefined;
+  editEpisode.value = currentUserMovie.value?.currentEpisode ?? undefined;
   isEditingProgress.value = true;
 };
 
@@ -204,22 +259,385 @@ const saveProgress = async () => {
     return;
   }
 
-  try {
-    await userMoviesStore.updateUserMovie(userId.value, currentUserMovie.value.movieId, {
-      currentSeason: editSeason.value,
-      currentEpisode: editEpisode.value,
-    });
+  isProgressSaving.value = true;
 
-    currentUserMovie.value = {
-      ...currentUserMovie.value,
-      currentSeason: editSeason.value ?? null,
-      currentEpisode: editEpisode.value ?? null,
-    };
+  try {
+    const updated = await userMoviesStore.updateUserMovie(
+      userId.value,
+      currentUserMovie.value.movieId,
+      {
+        currentSeason: editSeason.value,
+        currentEpisode: editEpisode.value,
+      },
+    );
+
+    currentUserMovie.value = updated;
 
     isEditingProgress.value = false;
     message.success("Прогресс обновлён");
   } catch {
     message.error("Не удалось обновить прогресс");
+  } finally {
+    isProgressSaving.value = false;
+  }
+};
+
+const updateWatchStatus = async (nextStatus: WatchStatus) => {
+  if (!currentUserMovie.value) {
+    return;
+  }
+
+  isProgressSaving.value = true;
+
+  try {
+    const updated = await userMoviesStore.updateUserMovie(
+      userId.value,
+      currentUserMovie.value.movieId,
+      {
+        watchStatus: nextStatus,
+      },
+    );
+
+    currentUserMovie.value = updated;
+    message.success("Статус обновлён");
+  } catch {
+    message.error("Не удалось обновить статус просмотра");
+  } finally {
+    isProgressSaving.value = false;
+  }
+};
+
+const onWatchStatusChange = (nextStatus: WatchStatus) => {
+  void updateWatchStatus(nextStatus);
+};
+
+const applyProgressPreset = async (preset: ProgressPreset) => {
+  if (!currentUserMovie.value) {
+    return;
+  }
+
+  const payload: {
+    watchStatus: WatchStatus;
+    currentSeason?: number;
+    currentEpisode?: number;
+    lastWatchedAt?: string;
+  } = {
+    watchStatus: preset.status,
+  };
+
+  if (preset.status === WatchStatus.WATCHING) {
+    const hasSeasonProgress = (currentUserMovie.value.currentSeason ?? 0) > 0;
+    const hasEpisodeProgress = (currentUserMovie.value.currentEpisode ?? 0) > 0;
+
+    if (!hasSeasonProgress && movie.value?.seasonCount) {
+      payload.currentSeason = 1;
+    }
+
+    if (!hasEpisodeProgress && movie.value?.episodeCount) {
+      payload.currentEpisode = 1;
+    }
+  }
+
+  if (preset.status === WatchStatus.COMPLETED) {
+    if (movie.value?.seasonCount) {
+      payload.currentSeason = movie.value.seasonCount;
+    }
+
+    if (movie.value?.episodeCount) {
+      payload.currentEpisode = movie.value.episodeCount;
+    }
+  }
+
+  if (preset.status === WatchStatus.DROPPED) {
+    payload.lastWatchedAt = new Date().toISOString();
+  }
+
+  const hasChanges =
+    currentUserMovie.value.watchStatus !== payload.watchStatus ||
+    payload.currentSeason !== undefined ||
+    payload.currentEpisode !== undefined ||
+    payload.lastWatchedAt !== undefined;
+
+  if (!hasChanges) {
+    return;
+  }
+
+  isProgressSaving.value = true;
+
+  try {
+    const updated = await userMoviesStore.updateUserMovie(
+      userId.value,
+      currentUserMovie.value.movieId,
+      payload
+    );
+
+    currentUserMovie.value = updated;
+    message.success("Статус обновлён");
+  } catch {
+    message.error("Не удалось применить пресет статуса");
+  } finally {
+    isProgressSaving.value = false;
+  }
+};
+
+const canDecreaseSeason = computed(() => {
+  return (currentUserMovie.value?.currentSeason ?? 0) > 0;
+});
+
+const canIncreaseSeason = computed(() => {
+  if (!movie.value?.seasonCount) {
+    return false;
+  }
+
+  return (currentUserMovie.value?.currentSeason ?? 0) < movie.value.seasonCount;
+});
+
+const canDecreaseEpisode = computed(() => {
+  return (currentUserMovie.value?.currentEpisode ?? 0) > 0;
+});
+
+const canIncreaseEpisode = computed(() => {
+  if (!movie.value?.episodeCount) {
+    return false;
+  }
+
+  return (currentUserMovie.value?.currentEpisode ?? 0) < movie.value.episodeCount;
+});
+
+const updateSerialProgress = async (
+  payload: { currentSeason?: number; currentEpisode?: number },
+  successMessage: string,
+  errorMessage: string
+) => {
+  if (!currentUserMovie.value) {
+    return;
+  }
+
+  isProgressSaving.value = true;
+
+  try {
+    const updated = await userMoviesStore.updateUserMovie(
+      userId.value,
+      currentUserMovie.value.movieId,
+      payload
+    );
+
+    currentUserMovie.value = updated;
+    message.success(successMessage);
+  } catch {
+    message.error(errorMessage);
+  } finally {
+    isProgressSaving.value = false;
+  }
+};
+
+const decreaseSeason = async () => {
+  if (!canDecreaseSeason.value) {
+    return;
+  }
+
+  const nextSeason = Math.max((currentUserMovie.value?.currentSeason ?? 0) - 1, 0);
+
+  await updateSerialProgress(
+    { currentSeason: nextSeason },
+    "Сезон обновлён",
+    "Не удалось обновить сезон"
+  );
+};
+
+const increaseSeason = async () => {
+  if (!canIncreaseSeason.value || !movie.value?.seasonCount) {
+    return;
+  }
+
+  const nextSeason = Math.min(
+    (currentUserMovie.value?.currentSeason ?? 0) + 1,
+    movie.value.seasonCount
+  );
+
+  await updateSerialProgress(
+    { currentSeason: nextSeason },
+    "Сезон обновлён",
+    "Не удалось обновить сезон"
+  );
+};
+
+const decreaseEpisode = async () => {
+  if (!canDecreaseEpisode.value) {
+    return;
+  }
+
+  const nextEpisode = Math.max((currentUserMovie.value?.currentEpisode ?? 0) - 1, 0);
+
+  await updateSerialProgress(
+    { currentEpisode: nextEpisode },
+    "Эпизод обновлён",
+    "Не удалось обновить эпизод"
+  );
+};
+
+const increaseEpisode = async () => {
+  if (!canIncreaseEpisode.value || !movie.value?.episodeCount) {
+    return;
+  }
+
+  const nextEpisode = Math.min(
+    (currentUserMovie.value?.currentEpisode ?? 0) + 1,
+    movie.value.episodeCount
+  );
+
+  await updateSerialProgress(
+    { currentEpisode: nextEpisode },
+    "Эпизод обновлён",
+    "Не удалось обновить эпизод"
+  );
+};
+
+const parseListLabels = (raw: string): string[] => {
+  const unique = new Set<string>();
+
+  for (const chunk of raw.split(",")) {
+    const normalized = chunk.trim();
+
+    if (normalized) {
+      unique.add(normalized);
+    }
+  }
+
+  return Array.from(unique);
+};
+
+const formatTitlesCount = (count: number): string => {
+  const abs = Math.abs(count);
+  const mod10 = abs % 10;
+  const mod100 = abs % 100;
+
+  if (mod10 === 1 && mod100 !== 11) {
+    return `${count} тайтл`;
+  }
+
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) {
+    return `${count} тайтла`;
+  }
+
+  return `${count} тайтлов`;
+};
+
+const openListsModal = async () => {
+  if (!userId.value) {
+    return;
+  }
+
+  isListsModalVisible.value = true;
+
+  try {
+    await userListsStore.fetchLists(userId.value);
+    await refreshMoviePresenceInLists();
+  } catch {
+    message.error(userListsStore.isError || "Не удалось загрузить списки");
+  }
+};
+
+const refreshMoviePresenceInLists = async () => {
+  if (!userId.value || !currentUserMovie.value) {
+    listIdsWithCurrentMovie.value = new Set();
+
+    return;
+  }
+
+  const nextPresence = new Set<string>();
+
+  await Promise.all(
+    availableUserLists.value.map(async (list) => {
+      try {
+        const response = await useFetch<UserListDetail>(
+          `/users/${userId.value}/lists/${list.id}`,
+          {
+            method: FETCH_METHOD.get,
+          }
+        );
+
+        if (response.status !== 200) {
+          return;
+        }
+
+        const containsMovie = response.data.items.some(
+          (item) => item.movieId === currentUserMovie.value?.movieId
+        );
+
+        if (containsMovie) {
+          nextPresence.add(list.id);
+        }
+      } catch {
+        /* ignore one broken list fetch and continue others */
+      }
+    })
+  );
+
+  listIdsWithCurrentMovie.value = nextPresence;
+};
+
+const createListFromModal = async () => {
+  if (!userId.value || !newListName.value.trim()) {
+    message.warning("Введите название списка");
+
+    return;
+  }
+
+  isListActionLoading.value = true;
+
+  try {
+    const created = await userListsStore.createList(userId.value, {
+      name: newListName.value.trim(),
+      labels: parseListLabels(newListLabelsInput.value),
+    });
+
+    newListName.value = "";
+    newListLabelsInput.value = "";
+    await refreshMoviePresenceInLists();
+    message.success(`Список «${created.name}» создан`);
+  } catch (error: unknown) {
+    const text = getApiResponseMessage(error);
+    message.error(text || "Не удалось создать список");
+  } finally {
+    isListActionLoading.value = false;
+  }
+};
+
+const addMovieToList = async (listId: string) => {
+  if (!userId.value || !currentUserMovie.value) {
+    return;
+  }
+
+  isListActionLoading.value = true;
+
+  try {
+    await userListsStore.addMovieToList(
+      userId.value,
+      listId,
+      currentUserMovie.value.movieId
+    );
+    listIdsWithCurrentMovie.value = new Set([
+      ...listIdsWithCurrentMovie.value,
+      listId,
+    ]);
+    await userListsStore.fetchLists(userId.value);
+    message.success("Тайтл добавлен в список");
+  } catch (error: unknown) {
+    if (isApiConflictError(error)) {
+      listIdsWithCurrentMovie.value = new Set([
+        ...listIdsWithCurrentMovie.value,
+        listId,
+      ]);
+      message.warning("Тайтл уже есть в этом списке");
+
+      return;
+    }
+
+    const text = getApiResponseMessage(error);
+    message.error(text || "Не удалось добавить фильм в список");
+  } finally {
+    isListActionLoading.value = false;
   }
 };
 </script>
@@ -394,6 +812,22 @@ const saveProgress = async () => {
                   :movie-title="movie.title"
                 />
               </div>
+
+              <div
+                v-if="currentMovieId && movie"
+                class="detail-card__meta-item detail-card__meta-item_interactive"
+                @click.stop
+              >
+                <a-button
+                  type="default"
+                  size="small"
+                  class="detail-card__meta-list-btn"
+                  @click="openListsModal"
+                >
+                  <BaseIcon name="mdi:playlist-plus" :width="16" :height="16" />
+                  В список
+                </a-button>
+              </div>
             </div>
           </div>
         </div>
@@ -448,6 +882,40 @@ const saveProgress = async () => {
             <span>Сериал просмотрен полностью!</span>
           </div>
 
+          <div class="serial-progress__status-row">
+            <div class="serial-progress__status-info">
+              <span class="serial-progress__status-label">Статус</span>
+              <span class="serial-progress__status-value">
+                {{ currentWatchStatusLabel }}
+              </span>
+            </div>
+            <a-segmented
+              :value="currentUserMovie.watchStatus"
+              :options="WATCH_STATUS_OPTIONS"
+              size="middle"
+              class="serial-progress__status-select"
+              :disabled="isProgressSaving"
+              @change="onWatchStatusChange"
+            />
+          </div>
+
+          <div class="serial-progress__presets">
+            <a-button
+              v-for="preset in PROGRESS_PRESETS"
+              :key="preset.id"
+              size="small"
+              class="serial-progress__preset-btn"
+              :class="{
+                'serial-progress__preset-btn_active':
+                  activeProgressPresetId === preset.id,
+              }"
+              :disabled="isProgressSaving"
+              @click="applyProgressPreset(preset)"
+            >
+              {{ preset.label }}
+            </a-button>
+          </div>
+
           <div v-if="!isEditingProgress" class="serial-progress">
             <div v-if="movie.seasonCount" class="serial-progress__item">
               <div class="serial-progress__label">
@@ -482,6 +950,47 @@ const saveProgress = async () => {
                 size="small"
               />
             </div>
+
+            <div class="serial-progress__quick-actions">
+              <div v-if="movie.seasonCount" class="serial-progress__quick-group">
+                <span class="serial-progress__quick-label">Сезон</span>
+                <div class="serial-progress__quick-controls">
+                  <a-button
+                    size="small"
+                    :disabled="isProgressSaving || !canDecreaseSeason"
+                    @click="decreaseSeason"
+                  >
+                    -1
+                  </a-button>
+                  <a-button
+                    size="small"
+                    :disabled="isProgressSaving || !canIncreaseSeason"
+                    @click="increaseSeason"
+                  >
+                    +1
+                  </a-button>
+                </div>
+              </div>
+              <div v-if="movie.episodeCount" class="serial-progress__quick-group">
+                <span class="serial-progress__quick-label">Эпизод</span>
+                <div class="serial-progress__quick-controls">
+                  <a-button
+                    size="small"
+                    :disabled="isProgressSaving || !canDecreaseEpisode"
+                    @click="decreaseEpisode"
+                  >
+                    -1
+                  </a-button>
+                  <a-button
+                    size="small"
+                    :disabled="isProgressSaving || !canIncreaseEpisode"
+                    @click="increaseEpisode"
+                  >
+                    +1
+                  </a-button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div v-else class="serial-progress serial-progress_editing">
@@ -515,7 +1024,11 @@ const saveProgress = async () => {
 
             <div class="serial-progress__edit-actions">
               <a-button @click="cancelEditProgress"> Отмена </a-button>
-              <a-button type="primary" @click="saveProgress">
+              <a-button
+                type="primary"
+                :loading="isProgressSaving"
+                @click="saveProgress"
+              >
                 <BaseIcon name="mdi:check" :width="16" :height="16" />
                 Сохранить
               </a-button>
@@ -532,6 +1045,84 @@ const saveProgress = async () => {
       </template>
     </div>
   </div>
+
+  <BaseModal v-model="isListsModalVisible" layout="detail">
+    <template #title>Добавить в пользовательский список</template>
+
+    <template #body>
+      <div class="lists-modal">
+        <div class="lists-modal__create">
+          <a-input
+            v-model:value="newListName"
+            placeholder="Название списка"
+            :maxlength="80"
+            size="large"
+          />
+          <a-input
+            v-model:value="newListLabelsInput"
+            placeholder="Метки через запятую (например: уютно, с друзьями)"
+            :maxlength="140"
+            size="large"
+          />
+          <a-button
+            type="primary"
+            :loading="isListActionLoading"
+            @click="createListFromModal"
+          >
+            Создать список
+          </a-button>
+        </div>
+
+        <ListLoading
+          v-if="userListsStore.isLoading"
+          :center="true"
+          loading-text="Загружаем списки..."
+          size="large"
+        />
+
+        <div v-else-if="availableUserLists.length" class="lists-modal__list">
+          <div
+            v-for="list in availableUserLists"
+            :key="list.id"
+            class="lists-modal__list-item"
+          >
+            <div class="lists-modal__list-main">
+              <div class="lists-modal__list-title">{{ list.name }}</div>
+              <div class="lists-modal__list-meta">
+                {{ formatTitlesCount(list._count.items) }}
+              </div>
+              <div v-if="list.labels.length" class="lists-modal__labels">
+                <span
+                  v-for="label in list.labels"
+                  :key="`${list.id}-${label}`"
+                  class="lists-modal__label"
+                >
+                  {{ label }}
+                </span>
+              </div>
+            </div>
+
+            <a-button
+              v-if="!isMovieAlreadyInList(list.id)"
+              size="small"
+              :loading="isListActionLoading"
+              @click="addMovieToList(list.id)"
+            >
+              Добавить
+            </a-button>
+          </div>
+        </div>
+
+        <div v-else class="lists-modal__empty">
+          Пока нет списков. Создайте первый выше.
+        </div>
+      </div>
+    </template>
+
+    <template #footer>
+      <a-button @click="isListsModalVisible = false">Закрыть</a-button>
+    </template>
+  </BaseModal>
 </template>
 
 <style scoped lang="scss">
@@ -773,6 +1364,12 @@ const saveProgress = async () => {
     margin-left: auto;
   }
 
+  &__meta-list-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
   &__tag_warning {
     display: inline-flex;
     align-items: center;
@@ -788,6 +1385,78 @@ const saveProgress = async () => {
       var(--color-warning, #faad14) 30%,
       transparent
     );
+  }
+}
+
+.lists-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  &__create {
+    display: grid;
+    gap: 0.75rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+  }
+
+  &__list {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  &__list-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--bg-secondary) 75%, transparent);
+  }
+
+  &__list-main {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  &__list-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  &__list-meta {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+  }
+
+  &__labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.25rem;
+  }
+
+  &__label {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid color-mix(in srgb, var(--ant-color-primary) 35%, transparent);
+    background: color-mix(in srgb, var(--ant-color-primary) 10%, var(--bg-primary));
+    color: var(--ant-color-primary);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.15rem 0.55rem;
+    line-height: 1.3;
+  }
+
+  &__empty {
+    padding: 0.75rem;
+    border-radius: 12px;
+    border: 1px dashed var(--border-color);
+    color: var(--text-secondary);
   }
 }
 
@@ -892,7 +1561,7 @@ const saveProgress = async () => {
 .serial-progress {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
 
   &__completed {
     display: flex;
@@ -912,6 +1581,100 @@ const saveProgress = async () => {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    padding: 0.85rem;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--bg-secondary) 75%, transparent);
+  }
+
+  &__status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
+    margin-bottom: 0.75rem;
+  }
+
+  &__status-info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    padding-left: 0.15rem;
+  }
+
+  &__status-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  &__status-value {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  &__status-select {
+    min-width: 280px;
+    max-width: 100%;
+
+    :deep(.ant-segmented) {
+      background: color-mix(in srgb, var(--bg-primary) 80%, transparent);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 4px;
+    }
+
+    :deep(.ant-segmented-item) {
+      border-radius: 8px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    :deep(.ant-segmented-item-selected) {
+      color: var(--text-primary);
+      background: color-mix(
+        in srgb,
+        var(--ant-color-primary) 14%,
+        var(--bg-primary)
+      );
+      box-shadow: none;
+    }
+  }
+
+  &__presets {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+    margin-bottom: 0.85rem;
+    padding-left: 0.1rem;
+  }
+
+  &__preset-btn {
+    border-radius: 999px;
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+
+    &_active {
+      color: var(--ant-color-primary);
+      border-color: color-mix(
+        in srgb,
+        var(--ant-color-primary) 40%,
+        transparent
+      );
+      background: color-mix(
+        in srgb,
+        var(--ant-color-primary) 10%,
+        var(--bg-primary)
+      );
+    }
   }
 
   &__label {
@@ -945,6 +1708,36 @@ const saveProgress = async () => {
     }
   }
 
+  &__quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  &__quick-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+  }
+
+  &__quick-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  &__quick-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
   &_editing {
     gap: 1rem;
   }
@@ -972,6 +1765,23 @@ const saveProgress = async () => {
     :deep(.ant-btn-primary) {
       display: flex;
       align-items: center;
+    }
+  }
+
+  @include mediaTablet {
+    &__status-row {
+      gap: 1.25rem;
+    }
+  }
+
+  @media (max-width: 640px) {
+    &__status-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    &__status-select {
+      min-width: 100%;
     }
   }
 }

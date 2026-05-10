@@ -21,10 +21,10 @@ const props = defineProps<StatsBlock>();
 @use "@/styles/media" as *;
 
 .stats {
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
+  padding: 0.7rem;
+  background: color-mix(in srgb, var(--bg-secondary) 65%, transparent);
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 75%, transparent);
 
   &__list {
     display: flex;
@@ -39,8 +39,8 @@ const props = defineProps<StatsBlock>();
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.5rem 0.75rem;
-    background: var(--bg-primary);
+    padding: 0.45rem 0.65rem;
+    background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
     border-radius: 6px;
     border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
     transition: all 0.2s ease;
@@ -55,32 +55,32 @@ const props = defineProps<StatsBlock>();
     margin: 0;
     font-weight: 500;
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
   }
 
   &__item-value {
     margin: 0;
     font-weight: 700;
     color: var(--text-primary);
-    font-size: 1rem;
+    font-size: 0.96rem;
     background: color-mix(in srgb, var(--ant-color-primary) 10%, transparent);
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
   }
 
   @include mediaTablet {
-    padding: 1.25rem;
+    padding: 0.8rem;
 
     &__item {
-      padding: 0.75rem 1rem;
+      padding: 0.55rem 0.8rem;
     }
 
     &__item-title {
-      font-size: 1rem;
+      font-size: 0.92rem;
     }
 
     &__item-value {
-      font-size: 1.1rem;
+      font-size: 1rem;
     }
   }
 }

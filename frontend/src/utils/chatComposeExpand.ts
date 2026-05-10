@@ -64,7 +64,7 @@ export function expandMessageWithMovieUrls(
       return full;
     }
 
-    const url = buildMovieDetailAbsoluteUrl(router, chip.movieId);
+    const url = buildMovieDetailAbsoluteUrl(router, chip.movieId, chip.title);
 
     return `«${chip.title}» ${url}`;
   });
@@ -82,7 +82,7 @@ export function stripMovieUrlsFromText(text: string): {
   const extracted: MovieChip[] = [];
   const cleaned = text.replace(
     MOVIE_PAIR_IN_TEXT,
-    (whole: string, title: string, urlStr: string) => {
+    (_whole: string, title: string, urlStr: string) => {
       try {
         const u = new URL(urlStr, window.location.origin);
         const m = u.pathname.match(/^\/detail\/([^/]+)\/?$/);
@@ -97,5 +97,28 @@ export function stripMovieUrlsFromText(text: string): {
     }
   );
 
-  return { cleaned, extracted };
+  const cleanedWithBareLinksHandled = cleaned.replace(
+    /(https?:\/\/[^\s<>"']+)/g,
+    (whole: string, urlStr: string) => {
+      try {
+        const u = new URL(urlStr, window.location.origin);
+        const m = u.pathname.match(/^\/detail\/([^/]+)\/?$/);
+        const shareTitle = u.searchParams.get("shareTitle")?.trim();
+
+        if (!m || !shareTitle) {
+          return whole;
+        }
+
+        if (!extracted.some((e) => e.movieId === m[1])) {
+          extracted.push({ movieId: m[1], title: shareTitle });
+        }
+
+        return `«${shareTitle}»`;
+      } catch {
+        return whole;
+      }
+    }
+  );
+
+  return { cleaned: cleanedWithBareLinksHandled, extracted };
 }

@@ -13,6 +13,7 @@ import {
 import { UserMovieService } from './user-movie.service';
 import { CreateUserMovieBodyDto, UpdateUserMovieDto } from './dto';
 import {
+  ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -59,6 +60,7 @@ export class UserMovieController {
     @Query('isFavorite') isFavorite?: string,
     @Query('seeLater') seeLater?: string,
     @Query('watchStatus') watchStatus?: string,
+    @Query('isSerial') isSerial?: string,
   ) {
     this.ensureSelf(userId, user);
     return this.userMovieService.findAllByUser(userId, {
@@ -71,6 +73,7 @@ export class UserMovieController {
       isFavorite: isFavorite !== undefined ? isFavorite === 'true' : undefined,
       seeLater: seeLater !== undefined ? seeLater === 'true' : undefined,
       watchStatus: watchStatus ? (watchStatus as WatchStatus) : undefined,
+      isSerial: isSerial !== undefined ? isSerial === 'true' : undefined,
     });
   }
 
@@ -96,6 +99,7 @@ export class UserMovieController {
     @Query('isFavorite') isFavorite?: string,
     @Query('seeLater') seeLater?: string,
     @Query('watchStatus') watchStatus?: string,
+    @Query('isSerial') isSerial?: string,
   ) {
     this.ensureSelf(userId, user);
     return this.userMovieService.searchUserMovies(userId, query, {
@@ -108,6 +112,7 @@ export class UserMovieController {
       isFavorite: isFavorite !== undefined ? isFavorite === 'true' : undefined,
       seeLater: seeLater !== undefined ? seeLater === 'true' : undefined,
       watchStatus: watchStatus ? (watchStatus as WatchStatus) : undefined,
+      isSerial: isSerial !== undefined ? isSerial === 'true' : undefined,
     });
   }
 
@@ -163,6 +168,24 @@ export class UserMovieController {
   }
 
   @ApiOperation({
+    summary: 'Получить расширенную аналитику пользователя',
+    description:
+      'Возвращает персональные инсайты: динамику, топ-жанры, прогресс статусов и сериалы в процессе',
+  })
+  @ApiOkResponse({
+    description: 'Аналитика получена',
+  })
+  @AuthProtected()
+  @Get('analytics')
+  public getUserAnalytics(
+    @Param('userId') userId: string,
+    @Authorized() user: User,
+  ) {
+    this.ensureSelf(userId, user);
+    return this.userMovieService.getUserAnalytics(userId);
+  }
+
+  @ApiOperation({
     summary: 'Получить персональные данные о фильме',
     description:
       'Возвращает персональные данные пользователя о конкретном фильме',
@@ -197,6 +220,10 @@ export class UserMovieController {
   @ApiOkResponse({
     description: 'Фильм добавлен',
   })
+  @ApiBadRequestResponse({
+    description:
+      'Некорректный прогресс (например, прогресс сезонов/эпизодов для не-сериала)',
+  })
   @AuthProtected()
   @Post()
   public create(
@@ -217,6 +244,9 @@ export class UserMovieController {
   })
   @ApiNotFoundResponse({
     description: 'Данные не найдены',
+  })
+  @ApiBadRequestResponse({
+    description: 'Некорректные значения прогресса просмотра',
   })
   @AuthProtected()
   @Patch(':movieId')

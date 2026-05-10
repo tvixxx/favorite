@@ -3,7 +3,7 @@
 ALTER TABLE "movies" ADD COLUMN "country_codes" VARCHAR(2)[];
 
 UPDATE "movies"
-SET "country_codes" = ARRAY["production_country_code"]::VARCHAR(2);
+SET "country_codes" = ARRAY["production_country_code"]::VARCHAR(2)[];
 
 ALTER TABLE "movies"
 ALTER COLUMN "country_codes" SET NOT NULL;

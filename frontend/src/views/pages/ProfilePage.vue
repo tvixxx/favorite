@@ -9,16 +9,19 @@ import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import type { UserData } from "@/state/types";
 import ProfileSettings from "@/components/ProfileSettings/ProfileSettings.vue";
 import BadgesList from "@/components/Badges/BadgesList.vue";
+import SettingBlock from "@/components/ProfileSettings/components/SettingBlock/SettingBlock.vue";
 import { message } from "ant-design-vue";
+import { GenreLabels } from "@/components/Genres/constants/genres.constants";
 import {
   ERROR_UPDATE_USER_NAME_TEXT,
   SUCCESS_UPDATE_USER_NAME_TEXT,
 } from "@/state/constants";
-import { useBadgesStore } from "@/stores";
+import { useBadgesStore, useUserMoviesStore } from "@/stores";
 
 const store = useMainStore();
 const router = useRouter();
 const badgesStore = useBadgesStore();
+const userMoviesStore = useUserMoviesStore();
 
 const isModalVisible = ref(false);
 const editForm = ref({ fullName: "" });
@@ -48,6 +51,98 @@ const shortId = computed(() => {
   return user.value?.id;
 });
 
+const analytics = computed(() => userMoviesStore.analytics);
+
+const analyticsTopGenresText = computed(() => {
+  const topGenres = analytics.value?.topGenres ?? [];
+
+  if (topGenres.length === 0) {
+    return "Пока недостаточно данных";
+  }
+
+  return topGenres
+    .map((item) => {
+      const label = GenreLabels[item.genre] ?? item.genre;
+      return `${label} (${item.count})`;
+    })
+    .join(" • ");
+});
+
+const analyticsContinueWatchingText = computed(() => {
+  const list = analytics.value?.continueWatching ?? [];
+
+  if (list.length === 0) {
+    return "Нет сериалов в процессе";
+  }
+
+  const first = list[0];
+  const season = first.currentSeason ?? 0;
+  const episode = first.currentEpisode ?? 0;
+
+  return `${first.title}: S${season} • E${episode}`;
+});
+
+const analyticsTrendText = computed(() => {
+  if (!analytics.value) {
+    return "Нет данных";
+  }
+
+  const last7 = analytics.value.addedLast7Days;
+  const last30 = analytics.value.addedLast30Days;
+
+  return `${last7} за 7 дней • ${last30} за 30 дней`;
+});
+
+const analyticsTrendBars = computed(() => {
+  if (!analytics.value) {
+    return {
+      last7: 0,
+      last30: 0,
+      last7Percent: 0,
+      last30Percent: 0,
+    };
+  }
+
+  const last7 = analytics.value.addedLast7Days;
+  const last30 = analytics.value.addedLast30Days;
+  const maxValue = Math.max(last7, last30, 1);
+
+  return {
+    last7,
+    last30,
+    last7Percent: Math.round((last7 / maxValue) * 100),
+    last30Percent: Math.round((last30 / maxValue) * 100),
+  };
+});
+
+const openWatchingSerials = () => {
+  router.push({
+    path: "/library/collection",
+    query: {
+      watchStatus: "WATCHING",
+      isSerial: "true",
+    },
+  });
+};
+
+const openDroppedTitles = () => {
+  router.push({
+    path: "/library/collection",
+    query: {
+      watchStatus: "DROPPED",
+    },
+  });
+};
+
+const openSeeLaterTitles = () => {
+  router.push({
+    path: "/library/collection",
+    query: {
+      seeLater: "true",
+    },
+  });
+};
+
 const goToLogin = () => {
   router.push("/login");
 };
@@ -69,7 +164,10 @@ const showEditDisplayNameModal = () => {
 
 onMounted(async () => {
   if (userId.value) {
-    await badgesStore.fetchUserBadges(userId.value);
+    await Promise.all([
+      badgesStore.fetchUserBadges(userId.value),
+      userMoviesStore.fetchUserMoviesAnalytics(userId.value),
+    ]);
   }
 });
 </script>
@@ -86,30 +184,41 @@ onMounted(async () => {
 
     <div class="profile-page__content">
       <div v-if="showContent" class="profile-page__grid">
-        <article class="user-card">
-          <div class="user-card__avatar-section">
-            <div class="user-card__avatar">
-              <div class="user-card__avatar-initials">{{ initials }}</div>
+        <div class="profile-page__primary-column">
+          <article class="user-card">
+            <div class="user-card__avatar-section">
+              <div class="user-card__avatar">
+                <div class="user-card__avatar-initials">{{ initials }}</div>
+              </div>
+              <div class="user-card__info">
+                <h2 class="user-card__name" @click="showEditDisplayNameModal">
+                  {{ fullName }}
+                </h2>
+                <template v-if="user">
+                  <div class="user-card__email">
+                    <BaseIcon name="mdi:email" class="user-card__email-icon" />
+                    {{ user.email }}
+                  </div>
+                  <div class="user-card__id">
+                    <BaseIcon name="mdi:identifier" class="user-card__id-icon" />
+                    <ATooltip :title="user?.id" placement="top">
+                      <span class="user-card__short-id">{{ shortId }}</span>
+                    </ATooltip>
+                  </div>
+                </template>
+              </div>
             </div>
-            <div class="user-card__info">
-              <h2 class="user-card__name" @click="showEditDisplayNameModal">
-                {{ fullName }}
-              </h2>
-              <template v-if="user">
-                <div class="user-card__email">
-                  <BaseIcon name="mdi:email" class="user-card__email-icon" />
-                  {{ user.email }}
-                </div>
-                <div class="user-card__id">
-                  <BaseIcon name="mdi:identifier" class="user-card__id-icon" />
-                  <ATooltip :title="user?.id" placement="top">
-                    <span class="user-card__short-id">{{ shortId }}</span>
-                  </ATooltip>
-                </div>
-              </template>
-            </div>
-          </div>
-        </article>
+          </article>
+
+          <article class="friends-card">
+            <SettingBlock
+              title="Друзья"
+              description="Управление друзьями и подписками"
+              type="friends"
+              icon="mdi:account-group"
+            />
+          </article>
+        </div>
 
         <article class="badges-card">
           <div class="badges-card__header">
@@ -139,7 +248,128 @@ onMounted(async () => {
           </div>
         </article>
 
-        <ProfileSettings />
+        <div class="profile-page__secondary-column">
+          <ProfileSettings :types="['theme', 'stats']" />
+
+          <article class="analytics-card">
+            <div class="analytics-card__header">
+              <BaseIcon name="mdi:chart-arc" class="analytics-card__icon" />
+              <h3 class="analytics-card__title">Персональная аналитика</h3>
+            </div>
+
+            <div
+              v-if="userMoviesStore.isAnalyticsLoading"
+              class="analytics-card__loading"
+            >
+              <div class="analytics-card__loader"></div>
+              <span>Загрузка аналитики...</span>
+            </div>
+
+            <div
+              v-else-if="userMoviesStore.isAnalyticsError || !analytics"
+              class="analytics-card__error"
+            >
+              <BaseIcon
+                name="mdi:alert-circle"
+                class="analytics-card__error-icon"
+              />
+              <span>Не удалось загрузить аналитику</span>
+            </div>
+
+            <div v-else class="analytics-card__content">
+              <div class="analytics-card__metrics">
+                <div class="analytics-card__metric">
+                  <span class="analytics-card__metric-label">Тренд</span>
+                  <span class="analytics-card__metric-value">{{
+                    analyticsTrendText
+                  }}</span>
+                </div>
+                <div class="analytics-card__trend-bars">
+                  <div class="analytics-card__trend-row">
+                    <span class="analytics-card__trend-label">7 дн</span>
+                    <div class="analytics-card__trend-track">
+                      <div
+                        class="analytics-card__trend-fill analytics-card__trend-fill--week"
+                        :style="{ width: `${analyticsTrendBars.last7Percent}%` }"
+                      />
+                    </div>
+                    <span class="analytics-card__trend-value">{{
+                      analyticsTrendBars.last7
+                    }}</span>
+                  </div>
+                  <div class="analytics-card__trend-row">
+                    <span class="analytics-card__trend-label">30 дн</span>
+                    <div class="analytics-card__trend-track">
+                      <div
+                        class="analytics-card__trend-fill analytics-card__trend-fill--month"
+                        :style="{ width: `${analyticsTrendBars.last30Percent}%` }"
+                      />
+                    </div>
+                    <span class="analytics-card__trend-value">{{
+                      analyticsTrendBars.last30
+                    }}</span>
+                  </div>
+                </div>
+                <div class="analytics-card__metric">
+                  <span class="analytics-card__metric-label">Фильмы / Сериалы</span>
+                  <span class="analytics-card__metric-value"
+                    >{{ analytics.totalMovies }} / {{ analytics.totalSerials }}</span
+                  >
+                </div>
+                <div class="analytics-card__metric">
+                  <span class="analytics-card__metric-label"
+                    >Процент завершения</span
+                  >
+                  <span class="analytics-card__metric-value"
+                    >{{ analytics.completionRate }}%</span
+                  >
+                </div>
+              </div>
+
+              <div class="analytics-card__insight">
+                <h4 class="analytics-card__insight-title">Топ жанров</h4>
+                <p class="analytics-card__insight-text">{{ analyticsTopGenresText }}</p>
+              </div>
+
+              <div class="analytics-card__insight">
+                <h4 class="analytics-card__insight-title">Продолжить смотреть</h4>
+                <p class="analytics-card__insight-text">
+                  {{ analyticsContinueWatchingText }}
+                </p>
+              </div>
+
+              <div class="analytics-card__quick-actions">
+                <a-button
+                  v-if="analytics.watchingSerialsCount > 0"
+                  type="primary"
+                  block
+                  @click="openWatchingSerials"
+                >
+                  Сериалы в процессе ({{ analytics.watchingSerialsCount }})
+                </a-button>
+
+                <div class="analytics-card__chips">
+                  <a-button
+                    v-if="analytics.statusBreakdown.dropped > 0"
+                    type="default"
+                    size="small"
+                    @click="openDroppedTitles"
+                  >
+                    Брошено ({{ analytics.statusBreakdown.dropped }})
+                  </a-button>
+                  <a-button
+                    v-if="analytics.seeLaterCount > 0"
+                    type="default"
+                    size="small"
+                    @click="openSeeLaterTitles"
+                  >
+                    Досмотреть позже ({{ analytics.seeLaterCount }})
+                  </a-button>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
       </div>
 
       <div v-else class="guest-card">
@@ -224,11 +454,7 @@ onMounted(async () => {
     grid-template-columns: 1fr;
     gap: 2rem;
     margin: 2rem 0;
-    min-height: 600px;
-
-    @include mediaMobileXL {
-      min-height: auto;
-    }
+    align-items: start;
 
     @include mediaTablet {
       grid-template-columns: 1fr;
@@ -236,15 +462,29 @@ onMounted(async () => {
     }
 
     @include mediaDesktopXS {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
+      grid-template-columns: minmax(280px, 0.95fr) minmax(320px, 1fr) minmax(
+          300px,
+          0.95fr
+        );
+      gap: 1.15rem;
     }
+  }
+
+  &__primary-column {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+  }
+
+  &__secondary-column {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
   }
 }
 
 .user-card {
-  height: 100%;
-  max-height: 200px;
+  height: auto;
   display: flex;
   background: var(--bg-primary);
   border-radius: 24px;
@@ -269,7 +509,7 @@ onMounted(async () => {
     @include mediaTablet {
       flex-direction: row;
       text-align: left;
-      gap: 2.5rem;
+      gap: 1.5rem;
     }
   }
 
@@ -358,6 +598,14 @@ onMounted(async () => {
   }
 }
 
+.friends-card {
+  background: var(--bg-primary);
+  border-radius: 24px;
+  box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
+}
+
 .guest-card {
   background: var(--bg-primary);
   border-radius: 24px;
@@ -421,6 +669,7 @@ onMounted(async () => {
 }
 
 .badges-card {
+  align-self: start;
   background: var(--bg-primary);
   border-radius: 24px;
   box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
@@ -491,6 +740,177 @@ onMounted(async () => {
     :deep(.ant-tabs-nav) {
       margin-bottom: 1rem;
     }
+  }
+}
+
+.analytics-card {
+  align-self: start;
+  background: var(--bg-primary);
+  border-radius: 24px;
+  box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  &__icon {
+    width: 22px;
+    height: 22px;
+    color: var(--ant-color-primary);
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  &__loading,
+  &__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1.4rem 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  &__loader {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--ant-color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  &__error {
+    color: var(--ant-color-error);
+  }
+
+  &__error-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  &__content {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  &__metrics {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  &__metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  }
+
+  &__metric-label {
+    color: var(--text-secondary);
+    font-size: 0.84rem;
+    font-weight: 600;
+  }
+
+  &__metric-value {
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    font-weight: 800;
+    text-align: right;
+  }
+
+  &__trend-bars {
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  }
+
+  &__trend-row {
+    display: grid;
+    grid-template-columns: auto minmax(90px, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__trend-label,
+  &__trend-value {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+
+  &__trend-track {
+    position: relative;
+    width: 100%;
+    height: 7px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border-color) 70%, transparent);
+    overflow: hidden;
+  }
+
+  &__trend-fill {
+    height: 100%;
+    border-radius: inherit;
+    transition: width 0.25s ease;
+
+    &--week {
+      background: color-mix(in srgb, var(--ant-color-primary) 82%, #ffffff);
+    }
+
+    &--month {
+      background: color-mix(in srgb, var(--ant-color-primary) 50%, #ffffff);
+    }
+  }
+
+  &__insight {
+    padding: 0.6rem 0.7rem;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+  }
+
+  &__insight-title {
+    margin: 0 0 0.3rem 0;
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+  }
+
+  &__insight-text {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  &__quick-actions {
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 }
 
