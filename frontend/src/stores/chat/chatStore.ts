@@ -4,6 +4,8 @@ import { io, Socket } from "socket.io-client";
 import { useFetch, FETCH_METHOD } from "@/composable";
 import { isSuccessStatus } from "@/utils";
 import { useUserStatusStore } from "../userStatus/userStatusStore";
+import { useNotificationsStore } from "../notifications/notificationsStore";
+import type { NotificationDto } from "../notifications/types";
 
 export interface Message {
   id: string;
@@ -153,6 +155,12 @@ export const useChatStore = defineStore("chat", () => {
         userStatusStore.setUserOffline(offlineUserId);
       },
     );
+
+    socket.value.on("notification:new", (dto: NotificationDto) => {
+      const notificationsStore = useNotificationsStore();
+
+      notificationsStore.applyIncoming(dto);
+    });
   };
 
   const disconnect = () => {

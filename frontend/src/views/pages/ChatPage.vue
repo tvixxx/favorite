@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
+import { ref, computed, onMounted, nextTick, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useChatStore, useUserStatusStore } from "@/stores";
 import { useMainStore } from "@/state/state";
@@ -98,7 +98,6 @@ onMounted(async () => {
     return;
   }
 
-  chatStore.connect(userId.value);
   await chatStore.fetchConversations(userId.value);
 
   const paramPeerId = route.params.userId as string | undefined;
@@ -128,9 +127,6 @@ onMounted(async () => {
   }
 });
 
-onUnmounted(() => {
-  chatStore.disconnect();
-});
 </script>
 
 <template>
