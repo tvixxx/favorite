@@ -1,15 +1,24 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { FriendshipStatus } from '../generated/prisma/enums';
+import { FriendshipStatus, NotificationType } from '../generated/prisma/enums';
 import { CreateFriendshipDto, FriendshipTypeDto } from './dto';
+import { NotificationService } from '../notification/notification.service';
+import { MessageGateway } from '../message/message.gateway';
 
 @Injectable()
 export class FriendshipService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly notificationService: NotificationService,
+    @Inject(forwardRef(() => MessageGateway))
+    private readonly messageGateway: MessageGateway,
+  ) {}
 
   async sendRequest(requesterId: string, dto: CreateFriendshipDto) {
     if (requesterId === dto.addresseeId) {
@@ -37,7 +46,7 @@ export class FriendshipService {
       throw new ConflictException('Friendship already exists');
     }
 
-    return this.prismaService.friendship.create({
+    const friendship = await this.prismaService.friendship.create({
       data: {
         requesterId,
         addresseeId: dto.addresseeId,
@@ -52,6 +61,28 @@ export class FriendshipService {
         addressee: true,
       },
     });
+
+    if (
+      dto.type === FriendshipTypeDto.FRIEND_REQUEST &&
+      friendship.status === FriendshipStatus.PENDING
+    ) {
+      const row = await this.notificationService.create(
+        friendship.addresseeId,
+        NotificationType.FRIEND_REQUEST,
+        {
+          friendshipId: friendship.id,
+          requesterId: friendship.requesterId,
+          requesterName: friendship.requester.fullName,
+        },
+      );
+
+      await this.messageGateway.emitToUser(
+        friendship.addresseeId,
+        this.notificationService.toDto(row),
+      );
+    }
+
+    return friendship;
   }
 
   async acceptRequest(userId: string, friendshipId: string) {
@@ -71,7 +102,7 @@ export class FriendshipService {
       throw new ConflictException('Request is not pending');
     }
 
-    return this.prismaService.friendship.update({
+    const updated = await this.prismaService.friendship.update({
       where: { id: friendshipId },
       data: { status: 'ACCEPTED' },
       include: {
@@ -79,6 +110,23 @@ export class FriendshipService {
         addressee: true,
       },
     });
+
+    const row = await this.notificationService.create(
+      updated.requesterId,
+      NotificationType.FRIEND_ACCEPTED,
+      {
+        friendshipId: updated.id,
+        friendId: updated.addresseeId,
+        friendName: updated.addressee.fullName,
+      },
+    );
+
+    await this.messageGateway.emitToUser(
+      updated.requesterId,
+      this.notificationService.toDto(row),
+    );
+
+    return updated;
   }
 
   async rejectRequest(userId: string, friendshipId: string) {

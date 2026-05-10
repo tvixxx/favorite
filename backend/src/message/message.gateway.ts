@@ -1,4 +1,8 @@
 import {
+  forwardRef,
+  Inject,
+} from '@nestjs/common';
+import {
   WebSocketGateway,
   WebSocketServer,
   SubscribeMessage,
@@ -11,6 +15,9 @@ import { Server, Socket } from 'socket.io';
 import { MessageService } from './message.service';
 import { UserStatusService } from '../user-status/user-status.service';
 import { FriendshipService } from '../friendship/friendship.service';
+import { NotificationService } from '../notification/notification.service';
+import type { NotificationDto } from '../notification/notification.service';
+import { NotificationType } from '../generated/prisma/enums';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -25,8 +32,18 @@ export class MessageGateway
   constructor(
     private readonly messageService: MessageService,
     private readonly userStatusService: UserStatusService,
+    @Inject(forwardRef(() => FriendshipService))
     private readonly friendshipService: FriendshipService,
+    private readonly notificationService: NotificationService,
   ) {}
+
+  async emitToUser(userId: string, dto: NotificationDto): Promise<void> {
+    const status = await this.userStatusService.getStatus(userId);
+
+    if (status?.socketId) {
+      this.server.to(status.socketId).emit('notification:new', dto);
+    }
+  }
 
   async handleConnection(client: Socket) {
     try {
@@ -98,6 +115,22 @@ export class MessageGateway
         senderId,
         data.receiverId,
         data.content,
+      );
+
+      const created = await this.notificationService.create(
+        data.receiverId,
+        NotificationType.CHAT_MESSAGE,
+        {
+          messageId: message.id,
+          senderId,
+          senderName: message.sender.fullName,
+          preview: data.content.slice(0, 200),
+        },
+      );
+
+      await this.emitToUser(
+        data.receiverId,
+        this.notificationService.toDto(created),
       );
 
       // Отправить получателю через WebSocket

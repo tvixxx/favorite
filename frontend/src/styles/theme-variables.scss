@@ -10,6 +10,8 @@
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --ant-color-primary: #1677ff;
   --ant-color-bg-container: #ffffff;
+  /* Иконки верхнего меню (ant-menu theme="dark") — контраст к тёмной плашке */
+  --nav-accent-icon: rgba(255, 255, 255, 0.92);
 }
 
 :root[data-theme="dark"] {
@@ -23,6 +25,7 @@
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
   --ant-color-primary: #177ddc;
   --ant-color-bg-container: #141414;
+  --nav-accent-icon: rgba(255, 255, 255, 0.92);
 }
 
 :root[data-theme="emerald"] {
@@ -36,6 +39,7 @@
   --shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.2);
   --ant-color-primary: #10b981;
   --ant-color-bg-container: #f0fdf4;
+  --nav-accent-icon: #ecfdf5;
 }
 
 :root[data-theme="corporate"] {
@@ -48,6 +52,7 @@
   --border-color: #cbd5e1;
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --ant-color-primary: #1e40af;
+  --nav-accent-icon: rgba(255, 255, 255, 0.92);
 }
 
 :root[data-theme="synthwave"] {
@@ -60,6 +65,7 @@
   --border-color: #3730a3;
   --shadow: 0 0 20px rgba(236, 72, 153, 0.3);
   --ant-color-primary: #ec4899;
+  --nav-accent-icon: #fbcfe8;
 }
 
 :root[data-theme="retro"] {
@@ -72,6 +78,7 @@
   --border-color: #f59e0b;
   --shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
   --ant-color-primary: #f59e0b;
+  --nav-accent-icon: #fef08a;
 }
 
 :root[data-theme="cyberpunk"] {
@@ -84,4 +91,5 @@
   --border-color: #6366f1;
   --shadow: 0 0 15px rgba(139, 92, 246, 0.4);
   --ant-color-primary: #8b5cf6;
+  --nav-accent-icon: #e9d5ff;
 }

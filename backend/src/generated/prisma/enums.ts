@@ -63,3 +63,12 @@ export const FriendshipType = {
 } as const
 
 export type FriendshipType = (typeof FriendshipType)[keyof typeof FriendshipType]
+
+
+export const NotificationType = {
+  CHAT_MESSAGE: 'CHAT_MESSAGE',
+  FRIEND_REQUEST: 'FRIEND_REQUEST',
+  FRIEND_ACCEPTED: 'FRIEND_ACCEPTED'
+} as const
+
+export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]

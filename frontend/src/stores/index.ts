@@ -7,3 +7,4 @@ export * from "./chat";
 export * from "./userStatus";
 export * from "./leaderboard";
 export * from "./userLists";
+export * from "./notifications";

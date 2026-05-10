@@ -72,3 +72,8 @@ export type Message = Prisma.MessageModel
  * 
  */
 export type UserStatus = Prisma.UserStatusModel
+/**
+ * Model Notification
+ * 
+ */
+export type Notification = Prisma.NotificationModel

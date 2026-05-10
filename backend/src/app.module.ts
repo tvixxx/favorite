@@ -22,6 +22,7 @@ import { MessageModule } from './message/message.module';
 import { UserStatusModule } from './user-status/user-status.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { UserListModule } from './user-list/user-list.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { UserListModule } from './user-list/user-list.module';
     UserStatusModule,
     LeaderboardModule,
     UserListModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
