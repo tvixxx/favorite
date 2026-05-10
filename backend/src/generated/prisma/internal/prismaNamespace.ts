@@ -390,6 +390,8 @@ export const ModelName = {
   Review: 'Review',
   Actor: 'Actor',
   UserMovie: 'UserMovie',
+  UserList: 'UserList',
+  UserListItem: 'UserListItem',
   Friendship: 'Friendship',
   Message: 'Message',
   UserStatus: 'UserStatus'
@@ -408,7 +410,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "movie" | "moviePoster" | "review" | "actor" | "userMovie" | "friendship" | "message" | "userStatus"
+    modelProps: "user" | "movie" | "moviePoster" | "review" | "actor" | "userMovie" | "userList" | "userListItem" | "friendship" | "message" | "userStatus"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -856,6 +858,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    UserList: {
+      payload: Prisma.$UserListPayload<ExtArgs>
+      fields: Prisma.UserListFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserListFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserListFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListPayload>
+        }
+        findFirst: {
+          args: Prisma.UserListFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserListFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListPayload>
+        }
+        findMany: {
+          args: Prisma.UserListFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListPayload>[]
+        }
+        create: {
+          args: Prisma.UserListCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListPayload>
+        }
+        createMany: {
+          args: Prisma.UserListCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserListCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListPayload>[]
+        }
+        delete: {
+          args: Prisma.UserListDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListPayload>
+        }
+        update: {
+          args: Prisma.UserListUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserListDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserListUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserListUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserListUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListPayload>
+        }
+        aggregate: {
+          args: Prisma.UserListAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserList>
+        }
+        groupBy: {
+          args: Prisma.UserListGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserListGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserListCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserListCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserListItem: {
+      payload: Prisma.$UserListItemPayload<ExtArgs>
+      fields: Prisma.UserListItemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserListItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListItemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserListItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListItemPayload>
+        }
+        findFirst: {
+          args: Prisma.UserListItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListItemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserListItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListItemPayload>
+        }
+        findMany: {
+          args: Prisma.UserListItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListItemPayload>[]
+        }
+        create: {
+          args: Prisma.UserListItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListItemPayload>
+        }
+        createMany: {
+          args: Prisma.UserListItemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserListItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListItemPayload>[]
+        }
+        delete: {
+          args: Prisma.UserListItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListItemPayload>
+        }
+        update: {
+          args: Prisma.UserListItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListItemPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserListItemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserListItemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserListItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListItemPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserListItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserListItemPayload>
+        }
+        aggregate: {
+          args: Prisma.UserListItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserListItem>
+        }
+        groupBy: {
+          args: Prisma.UserListItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserListItemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserListItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserListItemCountAggregateOutputType> | number
+        }
+      }
+    }
     Friendship: {
       payload: Prisma.$FriendshipPayload<ExtArgs>
       fields: Prisma.FriendshipFieldRefs
@@ -1203,6 +1353,32 @@ export const UserMovieScalarFieldEnum = {
 export type UserMovieScalarFieldEnum = (typeof UserMovieScalarFieldEnum)[keyof typeof UserMovieScalarFieldEnum]
 
 
+export const UserListScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  nameNormalized: 'nameNormalized',
+  description: 'description',
+  labels: 'labels',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserListScalarFieldEnum = (typeof UserListScalarFieldEnum)[keyof typeof UserListScalarFieldEnum]
+
+
+export const UserListItemScalarFieldEnum = {
+  id: 'id',
+  listId: 'listId',
+  movieId: 'movieId',
+  addedAt: 'addedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserListItemScalarFieldEnum = (typeof UserListItemScalarFieldEnum)[keyof typeof UserListItemScalarFieldEnum]
+
+
 export const FriendshipScalarFieldEnum = {
   id: 'id',
   requesterId: 'requesterId',
@@ -1503,6 +1679,8 @@ export type GlobalOmitConfig = {
   review?: Prisma.ReviewOmit
   actor?: Prisma.ActorOmit
   userMovie?: Prisma.UserMovieOmit
+  userList?: Prisma.UserListOmit
+  userListItem?: Prisma.UserListItemOmit
   friendship?: Prisma.FriendshipOmit
   message?: Prisma.MessageOmit
   userStatus?: Prisma.UserStatusOmit

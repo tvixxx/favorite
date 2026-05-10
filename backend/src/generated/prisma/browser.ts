@@ -48,6 +48,16 @@ export type Actor = Prisma.ActorModel
  */
 export type UserMovie = Prisma.UserMovieModel
 /**
+ * Model UserList
+ * 
+ */
+export type UserList = Prisma.UserListModel
+/**
+ * Model UserListItem
+ * 
+ */
+export type UserListItem = Prisma.UserListItemModel
+/**
  * Model Friendship
  * 
  */

@@ -44,13 +44,42 @@ let enrichTimer: ReturnType<typeof setTimeout> | null = null;
 let searchSeq = 0;
 
 function getNativeTextarea(): HTMLTextAreaElement | null {
-  const root = textareaRef.value?.$el;
+  const vm = textareaRef.value as
+    | {
+        $el?: HTMLElement;
+        textarea?: HTMLTextAreaElement;
+        resizableTextArea?: { textArea?: HTMLTextAreaElement };
+      }
+    | null
+    | undefined;
 
-  if (!root) {
+  if (!vm) {
     return null;
   }
 
-  return root.querySelector("textarea");
+  if (vm.textarea instanceof HTMLTextAreaElement) {
+    return vm.textarea;
+  }
+
+  const fromResize = vm.resizableTextArea?.textArea;
+  if (fromResize instanceof HTMLTextAreaElement) {
+    return fromResize;
+  }
+
+  const root = vm.$el;
+  if (root instanceof HTMLElement) {
+    const found = root.querySelector("textarea");
+    if (found instanceof HTMLTextAreaElement) {
+      return found;
+    }
+
+    const active = document.activeElement;
+    if (active instanceof HTMLTextAreaElement && root.contains(active)) {
+      return active;
+    }
+  }
+
+  return null;
 }
 
 function closeMention() {
@@ -242,13 +271,13 @@ function onPaste(e: ClipboardEvent) {
     return;
   }
 
-  e.preventDefault();
-
   const ta = getNativeTextarea();
 
   if (!ta) {
     return;
   }
+
+  e.preventDefault();
 
   const start = ta.selectionStart ?? 0;
   const end = ta.selectionEnd ?? 0;

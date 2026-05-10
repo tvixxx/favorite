@@ -207,6 +207,7 @@ export type UserWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   userMovies?: Prisma.UserMovieListRelationFilter
+  lists?: Prisma.UserListListRelationFilter
   reviews?: Prisma.ReviewListRelationFilter
   friendshipsRequested?: Prisma.FriendshipListRelationFilter
   friendshipsReceived?: Prisma.FriendshipListRelationFilter
@@ -225,6 +226,7 @@ export type UserOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   userMovies?: Prisma.UserMovieOrderByRelationAggregateInput
+  lists?: Prisma.UserListOrderByRelationAggregateInput
   reviews?: Prisma.ReviewOrderByRelationAggregateInput
   friendshipsRequested?: Prisma.FriendshipOrderByRelationAggregateInput
   friendshipsReceived?: Prisma.FriendshipOrderByRelationAggregateInput
@@ -246,6 +248,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   userMovies?: Prisma.UserMovieListRelationFilter
+  lists?: Prisma.UserListListRelationFilter
   reviews?: Prisma.ReviewListRelationFilter
   friendshipsRequested?: Prisma.FriendshipListRelationFilter
   friendshipsReceived?: Prisma.FriendshipListRelationFilter
@@ -292,6 +295,7 @@ export type UserCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
   friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
@@ -310,6 +314,7 @@ export type UserUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
   friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
@@ -328,6 +333,7 @@ export type UserUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
   friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
@@ -346,6 +352,7 @@ export type UserUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
   friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
@@ -469,6 +476,20 @@ export type UserUpdateOneRequiredWithoutUserMoviesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutUserMoviesInput, Prisma.UserUpdateWithoutUserMoviesInput>, Prisma.UserUncheckedUpdateWithoutUserMoviesInput>
 }
 
+export type UserCreateNestedOneWithoutListsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutListsInput, Prisma.UserUncheckedCreateWithoutListsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutListsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutListsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutListsInput, Prisma.UserUncheckedCreateWithoutListsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutListsInput
+  upsert?: Prisma.UserUpsertWithoutListsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutListsInput, Prisma.UserUpdateWithoutListsInput>, Prisma.UserUncheckedUpdateWithoutListsInput>
+}
+
 export type UserCreateNestedOneWithoutFriendshipsRequestedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutFriendshipsRequestedInput, Prisma.UserUncheckedCreateWithoutFriendshipsRequestedInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutFriendshipsRequestedInput
@@ -549,6 +570,7 @@ export type UserCreateWithoutReviewsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
   friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -566,6 +588,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
   friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -599,6 +622,7 @@ export type UserUpdateWithoutReviewsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
   friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -616,6 +640,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
   friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -632,6 +657,7 @@ export type UserCreateWithoutUserMoviesInput = {
   tags?: $Enums.Genre | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
   friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
@@ -649,6 +675,7 @@ export type UserUncheckedCreateWithoutUserMoviesInput = {
   tags?: $Enums.Genre | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
   friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
@@ -682,6 +709,7 @@ export type UserUpdateWithoutUserMoviesInput = {
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
   friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
@@ -699,6 +727,95 @@ export type UserUncheckedUpdateWithoutUserMoviesInput = {
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
+}
+
+export type UserCreateWithoutListsInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  role?: $Enums.UserRole
+  tags?: $Enums.Genre | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutListsInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  role?: $Enums.UserRole
+  tags?: $Enums.Genre | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutListsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutListsInput, Prisma.UserUncheckedCreateWithoutListsInput>
+}
+
+export type UserUpsertWithoutListsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutListsInput, Prisma.UserUncheckedUpdateWithoutListsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutListsInput, Prisma.UserUncheckedCreateWithoutListsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutListsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutListsInput, Prisma.UserUncheckedUpdateWithoutListsInput>
+}
+
+export type UserUpdateWithoutListsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutListsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
   friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
@@ -717,6 +834,7 @@ export type UserCreateWithoutFriendshipsRequestedInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -734,6 +852,7 @@ export type UserUncheckedCreateWithoutFriendshipsRequestedInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -756,6 +875,7 @@ export type UserCreateWithoutFriendshipsReceivedInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -773,6 +893,7 @@ export type UserUncheckedCreateWithoutFriendshipsReceivedInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -806,6 +927,7 @@ export type UserUpdateWithoutFriendshipsRequestedInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -823,6 +945,7 @@ export type UserUncheckedUpdateWithoutFriendshipsRequestedInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -851,6 +974,7 @@ export type UserUpdateWithoutFriendshipsReceivedInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -868,6 +992,7 @@ export type UserUncheckedUpdateWithoutFriendshipsReceivedInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -885,6 +1010,7 @@ export type UserCreateWithoutSentMessagesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
   friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
@@ -902,6 +1028,7 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
   friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
@@ -924,6 +1051,7 @@ export type UserCreateWithoutReceivedMessagesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
   friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
@@ -941,6 +1069,7 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
   friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
@@ -974,6 +1103,7 @@ export type UserUpdateWithoutSentMessagesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
   friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
@@ -991,6 +1121,7 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
   friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
@@ -1019,6 +1150,7 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
   friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
@@ -1036,6 +1168,7 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
   friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
@@ -1053,6 +1186,7 @@ export type UserCreateWithoutStatusInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
   friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
@@ -1070,6 +1204,7 @@ export type UserUncheckedCreateWithoutStatusInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
   friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
@@ -1103,6 +1238,7 @@ export type UserUpdateWithoutStatusInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
   friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
@@ -1120,6 +1256,7 @@ export type UserUncheckedUpdateWithoutStatusInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
   friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
@@ -1134,6 +1271,7 @@ export type UserUncheckedUpdateWithoutStatusInput = {
 
 export type UserCountOutputType = {
   userMovies: number
+  lists: number
   reviews: number
   friendshipsRequested: number
   friendshipsReceived: number
@@ -1143,6 +1281,7 @@ export type UserCountOutputType = {
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   userMovies?: boolean | UserCountOutputTypeCountUserMoviesArgs
+  lists?: boolean | UserCountOutputTypeCountListsArgs
   reviews?: boolean | UserCountOutputTypeCountReviewsArgs
   friendshipsRequested?: boolean | UserCountOutputTypeCountFriendshipsRequestedArgs
   friendshipsReceived?: boolean | UserCountOutputTypeCountFriendshipsReceivedArgs
@@ -1165,6 +1304,13 @@ export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
  */
 export type UserCountOutputTypeCountUserMoviesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.UserMovieWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountListsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserListWhereInput
 }
 
 /**
@@ -1213,6 +1359,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdAt?: boolean
   updatedAt?: boolean
   userMovies?: boolean | Prisma.User$userMoviesArgs<ExtArgs>
+  lists?: boolean | Prisma.User$listsArgs<ExtArgs>
   reviews?: boolean | Prisma.User$reviewsArgs<ExtArgs>
   friendshipsRequested?: boolean | Prisma.User$friendshipsRequestedArgs<ExtArgs>
   friendshipsReceived?: boolean | Prisma.User$friendshipsReceivedArgs<ExtArgs>
@@ -1258,6 +1405,7 @@ export type UserSelectScalar = {
 export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "fullName" | "role" | "tags" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   userMovies?: boolean | Prisma.User$userMoviesArgs<ExtArgs>
+  lists?: boolean | Prisma.User$listsArgs<ExtArgs>
   reviews?: boolean | Prisma.User$reviewsArgs<ExtArgs>
   friendshipsRequested?: boolean | Prisma.User$friendshipsRequestedArgs<ExtArgs>
   friendshipsReceived?: boolean | Prisma.User$friendshipsReceivedArgs<ExtArgs>
@@ -1273,6 +1421,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "User"
   objects: {
     userMovies: Prisma.$UserMoviePayload<ExtArgs>[]
+    lists: Prisma.$UserListPayload<ExtArgs>[]
     reviews: Prisma.$ReviewPayload<ExtArgs>[]
     friendshipsRequested: Prisma.$FriendshipPayload<ExtArgs>[]
     friendshipsReceived: Prisma.$FriendshipPayload<ExtArgs>[]
@@ -1684,6 +1833,7 @@ readonly fields: UserFieldRefs;
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   userMovies<T extends Prisma.User$userMoviesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$userMoviesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserMoviePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  lists<T extends Prisma.User$listsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$listsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserListPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reviews<T extends Prisma.User$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   friendshipsRequested<T extends Prisma.User$friendshipsRequestedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$friendshipsRequestedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FriendshipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   friendshipsReceived<T extends Prisma.User$friendshipsReceivedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$friendshipsReceivedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FriendshipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2136,6 +2286,30 @@ export type User$userMoviesArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.UserMovieScalarFieldEnum | Prisma.UserMovieScalarFieldEnum[]
+}
+
+/**
+ * User.lists
+ */
+export type User$listsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserList
+   */
+  select?: Prisma.UserListSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserList
+   */
+  omit?: Prisma.UserListOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserListInclude<ExtArgs> | null
+  where?: Prisma.UserListWhereInput
+  orderBy?: Prisma.UserListOrderByWithRelationInput | Prisma.UserListOrderByWithRelationInput[]
+  cursor?: Prisma.UserListWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserListScalarFieldEnum | Prisma.UserListScalarFieldEnum[]
 }
 
 /**

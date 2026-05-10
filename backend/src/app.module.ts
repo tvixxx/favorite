@@ -21,6 +21,7 @@ import { FriendshipModule } from './friendship/friendship.module';
 import { MessageModule } from './message/message.module';
 import { UserStatusModule } from './user-status/user-status.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
+import { UserListModule } from './user-list/user-list.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
     MessageModule,
     UserStatusModule,
     LeaderboardModule,
+    UserListModule,
   ],
   controllers: [AppController],
   providers: [AppService],

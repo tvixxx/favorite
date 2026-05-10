@@ -19,6 +19,7 @@ import type {
 } from "@/state/types";
 import { DEFAULT_MAIN_STATE, MAIN_STORE_NAME } from "@/state/constants";
 import { useUserMoviesStore } from "@/stores/userMovies/userMoviesStore";
+import { useUserListsStore } from "@/stores/userLists/userListsStore";
 
 export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
   const userDataRaw = useStorage<UserData | null>(
@@ -217,6 +218,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     state.value.user.data = null;
     state.value.user.loggedIn = false;
     useUserMoviesStore().resetSession();
+    useUserListsStore().resetSession();
   }
 
   function logOut(): void {

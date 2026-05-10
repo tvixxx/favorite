@@ -41,23 +41,21 @@ const onSortOrderChange = (value: LeaderboardSortOrder) => {
 </script>
 
 <template>
-  <div class="leaderboard-filters-bar">
-    <div class="leaderboard-filters-bar__field">
-      <span class="leaderboard-filters-bar__label">Сортировка</span>
+  <div class="filters-panel filters-shared leaderboard-filters-bar">
+    <div class="filters-panel__main">
       <a-select
         :value="props.sortBy"
         :options="sortByOptions"
-        class="leaderboard-filters-bar__select"
+        placeholder="Сортировка"
+        class="leaderboard-filters-bar__sort leaderboard-filters-bar__sort--wide"
         size="large"
         @update:value="onSortByChange"
       />
-    </div>
-    <div class="leaderboard-filters-bar__field">
-      <span class="leaderboard-filters-bar__label">Порядок</span>
       <a-select
         :value="props.sortOrder"
         :options="sortOrderOptions"
-        class="leaderboard-filters-bar__select leaderboard-filters-bar__select--narrow"
+        placeholder="Порядок"
+        class="leaderboard-filters-bar__sort leaderboard-filters-bar__sort--narrow"
         size="large"
         @update:value="onSortOrderChange"
       />
@@ -68,46 +66,46 @@ const onSortOrderChange = (value: LeaderboardSortOrder) => {
 <style lang="scss" scoped>
 @use "@/styles/media" as *;
 
-.leaderboard-filters-bar {
-  margin-top: 2rem;
-  margin-bottom: 2rem;
+.filters-panel {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem 1.5rem;
-  width: 100%;
-  max-width: var(--page-max-width);
-  justify-content: center;
-  align-items: flex-end;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  margin-bottom: 0;
 
-  &__field {
+  &__main {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    min-width: min(100%, 320px);
-  }
+    gap: 8px;
 
-  &__label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-  }
-
-  &__select {
-    width: min(100%, 420px);
-
-    &--narrow {
-      width: min(100%, 200px);
+    @include mediaTablet {
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
     }
   }
+}
 
-  @include mediaMax(480px) {
-    flex-direction: column;
-    align-items: stretch;
-    margin-top: 1.5rem;
+.leaderboard-filters-bar {
+  width: 100%;
+  max-width: var(--page-max-width, 1200px);
 
-    &__select,
-    &__select--narrow {
-      width: 100%;
+  &__sort {
+    width: 100%;
+
+    @include mediaTablet {
+      &--wide {
+        flex: 1 1 280px;
+        max-width: min(100%, 520px);
+        min-width: 220px;
+      }
+
+      &--narrow {
+        flex: 0 0 auto;
+        width: 200px;
+        min-width: 180px;
+      }
     }
   }
 }

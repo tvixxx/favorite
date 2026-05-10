@@ -26,6 +26,7 @@ model User {
   updatedAt DateTime    @updatedAt @map("updated_at")
 
   userMovies           UserMovie[]  @relation("user_movies")
+  lists                UserList[]   @relation("user_lists")
   reviews              Review[]     @relation("user_reviews")
   friendshipsRequested Friendship[] @relation("friendship_requester")
   friendshipsReceived  Friendship[] @relation("friendship_addressee")
@@ -55,6 +56,7 @@ model Movie {
   reviews    Review[]     @relation("movie_reviews")
   actors     Actor[]      @relation("movie_actors")
   userMovies UserMovie[]  @relation("movie_users")
+  listItems  UserListItem[] @relation("movie_list_items")
 
   @@index([publishDate, title])
   @@index([titleNormalized])
@@ -123,6 +125,41 @@ model UserMovie {
   @@index([isFavorite])
   @@index([seeLater])
   @@map("user_movies")
+}
+
+model UserList {
+  id             String         @id @default(uuid())
+  userId         String         @map("user_id")
+  name           String
+  nameNormalized String         @map("name_normalized")
+  description    String?
+  labels         String[]       @default([])
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  user  User           @relation("user_lists", fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  items UserListItem[] @relation("list_items")
+
+  @@unique([userId, nameNormalized])
+  @@index([userId])
+  @@map("user_lists")
+}
+
+model UserListItem {
+  id        String   @id @default(uuid())
+  listId    String   @map("list_id")
+  movieId   String   @map("movie_id")
+  addedAt   DateTime @default(now()) @map("added_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  list  UserList @relation("list_items", fields: [listId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  movie Movie    @relation("movie_list_items", fields: [movieId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([listId, movieId])
+  @@index([listId])
+  @@index([movieId])
+  @@map("user_list_items")
 }
 
 enum WatchStatus {
