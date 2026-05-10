@@ -47,9 +47,11 @@ async function onSearch(query: string) {
 </script>
 
 <template>
-  <MoviesFiltersShared
-    :search-handler="onSearch"
-    @update:movies-filters="onMoviesFilters"
-    @cleared="onCleared"
-  />
+  <div data-tour="catalog-filters">
+    <MoviesFiltersShared
+      :search-handler="onSearch"
+      @update:movies-filters="onMoviesFilters"
+      @cleared="onCleared"
+    />
+  </div>
 </template>

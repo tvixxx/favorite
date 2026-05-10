@@ -162,7 +162,12 @@ onMounted(async () => {
       />
       <div class="friends-page__header-main">
         <h1 class="friends-page__title">Друзья и подписки</h1>
-        <Button type="primary" size="large" @click="openAddModal">
+        <Button
+          type="primary"
+          size="large"
+          data-tour="friends-add-btn"
+          @click="openAddModal"
+        >
           <UserAddOutlined />
           Добавить
         </Button>
@@ -228,7 +233,26 @@ onMounted(async () => {
           </template>
         </List>
 
-        <Empty v-else description="Нет друзей" />
+        <div v-else class="friends-page__empty-block">
+          <Empty>
+            <template #description>
+              <span class="friends-page__empty-text">
+                Пока никого нет в списке друзей. Добавьте человека по email —
+                сможете переписываться в чате и делиться контекстом коллекции.
+              </span>
+            </template>
+          </Empty>
+
+          <Button
+            type="primary"
+            size="large"
+            class="friends-page__empty-cta"
+            @click="openAddModal"
+          >
+            <UserAddOutlined />
+            Добавить по email
+          </Button>
+        </div>
       </TabPane>
 
       <TabPane key="requests" :tab="`Запросы (${friendsStore.pendingRequestsCount})`">
@@ -419,6 +443,27 @@ onMounted(async () => {
     border-radius: 16px;
     padding: 1.5rem;
     border: 1px solid var(--border-color);
+  }
+
+  &__empty-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 2rem 1rem;
+    text-align: center;
+  }
+
+  &__empty-text {
+    display: block;
+    max-width: 28rem;
+    margin: 0 auto;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+
+  &__empty-cta {
+    align-self: center;
   }
 }
 

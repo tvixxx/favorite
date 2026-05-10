@@ -470,12 +470,24 @@ onBeforeUnmount(() => {
     />
 
     <div v-else-if="!hasLists" class="my-lists-page__empty">
-      <a-empty description="Пока нет пользовательских списков">
+      <a-empty>
         <template #description>
-          Создайте первый список из карточки фильма или сериала через кнопку
-          «В список».
+          <div class="my-lists-page__empty-desc">
+            Создайте первый список из карточки фильма или сериала через кнопку
+            «В список», либо выберите тайтл в каталоге и добавьте его в коллекцию.
+          </div>
         </template>
       </a-empty>
+
+      <div class="my-lists-page__empty-actions">
+        <a-button type="primary" @click="router.push('/library/catalog')">
+          Открыть каталог
+        </a-button>
+
+        <a-button @click="router.push('/library/collection')">
+          Моя коллекция
+        </a-button>
+      </div>
     </div>
 
     <div v-else class="my-lists-page__layout">
@@ -784,6 +796,24 @@ onBeforeUnmount(() => {
     padding: 1.5rem;
     background: var(--bg-primary);
     border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  &__empty-desc {
+    max-width: 28rem;
+    margin: 0 auto;
+    line-height: 1.55;
+  }
+
+  &__empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 1.25rem;
   }
 
   &__layout {

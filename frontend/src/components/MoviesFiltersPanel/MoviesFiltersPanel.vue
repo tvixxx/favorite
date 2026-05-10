@@ -65,14 +65,15 @@ watch([rateRange, seeLater], emitFilters, { deep: true });
 </script>
 
 <template>
-  <MoviesFiltersShared
-    :search-handler="searchHandler"
-    :extra-advanced-active="extraAdvancedActive"
-    :extra-filters-active="extraFiltersActive"
-    @update:movies-filters="onMoviesFilters"
-    @update:search-query="onSearchQuery"
-    @cleared="onSharedCleared"
-  >
+  <div class="movies-filters-panel" data-tour="collection-filters">
+    <MoviesFiltersShared
+      :search-handler="searchHandler"
+      :extra-advanced-active="extraAdvancedActive"
+      :extra-filters-active="extraFiltersActive"
+      @update:movies-filters="onMoviesFilters"
+      @update:search-query="onSearchQuery"
+      @cleared="onSharedCleared"
+    >
     <template #after-country>
       <div class="filters-panel__see-later">
         <a-switch v-model:checked="seeLater" size="small" />
@@ -82,7 +83,8 @@ watch([rateRange, seeLater], emitFilters, { deep: true });
     <template #advanced-extra>
       <RateFilter v-model="rateRange" />
     </template>
-  </MoviesFiltersShared>
+    </MoviesFiltersShared>
+  </div>
 </template>
 
 <style lang="scss" scoped>

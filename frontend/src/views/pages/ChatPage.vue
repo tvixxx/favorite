@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useChatStore, useUserStatusStore } from "@/stores";
 import { useMainStore } from "@/state/state";
 import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
@@ -10,6 +10,7 @@ import ChatMessageInput from "@/components/ChatMessageInput/ChatMessageInput.vue
 import ChatMessageContent from "@/components/ChatMessageContent/ChatMessageContent.vue";
 
 const route = useRoute();
+const router = useRouter();
 const chatStore = useChatStore();
 const userStatusStore = useUserStatusStore();
 const mainStore = useMainStore();
@@ -64,6 +65,10 @@ const sendMessage = (wireFromEnter?: string) => {
   chatStore.sendMessage(chatStore.currentChatUserId, content);
   messageInput.value = "";
   scrollToBottom();
+};
+
+const goToFriends = () => {
+  router.push("/friends");
 };
 
 const formatTime = (dateString: string) => {
@@ -205,7 +210,15 @@ onMounted(async () => {
         </template>
       </List>
 
-      <Empty v-else description="Нет диалогов" />
+      <div v-else class="chat-page__sidebar-empty">
+        <Empty description="Нет диалогов" />
+
+        <p class="chat-page__sidebar-empty-hint">
+          Добавьте пользователя по email в разделе «Друзья», чтобы начать переписку.
+        </p>
+
+        <Button type="primary" @click="goToFriends">К друзьям</Button>
+      </div>
     </div>
 
     <div class="chat-page__main">
@@ -356,6 +369,23 @@ onMounted(async () => {
     justify-content: center;
     padding: 2rem;
     gap: 1rem;
+  }
+
+  &__sidebar-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 1.25rem;
+    text-align: center;
+  }
+
+  &__sidebar-empty-hint {
+    margin: 0;
+    max-width: 18rem;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--text-secondary);
   }
 
   &__main {

@@ -2,12 +2,12 @@
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 
 interface Props {
-  btnHandler: () => void;
+  btnHandler?: () => void;
   heroIcon?: string;
   description?: string;
   btnSize?: "small" | "medium" | "large";
   btnType?: string;
-  btnText: string;
+  btnText?: string;
   btnIcon?: string;
 }
 
@@ -26,7 +26,7 @@ const {
     </div>
     <a-empty :description="description"></a-empty>
     <a-button
-      v-if="btnText"
+      v-if="btnText && btnHandler"
       class="list-empty__btn"
       :type="btnType"
       :size="btnSize"
