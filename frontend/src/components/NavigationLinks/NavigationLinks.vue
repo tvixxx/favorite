@@ -159,8 +159,13 @@ const handleMarkAllRead = async () => {
         Добавить
       </a-menu-item>
 
-      <a-menu-item key="library" @click="router.push('/library/collection')">
-        Медиатека
+      <a-menu-item
+        key="library"
+        @click="router.push('/library/collection')"
+      >
+        <span class="navigation__tour-anchor" data-tour="nav-library">
+          Медиатека
+        </span>
       </a-menu-item>
 
       <a-menu-item key="favorites" @click="router.push('/favorites')">
@@ -179,6 +184,7 @@ const handleMarkAllRead = async () => {
         >
           <span
             class="navigation__bell-wrap"
+            data-tour="nav-notifications"
             role="button"
             tabindex="0"
             aria-label="Уведомления"
@@ -280,6 +286,11 @@ const handleMarkAllRead = async () => {
 
   &__sign-out {
     margin-left: 0 !important;
+  }
+
+  &__tour-anchor {
+    display: inline-block;
+    vertical-align: middle;
   }
 
   &__bell-wrap {

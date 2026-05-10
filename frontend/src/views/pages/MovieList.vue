@@ -70,6 +70,26 @@ const emptyMoviesDescription = computed(() => {
   return "Фильмов пока нет...";
 });
 
+const clearCollectionFilters = async () => {
+  userMoviesStore.clearSearch();
+  userMoviesStore.setFilters({});
+  userMoviesStore.setCurrentPage(1);
+
+  if (!userId.value) {
+    return;
+  }
+
+  await userMoviesStore.fetchUserMovies(userId.value);
+};
+
+const goToCatalog = () => {
+  router.push("/library/catalog");
+};
+
+const goToCreate = () => {
+  router.push("/create");
+};
+
 const getPosterSrc = (item: UserMovie) => {
   return imageErrors.value.has(item.movieId)
     ? FALLBACK_IMAGE_URL
@@ -450,6 +470,26 @@ watch(
 
       <div v-else-if="!totalMovies" class="movie-list__empty-state">
         <a-empty :description="emptyMoviesDescription" />
+
+        <div class="movie-list__empty-actions">
+          <template v-if="userMoviesStore.hasActiveFilters">
+            <a-button type="primary" @click="clearCollectionFilters">
+              Сбросить фильтры и поиск
+            </a-button>
+          </template>
+
+          <template v-else>
+            <a-button type="primary" @click="goToCatalog">
+              Открыть каталог
+            </a-button>
+
+            <a-button @click="goToCreate">Добавить фильм вручную</a-button>
+          </template>
+        </div>
+
+        <p v-if="!userMoviesStore.hasActiveFilters" class="movie-list__empty-hint">
+          Подсказка: справа снизу есть быстрое добавление тайтла из каталога.
+        </p>
       </div>
 
       <div v-else class="movie-list__grid">
@@ -555,7 +595,7 @@ watch(
       </div>
     </div>
 
-    <div ref="quickAddFabRoot" class="quick-add-fab">
+    <div ref="quickAddFabRoot" class="quick-add-fab" data-tour="tour-quick-add">
       <Transition name="quick-add-fab-panel">
         <div
           v-if="isQuickAddPanelOpen"
@@ -649,6 +689,22 @@ watch(
     width: 100%;
 
     @include antEmptyTypography;
+  }
+
+  &__empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 1.25rem;
+  }
+
+  &__empty-hint {
+    margin: 1rem 0 0;
+    max-width: 26rem;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    opacity: 0.9;
   }
 }
 

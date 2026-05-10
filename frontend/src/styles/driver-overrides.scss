@@ -1,0 +1,24 @@
+.driver-active {
+  .ant-layout-header {
+    overflow: visible !important;
+  }
+
+  .navigation .ant-menu.ant-menu-horizontal,
+  .navigation .ant-menu-overflow {
+    overflow: visible !important;
+  }
+
+  /*
+   * driver.css: :not(body):has(> .driver-active-element) { overflow: hidden !important }
+   * Значит прямой родитель подсветки (часто li.ant-menu-item) режет «дырку» в маске.
+   */
+  .navigation :has(> .driver-active-element) {
+    overflow: visible !important;
+  }
+}
+
+.navigation .driver-active-element[data-tour="nav-library"],
+.navigation .driver-active-element[data-tour="nav-notifications"] {
+  position: relative;
+  z-index: 3;
+}

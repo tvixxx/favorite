@@ -127,6 +127,24 @@ onBeforeUnmount(() => {
 });
 
 const repeatFetch = () => moviesStore.fetchMovies();
+
+async function resetCatalogFilters(): Promise<void> {
+  moviesStore.clearSearch();
+
+  if (props.actorId) {
+    moviesStore.setFilters({ actorIds: [props.actorId] });
+  } else {
+    moviesStore.setFilters({});
+  }
+
+  moviesStore.setCurrentPage(1);
+
+  try {
+    await moviesStore.fetchMovies();
+  } catch {
+    message.error(ERROR_FETCH_MOVIES_TEXT);
+  }
+}
 </script>
 
 <template>
@@ -159,6 +177,15 @@ const repeatFetch = () => moviesStore.fetchMovies();
 
       <div v-else-if="!hasMovies" class="catalog-page__empty-state">
         <a-empty :description="emptyDescription" />
+
+        <div
+          v-if="moviesStore.hasActiveFilters"
+          class="catalog-page__empty-actions"
+        >
+          <a-button type="primary" @click="resetCatalogFilters">
+            Сбросить фильтры и поиск
+          </a-button>
+        </div>
       </div>
 
       <div v-else class="catalog-page__grid">
@@ -295,6 +322,14 @@ const repeatFetch = () => moviesStore.fetchMovies();
     width: 100%;
 
     @include antEmptyTypography;
+  }
+
+  &__empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 1.25rem;
   }
 }
 

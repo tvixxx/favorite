@@ -19,6 +19,7 @@
     "ant-design-vue": "^4.2.6",
     "axios": "^1.11.0",
     "dayjs": "^1.11.19",
+    "driver.js": "^1.4.0",
     "pinia": "^3.0.1",
     "socket.io-client": "^4.8.3",
     "vue": "^3.5.13",
