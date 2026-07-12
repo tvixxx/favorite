@@ -121,14 +121,17 @@ onMounted(() => {
             <div v-if="row.badges.length" class="leaderboard-card__badges">
               <span class="leaderboard-card__badges-title">Бейджи</span>
               <div class="leaderboard-card__badges-list">
-                <a-tooltip
-                  v-for="b in row.badges"
-                  :key="b.id"
-                  :title="b.title"
-                >
-                  <a-tag :color="tierTagColor(b.tier)" class="leaderboard-card__badge">
-                    <span class="leaderboard-card__badge-icon">{{ b.icon }}</span>
-                    <span class="leaderboard-card__badge-text">{{ b.title }}</span>
+                <a-tooltip v-for="b in row.badges" :key="b.id" :title="b.title">
+                  <a-tag
+                    :color="tierTagColor(b.tier)"
+                    class="leaderboard-card__badge"
+                  >
+                    <span class="leaderboard-card__badge-icon">{{
+                      b.icon
+                    }}</span>
+                    <span class="leaderboard-card__badge-text">{{
+                      b.title
+                    }}</span>
                   </a-tag>
                 </a-tooltip>
               </div>
@@ -136,7 +139,10 @@ onMounted(() => {
           </a-card>
         </div>
 
-        <div v-if="total > leaderboardStore.pageSize" class="leaderboard-page__pagination">
+        <div
+          v-if="total > leaderboardStore.pageSize"
+          class="leaderboard-page__pagination"
+        >
           <a-pagination
             :current="currentPage"
             :page-size="leaderboardStore.pageSize"
@@ -181,6 +187,7 @@ onMounted(() => {
     width: 100%;
     max-width: var(--grid-max-width);
     gap: 1.5rem;
+    margin-top: 2rem;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
     margin-bottom: 2rem;
   }
@@ -197,9 +204,7 @@ onMounted(() => {
   background: var(--bg-primary) !important;
   box-shadow: var(--shadow-card);
   border: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent) !important;
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 
   &:hover {
     transform: translateY(-4px);
@@ -207,16 +212,29 @@ onMounted(() => {
   }
 
   &--gold {
-    border-color: color-mix(in srgb, #eab308 55%, var(--border-color)) !important;
-    box-shadow: var(--shadow-card), 0 0 0 1px color-mix(in srgb, #eab308 25%, transparent);
+    border-color: color-mix(
+      in srgb,
+      #eab308 55%,
+      var(--border-color)
+    ) !important;
+    box-shadow: var(--shadow-card),
+      0 0 0 1px color-mix(in srgb, #eab308 25%, transparent);
   }
 
   &--silver {
-    border-color: color-mix(in srgb, #94a3b8 55%, var(--border-color)) !important;
+    border-color: color-mix(
+      in srgb,
+      #94a3b8 55%,
+      var(--border-color)
+    ) !important;
   }
 
   &--bronze {
-    border-color: color-mix(in srgb, #d97706 45%, var(--border-color)) !important;
+    border-color: color-mix(
+      in srgb,
+      #d97706 45%,
+      var(--border-color)
+    ) !important;
   }
 
   :deep(.ant-card-body) {
