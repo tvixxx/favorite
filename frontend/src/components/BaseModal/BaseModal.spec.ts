@@ -4,7 +4,7 @@ import Modal from "./BaseModal.vue";
 import { nextTick } from "vue";
 
 describe("BaseModal", () => {
-  let wrapper: any;
+  let wrapper: ReturnType<typeof mount>;
 
   beforeEach(() => {
     document.body.innerHTML = "";

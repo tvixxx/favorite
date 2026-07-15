@@ -63,8 +63,8 @@ const changeView = (): void => {
     :deep(.ant-btn-primary) {
       background: linear-gradient(
         135deg,
-        var(--ant-color-primary),
-        color-mix(in srgb, var(--ant-color-primary), #000 15%)
+        var(--fv-color-brand),
+        color-mix(in srgb, var(--fv-color-brand), #000 15%)
       );
       border: none;
       box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
@@ -76,7 +76,7 @@ const changeView = (): void => {
     }
 
     :deep(.ant-btn-default:hover) {
-      border-color: var(--ant-color-primary);
+      border-color: var(--fv-color-accent);
     }
   }
 

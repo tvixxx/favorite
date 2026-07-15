@@ -8,14 +8,17 @@ import { type UserMovie, useUserMoviesStore, WatchStatus } from "@/stores";
 import type { MovieApiResponse } from "@/stores/movies/types";
 import { useMainStore } from "@/state/state";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
-import ListError from "@/components/List/ListError/ListError.vue";
-import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
-import { formatDate, formatYear } from "@/utils";
+import PosterGridSkeleton from "@/components/Skeleton/PosterGridSkeleton.vue";
+import { useMinLoading } from "@/components/Skeleton/useMinLoading";
+import StateBlock, {
+  type StateAction,
+} from "@/components/StateBlock/StateBlock.vue";
+import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
+import { formatYear, movieCardMeta, movieCardTitle } from "@/utils";
 import { ERROR_FETCH_MOVIES_TEXT } from "@/state/constants";
 import type { UserMoviesFilters } from "@/stores";
-import { countriesLabelsRu } from "@/constants/countries/production-countries";
-import MovieShareButton from "@/components/MovieShareButton/MovieShareButton.vue";
-import MoviesFiltersPanel from "@/components/MoviesFiltersPanel/MoviesFiltersPanel.vue";
+import MovieCard from "@/components/MovieCard/MovieCard.vue";
+import CollectionFiltersBar from "@/components/MoviesFiltersPanel/CollectionFiltersBar.vue";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
 
@@ -48,6 +51,8 @@ const totalMovies = computed(() => userMoviesStore.currentList.length);
 const userMovieIds = computed(() => {
   return new Set(userMoviesStore.userMovies.map((item) => item.movieId));
 });
+const showSkeleton = useMinLoading(() => userMoviesStore.isLoading);
+
 const shouldFetchMovies = computed(
   () => !hasMovies.value && mainStore.isLoggedIn && userId.value
 );
@@ -59,15 +64,41 @@ const showPaginator = computed(
     !userMoviesStore.isLoading
 );
 
-const emptyMoviesDescription = computed(() => {
-  if (
-    userMoviesStore.hasActiveFilters &&
-    userMoviesStore.currentList.length === 0
-  ) {
-    return "Фильмы не найдены";
+const collectionEmptyState = computed(() => {
+  if (userMoviesStore.hasActiveFilters) {
+    return {
+      variant: "empty" as const,
+      icon: "ph:magnifying-glass",
+      title: "Ничего не найдено",
+      description: "Измените фильтры или сбросьте их, чтобы увидеть коллекцию.",
+      actions: [
+        {
+          label: "Сбросить фильтры",
+          icon: "ph:arrow-counter-clockwise",
+          kind: "secondary",
+          onClick: () => void clearCollectionFilters(),
+        },
+      ] as StateAction[],
+    };
   }
 
-  return "Фильмов пока нет...";
+  return {
+    ...STATE_PRESETS.collectionEmpty,
+    actions: [
+      {
+        label: "Добавить фильм",
+        icon: "ph:plus",
+        kind: "primary",
+        onClick: goToCreate,
+      },
+      {
+        label: "Открыть каталог",
+        icon: "ph:squares-four",
+        kind: "secondary",
+        onClick: goToCatalog,
+      },
+    ] as StateAction[],
+  };
 });
 
 const clearCollectionFilters = async () => {
@@ -100,6 +131,22 @@ const handleImageError = (movieId: string) => {
   imageErrors.value.add(movieId);
 };
 
+// Прогресс просмотра для полосы на постере (сериал — по сериям, фильм — завершён/нет)
+const watchProgressPercent = (item: UserMovie): number => {
+  const { movie } = item;
+
+  if (movie.isSerial && movie.episodeCount && item.currentEpisode) {
+    return Math.min(
+      100,
+      Math.round((item.currentEpisode / movie.episodeCount) * 100),
+    );
+  }
+
+  return item.completedAt || item.watchStatus === WatchStatus.COMPLETED
+    ? 100
+    : 0;
+};
+
 const removeMovie = async (item: UserMovie) => {
   try {
     await userMoviesStore.removeUserMovie(userId.value, item.movieId);
@@ -128,28 +175,6 @@ const removeFromFavorite = async (item: UserMovie) => {
     message.success(`${item.movie.title} удален из избранного`);
   } catch {
     message.error(`Не удалось удалить из избранного: ${item.movie.title}`);
-  }
-};
-
-const toggleSeeLater = async (item: UserMovie) => {
-  const newValue = !item.seeLater;
-
-  try {
-    await userMoviesStore.updateUserMovie(userId.value, item.movieId, {
-      seeLater: newValue,
-    });
-
-    if (userMoviesStore.filters.seeLater && !newValue) {
-      userMoviesStore.removeFromSearchResults(item.movieId);
-    }
-
-    message.success(
-      newValue
-        ? `${item.movie.title} добавлен в «Смотреть позже»`
-        : `${item.movie.title} убран из «Смотреть позже»`
-    );
-  } catch {
-    message.error("Не удалось обновить статус");
   }
 };
 
@@ -424,6 +449,12 @@ onBeforeUnmount(() => {
     clearTimeout(quickAddDebounceTimer);
     quickAddDebounceTimer = null;
   }
+
+  // Сбрасываем общий стор-стейт поиска/фильтров, иначе он «протекает» на другие
+  // страницы (напр. в Избранное) и показывает 0 результатов при возврате.
+  userMoviesStore.clearSearch();
+  userMoviesStore.setFilters({});
+  userMoviesStore.setCurrentPage(1);
 });
 
 const repeatFetchMovies = () => {
@@ -450,133 +481,45 @@ watch(
 <template>
   <div class="movie-list">
     <div class="movie-list__content">
-      <MoviesFiltersPanel
+      <CollectionFiltersBar
         :search-handler="findMovie"
         @update:filters="handleFiltersUpdate"
       />
-      <ListError
+      <StateBlock
         v-if="userMoviesStore.isError"
-        :is-error="userMoviesStore.isError"
-        :repeat-fn="repeatFetchMovies"
-        repeat-text="Повторить"
+        v-bind="STATE_PRESETS.collectionError"
+        :actions="[
+          {
+            label: 'Повторить',
+            icon: 'ph:arrow-clockwise',
+            kind: 'primary',
+            onClick: repeatFetchMovies,
+          },
+        ]"
       />
 
-      <ListLoading
-        v-else-if="userMoviesStore.isLoading"
-        :center="true"
-        loading-text="Загружаем фильмы..."
-        size="large"
-      />
+      <PosterGridSkeleton v-else-if="showSkeleton" :count="12" />
 
-      <div v-else-if="!totalMovies" class="movie-list__empty-state">
-        <a-empty :description="emptyMoviesDescription" />
-
-        <div class="movie-list__empty-actions">
-          <template v-if="userMoviesStore.hasActiveFilters">
-            <a-button type="primary" @click="clearCollectionFilters">
-              Сбросить фильтры и поиск
-            </a-button>
-          </template>
-
-          <template v-else>
-            <a-button type="primary" @click="goToCatalog">
-              Открыть каталог
-            </a-button>
-
-            <a-button @click="goToCreate">Добавить фильм вручную</a-button>
-          </template>
-        </div>
-
-        <p v-if="!userMoviesStore.hasActiveFilters" class="movie-list__empty-hint">
-          Подсказка: справа снизу есть быстрое добавление тайтла из каталога.
-        </p>
-      </div>
+      <StateBlock v-else-if="!totalMovies" v-bind="collectionEmptyState" />
 
       <div v-else class="movie-list__grid">
-        <div
+        <MovieCard
           v-for="item in userMoviesStore.paginatedUserMovies"
           :key="item.id"
-          class="movie-card"
-          @click="goToMovie(item)"
-        >
-          <div class="movie-card__header">
-            <img
-              :alt="`${item.movie.title} постер`"
-              :src="getPosterSrc(item)"
-              class="movie-card__poster"
-              loading="lazy"
-              @error="handleImageError(item.movieId)"
-            />
-            <div class="movie-card__favorite">
-              <BaseIcon
-                :height="22"
-                :name="item.isFavorite ? 'mdi:heart' : 'mdi:heart-outline'"
-                :width="22"
-                @click.stop="
-                  () =>
-                    item.isFavorite
-                      ? removeFromFavorite(item)
-                      : addToFavorite(item)
-                "
-              />
-            </div>
-          </div>
-
-          <div class="movie-card__content">
-            <div class="movie-card__rating">{{ item.personalRate || 0 }}/10</div>
-
-            <button
-              class="movie-card__delete"
-              @click.stop="() => removeMovie(item)"
-            >
-              <BaseIcon :height="18" :width="18" name="pajamas:remove" />
-            </button>
-
-            <h3 class="movie-card__title">
-              {{ item.movie.title }} <span v-if="item.movie.isSerial">(сериал)</span>
-            </h3>
-
-            <div class="movie-card__meta">
-              <div class="movie-card__meta-item">
-                <BaseIcon class="movie-card__meta-icon" name="mdi:eye" />
-                <span class="movie-card__meta-item-text">
-                  Дата добавления: {{ formatDate(item.addedAt) }}
-                </span>
-              </div>
-              <div class="movie-card__meta-item">
-                <BaseIcon class="movie-card__meta-icon" name="mdi:filmstrip" />
-                <span class="movie-card__meta-item-text"
-                  >Дата выхода: {{ formatYear(item.movie.publishDate) }}</span
-                >
-              </div>
-              <div
-                v-if="item.movie.countryCodes?.length"
-                class="movie-card__meta-item"
-              >
-                <BaseIcon class="movie-card__meta-icon" name="mdi:earth" />
-                <span class="movie-card__meta-item-text">{{
-                  countriesLabelsRu(item.movie.countryCodes)
-                }}</span>
-              </div>
-            </div>
-
-            <div class="movie-card__see-later" @click.stop>
-              <a-switch
-                :checked="item.seeLater"
-                size="small"
-                @change="() => toggleSeeLater(item)"
-              />
-              <span class="movie-card__see-later-label">Смотреть позже</span>
-            </div>
-
-            <div class="movie-card__share" @click.stop>
-              <MovieShareButton
-                :movie-id="item.movieId"
-                :movie-title="item.movie.title"
-              />
-            </div>
-          </div>
-        </div>
+          :poster-src="getPosterSrc(item)"
+          :title="movieCardTitle(item.movie)"
+          :meta="movieCardMeta(item.movie)"
+          :rate="item.personalRate || 0"
+          :progress-percent="watchProgressPercent(item)"
+          :favorite="item.isFavorite"
+          deletable
+          @open="goToMovie(item)"
+          @toggle-favorite="
+            item.isFavorite ? removeFromFavorite(item) : addToFavorite(item)
+          "
+          @delete="removeMovie(item)"
+          @poster-error="handleImageError(item.movieId)"
+        />
       </div>
 
       <div
@@ -627,7 +570,7 @@ watch(
               placeholder="Например: Рекрут, Интерстеллар, Dark..."
             >
               <template #prefix>
-                <BaseIcon name="mdi:magnify" :width="16" :height="16" />
+                <BaseIcon name="ph:magnifying-glass" :width="16" :height="16" />
               </template>
             </a-input>
           </a-auto-complete>
@@ -641,7 +584,7 @@ watch(
         @click.stop="toggleQuickAddPanel"
       >
         <BaseIcon
-          :name="isQuickAddPanelOpen ? 'mdi:close' : 'mdi:plus'"
+          :name="isQuickAddPanelOpen ? 'ph:x' : 'ph:plus'"
           :width="22"
           :height="22"
         />
@@ -685,7 +628,7 @@ watch(
     align-items: center;
     justify-content: center;
     text-align: center;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
     width: 100%;
 
     @include antEmptyTypography;
@@ -723,9 +666,9 @@ watch(
     gap: 0.6rem;
     padding: 0.9rem;
     border-radius: 16px;
-    border: 1px solid var(--border-color);
-    background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
-    box-shadow: var(--shadow-elevated);
+    border: 1px solid var(--fv-color-border);
+    background: color-mix(in srgb, var(--fv-color-bg-primary) 92%, transparent);
+    box-shadow: var(--fv-shadow-elevated);
     backdrop-filter: blur(8px);
 
     :deep(.ant-select) {
@@ -741,21 +684,21 @@ watch(
   &__panel-title {
     margin: 0;
     font-size: 0.92rem;
-    font-weight: 700;
-    color: var(--text-primary);
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
   }
 
   &__panel-hint {
     font-size: 0.78rem;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__button {
-    border: 1px solid color-mix(in srgb, var(--ant-color-primary) 35%, transparent);
+    border: 1px solid color-mix(in srgb, var(--fv-color-brand) 35%, transparent);
     background: linear-gradient(
       135deg,
-      var(--ant-color-primary),
-      color-mix(in srgb, var(--ant-color-primary) 85%, #6a8dff)
+      var(--fv-color-brand),
+      color-mix(in srgb, var(--fv-color-brand), #000 12%)
     );
     color: #fff;
     border-radius: 999px;
@@ -765,29 +708,30 @@ watch(
     align-items: center;
     gap: 0.42rem;
     cursor: pointer;
-    box-shadow: var(--shadow-primary-md);
+    box-shadow: var(--fv-shadow-brand-md);
     transition:
       transform 0.2s ease,
       box-shadow 0.2s ease;
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 28px color-mix(in srgb, var(--ant-color-primary) 40%, transparent);
+      box-shadow: 0 12px 28px color-mix(in srgb, var(--fv-color-brand) 40%, transparent);
     }
 
     &_active {
-      background: color-mix(in srgb, var(--ant-color-primary) 92%, #1f3b87);
+      background: color-mix(in srgb, var(--fv-color-brand) 92%, #1f3b87);
     }
   }
 
   &__button-text {
     font-size: 0.86rem;
-    font-weight: 700;
+    font-weight: 500;
   }
 
-  @include mediaMax(767px) {
+  @include mediaMax(768px) {
     right: 0.85rem;
-    bottom: 0.95rem;
+    // поднимаем над мобильным таб-баром (64px + safe-area)
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 0.85rem);
 
     &__button {
       padding: 0.55rem 0.8rem;
@@ -810,209 +754,4 @@ watch(
   transform: translateY(8px) scale(0.98);
 }
 
-.movie-card {
-  @include clickableCard(var(--radius-md));
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(
-      90deg,
-      var(--ant-color-primary),
-      color-mix(in srgb, var(--ant-color-primary) 50%, var(--bg-secondary))
-    );
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: 1;
-  }
-
-  &:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.2);
-    border-color: color-mix(in srgb, var(--ant-color-primary) 40%, transparent);
-
-    &::before {
-      opacity: 1;
-    }
-
-    .movie-card__poster {
-      transform: scale(1.05);
-    }
-  }
-
-  &__header {
-    position: relative;
-    aspect-ratio: 16 / 10;
-    overflow: hidden;
-    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
-  }
-
-  &__poster {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center top;
-    transition: transform 0.4s ease;
-  }
-
-  &__favorite {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 36px;
-    height: 36px;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 2;
-    transition: all 0.2s ease;
-
-    &:hover {
-      transform: scale(1.1);
-      background: white;
-    }
-
-    svg {
-      width: 20px;
-      height: 20px;
-      color: var(--ant-color-primary);
-    }
-  }
-
-  &__content {
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    flex: 1;
-  }
-
-  &__rating {
-    align-self: flex-end;
-    background: var(--ant-color-primary);
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 16px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    box-shadow: 0 2px 8px
-      color-mix(in srgb, var(--ant-color-primary) 30%, transparent);
-  }
-
-  &__delete {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--bg-secondary) 85%, transparent);
-    border: 1px solid color-mix(in srgb, var(--text-secondary) 50%, transparent);
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(8px);
-    opacity: 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    z-index: 2;
-
-    .movie-card:hover & {
-      opacity: 1;
-    }
-
-    @media (max-width: 899px) {
-      opacity: 0.9;
-    }
-
-    &:hover {
-      background: #ef4444;
-      border-color: #dc2626;
-      color: white;
-      transform: scale(1.1);
-      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-    }
-
-    svg {
-      width: 16px;
-      height: 16px;
-    }
-  }
-
-  &__title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    margin: 0;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    color: var(--text-primary);
-    flex-grow: 1;
-  }
-
-  &__meta {
-    display: flex;
-    flex-direction: column;
-    gap: 0.375rem;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    padding-top: 0.5rem;
-    border-top: 1px solid
-      color-mix(in srgb, var(--border-color) 40%, transparent);
-  }
-
-  &__meta-item {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-  }
-
-  &__meta-icon {
-    width: 14px;
-    height: 14px;
-    color: var(--ant-color-primary);
-  }
-
-  &__meta-item-text {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__see-later {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-top: 0.5rem;
-    border-top: 1px solid
-      color-mix(in srgb, var(--border-color) 40%, transparent);
-  }
-
-  &__see-later-label {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-  }
-
-  &__share {
-    display: flex;
-    justify-content: flex-start;
-    width: 100%;
-    padding-top: 0.5rem;
-    border-top: 1px solid
-      color-mix(in srgb, var(--border-color) 40%, transparent);
-  }
-}
 </style>

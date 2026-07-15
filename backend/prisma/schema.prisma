@@ -134,6 +134,7 @@ model UserList {
   name           String
   nameNormalized String         @map("name_normalized")
   description    String?
+  color          String?        @default("#FF0032")
   labels         String[]       @default([])
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")

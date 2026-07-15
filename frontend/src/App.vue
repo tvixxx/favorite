@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from "vue";
 import NavigationLinks from "@/components/NavigationLinks/NavigationLinks.vue";
+import MobileTabBar from "@/components/MobileTabBar/MobileTabBar.vue";
 import OnboardingModal from "@/components/Onboarding/OnboardingModal.vue";
 import { useMainStore } from "@/state/state";
 import { ConfigProvider } from "ant-design-vue";
@@ -52,6 +53,12 @@ watch(
     if (loggedIn && userId) {
       chatStore.connect(userId);
 
+      // диалоги грузим при логине — чтобы счётчик непрочитанных был доступен
+      // в навигации / таб-баре / хаб-чипе на всех экранах
+      chatStore.fetchConversations(userId).catch(() => {
+        // не блокирует приложение
+      });
+
       try {
         await notificationsStore.hydrate(userId);
       } catch {
@@ -81,6 +88,7 @@ onMounted(async () => {
 <template>
   <ConfigProvider :theme="themeConfig">
     <NavigationLinks v-if="showNavMenu" />
+    <MobileTabBar v-if="showNavMenu" />
 
     <OnboardingModal
       v-if="store.userData?.id"
@@ -99,11 +107,11 @@ onMounted(async () => {
 
 <style lang="scss">
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: var(--fv-font-ui);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
+  color: var(--fv-color-text-primary);
   width: 100%;
   height: 100%;
 }
@@ -112,5 +120,12 @@ body {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+/* Место под нижний таб-бар на мобиле, чтобы контент не прятался */
+@media (max-width: 768px) {
+  #app {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
 }
 </style>

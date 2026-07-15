@@ -1,23 +1,23 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, watch } from "vue";
 import { message } from "ant-design-vue";
 import { useDebounceFn } from "@vueuse/core";
 import { RouterLink } from "vue-router";
 
-import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
-import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import ListError from "@/components/List/ListError/ListError.vue";
-import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
+import PosterGridSkeleton from "@/components/Skeleton/PosterGridSkeleton.vue";
+import { useMinLoading } from "@/components/Skeleton/useMinLoading";
+import StateBlock, {
+  type StateAction,
+} from "@/components/StateBlock/StateBlock.vue";
+import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import { useActorsStore } from "@/stores";
 
 const actorsStore = useActorsStore();
 
-const searchInput = ref(actorsStore.actorsSearchQ);
-
-const runLoad = async () => {
+const runLoad = async (): Promise<void> => {
   try {
     await actorsStore.fetchActorsPage({
-      q: searchInput.value,
+      q: actorsStore.actorsSearchQ,
       page: actorsStore.actorsPageCurrent,
       pageSize: actorsStore.actorsPageSize,
     });
@@ -26,103 +26,132 @@ const runLoad = async () => {
   }
 };
 
-const debouncedSearch = useDebounceFn(async () => {
+// Поиск живёт в шапке (LibraryLayout) и пишет в actorsStore.actorsSearchQ — реагируем здесь
+const debouncedReload = useDebounceFn(async () => {
   actorsStore.actorsPageCurrent = 1;
   await runLoad();
 }, 350);
 
-watch(searchInput, () => {
-  void debouncedSearch();
-});
+watch(
+  () => actorsStore.actorsSearchQ,
+  () => void debouncedReload(),
+);
 
 onMounted(async () => {
   actorsStore.actorsPageCurrent = 1;
   await runLoad();
 });
 
-const onPageChange = (page: number) => {
+const onPageChange = (page: number): void => {
   actorsStore.actorsPageCurrent = page;
   void runLoad();
 };
 
-const onPageSizeChange = (_current: number, size: number) => {
+const onPageSizeChange = (_current: number, size: number): void => {
   actorsStore.actorsPageSize = size;
   actorsStore.actorsPageCurrent = 1;
   void runLoad();
 };
 
-const emptyDescription = computed(() => {
+const showSkeleton = useMinLoading(
+  () => actorsStore.isActorsLoading && !actorsStore.actorsPageItems.length,
+);
+
+const actorsEmptyState = computed(() => {
   if (actorsStore.actorsSearchQ.trim()) {
-    return "Никого не нашли — попробуйте другой запрос";
+    return {
+      variant: "empty" as const,
+      icon: "ph:magnifying-glass",
+      title: "Никого не нашли",
+      description: "Попробуйте другой запрос.",
+      actions: [
+        {
+          label: "Сбросить поиск",
+          icon: "ph:arrow-counter-clockwise",
+          kind: "secondary",
+          onClick: () => {
+            actorsStore.actorsSearchQ = "";
+          },
+        },
+      ] as StateAction[],
+    };
   }
 
-  return "Пока нет ни одного актёра в каталоге.";
+  return {
+    ...STATE_PRESETS.actorsEmpty,
+    description: "Актёры появляются, когда вы добавляете фильмы в свою коллекцию.",
+    actions: [] as StateAction[],
+  };
 });
 
 const showEmptyBlock = computed(
-  () =>
-    !actorsStore.isActorsLoading &&
-    actorsStore.actorsPageItems.length === 0,
+  () => !actorsStore.isActorsLoading && actorsStore.actorsPageItems.length === 0,
 );
+
+const initial = (name: string): string => (name.trim()[0] ?? "?").toUpperCase();
+
+// Детерминированный градиент аватара по id (разнообразие как в эталоне)
+const AVATAR_GRADIENTS = [
+  "linear-gradient(135deg, #3a6ff0, #1b2a6b)",
+  "linear-gradient(135deg, #e0398a, #7b1fa2)",
+  "linear-gradient(135deg, #26cd58, #0e7a3a)",
+  "linear-gradient(135deg, #f95721, #b23a0e)",
+  "linear-gradient(135deg, #8b5cf6, #4c1d95)",
+  "linear-gradient(135deg, #f5a623, #b9770a)",
+];
+
+const gradientFor = (id: string): string => {
+  let hash = 0;
+  for (let i = 0; i < id.length; i += 1) {
+    hash = (hash + id.charCodeAt(i)) % AVATAR_GRADIENTS.length;
+  }
+
+  return AVATAR_GRADIENTS[hash];
+};
 </script>
 
 <template>
   <div class="actors-page">
     <div class="actors-page__content">
-      <div class="actors-page__toolbar">
-        <AppBackButton
-          class="actors-page__back"
-          label="К коллекции"
-          mode="replace"
-          :fallback="{ path: '/library/collection' }"
-        />
-        <a-input
-          v-model:value="searchInput"
-          class="actors-page__search"
-          size="large"
-          allow-clear
-          placeholder="Поиск по имени актёра…"
-          aria-label="Поиск по имени актёра"
-        >
-          <template #prefix>
-            <BaseIcon name="mdi:magnify" :width="18" :height="18" />
-          </template>
-        </a-input>
-      </div>
-
-      <ListError
+      <StateBlock
         v-if="actorsStore.isActorsError"
-        :is-error="actorsStore.isActorsError"
-        :repeat-fn="runLoad"
-        repeat-text="Повторить"
+        v-bind="STATE_PRESETS.actorsError"
+        :actions="[
+          {
+            label: 'Повторить',
+            icon: 'ph:arrow-clockwise',
+            kind: 'primary',
+            onClick: runLoad,
+          },
+        ]"
       />
 
-      <ListLoading
-        v-else-if="actorsStore.isActorsLoading && !actorsStore.actorsPageItems.length"
-        :center="true"
-        loading-text="Загружаем актёров…"
-        size="large"
+      <PosterGridSkeleton
+        v-else-if="showSkeleton"
+        :count="12"
+        variant="avatar"
+        :min-width="160"
       />
 
-      <div v-else-if="showEmptyBlock" class="actors-page__empty">
-        <p>{{ emptyDescription }}</p>
-      </div>
+      <StateBlock v-else-if="showEmptyBlock" v-bind="actorsEmptyState" />
 
       <template v-else>
-        <ul class="actors-page__list" aria-label="Список актёров">
-          <li v-for="a in actorsStore.actorsPageItems" :key="a.id">
-            <RouterLink class="actors-page__link" :to="`/library/actors/${a.id}`">
-              <BaseIcon class="actors-page__icon" name="mdi:account" :width="22" :height="22" />
-              <span>{{ a.name }}</span>
-              <BaseIcon
-                class="actors-page__chevron"
-                name="mdi:chevron-right"
-                :width="20"
-                :height="20"
-              />
-            </RouterLink>
-          </li>
-        </ul>
+        <div class="actors-grid">
+          <RouterLink
+            v-for="a in actorsStore.actorsPageItems"
+            :key="a.id"
+            class="actor-card"
+            :to="`/library/actors/${a.id}`"
+          >
+            <span
+              class="actor-card__avatar"
+              :style="{ background: gradientFor(a.id) }"
+              aria-hidden="true"
+              >{{ initial(a.name) }}</span
+            >
+            <span class="actor-card__name">{{ a.name }}</span>
+          </RouterLink>
+        </div>
 
         <div
           v-if="actorsStore.actorsPageTotal > actorsStore.actorsPageSize"
@@ -145,7 +174,6 @@ const showEmptyBlock = computed(
 
 <style lang="scss" scoped>
 @use "@/styles/layout" as *;
-@use "@/styles/media" as *;
 
 .actors-page {
   width: 100%;
@@ -155,57 +183,13 @@ const showEmptyBlock = computed(
     align-items: stretch;
   }
 
-  &__toolbar {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-    width: 100%;
-    max-width: var(--grid-max-width);
-    margin-bottom: 0.5rem;
-
-    @include mediaTablet {
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-items: flex-start;
-      gap: 1rem;
-    }
-  }
-
-  &__back {
-    :deep(.app-back-btn) {
-      margin: 0;
-    }
-  }
-
-  &__search {
-    flex: 1;
-    min-width: min(100%, 280px);
-    max-width: 520px;
-
-    @include mediaTablet {
-      margin-left: auto;
-    }
-  }
-
   &__empty {
     min-height: 240px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
     text-align: center;
-  }
-
-  &__list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    max-width: var(--grid-max-width);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
   }
 
   &__pagination {
@@ -214,44 +198,56 @@ const showEmptyBlock = computed(
     margin-top: 1.5rem;
     padding-bottom: 1rem;
   }
+}
 
-  &__link {
+// Эталон: сетка карточек актёров (аватар-круг + имя)
+.actors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+  width: 100%;
+  margin: 0.5rem 0 2rem;
+}
+
+.actor-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  text-align: center;
+  text-decoration: none;
+  border-radius: var(--fv-radius-md);
+  background: var(--fv-color-bg-primary);
+  border: 1px solid color-mix(in srgb, var(--fv-color-border) 55%, transparent);
+  box-shadow: var(--fv-shadow-card);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--fv-shadow-elevated);
+  }
+
+  &__avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.85rem 1rem;
-    border-radius: var(--radius-md);
-    text-decoration: none;
-    color: var(--text-primary);
-    font-weight: 600;
-    background: var(--bg-primary);
-    border: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
-    transition:
-      border-color 0.2s ease,
-      box-shadow 0.2s ease,
-      color 0.2s ease;
-
-    &:hover {
-      border-color: color-mix(
-        in srgb,
-        var(--ant-color-primary) 35%,
-        var(--border-color)
-      );
-      box-shadow: 0 4px 16px color-mix(in srgb, #000 6%, transparent);
-    }
+    justify-content: center;
+    color: #fff;
+    font-family: var(--fv-font-display);
+    font-weight: 500;
+    font-size: 2rem;
   }
 
-  &__icon {
-    flex-shrink: 0;
-    color: var(--ant-color-primary);
-    opacity: 0.9;
-  }
-
-  &__chevron {
-    margin-left: auto;
-    flex-shrink: 0;
-    color: var(--text-secondary);
-    opacity: 0.8;
+  &__name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.25;
+    color: var(--fv-color-text-primary);
   }
 }
 </style>

@@ -2,14 +2,15 @@
 
 @mixin pageShell($paddingBottom: 4rem) {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-  color: var(--text-primary);
+  // Плоский mist-фон канвы (без градиента)
+  background: var(--fv-color-bg-secondary);
+  color: var(--fv-color-text-primary);
   padding-bottom: $paddingBottom;
 }
 
 @mixin pageContentContainer(
-  $maxWidth: var(--page-max-width),
-  $paddingX: var(--page-content-padding-x)
+  $maxWidth: var(--fv-layout-max-width),
+  $paddingX: var(--fv-layout-gutter)
 ) {
   width: 100%;
   max-width: $maxWidth;
@@ -20,37 +21,21 @@
   align-items: center;
 
   @include mediaDesktopS {
-    padding: 0 var(--page-content-padding-x-desktop);
+    padding: 0 var(--fv-layout-gutter-lg);
   }
 }
 
-@mixin cardsGrid(
-  $min: 300px,
-  $tabletMin: 340px,
-  $desktopMin: 360px,
-  $desktopMax: 420px,
-  $gap: 2rem,
-  $maxWidth: var(--grid-max-width)
-) {
+@mixin cardsGrid($min: 178px, $gap: 24px) {
   display: grid;
   gap: $gap;
   margin: 2rem 0;
   width: 100%;
-  max-width: $maxWidth;
+  // Сетка заполняет контейнер (как в эталоне) — правый край вровень с чипами/фильтрами
   grid-template-columns: repeat(auto-fill, minmax($min, 1fr));
 
-  @include mediaTablet {
-    grid-template-columns: repeat(auto-fill, minmax($tabletMin, 1fr));
-  }
-
-  @include mediaDesktopXS {
-    grid-template-columns: repeat(auto-fill, minmax($desktopMin, $desktopMax));
-    justify-content: center;
-  }
-
-  @include mediaMax(500px) {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+  @include mediaMax(640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
   }
 }
 

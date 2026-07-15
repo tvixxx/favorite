@@ -35,7 +35,7 @@ async function onClick() {
     :aria-label="label"
     @click="onClick"
   >
-    <BaseIcon name="mdi:arrow-left" :width="20" :height="20" />
+    <BaseIcon name="ph:arrow-left" :width="20" :height="20" />
     <span>{{ label }}</span>
   </button>
 </template>
@@ -46,20 +46,24 @@ async function onClick() {
   align-items: center;
   gap: 8px;
   margin: 1.5rem 0;
-  padding: 10px 20px;
+  padding: 10px 18px;
   border-radius: 12px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-secondary);
+  border: none;
+  background: var(--fv-color-bg-primary);
+  box-shadow: var(--fv-shadow-low);
+  color: var(--fv-color-text-primary);
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:hover {
-    border-color: var(--ant-color-primary);
-    color: var(--ant-color-primary);
-    transform: translateX(-4px);
+    color: var(--fv-color-accent);
+    box-shadow: var(--fv-shadow-elevated);
+    transform: translateX(-2px);
   }
 }
 </style>

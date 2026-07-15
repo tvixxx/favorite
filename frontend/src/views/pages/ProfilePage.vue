@@ -5,7 +5,9 @@ import { useRouter } from "vue-router";
 import { computed, onMounted, ref } from "vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
-import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
+import SkeletonBar from "@/components/Skeleton/SkeletonBar.vue";
+import RowsSkeleton from "@/components/Skeleton/RowsSkeleton.vue";
+import { useMinLoading } from "@/components/Skeleton/useMinLoading";
 import type { UserData } from "@/state/types";
 import ProfileSettings from "@/components/ProfileSettings/ProfileSettings.vue";
 import BadgesList from "@/components/Badges/BadgesList.vue";
@@ -17,14 +19,29 @@ import {
   SUCCESS_UPDATE_USER_NAME_TEXT,
 } from "@/state/constants";
 import { useBadgesStore, useUserMoviesStore } from "@/stores";
+import { useStorage } from "@vueuse/core";
+import { avatarGradient } from "@/composable/useAvatarGradient";
 
 const store = useMainStore();
 const router = useRouter();
 const badgesStore = useBadgesStore();
 const userMoviesStore = useUserMoviesStore();
 
+// min-display скелетонов (шиммер появляется сразу, держится минимум ~0.4с)
+const showBadgesSkeleton = useMinLoading(() => badgesStore.isLoading);
+const showAnalyticsSkeleton = useMinLoading(
+  () => userMoviesStore.isAnalyticsLoading,
+);
+
 const isModalVisible = ref(false);
+const isSaving = ref(false);
 const editForm = ref({ fullName: "" });
+
+// Настройки уведомлений хранятся локально (без изменений бэка)
+const notifyNewMessages = useStorage("fv-notify-new-messages", true);
+const notifyFriendRequests = useStorage("fv-notify-friend-requests", true);
+const notifyRecommendations = useStorage("fv-notify-recommendations", false);
+const achievementsView = ref<"unlocked" | "locked">("unlocked");
 
 const user = computed<UserData | null>(() => store.userData ?? null);
 const fullName = computed(() => store.userData?.fullName || "");
@@ -53,67 +70,29 @@ const shortId = computed(() => {
 
 const analytics = computed(() => userMoviesStore.analytics);
 
-const analyticsTopGenresText = computed(() => {
-  const topGenres = analytics.value?.topGenres ?? [];
+const hasQuickActions = computed(() => {
+  const a = analytics.value;
 
-  if (topGenres.length === 0) {
-    return "Пока недостаточно данных";
+  if (!a) {
+    return false;
   }
 
-  return topGenres
-    .map((item) => {
-      const label = GenreLabels[item.genre] ?? item.genre;
-      return `${label} (${item.count})`;
-    })
-    .join(" • ");
+  return (
+    a.watchingSerialsCount > 0 ||
+    a.statusBreakdown.dropped > 0 ||
+    a.seeLaterCount > 0
+  );
 });
 
-const analyticsContinueWatchingText = computed(() => {
-  const list = analytics.value?.continueWatching ?? [];
+const continueWatchingItem = computed(
+  () => analytics.value?.continueWatching?.[0] ?? null,
+);
 
-  if (list.length === 0) {
-    return "Нет сериалов в процессе";
+const openContinueWatching = () => {
+  if (continueWatchingItem.value) {
+    router.push(`/detail/${continueWatchingItem.value.movieId}`);
   }
-
-  const first = list[0];
-  const season = first.currentSeason ?? 0;
-  const episode = first.currentEpisode ?? 0;
-
-  return `${first.title}: S${season} • E${episode}`;
-});
-
-const analyticsTrendText = computed(() => {
-  if (!analytics.value) {
-    return "Нет данных";
-  }
-
-  const last7 = analytics.value.addedLast7Days;
-  const last30 = analytics.value.addedLast30Days;
-
-  return `${last7} за 7 дней • ${last30} за 30 дней`;
-});
-
-const analyticsTrendBars = computed(() => {
-  if (!analytics.value) {
-    return {
-      last7: 0,
-      last30: 0,
-      last7Percent: 0,
-      last30Percent: 0,
-    };
-  }
-
-  const last7 = analytics.value.addedLast7Days;
-  const last30 = analytics.value.addedLast30Days;
-  const maxValue = Math.max(last7, last30, 1);
-
-  return {
-    last7,
-    last30,
-    last7Percent: Math.round((last7 / maxValue) * 100),
-    last30Percent: Math.round((last30 / maxValue) * 100),
-  };
-});
+};
 
 const openWatchingSerials = () => {
   router.push({
@@ -148,18 +127,27 @@ const goToLogin = () => {
 };
 
 const updateName = async () => {
+  isSaving.value = true;
+
   try {
     await store.updateDisplayName(editForm.value.fullName);
     message.success(SUCCESS_UPDATE_USER_NAME_TEXT);
+    isModalVisible.value = false;
   } catch {
     message.error(ERROR_UPDATE_USER_NAME_TEXT);
   } finally {
-    isModalVisible.value = false;
+    isSaving.value = false;
   }
 };
 
 const showEditDisplayNameModal = () => {
+  editForm.value.fullName = fullName.value;
   isModalVisible.value = true;
+};
+
+const signOut = () => {
+  store.logOut();
+  router.push("/login");
 };
 
 onMounted(async () => {
@@ -174,95 +162,128 @@ onMounted(async () => {
 
 <template>
   <div class="profile-page">
-    <HeroHeader
-      v-if="showContent"
-      title="Ваш КиноПрофиль"
-      subtitle="Все ваши фильмы, статистика и настройки в одном месте"
-      badge-text="Профиль"
-      icon-name="mdi:account-star"
-    />
-
     <div class="profile-page__content">
-      <div v-if="showContent" class="profile-page__grid">
-        <div class="profile-page__primary-column">
-          <article class="user-card">
-            <div class="user-card__avatar-section">
-              <div class="user-card__avatar">
-                <div class="user-card__avatar-initials">{{ initials }}</div>
-              </div>
-              <div class="user-card__info">
-                <h2 class="user-card__name" @click="showEditDisplayNameModal">
-                  {{ fullName }}
-                </h2>
-                <template v-if="user">
-                  <div class="user-card__email">
-                    <BaseIcon name="mdi:email" class="user-card__email-icon" />
-                    {{ user.email }}
-                  </div>
-                  <div class="user-card__id">
-                    <BaseIcon name="mdi:identifier" class="user-card__id-icon" />
-                    <ATooltip :title="user?.id" placement="top">
-                      <span class="user-card__short-id">{{ shortId }}</span>
-                    </ATooltip>
-                  </div>
-                </template>
-              </div>
+      <template v-if="showContent">
+        <section class="profile-hero">
+          <div class="profile-hero__avatar">{{ initials }}</div>
+          <div class="profile-hero__info">
+            <p class="profile-hero__eyebrow">Ваш кинопрофиль</p>
+            <h1 class="profile-hero__name" @click="showEditDisplayNameModal">
+              {{ fullName }}
+            </h1>
+            <div v-if="user" class="profile-hero__meta">
+              <span class="profile-hero__meta-item">
+                <BaseIcon
+                  name="ph:envelope-simple"
+                  class="profile-hero__meta-icon"
+                />
+                {{ user.email }}
+              </span>
+              <span
+                class="profile-hero__meta-item profile-hero__meta-item--muted"
+              >
+                <BaseIcon
+                  name="ph:identification-card"
+                  class="profile-hero__meta-icon"
+                />
+                <ATooltip :title="user.id" placement="top">
+                  <span class="profile-hero__short-id">{{ shortId }}</span>
+                </ATooltip>
+              </span>
             </div>
-          </article>
-
-          <article class="friends-card">
-            <SettingBlock
-              title="Друзья"
-              description="Управление друзьями и подписками"
-              type="friends"
-              icon="mdi:account-group"
+          </div>
+          <button
+            type="button"
+            class="profile-hero__settings"
+            @click="showEditDisplayNameModal"
+          >
+            <BaseIcon
+              name="ph:gear"
+              class="profile-hero__settings-icon"
             />
-          </article>
-        </div>
+            Настройки
+          </button>
+        </section>
 
-        <article class="badges-card">
+        <div class="profile-page__grid">
+          <div class="profile-page__primary-column">
+            <div class="profile-page__top-row">
+            <article class="friends-card">
+              <SettingBlock
+                title="Друзья"
+                description="Управление друзьями и подписками"
+                type="friends"
+                icon="ph:users-three"
+              />
+            </article>
+
+            <article class="badges-card">
           <div class="badges-card__header">
-            <BaseIcon name="mdi:trophy" class="badges-card__icon" />
+            <BaseIcon name="ph:trophy" class="badges-card__icon" />
             <h3 class="badges-card__title">Достижения</h3>
           </div>
 
-          <div v-if="badgesStore.isLoading" class="badges-card__loading">
-            <div class="badges-card__loader"></div>
-            <span>Загрузка достижений...</span>
-          </div>
+          <RowsSkeleton
+            v-if="showBadgesSkeleton"
+            :count="4"
+            :badge="false"
+          />
 
           <div v-else-if="badgesStore.isError" class="badges-card__error">
-            <BaseIcon name="mdi:alert-circle" class="badges-card__error-icon" />
+            <BaseIcon name="ph:warning-circle" class="badges-card__error-icon" />
             <span>Ошибка загрузки достижений</span>
           </div>
 
           <div v-else class="badges-card__content">
-            <a-tabs default-active-key="unlocked">
-              <a-tab-pane key="unlocked" tab="Открытые">
-                <BadgesList :badges="badgesStore.unlockedBadges" />
-              </a-tab-pane>
-              <a-tab-pane key="locked" tab="Закрытые">
-                <BadgesList :badges="badgesStore.lockedBadges" :show-locked="true" />
-              </a-tab-pane>
-            </a-tabs>
-          </div>
-        </article>
+            <div class="badges-card__seg" role="tablist">
+              <button
+                type="button"
+                class="badges-card__seg-btn"
+                :class="{
+                  'badges-card__seg-btn--on': achievementsView === 'unlocked',
+                }"
+                @click="achievementsView = 'unlocked'"
+              >
+                Открытые
+              </button>
+              <button
+                type="button"
+                class="badges-card__seg-btn"
+                :class="{
+                  'badges-card__seg-btn--on': achievementsView === 'locked',
+                }"
+                @click="achievementsView = 'locked'"
+              >
+                Закрытые
+              </button>
+            </div>
 
-        <div class="profile-page__secondary-column">
-          <ProfileSettings :types="['theme', 'stats']" />
+            <BadgesList
+              v-if="achievementsView === 'unlocked'"
+              :badges="badgesStore.unlockedBadges"
+            />
+            <BadgesList
+              v-else
+              :badges="badgesStore.lockedBadges"
+              :show-locked="true"
+            />
+          </div>
+            </article>
+          </div>
 
           <article class="analytics-card">
             <div class="analytics-card__header">
-              <BaseIcon name="mdi:chart-arc" class="analytics-card__icon" />
+              <BaseIcon name="ph:chart-line-up" class="analytics-card__icon" />
               <h3 class="analytics-card__title">Персональная аналитика</h3>
             </div>
 
-            <div
-              v-if="userMoviesStore.isAnalyticsLoading"
-              class="analytics-card__loading"
-            >
-              <div class="analytics-card__loader"></div>
-              <span>Загрузка аналитики...</span>
+            <div v-if="showAnalyticsSkeleton" class="analytics-card__skel">
+              <SkeletonBar
+                v-for="i in 4"
+                :key="`an-skel-${i}`"
+                height="92px"
+                radius="var(--fv-radius-md)"
+              />
             </div>
 
             <div
@@ -270,107 +291,116 @@ onMounted(async () => {
               class="analytics-card__error"
             >
               <BaseIcon
-                name="mdi:alert-circle"
+                name="ph:warning-circle"
                 class="analytics-card__error-icon"
               />
               <span>Не удалось загрузить аналитику</span>
             </div>
 
             <div v-else class="analytics-card__content">
-              <div class="analytics-card__metrics">
-                <div class="analytics-card__metric">
-                  <span class="analytics-card__metric-label">Тренд</span>
-                  <span class="analytics-card__metric-value">{{
-                    analyticsTrendText
-                  }}</span>
-                </div>
-                <div class="analytics-card__trend-bars">
-                  <div class="analytics-card__trend-row">
-                    <span class="analytics-card__trend-label">7 дн</span>
-                    <div class="analytics-card__trend-track">
-                      <div
-                        class="analytics-card__trend-fill analytics-card__trend-fill--week"
-                        :style="{ width: `${analyticsTrendBars.last7Percent}%` }"
-                      />
-                    </div>
-                    <span class="analytics-card__trend-value">{{
-                      analyticsTrendBars.last7
-                    }}</span>
-                  </div>
-                  <div class="analytics-card__trend-row">
-                    <span class="analytics-card__trend-label">30 дн</span>
-                    <div class="analytics-card__trend-track">
-                      <div
-                        class="analytics-card__trend-fill analytics-card__trend-fill--month"
-                        :style="{ width: `${analyticsTrendBars.last30Percent}%` }"
-                      />
-                    </div>
-                    <span class="analytics-card__trend-value">{{
-                      analyticsTrendBars.last30
-                    }}</span>
+              <div class="analytics-tiles">
+                <div class="analytics-tile">
+                  <span class="analytics-tile__label">Тренд просмотров</span>
+                  <div class="analytics-tile__trend">
+                    <span class="analytics-tile__trend-part">
+                      <b>{{ analytics.addedLast7Days }}</b> за 7 дней
+                    </span>
+                    <span class="analytics-tile__trend-part">
+                      <b>{{ analytics.addedLast30Days }}</b> за 30 дней
+                    </span>
                   </div>
                 </div>
-                <div class="analytics-card__metric">
-                  <span class="analytics-card__metric-label">Фильмы / Сериалы</span>
-                  <span class="analytics-card__metric-value"
-                    >{{ analytics.totalMovies }} / {{ analytics.totalSerials }}</span
-                  >
+
+                <div class="analytics-tile">
+                  <span class="analytics-tile__label">Фильмы / Сериалы</span>
+                  <span class="analytics-tile__value">
+                    {{ analytics.totalMovies }} / {{ analytics.totalSerials }}
+                  </span>
+                  <span class="analytics-tile__hint">
+                    завершено {{ analytics.completionRate }}%
+                  </span>
                 </div>
-                <div class="analytics-card__metric">
-                  <span class="analytics-card__metric-label"
-                    >Процент завершения</span
+
+                <div class="analytics-tile">
+                  <span class="analytics-tile__label">Топ жанров</span>
+                  <div
+                    v-if="analytics.topGenres.length"
+                    class="analytics-tile__chips"
                   >
-                  <span class="analytics-card__metric-value"
-                    >{{ analytics.completionRate }}%</span
+                    <span
+                      v-for="g in analytics.topGenres"
+                      :key="g.genre"
+                      class="analytics-tile__chip"
+                    >
+                      {{ GenreLabels[g.genre] ?? g.genre }} · {{ g.count }}
+                    </span>
+                  </div>
+                  <span v-else class="analytics-tile__hint">
+                    Пока недостаточно данных
+                  </span>
+                </div>
+
+                <div class="analytics-tile">
+                  <span class="analytics-tile__label">Продолжить смотреть</span>
+                  <button
+                    v-if="continueWatchingItem"
+                    type="button"
+                    class="analytics-tile__continue"
+                    @click="openContinueWatching"
                   >
+                    <span
+                      class="analytics-tile__poster"
+                      aria-hidden="true"
+                    ></span>
+                    <span class="analytics-tile__continue-info">
+                      <span class="analytics-tile__continue-title">
+                        {{ continueWatchingItem.title }}
+                      </span>
+                      <span class="analytics-tile__continue-meta">
+                        С{{ continueWatchingItem.currentSeason ?? 0 }} · Э{{
+                          continueWatchingItem.currentEpisode ?? 0
+                        }}<template v-if="continueWatchingItem.episodeCount">
+                          из {{ continueWatchingItem.episodeCount }}</template
+                        >
+                      </span>
+                    </span>
+                  </button>
+                  <span v-else class="analytics-tile__hint">
+                    Нет сериалов в процессе
+                  </span>
                 </div>
               </div>
 
-              <div class="analytics-card__insight">
-                <h4 class="analytics-card__insight-title">Топ жанров</h4>
-                <p class="analytics-card__insight-text">{{ analyticsTopGenresText }}</p>
-              </div>
-
-              <div class="analytics-card__insight">
-                <h4 class="analytics-card__insight-title">Продолжить смотреть</h4>
-                <p class="analytics-card__insight-text">
-                  {{ analyticsContinueWatchingText }}
-                </p>
-              </div>
-
-              <div class="analytics-card__quick-actions">
+              <div v-if="hasQuickActions" class="analytics-card__quick-actions">
                 <a-button
                   v-if="analytics.watchingSerialsCount > 0"
                   type="primary"
-                  block
                   @click="openWatchingSerials"
                 >
                   Сериалы в процессе ({{ analytics.watchingSerialsCount }})
                 </a-button>
-
-                <div class="analytics-card__chips">
-                  <a-button
-                    v-if="analytics.statusBreakdown.dropped > 0"
-                    type="default"
-                    size="small"
-                    @click="openDroppedTitles"
-                  >
-                    Брошено ({{ analytics.statusBreakdown.dropped }})
-                  </a-button>
-                  <a-button
-                    v-if="analytics.seeLaterCount > 0"
-                    type="default"
-                    size="small"
-                    @click="openSeeLaterTitles"
-                  >
-                    Досмотреть позже ({{ analytics.seeLaterCount }})
-                  </a-button>
-                </div>
+                <a-button
+                  v-if="analytics.statusBreakdown.dropped > 0"
+                  @click="openDroppedTitles"
+                >
+                  Брошено ({{ analytics.statusBreakdown.dropped }})
+                </a-button>
+                <a-button
+                  v-if="analytics.seeLaterCount > 0"
+                  @click="openSeeLaterTitles"
+                >
+                  Досмотреть позже ({{ analytics.seeLaterCount }})
+                </a-button>
               </div>
             </div>
           </article>
         </div>
-      </div>
+
+          <div class="profile-page__secondary-column">
+            <ProfileSettings :types="['theme', 'stats']" />
+          </div>
+        </div>
+      </template>
 
       <div v-else class="guest-card">
         <BaseIcon name="fluent-color:warning-24" class="guest-card__icon" />
@@ -384,28 +414,93 @@ onMounted(async () => {
           class="guest-card__login-btn"
           @click="goToLogin"
         >
-          <BaseIcon name="mdi:login" class="guest-card__login-btn__icon" />
+          <BaseIcon name="ph:sign-in" class="guest-card__login-btn__icon" />
           Войти в аккаунт
         </a-button>
       </div>
     </div>
   </div>
 
-  <BaseModal v-model="isModalVisible" @confirm="updateName">
-    <template #title>
-      <h3>Смена имени</h3>
-    </template>
+  <BaseModal v-model="isModalVisible" layout="form">
+    <template #title>Настройки</template>
 
     <template #body>
-      <a-form :model="editForm" layout="vertical" @finish="updateName">
-        <a-form-item label="Изменить отображаемое имя" name="fullName">
-          <a-input
-            v-model:value="editForm.fullName"
-            size="large"
-            :maxlength="50"
-          />
-        </a-form-item>
-      </a-form>
+      <div class="settings-modal">
+        <div class="settings-modal__avatar-row">
+          <div
+            class="settings-modal__avatar"
+            :style="{ background: avatarGradient(userId) }"
+          >
+            {{ initials }}
+          </div>
+          <button
+            type="button"
+            class="settings-modal__photo-btn"
+            disabled
+            title="Загрузка фото появится позже"
+          >
+            <BaseIcon name="ph:camera" :width="18" :height="18" />
+            Сменить фото
+          </button>
+        </div>
+
+        <div class="settings-modal__fields">
+          <label class="settings-modal__field">
+            <span class="settings-modal__label">Имя</span>
+            <a-input
+              v-model:value="editForm.fullName"
+              size="large"
+              :maxlength="50"
+            >
+              <template #prefix>
+                <BaseIcon name="ph:user" :width="18" :height="18" />
+              </template>
+            </a-input>
+          </label>
+
+          <label class="settings-modal__field">
+            <span class="settings-modal__label">Email</span>
+            <a-input :value="user?.email" size="large" disabled>
+              <template #prefix>
+                <BaseIcon name="ph:envelope-simple" :width="18" :height="18" />
+              </template>
+            </a-input>
+          </label>
+        </div>
+
+        <div class="settings-modal__notifs-group">
+          <p class="settings-modal__section">Уведомления</p>
+          <div class="settings-modal__notifs">
+            <div class="settings-modal__notif-row">
+              <span>Новые сообщения</span>
+              <a-switch v-model:checked="notifyNewMessages" />
+            </div>
+            <div class="settings-modal__notif-row">
+              <span>Запросы в друзья</span>
+              <a-switch v-model:checked="notifyFriendRequests" />
+            </div>
+            <div class="settings-modal__notif-row">
+              <span>Рекомендации от друзей</span>
+              <a-switch v-model:checked="notifyRecommendations" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template #footer>
+      <a-button class="settings-modal__logout" @click="signOut">
+        <BaseIcon name="ph:sign-out" :width="18" :height="18" />
+        Выйти
+      </a-button>
+      <a-button
+        type="primary"
+        html-type="button"
+        :loading="isSaving"
+        @click="updateName"
+      >
+        Сохранить
+      </a-button>
     </template>
   </BaseModal>
 </template>
@@ -414,19 +509,133 @@ onMounted(async () => {
 @use "../../styles/media" as *;
 @use "@/styles/layout" as *;
 
+/* ── Модалка «Настройки» (эталон) ── */
+.settings-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  &__avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &__avatar {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 24px;
+  }
+
+  &__photo-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: var(--fv-radius-sm);
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-primary);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+
+    &:hover:not(:disabled) {
+      background: color-mix(
+        in srgb,
+        var(--fv-color-text-primary) 6%,
+        var(--fv-color-bg-secondary)
+      );
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--fv-color-text-secondary);
+  }
+
+  &__notifs-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__section {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--fv-color-text-secondary);
+  }
+
+  &__notifs {
+    background: var(--fv-color-bg-secondary);
+    border-radius: 16px;
+    padding: 4px 16px;
+  }
+
+  &__notif-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 0;
+    font-size: 0.95rem;
+    color: var(--fv-color-text-primary);
+    border-bottom: 1px solid var(--fv-color-border);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__logout {
+    margin-inline-end: auto; // прижать влево (Сохранить остаётся справа)
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    background: color-mix(in srgb, var(--fv-color-brand) 12%, transparent);
+    color: var(--fv-color-brand);
+
+    &:hover {
+      background: color-mix(in srgb, var(--fv-color-brand) 18%, transparent) !important;
+      color: var(--fv-color-brand) !important;
+    }
+  }
+}
+
 .profile-page {
   @include pageShell(0);
   display: flex;
   flex-direction: column;
-
-  &__hero {
-    background: linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--ant-color-primary) 80%, transparent) 0%,
-      transparent 100%
-    );
-    padding: 2rem 0;
-  }
 
   &__content {
     max-width: 1200px;
@@ -434,183 +643,184 @@ onMounted(async () => {
     padding: 0 1rem;
   }
 
-  &__title {
-    font-size: clamp(2rem, 6vw, 3rem);
-    font-weight: 800;
-    margin: 1rem 0 0 0;
-    background: linear-gradient(
-      135deg,
-      var(--ant-color-primary),
-      var(--text-primary)
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-align: center;
-  }
-
   &__grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 1.25rem;
     margin: 2rem 0;
     align-items: start;
 
-    @include mediaTablet {
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-    }
-
+    // Эталон: основа 2/3 + боковая колонка 1/3 (высокий блок не ломает сетку)
     @include mediaDesktopXS {
-      grid-template-columns: minmax(280px, 0.95fr) minmax(320px, 1fr) minmax(
-          300px,
-          0.95fr
-        );
-      gap: 1.15rem;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.25rem;
     }
   }
 
   &__primary-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+  }
+
+  // Друзья + Достижения в ряд (1fr/1fr), схлопывается в 1 колонку на узких
+  &__top-row {
     display: grid;
-    gap: 1rem;
-    align-content: start;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    align-items: stretch;
+
+    @include mediaTablet {
+      grid-template-columns: 1fr 1fr;
+    }
   }
 
   &__secondary-column {
-    display: grid;
-    gap: 1rem;
-    align-content: start;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
   }
 }
 
-.user-card {
-  height: auto;
+// Профиль-карточка = шапка страницы (эталон: аватар + инфо + «Настройки»)
+.profile-hero {
   display: flex;
-  background: var(--bg-primary);
-  border-radius: 24px;
-  box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-  padding: 2.5rem;
+  align-items: center;
+  text-align: left; // перебиваем глобальный #app { text-align: center }
+  gap: 24px;
+  margin-top: 2rem;
+  padding: 1.75rem 2rem;
+  background: var(--fv-color-bg-primary);
+  border-radius: var(--fv-radius-lg);
+  box-shadow: var(--fv-shadow-card);
+  border: 1px solid color-mix(in srgb, var(--fv-color-border) 55%, transparent);
 
-  @include mediaMobileXL {
-    height: auto;
-    padding: 2rem;
-  }
-
-  &__avatar-section {
-    flex: 1;
-    display: flex;
+  @include mediaMax(640px) {
     flex-direction: column;
-    align-items: center;
-    gap: 2rem;
-    text-align: center;
-
-    @include mediaTablet {
-      flex-direction: row;
-      text-align: left;
-      gap: 1.5rem;
-    }
+    align-items: flex-start;
+    gap: 16px;
+    padding: 1.5rem;
   }
 
   &__avatar {
-    position: relative;
-    width: 120px;
-    height: 120px;
-
-    @include mediaMobile {
-      width: 100px;
-      height: 100px;
-    }
-  }
-
-  &__avatar-initials {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      135deg,
-      var(--ant-color-primary),
-      var(--text-primary)
-    );
+    flex-shrink: 0;
+    width: 84px;
+    height: 84px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: white;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #3a6ff0, #1b2a6b);
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 500;
   }
 
   &__info {
     flex: 1;
+    min-width: 0;
+  }
+
+  &__eyebrow {
+    margin: 0 0 6px;
+    font-family: var(--fv-font-display);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fv-color-text-tertiary);
   }
 
   &__name {
+    margin: 0;
+    font-family: var(--fv-font-display);
     font-size: clamp(1.5rem, 4vw, 2rem);
-    font-weight: 800;
-    margin: 0 0 0.5rem 0;
-    background: linear-gradient(
-      135deg,
-      var(--ant-color-primary),
-      var(--text-primary)
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-weight: 500;
+    line-height: 1.1;
+    color: var(--fv-color-text-primary);
     cursor: pointer;
   }
 
-  &__email {
+  &__meta {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1.1rem;
-    color: var(--text-secondary);
-    margin-bottom: 1rem;
-    word-break: break-all;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 8px;
   }
 
-  &__email-icon {
-    width: 18px;
-    height: 18px;
-    color: var(--ant-color-primary);
-  }
-
-  &__id {
-    display: flex;
+  &__meta-item {
+    display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 6px;
     font-size: 0.95rem;
-    color: var(--text-secondary);
-    font-family: monospace;
+    color: var(--fv-color-text-secondary);
+    word-break: break-word;
+
+    &--muted {
+      color: var(--fv-color-text-tertiary);
+    }
   }
 
-  &__id-icon {
-    width: 18px;
-    height: 18px;
-    color: var(--ant-color-primary);
+  &__meta-icon {
+    width: 16px;
+    height: 16px;
+    color: inherit; // нейтральный цвет по тексту строки (не синий accent)
+    flex-shrink: 0;
   }
 
   &__short-id {
     cursor: pointer;
+    font-family: monospace;
+  }
+
+  &__settings {
+    flex-shrink: 0;
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 20px;
+    border: none;
+    border-radius: var(--fv-radius-sm);
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-primary);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: color-mix(
+        in srgb,
+        var(--fv-color-text-primary) 8%,
+        var(--fv-color-bg-secondary)
+      );
+    }
+  }
+
+  &__settings-icon {
+    width: 18px;
+    height: 18px;
   }
 }
 
 .friends-card {
-  background: var(--bg-primary);
+  background: var(--fv-color-bg-primary);
   border-radius: 24px;
-  box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-color);
+  box-shadow: var(--fv-shadow-low), 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--fv-color-border);
   padding: 1.5rem;
 }
 
 .guest-card {
-  background: var(--bg-primary);
+  background: var(--fv-color-bg-primary);
   border-radius: 24px;
-  box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-color);
+  box-shadow: var(--fv-shadow-low), 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--fv-color-border);
   padding: 4rem 2.5rem;
   text-align: center;
   max-width: 500px;
@@ -637,13 +847,13 @@ onMounted(async () => {
 
   &__title {
     font-size: clamp(1.5rem, 4vw, 2rem);
-    font-weight: 800;
+    font-weight: 500;
     margin: 0 0 1rem 0;
-    color: var(--text-primary);
+    color: var(--fv-color-text-primary);
   }
 
   &__description {
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
     font-size: 1.1rem;
     margin-bottom: 2.5rem;
     line-height: 1.6;
@@ -670,10 +880,10 @@ onMounted(async () => {
 
 .badges-card {
   align-self: start;
-  background: var(--bg-primary);
+  background: var(--fv-color-bg-primary);
   border-radius: 24px;
-  box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-color);
+  box-shadow: var(--fv-shadow-low), 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--fv-color-border);
   padding: 2rem;
 
   @include mediaMobileXL {
@@ -690,14 +900,14 @@ onMounted(async () => {
   &__icon {
     width: 28px;
     height: 28px;
-    color: var(--ant-color-warning);
+    color: var(--fv-color-accent);
   }
 
   &__title {
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 500;
     margin: 0;
-    color: var(--text-primary);
+    color: var(--fv-color-text-primary);
   }
 
   &__loading {
@@ -708,14 +918,14 @@ onMounted(async () => {
     gap: 1rem;
     padding: 3rem 1rem;
     text-align: center;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__loader {
     width: 40px;
     height: 40px;
-    border: 3px solid var(--border-color);
-    border-top-color: var(--ant-color-primary);
+    border: 3px solid var(--fv-color-border);
+    border-top-color: var(--fv-color-accent);
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -737,18 +947,49 @@ onMounted(async () => {
   }
 
   &__content {
-    :deep(.ant-tabs-nav) {
-      margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  // Эталон: сегмент-переключатель Открытые / Закрытые
+  &__seg {
+    display: inline-flex;
+    align-self: flex-start;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 10px;
+    background: var(--fv-color-bg-secondary);
+  }
+
+  &__seg-btn {
+    height: 34px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--fv-color-text-secondary);
+    cursor: pointer;
+    transition:
+      color 0.15s ease,
+      background 0.15s ease;
+
+    &--on {
+      background: var(--fv-color-bg-primary);
+      color: var(--fv-color-text-primary);
+      box-shadow: var(--fv-shadow-card);
     }
   }
 }
 
 .analytics-card {
-  align-self: start;
-  background: var(--bg-primary);
+  background: var(--fv-color-bg-primary);
   border-radius: 24px;
-  box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-color);
+  box-shadow: var(--fv-shadow-low), 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--fv-color-border);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -763,14 +1004,14 @@ onMounted(async () => {
   &__icon {
     width: 22px;
     height: 22px;
-    color: var(--ant-color-primary);
+    color: var(--fv-color-accent);
   }
 
   &__title {
     margin: 0;
     font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-primary);
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
   }
 
   &__loading,
@@ -781,16 +1022,23 @@ onMounted(async () => {
     justify-content: center;
     gap: 0.75rem;
     padding: 1.4rem 0.8rem;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__loader {
     width: 32px;
     height: 32px;
-    border: 3px solid var(--border-color);
-    border-top-color: var(--ant-color-primary);
+    border: 3px solid var(--fv-color-border);
+    border-top-color: var(--fv-color-accent);
     border-radius: 50%;
     animation: spin 1s linear infinite;
+  }
+
+  &__skel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 0.5rem 0;
   }
 
   &__error {
@@ -803,114 +1051,133 @@ onMounted(async () => {
   }
 
   &__content {
-    display: grid;
-    gap: 0.9rem;
-  }
-
-  &__metrics {
-    display: grid;
-    gap: 0.55rem;
-  }
-
-  &__metric {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.7rem;
-    padding: 0.55rem 0.7rem;
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
-    border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  }
-
-  &__metric-label {
-    color: var(--text-secondary);
-    font-size: 0.84rem;
-    font-weight: 600;
-  }
-
-  &__metric-value {
-    color: var(--text-primary);
-    font-size: 0.92rem;
-    font-weight: 800;
-    text-align: right;
-  }
-
-  &__trend-bars {
-    display: grid;
-    gap: 0.4rem;
-    padding: 0.55rem 0.7rem;
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
-    border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  }
-
-  &__trend-row {
-    display: grid;
-    grid-template-columns: auto minmax(90px, 1fr) auto;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  &__trend-label,
-  &__trend-value {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--text-secondary);
-  }
-
-  &__trend-track {
-    position: relative;
-    width: 100%;
-    height: 7px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--border-color) 70%, transparent);
-    overflow: hidden;
-  }
-
-  &__trend-fill {
-    height: 100%;
-    border-radius: inherit;
-    transition: width 0.25s ease;
-
-    &--week {
-      background: color-mix(in srgb, var(--ant-color-primary) 82%, #ffffff);
-    }
-
-    &--month {
-      background: color-mix(in srgb, var(--ant-color-primary) 50%, #ffffff);
-    }
-  }
-
-  &__insight {
-    padding: 0.6rem 0.7rem;
-    border-radius: 10px;
-    border: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
-  }
-
-  &__insight-title {
-    margin: 0 0 0.3rem 0;
-    font-size: 0.84rem;
-    color: var(--text-secondary);
-    font-weight: 700;
-  }
-
-  &__insight-text {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 0.9rem;
-    line-height: 1.45;
+    flex-direction: column;
+    gap: 1rem;
   }
 
   &__quick-actions {
-    display: grid;
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.6rem;
+  }
+}
+
+// Эталон: аналитика — сетка из 4 тайлов
+.analytics-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.analytics-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border-radius: var(--fv-radius-md);
+  background: var(--fv-color-bg-secondary);
+  text-align: left;
+
+  &__label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fv-color-text-tertiary);
+  }
+
+  &__trend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+  }
+
+  &__trend-part {
+    font-size: 0.9rem;
+    color: var(--fv-color-text-secondary);
+
+    b {
+      font-family: var(--fv-font-display);
+      font-size: 1.35rem;
+      font-weight: 500;
+      color: var(--fv-color-text-primary);
+      margin-right: 2px;
+    }
+  }
+
+  &__value {
+    font-family: var(--fv-font-display);
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
+  }
+
+  &__hint {
+    font-size: 0.85rem;
+    color: var(--fv-color-text-secondary);
   }
 
   &__chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 6px;
+    margin-top: 2px;
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: var(--fv-color-bg-secondary);
+    border: 1px solid var(--fv-color-border); // обводка (эталон .chip)
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
+  }
+
+  &__continue {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 2px;
+    padding: 0;
+    width: 100%;
+    min-width: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  &__poster {
+    flex-shrink: 0;
+    width: 34px;
+    aspect-ratio: 2 / 3;
+    border-radius: 6px;
+    background: linear-gradient(160deg, #2a3550, #0e1524);
+  }
+
+  &__continue-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__continue-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__continue-meta {
+    font-size: 0.78rem;
+    color: var(--fv-color-text-secondary);
   }
 }
 
@@ -925,7 +1192,7 @@ onMounted(async () => {
 
   &:focus-within {
     box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--ant-color-primary) 10%, transparent);
+      color-mix(in srgb, var(--fv-color-accent) 10%, transparent);
   }
 }
 </style>

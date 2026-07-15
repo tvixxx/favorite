@@ -60,7 +60,7 @@ async function copyLink(e?: Event) {
   >
     <BaseIcon
       class="movie-share-btn__icon"
-      name="mdi:share-variant"
+      name="ph:share-network"
       :width="compact ? 18 : 20"
       :height="compact ? 18 : 20"
     />
@@ -76,10 +76,10 @@ async function copyLink(e?: Event) {
   gap: 0.45rem;
   padding: 0.45rem 0.85rem;
   margin: 0;
-  border-radius: var(--radius-md, 10px);
-  border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
-  background: color-mix(in srgb, var(--bg-secondary) 40%, var(--bg-primary));
-  color: var(--text-secondary);
+  border-radius: var(--fv-radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--fv-color-border) 80%, transparent);
+  background: color-mix(in srgb, var(--fv-color-bg-secondary) 40%, var(--fv-color-bg-primary));
+  color: var(--fv-color-text-secondary);
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
@@ -89,16 +89,16 @@ async function copyLink(e?: Event) {
   &:hover {
     border-color: color-mix(
       in srgb,
-      var(--ant-color-primary) 45%,
-      var(--border-color)
+      var(--fv-color-accent) 45%,
+      var(--fv-color-border)
     );
-    color: var(--ant-color-primary);
-    background: var(--bg-primary);
+    color: var(--fv-color-accent);
+    background: var(--fv-color-bg-primary);
     box-shadow: 0 2px 10px color-mix(in srgb, #000 6%, transparent);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--ant-color-primary);
+    outline: 2px solid var(--fv-color-accent);
     outline-offset: 2px;
   }
 

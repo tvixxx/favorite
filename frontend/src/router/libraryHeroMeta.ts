@@ -6,32 +6,31 @@ export interface LibraryHeroMeta {
 }
 
 export const LIBRARY_HERO_COLLECTION: LibraryHeroMeta = {
-  title: "Кинотеатр у вас дома",
-  subtitle: "Все хиты и новинки которые вы смотрели",
-  badgeText: "Фильмотека",
-  iconName: "mdi:filmstrip",
+  title: "Моя коллекция",
+  subtitle: "продолжайте смотреть с того места, где остановились",
+  badgeText: "Медиатека",
+  iconName: "ph:squares-four",
 };
 
 export const LIBRARY_HERO_CATALOG: LibraryHeroMeta = {
-  title: "Общий каталог",
-  subtitle:
-    "Все фильмы и сериалы в приложении — добавляйте понравившееся к себе",
-  badgeText: "Каталог",
-  iconName: "mdi:movie-search",
+  title: "Каталог",
+  subtitle: "Найдите новое кино и добавьте в свою коллекцию",
+  badgeText: "Медиатека",
+  iconName: "ph:magnifying-glass",
 };
 
 export const LIBRARY_HERO_ACTORS: LibraryHeroMeta = {
   title: "Актёры",
   subtitle:
     "Выберите актёра, чтобы открыть его фильмы и сериалы из общего каталога",
-  badgeText: "В списке",
-  iconName: "mdi:account-group",
+  badgeText: "Медиатека",
+  iconName: "ph:users-three",
 };
 
 export const LIBRARY_HERO_LISTS: LibraryHeroMeta = {
   title: "Мои списки",
   subtitle:
     "Подборки под настроение и сценарии просмотра: открывайте список и управляйте его содержимым",
-  badgeText: "Списков",
-  iconName: "mdi:playlist-star",
+  badgeText: "Медиатека",
+  iconName: "ph:bookmarks-simple",
 };

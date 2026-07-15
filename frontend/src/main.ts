@@ -6,10 +6,12 @@ import Antd from "ant-design-vue";
 import { message } from "ant-design-vue";
 import "./styles/theme-variables.scss";
 import "./styles/tokens.scss";
+import "./styles/fonts.scss";
 import "./styles/animations.scss";
 import "ant-design-vue/dist/reset.css";
 import "driver.js/dist/driver.css";
 import "./styles/driver-overrides.scss";
+import "./styles/forms.scss";
 import { createPinia } from "pinia";
 
 registerSW({ immediate: true });

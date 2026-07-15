@@ -6,7 +6,17 @@
       "Bash(npm install *)",
       "Bash(yarn add *)",
       "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"да делай как все нужно\" npx prisma migrate reset --force)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "mcp__memory__search_nodes",
+      "Skill(artifact-design)",
+      "Skill(artifact-design:*)",
+      "WebFetch(domain:claude.ai)",
+      "WebFetch(domain:habr.com)",
+      "mcp__memory__create_entities",
+      "mcp__memory__create_relations",
+      "mcp__memory__read_graph",
+      "mcp__memory__open_nodes",
+      "mcp__memory__add_observations"
     ]
   }
 }

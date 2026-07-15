@@ -3,11 +3,16 @@ import { ref, computed, onMounted, nextTick, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useChatStore, useUserStatusStore } from "@/stores";
 import { useMainStore } from "@/state/state";
-import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
-import { Button, List, ListItem, Empty, Badge, Avatar } from "ant-design-vue";
-import { SendOutlined } from "@ant-design/icons-vue";
+import { Badge } from "ant-design-vue";
 import ChatMessageInput from "@/components/ChatMessageInput/ChatMessageInput.vue";
 import ChatMessageContent from "@/components/ChatMessageContent/ChatMessageContent.vue";
+import SocialHubTabs from "@/components/SocialHubTabs/SocialHubTabs.vue";
+import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import RowsSkeleton from "@/components/Skeleton/RowsSkeleton.vue";
+import { useMinLoading } from "@/components/Skeleton/useMinLoading";
+import StateBlock from "@/components/StateBlock/StateBlock.vue";
+import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
+import { avatarGradient, avatarLetter } from "@/composable/useAvatarGradient";
 
 const route = useRoute();
 const router = useRouter();
@@ -15,8 +20,23 @@ const chatStore = useChatStore();
 const userStatusStore = useUserStatusStore();
 const mainStore = useMainStore();
 
+const showConversationsSkeleton = useMinLoading(() => chatStore.isLoading);
+
 const userId = computed(() => mainStore.userData?.id || "");
 const messageInput = ref("");
+
+const reloadConversations = (): void => {
+  if (userId.value) {
+    void chatStore.fetchConversations(userId.value);
+  }
+};
+
+const reloadMessages = (): void => {
+  if (userId.value && chatStore.currentChatUserId) {
+    void chatStore.fetchMessages(userId.value, chatStore.currentChatUserId);
+  }
+};
+
 const chatInputRef = ref<InstanceType<typeof ChatMessageInput> | null>(null);
 const messagesContainer = ref<HTMLElement | null>(null);
 
@@ -49,6 +69,13 @@ const scrollToBottom = () => {
 const selectConversation = async (otherUserId: string) => {
   await chatStore.openChat(userId.value, otherUserId);
   scrollToBottom();
+};
+
+// Клаппер: вставляет «#» — открывает подсказку фильмов из коллекции
+const attachMovie = () => {
+  const current = messageInput.value;
+  const needsSpace = current.length > 0 && !/\s$/.test(current);
+  messageInput.value = `${current}${needsSpace ? " " : ""}#`;
 };
 
 const sendMessage = (wireFromEnter?: string) => {
@@ -135,104 +162,142 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="chat-page">
-    <div class="chat-page__sidebar">
-      <div class="chat-page__sidebar-header">
-        <AppBackButton
-          class="chat-page__nav-back"
-          label="К друзьям"
-          :fallback="{ path: '/friends' }"
-        />
-        <div class="chat-page__sidebar-title-row">
+  <div class="chat-page-shell">
+    <SocialHubTabs :unread-count="chatStore.totalUnreadCount" />
+
+    <div
+      class="chat-page"
+      :class="{ 'chat-page--conversation': !!chatStore.currentChatUserId }"
+    >
+      <div class="chat-page__sidebar">
+        <div class="chat-page__sidebar-header">
           <h2 class="chat-page__title">Сообщения</h2>
-          <Badge :count="chatStore.totalUnreadCount" :overflow-count="99" />
         </div>
-      </div>
 
-      <div v-if="chatStore.isLoading" class="chat-page__loading">
-        <div class="loader"></div>
-      </div>
+      <RowsSkeleton
+        v-if="showConversationsSkeleton"
+        :count="6"
+        :badge="false"
+      />
 
-      <List
+      <StateBlock
+        v-else-if="chatStore.isError"
+        variant="error"
+        icon="ph:warning-circle"
+        title="Диалоги не загрузились"
+        description="Не удалось получить список диалогов. Попробуйте обновить."
+        :actions="[
+          {
+            label: 'Обновить',
+            icon: 'ph:arrow-clockwise',
+            kind: 'primary',
+            onClick: reloadConversations,
+          },
+        ]"
+      />
+
+      <div
         v-else-if="chatStore.conversations.length > 0"
-        :data-source="chatStore.conversations"
-        :row-key="(item: { otherUser: { id: string } }) => item.otherUser.id"
         class="chat-page__conversations"
       >
-        <template #renderItem="{ item }">
-          <ListItem class="conversation-list-item">
-            <div
-              class="conversation-item"
-              :class="{
-                'conversation-item--active':
-                  chatStore.currentChatUserId === item.otherUser.id,
-              }"
-              role="button"
-              tabindex="0"
-              @click="selectConversation(item.otherUser.id)"
+        <button
+          v-for="item in chatStore.conversations"
+          :key="item.otherUser.id"
+          type="button"
+          class="conversation-item"
+          :class="{
+            'conversation-item--active':
+              chatStore.currentChatUserId === item.otherUser.id,
+          }"
+          @click="selectConversation(item.otherUser.id)"
+        >
+          <div class="conversation-item__avatar">
+            <Badge
+              :dot="userStatusStore.isUserOnline(item.otherUser.id)"
+              color="green"
             >
-              <div class="conversation-item__avatar">
-                <Badge
-                  :dot="userStatusStore.isUserOnline(item.otherUser.id)"
-                  color="green"
-                >
-                  <Avatar :size="48">
-                    {{ (item.otherUser.fullName || "?")[0].toUpperCase() }}
-                  </Avatar>
-                </Badge>
-              </div>
-              <div class="conversation-item__content">
-                <div class="conversation-item__header">
-                  <span class="conversation-item__username">{{
-                    item.otherUser.fullName
-                  }}</span>
-                  <span class="conversation-item__time">{{
-                    formatTime(item.lastMessage.createdAt)
-                  }}</span>
-                </div>
-                <div class="conversation-item__message">
-                  <span
-                    :class="{
-                      'conversation-item__message--unread':
-                        item.unreadCount > 0,
-                    }"
-                  >
-                    {{ item.lastMessage.content }}
-                  </span>
-                  <Badge
-                    v-if="item.unreadCount > 0"
-                    :count="item.unreadCount"
-                  />
-                </div>
-              </div>
+              <span
+                class="chat-avatar"
+                :style="{ background: avatarGradient(item.otherUser.id) }"
+              >
+                {{ avatarLetter(item.otherUser.fullName) }}
+              </span>
+            </Badge>
+          </div>
+          <div class="conversation-item__content">
+            <div class="conversation-item__header">
+              <span class="conversation-item__username">{{
+                item.otherUser.fullName
+              }}</span>
+              <span class="conversation-item__time">{{
+                formatTime(item.lastMessage.createdAt)
+              }}</span>
             </div>
-          </ListItem>
-        </template>
-      </List>
-
-      <div v-else class="chat-page__sidebar-empty">
-        <Empty description="Нет диалогов" />
-
-        <p class="chat-page__sidebar-empty-hint">
-          Добавьте пользователя по email в разделе «Друзья», чтобы начать переписку.
-        </p>
-
-        <Button type="primary" @click="goToFriends">К друзьям</Button>
+            <div class="conversation-item__message">
+              <span
+                class="conversation-item__preview"
+                :class="{
+                  'conversation-item__preview--unread': item.unreadCount > 0,
+                }"
+              >
+                {{ item.lastMessage.content }}
+              </span>
+              <span
+                v-if="item.unreadCount > 0"
+                class="conversation-item__badge"
+                >{{ item.unreadCount }}</span
+              >
+            </div>
+          </div>
+        </button>
       </div>
+
+      <StateBlock
+        v-else
+        v-bind="STATE_PRESETS.chatListEmpty"
+        :actions="[
+          {
+            label: 'К друзьям',
+            icon: 'ph:users-three',
+            kind: 'primary',
+            onClick: goToFriends,
+          },
+        ]"
+      />
     </div>
 
     <div class="chat-page__main">
       <div v-if="!chatStore.currentChatUserId" class="chat-page__empty">
-        <Empty description="Выберите диалог" />
+        <StateBlock
+          variant="empty"
+          icon="ph:chats-circle"
+          title="Выберите диалог"
+          description="Откройте переписку слева или начните новую в разделе «Друзья»."
+        />
       </div>
 
       <template v-else>
         <div class="chat-page__header">
+          <button
+            type="button"
+            class="chat-page__header-back"
+            aria-label="К списку диалогов"
+            @click="chatStore.closeChat()"
+          >
+            <BaseIcon name="ph:arrow-left" :width="20" :height="20" />
+          </button>
           <div class="chat-page__header-user">
             <Badge :dot="isOtherUserOnline" color="green">
-              <Avatar :size="40">
-                {{ selectedConversation?.otherUser.fullName[0].toUpperCase() }}
-              </Avatar>
+              <span
+                class="chat-avatar chat-avatar--sm"
+                :style="{
+                  background: avatarGradient(
+                    selectedConversation?.otherUser.id || '',
+                  ),
+                }"
+              >
+                {{ avatarLetter(selectedConversation?.otherUser.fullName) }}
+              </span>
             </Badge>
             <div class="chat-page__header-info">
               <span class="chat-page__header-username">
@@ -246,8 +311,22 @@ onMounted(async () => {
         </div>
 
         <div ref="messagesContainer" class="chat-page__messages">
+          <StateBlock
+            v-if="chatStore.isMessagesError"
+            v-bind="STATE_PRESETS.chatThreadError"
+            :actions="[
+              {
+                label: 'Обновить',
+                icon: 'ph:arrow-clockwise',
+                kind: 'primary',
+                onClick: reloadMessages,
+              },
+            ]"
+          />
+
           <div
             v-for="message in chatStore.currentMessages"
+            v-else
             :key="message.id"
             class="message"
             :class="{
@@ -255,55 +334,77 @@ onMounted(async () => {
               'message--received': message.senderId !== userId,
             }"
           >
-            <div class="message__bubble">
-              <p class="message__content">
-                <ChatMessageContent :content="message.content" />
-              </p>
-              <span class="message__time">
-                {{ formatTime(message.createdAt) }}
-                <span
-                  v-if="message.senderId === userId && message.isRead"
-                  class="message__read"
-                  >✓✓</span
-                >
-              </span>
-            </div>
+            <ChatMessageContent
+              :content="message.content"
+              :sent="message.senderId === userId"
+            />
+            <span class="message__time">
+              {{ formatTime(message.createdAt) }}
+              <span
+                v-if="message.senderId === userId && message.isRead"
+                class="message__read"
+                >✓✓</span
+              >
+            </span>
           </div>
         </div>
 
         <div class="chat-page__input">
+          <button
+            type="button"
+            class="chat-page__attach"
+            aria-label="Прикрепить фильм из коллекции"
+            @click="attachMovie"
+          >
+            <BaseIcon name="ph:film-slate" :width="20" :height="20" />
+          </button>
+
           <ChatMessageInput
             ref="chatInputRef"
             v-model="messageInput"
             :user-id="userId"
             @send="sendMessage"
           />
-          <Button
-            type="primary"
-            size="large"
+
+          <button
+            type="button"
+            class="chat-page__send"
             :disabled="!messageInput.trim()"
+            aria-label="Отправить"
             @click="sendMessage()"
           >
-            <SendOutlined />
-          </Button>
+            <BaseIcon name="ph:paper-plane-right-fill" :width="18" :height="18" />
+          </button>
         </div>
       </template>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
+.chat-page-shell {
+  // контейнер как на Друзьях — чтобы отступы/позиция чипа совпадали (нет скачка)
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
 .chat-page {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: 360px 1fr;
-  height: calc(100vh - 80px);
   gap: 1rem;
-  padding: 1rem;
 
   &__sidebar {
-    background: var(--bg-primary);
+    background: var(--fv-color-bg-primary);
     border-radius: 16px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--fv-color-border);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -315,52 +416,23 @@ onMounted(async () => {
     align-items: stretch;
     gap: 0.75rem;
     padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  &__nav-back {
-    :deep(.app-back-btn) {
-      margin: 0;
-    }
-  }
-
-  &__sidebar-title-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
+    border-bottom: 1px solid var(--fv-color-border);
   }
 
   &__title {
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 500;
     margin: 0;
   }
 
   &__conversations {
     flex: 1;
-    overflow-y: auto;
     min-width: 0;
-
-    :deep(.ant-list) {
-      width: 100%;
-    }
-
-    :deep(.ant-spin-nested-loading),
-    :deep(.ant-spin-container) {
-      width: 100%;
-    }
-
-    :deep(.ant-list-items) {
-      width: 100%;
-    }
-
-    :deep(.ant-list-item) {
-      display: block;
-      width: 100%;
-      max-width: 100%;
-      padding: 0;
-    }
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
   }
 
   &__loading {
@@ -385,15 +457,16 @@ onMounted(async () => {
     max-width: 18rem;
     font-size: 0.9rem;
     line-height: 1.45;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__main {
-    background: var(--bg-primary);
+    background: var(--fv-color-bg-primary);
     border-radius: 16px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--fv-color-border);
     display: flex;
     flex-direction: column;
+    min-width: 0;
     overflow: hidden;
   }
 
@@ -405,8 +478,34 @@ onMounted(async () => {
   }
 
   &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
     padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--fv-color-border);
+  }
+
+  &__header-back {
+    display: none; // видна только на мобиле (одна панель за раз)
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-primary);
+    cursor: pointer;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: color-mix(
+        in srgb,
+        var(--fv-color-text-primary) 8%,
+        var(--fv-color-bg-secondary)
+      );
+    }
   }
 
   &__header-user {
@@ -427,59 +526,131 @@ onMounted(async () => {
 
   &__header-status {
     font-size: 0.875rem;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__messages {
     flex: 1;
+    min-width: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    background: var(--fv-color-bg-secondary);
   }
 
   &__input {
-    padding: 1.5rem;
-    border-top: 1px solid var(--border-color);
+    padding: 12px 16px;
+    border-top: 1px solid var(--fv-color-border);
+    background: var(--fv-color-bg-primary);
     display: flex;
     align-items: flex-end;
-    gap: 0.75rem;
+    gap: 10px;
+  }
+
+  &__attach,
+  &__send {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  &__attach {
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-primary);
+
+    &:hover {
+      background: color-mix(
+        in srgb,
+        var(--fv-color-text-primary) 8%,
+        var(--fv-color-bg-secondary)
+      );
+    }
+  }
+
+  &__send {
+    background: var(--fv-color-brand);
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--fv-color-brand), #000 10%);
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
   }
 }
 
-.conversation-list-item {
-  width: 100%;
-  max-width: 100%;
-  padding: 0 !important;
-  border-block-end: 1px solid var(--border-color);
+// Мобайл: одна панель за раз (список ИЛИ переписка) — иначе 2 колонки не влезают
+@media (max-width: 768px) {
+  .chat-page-shell {
+    // высота с учётом верхней шапки + нижнего таб-бара; отступы — как на Друзьях
+    height: calc(100dvh - 128px);
+  }
+
+  .chat-page {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .chat-page__main {
+    display: none;
+  }
+
+  .chat-page--conversation {
+    .chat-page__sidebar {
+      display: none;
+    }
+
+    .chat-page__main {
+      display: flex;
+    }
+  }
+
+  .chat-page__header-back {
+    display: inline-flex;
+  }
+
+  .message {
+    max-width: 85%;
+  }
 }
 
 .conversation-item {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   width: 100%;
-  max-width: 100%;
   box-sizing: border-box;
-  padding: 1rem 1.5rem;
+  padding: 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.15s ease;
 
   &:hover {
-    background: var(--bg-secondary);
+    background: var(--fv-color-bg-secondary);
   }
 
   &--active {
-    background: color-mix(
-      in srgb,
-      var(--ant-color-primary) 8%,
-      var(--bg-secondary)
-    );
-    box-shadow: inset 3px 0 0 0 var(--ant-color-primary);
+    background: color-mix(in srgb, var(--fv-color-accent) 10%, transparent);
   }
 
   &__avatar {
-    margin-right: 1rem;
+    margin-right: 12px;
   }
 
   &__content {
@@ -487,23 +658,21 @@ onMounted(async () => {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    gap: 3px;
   }
 
   &__header {
     display: flex;
-    flex-direction: row;
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    margin-bottom: 0.35rem;
     min-width: 0;
   }
 
   &__username {
     min-width: 0;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--fv-color-text-primary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -512,81 +681,104 @@ onMounted(async () => {
   &__time {
     flex-shrink: 0;
     font-size: 0.75rem;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-tertiary);
     white-space: nowrap;
   }
 
   &__message {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  &__preview {
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    color: var(--fv-color-text-secondary);
 
     &--unread {
       font-weight: 600;
-      color: var(--text-primary);
+      color: var(--fv-color-text-primary);
     }
+  }
+
+  &__badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--fv-color-brand);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+  }
+}
+
+/* Цветной аватар диалога/шапки (эталон) */
+.chat-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.1rem;
+
+  &--sm {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
   }
 }
 
 .message {
   display: flex;
-  max-width: 70%;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 82%;
+  min-width: 0;
 
   &--sent {
     align-self: flex-end;
-
-    .message__bubble {
-      background: var(--ant-color-primary);
-      color: white;
-    }
-
-    :deep(.chat-msg-content__link) {
-      color: rgba(255, 255, 255, 0.95);
-    }
+    align-items: flex-end;
   }
 
   &--received {
     align-self: flex-start;
-
-    .message__bubble {
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-    }
-  }
-
-  &__bubble {
-    padding: 0.75rem 1rem;
-    border-radius: 12px;
-    word-wrap: break-word;
-  }
-
-  &__content {
-    margin: 0 0 0.25rem 0;
+    align-items: flex-start;
   }
 
   &__time {
-    font-size: 0.75rem;
-    opacity: 0.7;
+    margin: 0 6px;
+    font-size: 11px;
+    color: var(--fv-color-text-tertiary);
     display: flex;
     align-items: center;
     gap: 0.25rem;
   }
 
   &__read {
-    color: var(--ant-color-success);
+    color: var(--fv-color-positive);
   }
 }
 
 .loader {
   width: 24px;
   height: 24px;
-  border: 3px solid var(--border-color);
-  border-top-color: var(--ant-color-primary);
+  border: 3px solid var(--fv-color-border);
+  border-top-color: var(--fv-color-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

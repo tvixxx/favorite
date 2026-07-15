@@ -173,6 +173,7 @@ export const UserListScalarFieldEnum = {
   name: 'name',
   nameNormalized: 'nameNormalized',
   description: 'description',
+  color: 'color',
   labels: 'labels',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

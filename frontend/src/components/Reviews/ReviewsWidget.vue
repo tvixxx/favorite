@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useReviews } from "@/composable/useReviews";
-import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
-import ListError from "@/components/List/ListError/ListError.vue";
+import RowsSkeleton from "@/components/Skeleton/RowsSkeleton.vue";
+import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import ReviewItem from "@/components/Reviews/ReviewItem.vue";
 import ReviewForm from "@/components/Reviews/ReviewForm.vue";
 import { showErrorRequest } from "@/state/utils";
@@ -21,7 +21,6 @@ const reviewsStore = useReviews();
 const { reviews, isLoading, isLoaded, isError, totalReviews } = reviewsStore;
 const { fetchReviews, createReview, updateReview, deleteReview } = reviewsStore;
 
-const DEFAULT_ERROR = "Ошибка загрузки отзывов";
 const MIN_REVIEW_TEXT_LENGTH = 10;
 
 const editingReview = ref<Review | null>(null);
@@ -103,7 +102,7 @@ const handleDelete = async (reviewId: string) => {
     <div class="reviews-widget__header">
       <h3 class="reviews-widget__title">
         <BaseIcon
-          name="mdi:comment-text-multiple-outline"
+          name="ph:chats"
           :width="22"
           :height="22"
         />
@@ -114,20 +113,29 @@ const handleDelete = async (reviewId: string) => {
       </span>
     </div>
 
-    <ListError
+    <StateBlock
       v-if="isError"
       class="reviews-widget__error"
-      :is-error="DEFAULT_ERROR"
-      :repeat-fn="() => fetchReviews(movieId)"
-      repeat-text="Повторить"
+      compact
+      variant="error"
+      icon="ph:warning-circle"
+      title="Не удалось загрузить отзывы"
+      description="Попробуйте обновить."
+      :actions="[
+        {
+          label: 'Повторить',
+          icon: 'ph:arrow-clockwise',
+          kind: 'primary',
+          onClick: () => void fetchReviews(movieId),
+        },
+      ]"
     />
 
-    <ListLoading
+    <RowsSkeleton
       v-else-if="isLoading"
       class="reviews-widget__loading"
-      :center="true"
-      loading-text="Загружаем отзывы..."
-      size="large"
+      :count="3"
+      :badge="false"
     />
 
     <template v-else-if="isLoaded">
@@ -144,7 +152,7 @@ const handleDelete = async (reviewId: string) => {
       </div>
 
       <div v-else class="reviews-widget__empty">
-        <BaseIcon name="mdi:comment-off-outline" :width="40" :height="40" />
+        <BaseIcon name="ph:chat-text" :width="40" :height="40" />
         <p>Отзывов пока нет. Будьте первым!</p>
       </div>
     </template>
@@ -179,11 +187,11 @@ const handleDelete = async (reviewId: string) => {
 
 <style scoped lang="scss">
 .reviews-widget {
-  background: var(--bg-primary);
+  background: var(--fv-color-bg-primary);
   border-radius: 20px;
   padding: 2rem;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border-color);
+  box-shadow: var(--fv-shadow-low);
+  border: 1px solid var(--fv-color-border);
 
   &__header {
     display: flex;
@@ -197,12 +205,12 @@ const handleDelete = async (reviewId: string) => {
     align-items: center;
     gap: 10px;
     font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-primary);
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
     margin: 0;
 
     svg {
-      color: var(--ant-color-primary);
+      color: var(--fv-color-accent);
     }
   }
 
@@ -216,12 +224,12 @@ const handleDelete = async (reviewId: string) => {
     border-radius: 14px;
     background: color-mix(
       in srgb,
-      var(--ant-color-primary) 10%,
-      var(--bg-primary)
+      var(--fv-color-accent) 10%,
+      var(--fv-color-bg-primary)
     );
-    color: var(--ant-color-primary);
+    color: var(--fv-color-accent);
     font-size: 0.85rem;
-    font-weight: 700;
+    font-weight: 500;
   }
 
   &__list {
@@ -239,9 +247,9 @@ const handleDelete = async (reviewId: string) => {
     padding: 2.5rem 1rem;
     margin-bottom: 1.5rem;
     border-radius: 12px;
-    background: var(--bg-secondary);
-    border: 1px dashed var(--border-color);
-    color: var(--text-secondary);
+    background: var(--fv-color-bg-secondary);
+    border: 1px dashed var(--fv-color-border);
+    color: var(--fv-color-text-secondary);
     text-align: center;
 
     p {
@@ -253,7 +261,7 @@ const handleDelete = async (reviewId: string) => {
   &__form-section {
     padding-top: 1.5rem;
     border-top: 1px solid
-      color-mix(in srgb, var(--border-color) 50%, transparent);
+      color-mix(in srgb, var(--fv-color-border) 50%, transparent);
   }
 
   &__form-header {
@@ -266,7 +274,7 @@ const handleDelete = async (reviewId: string) => {
   &__form-title {
     font-size: 1rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--fv-color-text-primary);
     margin: 0;
   }
 }

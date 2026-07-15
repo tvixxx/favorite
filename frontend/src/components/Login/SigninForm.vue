@@ -77,7 +77,7 @@ const login = async ({ email, password }: FormState) => {
       >
         <a-form-item name="email" class="signin__field">
           <template #label>
-            <Icon icon="mdi:email-outline" class="signin__field-icon" />
+            <Icon icon="ph:envelope-simple" class="signin__field-icon" />
             Email
           </template>
           <a-input
@@ -89,7 +89,7 @@ const login = async ({ email, password }: FormState) => {
 
         <a-form-item name="password" class="signin__field">
           <template #label>
-            <Icon icon="mdi:lock-outline" class="signin__field-icon" />
+            <Icon icon="ph:lock-simple" class="signin__field-icon" />
             Пароль
           </template>
           <a-input-password
@@ -142,8 +142,8 @@ const login = async ({ email, password }: FormState) => {
       border: none;
       background: linear-gradient(
         135deg,
-        var(--ant-color-primary),
-        color-mix(in srgb, var(--ant-color-primary), #000 15%)
+        var(--fv-color-brand),
+        color-mix(in srgb, var(--fv-color-brand), #000 15%)
       );
       font-weight: 600;
       font-size: 1rem;
@@ -161,7 +161,7 @@ const login = async ({ email, password }: FormState) => {
   }
 
   &__field-icon {
-    color: var(--ant-color-primary);
+    color: var(--fv-color-accent);
     width: 20px;
     height: 20px;
     margin-right: 0.5rem;

@@ -13,7 +13,7 @@ const genreOptions: SelectProps["options"] = GenreValues.map((genre) => ({
   value: genre,
 }));
 
-const filterOption = (input: string, option: any) => {
+const filterOption = (input: string, option: { label: string }) => {
   return option.label.toLowerCase().includes(input.toLowerCase());
 };
 </script>

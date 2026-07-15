@@ -423,7 +423,7 @@ defineExpose({
           >
             <BaseIcon
               class="chat-message-input__mention-icon"
-              name="mdi:movie-open-outline"
+              name="ph:film-slate"
               :width="18"
               :height="18"
             />
@@ -479,6 +479,30 @@ defineExpose({
 
   &__textarea {
     width: 100%;
+
+    // Эталон: поле — серая «пилюля» без рамки/красного фокуса
+    :deep(.ant-input) {
+      background: var(--fv-color-bg-secondary);
+      border: none;
+      border-radius: 22px;
+      padding: 10px 16px;
+      font-size: 15px;
+      resize: none;
+      box-shadow: none;
+      transition: background 0.15s ease;
+
+      &:hover,
+      &:focus,
+      &:focus-within {
+        border: none;
+        box-shadow: none;
+        background: color-mix(
+          in srgb,
+          var(--fv-color-text-primary) 4%,
+          var(--fv-color-bg-secondary)
+        );
+      }
+    }
   }
 
   &__mention {
@@ -491,15 +515,15 @@ defineExpose({
     z-index: 50;
     padding: 0.35rem;
     border-radius: 12px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-primary);
+    border: 1px solid var(--fv-color-border);
+    background: var(--fv-color-bg-primary);
     box-shadow: 0 8px 28px color-mix(in srgb, #000 12%, transparent);
   }
 
   &__mention-hint {
     padding: 0.6rem 0.75rem;
     font-size: 0.85rem;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__mention-item {
@@ -513,7 +537,7 @@ defineExpose({
     border: none;
     border-radius: 8px;
     background: transparent;
-    color: var(--text-primary);
+    color: var(--fv-color-text-primary);
     font-size: 0.9rem;
     cursor: pointer;
     transition: background 0.15s ease;
@@ -522,8 +546,8 @@ defineExpose({
     &--active {
       background: color-mix(
         in srgb,
-        var(--ant-color-primary) 10%,
-        var(--bg-secondary)
+        var(--fv-color-accent) 10%,
+        var(--fv-color-bg-secondary)
       );
     }
   }
@@ -531,7 +555,7 @@ defineExpose({
   &__mention-icon {
     flex-shrink: 0;
     margin-top: 2px;
-    color: var(--ant-color-primary);
+    color: var(--fv-color-accent);
     opacity: 0.9;
   }
 
@@ -542,7 +566,7 @@ defineExpose({
 
   &__mention-serial {
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
     font-size: 0.88em;
   }
 }

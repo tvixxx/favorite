@@ -32,7 +32,7 @@ defineProps<{
   &__label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__picker {

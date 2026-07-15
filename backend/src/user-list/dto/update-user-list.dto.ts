@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   ArrayMaxSize,
   IsArray,
+  IsHexColor,
   IsOptional,
   IsString,
   Length,
@@ -27,6 +28,15 @@ export class UpdateUserListDto {
   @IsString()
   @Length(0, 240)
   description?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Цвет обложки списка (HEX)',
+    example: '#007CFF',
+  })
+  @IsOptional()
+  @IsHexColor()
+  color?: string;
 
   @ApiProperty({
     required: false,

@@ -13,7 +13,7 @@ export const LEADERBOARD_HERO_USERS: LeaderboardHeroMeta = {
   subtitle:
     "Кто больше всего смотрит до конца: фильмы сразу в зачёт, сериалы — только после последней серии",
   badgeText: "Участников",
-  iconName: "mdi:podium-gold",
+  iconName: "ph:trophy-fill",
   kind: "users",
 };
 
@@ -22,7 +22,7 @@ export const LEADERBOARD_HERO_MOVIES: LeaderboardHeroMeta = {
   subtitle:
     "Средняя пользовательская оценка из коллекций; без оценок считается 0 и попадает в диапазон, если в фильтре рейтинга есть 0",
   badgeText: "В списке",
-  iconName: "mdi:star-circle",
+  iconName: "ph:star-fill",
   kind: "movies",
 };
 

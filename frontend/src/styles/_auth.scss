@@ -4,7 +4,7 @@
 @mixin authShell {
   min-height: 450px;
   height: 100%;
-  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  background: linear-gradient(135deg, var(--fv-color-bg-primary) 0%, var(--fv-color-bg-secondary) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,20 +14,18 @@
 }
 
 @mixin authTitle($block) {
+  font-family: var(--fv-font-display);
   font-size: clamp(2rem, 5vw, 2.75rem);
-  font-weight: 800;
+  font-weight: 500;
   margin: 0;
-  background: linear-gradient(135deg, var(--ant-color-primary), var(--text-primary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--fv-color-text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
 
   .#{$block}__title-icon {
-    color: var(--ant-color-primary);
+    color: var(--fv-color-accent);
     width: 32px;
     height: 32px;
   }
@@ -35,11 +33,11 @@
 
 @mixin authAntForm($block) {
   :deep(.ant-form) {
-    background: var(--bg-primary);
+    background: var(--fv-color-bg-primary);
     padding: 2.5rem 2rem;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-elevated);
-    border: 1px solid var(--border-color);
+    border-radius: var(--fv-radius-lg);
+    box-shadow: var(--fv-shadow-elevated);
+    border: 1px solid var(--fv-color-border);
 
     .ant-form-item {
       margin-bottom: 1.5rem;
@@ -48,30 +46,30 @@
         .ant-form-item-label {
           > label {
             font-weight: 600;
-            color: var(--text-primary);
+            color: var(--fv-color-text-primary);
             font-size: 0.95rem;
           }
         }
 
         .ant-form-item-control-input-content {
           .ant-input {
-            border-radius: var(--radius-sm);
-            border: 2px solid var(--border-color);
+            border-radius: var(--fv-radius-sm);
+            border: 2px solid var(--fv-color-border);
             height: 52px;
             padding: 0 1rem;
             font-size: 1rem;
             transition: all 0.3s ease;
-            background: var(--bg-secondary);
+            background: var(--fv-color-bg-secondary);
 
             &:focus,
             &:hover {
-              border-color: var(--ant-color-primary);
+              border-color: var(--fv-color-accent);
               @include antFocusRing(10%);
-              background: var(--bg-primary);
+              background: var(--fv-color-bg-primary);
             }
 
             &::placeholder {
-              color: var(--text-secondary);
+              color: var(--fv-color-text-secondary);
             }
           }
 
@@ -81,7 +79,7 @@
             }
 
             .ant-input-password-icon {
-              color: var(--text-secondary);
+              color: var(--fv-color-text-secondary);
             }
           }
         }

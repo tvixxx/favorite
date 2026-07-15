@@ -1,27 +1,72 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { RouterLink } from "vue-router";
-import { parseChatMessageContent } from "@/utils/chatMessageSegments";
+import ChatMovieCard from "@/components/ChatMessageContent/ChatMovieCard.vue";
+import {
+  parseChatMessageContent,
+  type ChatMessageSegment,
+} from "@/utils/chatMessageSegments";
 
 const props = defineProps<{
   content: string;
+  /** Сообщение отправлено текущим пользователем — красный пузырь */
+  sent?: boolean;
 }>();
 
-const segments = computed(() => parseChatMessageContent(props.content));
+type Block =
+  | { kind: "text"; segments: ChatMessageSegment[] }
+  | { kind: "movie"; url: string; title: string };
 
-function parseDetailLink(url: string): { id: string; title: string | null } | null {
+// Группируем сегменты в блоки: подряд идущий текст/ссылки → пузырь,
+// каждый фильм → отдельная карточка (как в эталоне — не внутри пузыря).
+const blocks = computed<Block[]>(() => {
+  const segments = parseChatMessageContent(props.content);
+  const result: Block[] = [];
+  let run: ChatMessageSegment[] = [];
+
+  const flush = (): void => {
+    const hasContent = run.some(
+      (seg) => seg.type === "link" || (seg.type === "text" && seg.text.trim()),
+    );
+
+    if (hasContent) {
+      result.push({ kind: "text", segments: run });
+    }
+
+    run = [];
+  };
+
+  for (const seg of segments) {
+    if (seg.type === "movie") {
+      flush();
+      result.push({ kind: "movie", url: seg.url, title: seg.title });
+    } else {
+      run.push(seg);
+    }
+  }
+
+  flush();
+
+  return result;
+});
+
+function parseDetailLink(
+  url: string,
+): { id: string; title: string | null } | null {
   try {
-    const u = new URL(url, window.location.origin);
-    if (u.origin !== window.location.origin) {
+    const parsed = new URL(url, window.location.origin);
+
+    if (parsed.origin !== window.location.origin) {
       return null;
     }
 
-    const m = u.pathname.match(/^\/detail\/([^/]+)\/?$/);
-    if (!m) {
+    const match = parsed.pathname.match(/^\/detail\/([^/]+)\/?$/);
+
+    if (!match) {
       return null;
     }
 
-    return { id: m[1], title: u.searchParams.get("shareTitle") };
+    return { id: match[1], title: parsed.searchParams.get("shareTitle") };
   } catch {
     return null;
   }
@@ -29,56 +74,70 @@ function parseDetailLink(url: string): { id: string; title: string | null } | nu
 </script>
 
 <template>
-  <span class="chat-msg-content">
-    <template v-for="(seg, idx) in segments" :key="idx">
-      <span v-if="seg.type === 'text'" class="chat-msg-content__text">{{
-        seg.text
-      }}</span>
-      <template v-else-if="seg.type === 'movie'">
-        <RouterLink
-          v-if="parseDetailLink(seg.url)"
-          class="chat-msg-content__link"
-          :to="{ name: 'detail', params: { id: parseDetailLink(seg.url)!.id } }"
-        >
-          {{ seg.title }}
-        </RouterLink>
-        <a
-          v-else
-          class="chat-msg-content__link"
-          :href="seg.url"
-          target="_blank"
-          rel="noopener noreferrer"
-          >{{ seg.title }}</a
-        >
+  <template v-for="(block, idx) in blocks" :key="idx">
+    <ChatMovieCard
+      v-if="block.kind === 'movie'"
+      :url="block.url"
+      :title="block.title"
+    />
+
+    <div
+      v-else
+      class="chat-bubble"
+      :class="sent ? 'chat-bubble--sent' : 'chat-bubble--received'"
+    >
+      <template v-for="(seg, sidx) in block.segments" :key="sidx">
+        <span v-if="seg.type === 'text'">{{ seg.text }}</span>
+        <template v-else-if="seg.type === 'link'">
+          <RouterLink
+            v-if="parseDetailLink(seg.url)"
+            class="chat-bubble__link"
+            :to="{ name: 'detail', params: { id: parseDetailLink(seg.url)!.id } }"
+          >
+            {{ parseDetailLink(seg.url)?.title || seg.url }}
+          </RouterLink>
+          <a
+            v-else
+            class="chat-bubble__link"
+            :href="seg.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            >{{ seg.url }}</a
+          >
+        </template>
       </template>
-      <template v-else-if="seg.type === 'link'">
-        <RouterLink
-          v-if="parseDetailLink(seg.url)"
-          class="chat-msg-content__link"
-          :to="{ name: 'detail', params: { id: parseDetailLink(seg.url)!.id } }"
-        >
-          {{ parseDetailLink(seg.url)?.title || seg.url }}
-        </RouterLink>
-        <a
-          v-else
-          class="chat-msg-content__link"
-          :href="seg.url"
-          target="_blank"
-          rel="noopener noreferrer"
-          >{{ seg.url }}</a
-        >
-      </template>
-    </template>
-  </span>
+    </div>
+  </template>
 </template>
 
 <style scoped lang="scss">
-.chat-msg-content {
+/* Текстовый пузырь (эталон): красный отправленный / белый полученный, хвост */
+.chat-bubble {
+  width: fit-content;
+  max-width: 100%;
+  padding: 11px 14px;
+  font-family: var(--fv-font-ui);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;
+  overflow-wrap: anywhere;
 
-  &__text {
-    white-space: pre-wrap;
+  &--sent {
+    align-self: flex-end;
+    background: var(--fv-color-brand);
+    color: #fff;
+    border-radius: 16px 16px 4px 16px;
+  }
+
+  &--received {
+    align-self: flex-start;
+    background: var(--fv-color-bg-primary);
+    color: var(--fv-color-text-primary);
+    border: 1px solid color-mix(in srgb, var(--fv-color-border) 60%, transparent);
+    border-radius: 16px 16px 16px 4px;
+    box-shadow: var(--fv-shadow-low);
   }
 
   &__link {

@@ -1,20 +1,23 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { formatDate, formatYear } from "@/utils";
+import { movieCardMeta, movieCardTitle } from "@/utils";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { useMainStore } from "@/state/state";
 import { message } from "ant-design-vue";
 import { useUserMoviesStore } from "@/stores";
 
-import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
-import ListError from "@/components/List/ListError/ListError.vue";
-import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
-import ListEmpty from "@/components/List/ListEmpty/ListEmpty.vue";
+import PosterGridSkeleton from "@/components/Skeleton/PosterGridSkeleton.vue";
+import { useMinLoading } from "@/components/Skeleton/useMinLoading";
+import StateBlock, {
+  type StateAction,
+} from "@/components/StateBlock/StateBlock.vue";
+import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import type { UserMovie, UserMoviesFilters } from "@/stores";
-import MoviesFiltersPanel from "@/components/MoviesFiltersPanel/MoviesFiltersPanel.vue";
+import CollectionFiltersBar from "@/components/MoviesFiltersPanel/CollectionFiltersBar.vue";
+import MovieCard from "@/components/MovieCard/MovieCard.vue";
 
 const router = useRouter();
 const userMoviesStore = useUserMoviesStore();
@@ -113,6 +116,26 @@ const paginatedFavorites = computed(() => {
 });
 
 const totalFavorites = computed(() => favoritesForView.value.length);
+
+const pluralTitles = (n: number): string => {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+
+  if (mod10 === 1 && mod100 !== 11) {
+    return "тайтл";
+  }
+
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+    return "тайтла";
+  }
+
+  return "тайтлов";
+};
+
+const favoritesSubtitle = computed(
+  () =>
+    `${totalFavorites.value} ${pluralTitles(totalFavorites.value)} отмечено сердечком`,
+);
 const hasFilteredResults = computed(() => favoritesForView.value.length > 0);
 
 const showPaginator = computed(
@@ -122,11 +145,34 @@ const showPaginator = computed(
     !userMoviesStore.isLoading
 );
 
-const emptyFavoritesDescription = computed(() =>
-  searchQuery.value.trim() || userMoviesStore.searchQuery.trim()
-    ? "В избранном ничего не найдено"
-    : "Избранных фильмов пока нет..."
-);
+const showSkeleton = useMinLoading(() => userMoviesStore.isLoading);
+
+const favoritesEmptyState = computed(() => {
+  const searching =
+    searchQuery.value.trim() || userMoviesStore.searchQuery.trim();
+
+  if (searching) {
+    return {
+      variant: "empty" as const,
+      icon: "ph:magnifying-glass",
+      title: "Ничего не найдено",
+      description: "В избранном ничего не найдено — измените запрос.",
+      actions: [] as StateAction[],
+    };
+  }
+
+  return {
+    ...STATE_PRESETS.favoritesEmpty,
+    actions: [
+      {
+        label: "Открыть каталог",
+        icon: "ph:squares-four",
+        kind: "secondary",
+        onClick: () => void router.push("/library/catalog"),
+      },
+    ] as StateAction[],
+  };
+});
 
 const getPosterSrc = (item: UserMovie) => {
   return imageErrors.value.has(item.movieId)
@@ -153,10 +199,6 @@ const goToMovie = (item: UserMovie) => {
   router.push(`/detail/${item.movieId}`);
 };
 
-const goToMovies = () => {
-  router.push("/library/collection");
-};
-
 onMounted(async () => {
   applyFavoriteScopeToStore();
 
@@ -172,56 +214,52 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
-  userMoviesStore.setFilters({
-    ...userMoviesStore.filters,
-    isFavorite: undefined,
-  });
+  // Полный сброс общего стор-стейта, чтобы поиск/фильтры не «протекали»
+  // на другие страницы (Медиатека и т.д.).
+  userMoviesStore.clearSearch();
+  userMoviesStore.setFilters({});
+  userMoviesStore.setCurrentPage(1);
 });
 </script>
 
 <template>
   <section class="favorites">
     <HeroHeader
-      title="Ваши любимые фильмы"
-      subtitle="Только то, что вы выделили как лучшее"
+      title="Любимое кино"
+      :subtitle="favoritesSubtitle"
       badge-text="Избранное"
-      :badge-count="totalFavorites"
-      icon-name="mdi:heart"
+      icon-name="ph:heart-fill"
+      icon-tone="negative"
     />
 
     <div class="favorites__content">
-      <AppBackButton :fallback="{ path: '/profile' }" />
-      <MoviesFiltersPanel
+      <CollectionFiltersBar
+        :show-status="false"
+        search-placeholder="Поиск по избранному"
         :search-handler="handleSearch"
         @update:filters="handleFiltersUpdate"
       />
-      <ListError
+      <StateBlock
         v-if="userMoviesStore.isError"
-        :isError="userMoviesStore.isError"
-        :repeatFn="() => void refetchFavorites()"
-        repeatText="Повторить"
+        v-bind="STATE_PRESETS.favoritesError"
+        :actions="[
+          {
+            label: 'Повторить',
+            icon: 'ph:arrow-clockwise',
+            kind: 'primary',
+            onClick: () => void refetchFavorites(),
+          },
+        ]"
       />
 
-      <div v-else-if="userMoviesStore.isLoading" class="favorites__loading">
-        <ListLoading
-          size="large"
-          loading-text="Загружаем избранное..."
-          :center="true"
-        />
-      </div>
+      <PosterGridSkeleton v-else-if="showSkeleton" :count="12" />
 
-      <div v-else-if="!hasFilteredResults" class="favorites__empty-state">
-        <ListEmpty
-          :description="emptyFavoritesDescription"
-          btn-text="Перейти в фильмы"
-          :btn-handler="goToMovies"
-        />
-      </div>
+      <StateBlock v-else-if="!hasFilteredResults" v-bind="favoritesEmptyState" />
 
       <div v-else class="favorites__section">
         <div class="favorites__section-header">
           <h2 class="favorites__section-title">
-            <BaseIcon name="mdi:heart-outline" />
+            <BaseIcon name="ph:heart" />
             Избранное
           </h2>
           <a-button
@@ -235,48 +273,18 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="favorites__grid">
-          <div
+          <MovieCard
             v-for="item in paginatedFavorites"
             :key="item.id"
-            class="favorites__card"
-            @click="goToMovie(item)"
-          >
-            <div class="favorites__card-image">
-              <img
-                :src="getPosterSrc(item)"
-                :alt="`${item.movie.title} постер`"
-                class="favorites__poster"
-                loading="lazy"
-                @error="handleImageError(item.movieId)"
-              />
-              <div class="favorites__card-favorite">
-                <BaseIcon name="mdi:heart" />
-              </div>
-            </div>
-
-            <div class="favorites__card-content">
-              <div class="favorites__card-rating">{{ item.personalRate || 0 }}/10</div>
-
-              <button
-                class="favorites__card-delete"
-                @click.stop="() => removeFromFavorite(item)"
-              >
-                <BaseIcon name="pajamas:remove" />
-              </button>
-
-              <h3 class="favorites__card-title">{{ item.movie.title }}</h3>
-
-              <div class="favorites__card-meta">
-                <div class="favorites__meta-item">
-                  <BaseIcon name="mdi:calendar" class="favorites__meta-icon" />
-                  {{ formatDate(item.addedAt) }}
-                </div>
-                <div class="favorites__meta-item">
-                  {{ formatYear(item.movie.publishDate) }}
-                </div>
-              </div>
-            </div>
-          </div>
+            :poster-src="getPosterSrc(item)"
+            :title="movieCardTitle(item.movie)"
+            :meta="movieCardMeta(item.movie)"
+            :rate="item.personalRate || 0"
+            :favorite="true"
+            @open="goToMovie(item)"
+            @toggle-favorite="removeFromFavorite(item)"
+            @poster-error="handleImageError(item.movieId)"
+          />
         </div>
 
         <div class="favorites__pagination" v-if="showPaginator">
@@ -313,7 +321,6 @@ onBeforeUnmount(() => {
   &__section {
     margin-top: 2rem;
     width: 100%;
-    max-width: 1400px;
   }
 
   &__section-header {
@@ -323,13 +330,13 @@ onBeforeUnmount(() => {
     margin-bottom: 1rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid
-      color-mix(in srgb, var(--border-color) 50%, transparent);
+      color-mix(in srgb, var(--fv-color-border) 50%, transparent);
   }
 
   &__section-title {
     font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--text-primary);
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -338,198 +345,23 @@ onBeforeUnmount(() => {
     svg {
       width: 28px;
       height: 28px;
-      color: var(--ant-color-primary);
+      color: var(--fv-color-brand);
     }
   }
 
   &__refresh {
     background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
+    border: 1px solid var(--fv-color-border);
+    color: var(--fv-color-text-secondary);
 
     &:hover {
-      border-color: var(--ant-color-primary);
-      color: var(--ant-color-primary);
+      border-color: var(--fv-color-accent);
+      color: var(--fv-color-accent);
     }
   }
 
   &__grid {
     @include cardsGrid;
-  }
-
-  &__card {
-    @include clickableCard(var(--radius-md));
-
-    &::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(
-        90deg,
-        var(--ant-color-primary),
-        color-mix(in srgb, var(--ant-color-primary) 50%, var(--bg-secondary))
-      );
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: 1;
-    }
-
-    &:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.2);
-      border-color: color-mix(
-        in srgb,
-        var(--ant-color-primary) 40%,
-        transparent
-      );
-
-      &::before {
-        opacity: 1;
-      }
-
-      .favorites__poster {
-        transform: scale(1.05);
-      }
-    }
-  }
-
-  &__card-image {
-    position: relative;
-    aspect-ratio: 16 / 10;
-    overflow: hidden;
-    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
-  }
-
-  &__poster {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center top;
-    transition: transform 0.4s ease;
-  }
-
-  &__card-favorite {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 36px;
-    height: 36px;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 2;
-
-    svg {
-      width: 20px;
-      height: 20px;
-      color: var(--ant-color-primary);
-    }
-  }
-
-  &__card-content {
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    flex: 1;
-  }
-
-  &__card-rating {
-    align-self: flex-end;
-    background: var(--ant-color-primary);
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 16px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    box-shadow: 0 2px 8px
-      color-mix(in srgb, var(--ant-color-primary) 30%, transparent);
-  }
-
-  &__card-delete {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--bg-secondary) 85%, transparent);
-    border: 1px solid color-mix(in srgb, var(--text-secondary) 50%, transparent);
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(8px);
-    opacity: 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    z-index: 2;
-
-    .favorites__card:hover & {
-      opacity: 1;
-    }
-
-    @media (max-width: 899px) {
-      opacity: 0.9;
-    }
-
-    &:hover {
-      background: #ef4444;
-      border-color: #dc2626;
-      color: white;
-      transform: scale(1.1);
-      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-    }
-
-    svg {
-      width: 16px;
-      height: 16px;
-    }
-  }
-
-  &__card-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    margin: 0;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    color: var(--text-primary);
-    flex-grow: 1;
-  }
-
-  &__card-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    padding-top: 0.5rem;
-    border-top: 1px solid
-      color-mix(in srgb, var(--border-color) 40%, transparent);
-  }
-
-  &__meta-item {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-  }
-
-  &__meta-icon {
-    width: 14px;
-    height: 14px;
-    color: var(--ant-color-primary);
   }
 
   &__loading {
@@ -556,7 +388,7 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
     text-align: center;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
     width: 100%;
   }
 }

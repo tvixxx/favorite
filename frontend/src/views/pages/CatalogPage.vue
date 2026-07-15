@@ -3,16 +3,19 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { message } from "ant-design-vue";
 
-import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import ListError from "@/components/List/ListError/ListError.vue";
-import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
+import PosterGridSkeleton from "@/components/Skeleton/PosterGridSkeleton.vue";
+import { useMinLoading } from "@/components/Skeleton/useMinLoading";
+import StateBlock, {
+  type StateAction,
+} from "@/components/StateBlock/StateBlock.vue";
+import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import CatalogFiltersBar from "@/components/MoviesFiltersPanel/CatalogFiltersBar.vue";
 import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
-import MovieShareButton from "@/components/MovieShareButton/MovieShareButton.vue";
 import CatalogMoviePreviewModal from "@/components/Catalog/CatalogMoviePreviewModal.vue";
+import MovieCard from "@/components/MovieCard/MovieCard.vue";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { ERROR_FETCH_MOVIES_TEXT } from "@/state/constants";
-import { formatAverageRating, formatYear } from "@/utils";
+import { formatAverageRating, movieCardMeta, movieCardTitle } from "@/utils";
 import { useMoviesStore } from "@/stores";
 import type { Movie } from "@/stores/movies/types";
 
@@ -50,19 +53,38 @@ const showPaginator = computed(
     !moviesStore.isMoviesError &&
     !moviesStore.isMoviesLoading
 );
-const emptyDescription = computed(() => {
-  if (
-    moviesStore.hasActiveFilters &&
-    moviesStore.currentMoviesList.length === 0
-  ) {
-    return "Ничего не найдено — попробуйте изменить фильтры";
+const showSkeleton = useMinLoading(() => moviesStore.isMoviesLoading);
+
+const catalogEmptyState = computed(() => {
+  const query = moviesStore.searchQuery?.trim();
+
+  if (moviesStore.hasActiveFilters) {
+    const resetAction: StateAction = {
+      label: "Сбросить фильтры",
+      icon: "ph:arrow-counter-clockwise",
+      kind: "secondary",
+      onClick: () => void resetCatalogFilters(),
+    };
+
+    return {
+      ...STATE_PRESETS.catalogSearchEmpty,
+      description: query
+        ? `По запросу «${query}» ничего не найдено. Проверьте написание или измените фильтры.`
+        : STATE_PRESETS.catalogSearchEmpty.description,
+      actions: [resetAction],
+    };
   }
 
-  if (props.actorId && moviesStore.currentMoviesList.length === 0) {
-    return "В каталоге пока нет фильмов с этим актёром";
+  if (props.actorId) {
+    return {
+      ...STATE_PRESETS.catalogEmpty,
+      title: "Нет фильмов с этим актёром",
+      description: "В каталоге пока нет фильмов с выбранным актёром.",
+      actions: [] as StateAction[],
+    };
   }
 
-  return "В каталоге пока нет фильмов";
+  return { ...STATE_PRESETS.catalogEmpty, actions: [] as StateAction[] };
 });
 
 const getPosterSrc = (item: Movie) => {
@@ -119,11 +141,12 @@ watch(
 );
 
 onBeforeUnmount(() => {
-  if (props.actorId) {
-    const next = { ...moviesStore.filters };
-    delete next.actorIds;
-    moviesStore.setFilters(next);
-  }
+  // Полный сброс: локальный UI фильтр-бара при возврате пуст, поэтому и стор
+  // должен быть чистым — иначе поиск/фильтры «протекают» на другие страницы
+  // и показывают 0 результатов. Актёрский фильтр восстанавливается на mount.
+  moviesStore.clearSearch();
+  moviesStore.setFilters({});
+  moviesStore.setCurrentPage(1);
 });
 
 const repeatFetch = () => moviesStore.fetchMovies();
@@ -161,93 +184,36 @@ async function resetCatalogFilters(): Promise<void> {
         :locked-actor-ids="actorId ? [actorId] : undefined"
       />
 
-      <ListError
+      <StateBlock
         v-if="moviesStore.isMoviesError"
-        :is-error="moviesStore.isMoviesError"
-        :repeat-fn="repeatFetch"
-        repeat-text="Повторить"
+        v-bind="STATE_PRESETS.catalogError"
+        :actions="[
+          {
+            label: 'Повторить',
+            icon: 'ph:arrow-clockwise',
+            kind: 'primary',
+            onClick: repeatFetch,
+          },
+        ]"
       />
 
-      <ListLoading
-        v-else-if="moviesStore.isMoviesLoading"
-        :center="true"
-        loading-text="Загружаем каталог…"
-        size="large"
-      />
+      <PosterGridSkeleton v-else-if="showSkeleton" :count="12" />
 
-      <div v-else-if="!hasMovies" class="catalog-page__empty-state">
-        <a-empty :description="emptyDescription" />
-
-        <div
-          v-if="moviesStore.hasActiveFilters"
-          class="catalog-page__empty-actions"
-        >
-          <a-button type="primary" @click="resetCatalogFilters">
-            Сбросить фильтры и поиск
-          </a-button>
-        </div>
-      </div>
+      <StateBlock v-else-if="!hasMovies" v-bind="catalogEmptyState" />
 
       <div v-else class="catalog-page__grid">
-        <div
+        <MovieCard
           v-for="item in moviesStore.paginatedMovies"
           :key="item.id"
-          class="catalog-card"
-          role="button"
-          tabindex="0"
-          @click="openPreview(item.id)"
-          @keydown.enter.prevent="openPreview(item.id)"
-        >
-          <div class="catalog-card__header">
-            <img
-              :alt="`${item.title} постер`"
-              :src="getPosterSrc(item)"
-              class="catalog-card__poster"
-              loading="lazy"
-              @error="handleImageError(item.id)"
-            />
-          </div>
-
-          <div class="catalog-card__body">
-            <div class="catalog-card__rating-row">
-              <span
-                class="catalog-card__rating"
-                :class="{ 'catalog-card__rating_muted': !ratingLabel(item) }"
-              >
-                <template v-if="ratingLabel(item)">
-                  {{ ratingLabel(item) }}
-                  <span class="catalog-card__rating-max">/10</span>
-                </template>
-                <template v-else>—</template>
-              </span>
-              <span class="catalog-card__rating-hint">средний балл</span>
-            </div>
-
-            <h3 class="catalog-card__title">
-              {{ item.title }}
-              <span v-if="item.isSerial" class="catalog-card__serial"
-                >(сериал)</span
-              >
-            </h3>
-
-            <div class="catalog-card__meta">
-              <div v-if="item.publishDate" class="catalog-card__meta-item">
-                <BaseIcon
-                  class="catalog-card__meta-icon"
-                  name="mdi:filmstrip"
-                />
-                <span>{{ formatYear(item.publishDate) }}</span>
-              </div>
-            </div>
-
-            <div class="catalog-card__share" @click.stop>
-              <MovieShareButton
-                :movie-id="item.id"
-                :movie-title="item.title"
-              />
-            </div>
-          </div>
-        </div>
+          :poster-src="getPosterSrc(item)"
+          :title="movieCardTitle(item)"
+          :meta="movieCardMeta(item)"
+          :rate="ratingLabel(item)"
+          addable
+          @open="openPreview(item.id)"
+          @add="openPreview(item.id)"
+          @poster-error="handleImageError(item.id)"
+        />
       </div>
 
       <div
@@ -293,7 +259,7 @@ async function resetCatalogFilters(): Promise<void> {
   &__back-wrap {
     align-self: stretch;
     width: 100%;
-    max-width: var(--page-max-width);
+    max-width: var(--fv-layout-max-width);
 
     :deep(.app-back-btn) {
       margin: 0 0 0.75rem;
@@ -318,7 +284,7 @@ async function resetCatalogFilters(): Promise<void> {
     align-items: center;
     justify-content: center;
     text-align: center;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
     width: 100%;
 
     @include antEmptyTypography;
@@ -333,131 +299,4 @@ async function resetCatalogFilters(): Promise<void> {
   }
 }
 
-.catalog-card {
-  @include clickableCard(var(--radius-md));
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(
-      90deg,
-      var(--ant-color-primary),
-      color-mix(in srgb, var(--ant-color-primary) 50%, var(--bg-secondary))
-    );
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: 1;
-  }
-
-  &:hover::before {
-    opacity: 1;
-  }
-
-  &__header {
-    position: relative;
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
-    overflow: hidden;
-    aspect-ratio: 2 / 3;
-    background: var(--bg-secondary);
-  }
-
-  &__poster {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center top;
-    display: block;
-    transition: transform 0.35s ease;
-  }
-
-  &:hover &__poster {
-    transform: scale(1.03);
-  }
-
-  &__body {
-    padding: 1rem 1.1rem 1.15rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  &__rating-row {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  &__rating {
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
-
-    &_muted {
-      font-weight: 700;
-      color: var(--text-secondary);
-    }
-  }
-
-  &__rating-max {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-  }
-
-  &__rating-hint {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: lowercase;
-    opacity: 0.85;
-  }
-
-  &__title {
-    margin: 0;
-    font-size: 1.05rem;
-    font-weight: 700;
-    line-height: 1.35;
-    color: var(--text-primary);
-  }
-
-  &__serial {
-    font-weight: 600;
-    color: var(--text-secondary);
-    font-size: 0.9em;
-  }
-
-  &__meta {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-  }
-
-  &__meta-item {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-
-  &__meta-icon {
-    flex-shrink: 0;
-    opacity: 0.75;
-    color: var(--ant-color-primary);
-  }
-
-  &__share {
-    display: flex;
-    justify-content: flex-start;
-    width: 100%;
-    padding-top: 0.35rem;
-  }
-}
 </style>

@@ -9,6 +9,7 @@ export interface UserListSummary {
   userId: string;
   name: string;
   description: string | null;
+  color: string | null;
   labels: string[];
   createdAt: string;
   updatedAt: string;
@@ -30,6 +31,7 @@ export interface UserListDetail {
   userId: string;
   name: string;
   description: string | null;
+  color: string | null;
   labels: string[];
   createdAt: string;
   updatedAt: string;
@@ -39,11 +41,13 @@ export interface UserListDetail {
 export interface CreateUserListPayload {
   name: string;
   description?: string;
+  color?: string;
   labels?: string[];
 }
 
 export interface UpdateUserListPayload {
   name?: string;
   description?: string;
+  color?: string;
   labels?: string[];
 }

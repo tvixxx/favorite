@@ -130,6 +130,7 @@ export const useUserListsStore = defineStore("userLists", () => {
         ...currentList.value,
         name: updated.name,
         description: updated.description,
+        color: updated.color,
         labels: updated.labels,
         updatedAt: updated.updatedAt,
       };

@@ -53,6 +53,6 @@ export async function useFetch<T = unknown>(
   return {
     data: response.data,
     status: response.status,
-    token: token ?? (response.data as any)?.accessToken,
+    token: token ?? (response.data as { accessToken?: string })?.accessToken,
   };
 }

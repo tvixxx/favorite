@@ -78,7 +78,7 @@ const register = async ({ email, password, name }: FormState) => {
     <div class="register__container">
       <div class="register__header">
         <h1 class="register__title">
-          <Icon icon="mdi:account-plus" class="register__title-icon" />
+          <Icon icon="ph:user-plus" class="register__title-icon" />
           Регистрация
         </h1>
       </div>
@@ -92,7 +92,7 @@ const register = async ({ email, password, name }: FormState) => {
       >
         <a-form-item name="name" class="register__field">
           <template #label>
-            <Icon icon="mdi:account-outline" class="register__field-icon" />
+            <Icon icon="ph:user" class="register__field-icon" />
             Имя
           </template>
           <a-input
@@ -104,7 +104,7 @@ const register = async ({ email, password, name }: FormState) => {
 
         <a-form-item name="email" class="register__field">
           <template #label>
-            <Icon icon="mdi:email-outline" class="register__field-icon" />
+            <Icon icon="ph:envelope-simple" class="register__field-icon" />
             Email
           </template>
           <a-input
@@ -116,7 +116,7 @@ const register = async ({ email, password, name }: FormState) => {
 
         <a-form-item name="password" class="register__field">
           <template #label>
-            <Icon icon="mdi:lock-outline" class="register__field-icon" />
+            <Icon icon="ph:lock-simple" class="register__field-icon" />
             Пароль
           </template>
           <a-input-password
@@ -169,8 +169,8 @@ const register = async ({ email, password, name }: FormState) => {
       border: none;
       background: linear-gradient(
         135deg,
-        var(--ant-color-primary),
-        color-mix(in srgb, var(--ant-color-primary), #000 15%)
+        var(--fv-color-brand),
+        color-mix(in srgb, var(--fv-color-brand), #000 15%)
       );
       font-weight: 600;
       font-size: 1rem;
@@ -188,7 +188,7 @@ const register = async ({ email, password, name }: FormState) => {
   }
 
   &__field-icon {
-    color: var(--ant-color-primary);
+    color: var(--fv-color-accent);
     width: 20px;
     height: 20px;
     margin-right: 0.5rem;

@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import type { Review } from "@/stores";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import ConfirmDialog from "@/components/ConfirmDialog/ConfirmDialog.vue";
 
 const props = withDefaults(
   defineProps<{
@@ -18,6 +19,13 @@ const emit = defineEmits<{
 }>();
 
 const ratePercent = computed(() => (props.review.rate / 10) * 100);
+
+const isDeleteOpen = ref(false);
+
+const confirmDelete = (): void => {
+  emit("delete", props.review.id);
+  isDeleteOpen.value = false;
+};
 </script>
 
 <template>
@@ -40,24 +48,25 @@ const ratePercent = computed(() => (props.review.rate / 10) * 100);
           :class="{ 'review-item__action-btn--active': isEditing }"
           @click="emit('edit', review)"
         >
-          <BaseIcon name="mdi:pencil-outline" :width="16" :height="16" />
+          <BaseIcon name="ph:pencil-simple" :width="16" :height="16" />
         </button>
-        <a-popconfirm
-          title="Удалить отзыв?"
-          ok-text="Да"
-          cancel-text="Нет"
-          @confirm="emit('delete', review.id)"
+        <button
+          class="review-item__action-btn review-item__action-btn--danger"
+          @click="isDeleteOpen = true"
         >
-          <button
-            class="review-item__action-btn review-item__action-btn--danger"
-          >
-            <BaseIcon name="mdi:delete-outline" :width="16" :height="16" />
-          </button>
-        </a-popconfirm>
+          <BaseIcon name="ph:trash" :width="16" :height="16" />
+        </button>
       </div>
     </div>
 
     <p class="review-item__text">{{ review.text }}</p>
+
+    <ConfirmDialog
+      v-model="isDeleteOpen"
+      title="Удалить отзыв?"
+      description="Отзыв будет удалён безвозвратно."
+      @confirm="confirmDelete"
+    />
   </div>
 </template>
 
@@ -67,23 +76,23 @@ const ratePercent = computed(() => (props.review.rate / 10) * 100);
 .review-item {
   padding: 1.25rem;
   border-radius: 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: var(--fv-color-bg-secondary);
+  border: 1px solid var(--fv-color-border);
   transition: all 0.2s ease;
 
   &--editing {
-    border-color: var(--ant-color-primary);
+    border-color: var(--fv-color-accent);
     background: color-mix(
       in srgb,
-      var(--ant-color-primary) 5%,
-      var(--bg-secondary)
+      var(--fv-color-accent) 5%,
+      var(--fv-color-bg-secondary)
     );
     box-shadow: 0 0 0 2px
-      color-mix(in srgb, var(--ant-color-primary) 15%, transparent);
+      color-mix(in srgb, var(--fv-color-accent) 15%, transparent);
   }
 
   &:hover {
-    border-color: color-mix(in srgb, var(--ant-color-primary) 30%, transparent);
+    border-color: color-mix(in srgb, var(--fv-color-accent) 30%, transparent);
 
     .review-item__actions {
       opacity: 1;
@@ -106,21 +115,21 @@ const ratePercent = computed(() => (props.review.rate / 10) * 100);
 
   &__rating-value {
     font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--ant-color-primary);
+    font-weight: 500;
+    color: var(--fv-color-accent);
     line-height: 1;
   }
 
   &__rating-max {
     font-size: 0.8rem;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__rating-bar {
     width: 80px;
     height: 4px;
-    background: var(--bg-primary);
+    background: var(--fv-color-bg-primary);
     border-radius: 2px;
     overflow: hidden;
     margin-left: 6px;
@@ -128,7 +137,7 @@ const ratePercent = computed(() => (props.review.rate / 10) * 100);
 
   &__rating-fill {
     height: 100%;
-    background: var(--ant-color-primary);
+    background: var(--fv-color-accent);
     border-radius: 2px;
     transition: width 0.4s ease;
   }
@@ -148,9 +157,9 @@ const ratePercent = computed(() => (props.review.rate / 10) * 100);
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-primary);
-    color: var(--text-secondary);
+    border: 1px solid var(--fv-color-border);
+    background: var(--fv-color-bg-primary);
+    color: var(--fv-color-text-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -158,17 +167,17 @@ const ratePercent = computed(() => (props.review.rate / 10) * 100);
     transition: all 0.2s ease;
 
     &:hover {
-      border-color: var(--ant-color-primary);
-      color: var(--ant-color-primary);
+      border-color: var(--fv-color-accent);
+      color: var(--fv-color-accent);
     }
 
     &--active {
-      border-color: var(--ant-color-primary);
-      color: var(--ant-color-primary);
+      border-color: var(--fv-color-accent);
+      color: var(--fv-color-accent);
       background: color-mix(
         in srgb,
-        var(--ant-color-primary) 10%,
-        var(--bg-primary)
+        var(--fv-color-accent) 10%,
+        var(--fv-color-bg-primary)
       );
     }
 
@@ -181,7 +190,7 @@ const ratePercent = computed(() => (props.review.rate / 10) * 100);
   &__text {
     font-size: 0.95rem;
     line-height: 1.7;
-    color: var(--text-primary);
+    color: var(--fv-color-text-primary);
     margin: 0;
     white-space: pre-line;
   }

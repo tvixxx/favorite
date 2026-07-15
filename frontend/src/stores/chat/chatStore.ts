@@ -46,6 +46,7 @@ export const useChatStore = defineStore("chat", () => {
   const isConnected = ref(false);
   const isLoading = ref(false);
   const isError = ref<string | null>(null);
+  const isMessagesError = ref(false);
 
   const userStatusStore = useUserStatusStore();
 
@@ -188,8 +189,9 @@ export const useChatStore = defineStore("chat", () => {
       } else {
         isError.value = "Failed to load conversations";
       }
-    } catch (error: any) {
-      isError.value = error.message;
+    } catch (error) {
+      isError.value =
+        error instanceof Error ? error.message : "Failed to load conversations";
     } finally {
       isLoading.value = false;
     }
@@ -200,6 +202,8 @@ export const useChatStore = defineStore("chat", () => {
     otherUserId: string,
     limit = 50,
   ) => {
+    isMessagesError.value = false;
+
     try {
       const response = await useFetch<Message[]>(
         `/users/${userId}/messages/${otherUserId}?limit=${limit}`,
@@ -211,8 +215,11 @@ export const useChatStore = defineStore("chat", () => {
 
         return response.data;
       }
-    } catch (error: any) {
+
+      isMessagesError.value = true;
+    } catch (error) {
       console.error("Failed to load messages:", error);
+      isMessagesError.value = true;
     }
   };
 
@@ -274,6 +281,7 @@ export const useChatStore = defineStore("chat", () => {
     isConnected,
     isLoading,
     isError,
+    isMessagesError,
     totalUnreadCount,
     currentMessages,
     connect,

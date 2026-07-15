@@ -5,8 +5,11 @@ interface Props {
   title: string;
   subtitle?: string;
   badgeText?: string;
+  /** Оставлен для совместимости; в eyebrow не выводится (эталон: счётчик — в subtitle) */
   badgeCount?: number;
   iconName?: string;
+  // Если задан tone — слева рендерится цветной icon-badge (Избранное/Топ и т.п.)
+  iconTone?: "negative" | "warning" | "accent" | "positive";
 }
 
 defineProps<Props>();
@@ -14,120 +17,130 @@ defineProps<Props>();
 
 <template>
   <div class="hero-header">
-    <div class="hero-header__overlay"></div>
-    <div class="hero-header__content">
-      <div v-if="badgeText" class="hero-header__badge">
-        <BaseIcon
-          :name="iconName || 'mdi:star'"
-          class="hero-header__badge-icon"
-        />
-        <span>{{ badgeText }}</span>
-        <span v-if="badgeCount" class="hero-header__badge-count"
-          >({{ badgeCount }})</span
-        >
+    <section class="hero-header__card">
+      <div
+        v-if="iconTone && iconName"
+        class="hero-header__badge"
+        :class="`hero-header__badge--${iconTone}`"
+      >
+        <BaseIcon :name="iconName" :width="28" :height="28" />
       </div>
-      <h1 v-if="title" class="hero-header__title">{{ title }}</h1>
-      <p v-if="subtitle" class="hero-header__subtitle">{{ subtitle }}</p>
-    </div>
+
+      <div class="hero-header__text">
+        <p v-if="badgeText" class="hero-header__eyebrow">{{ badgeText }}</p>
+        <h1 v-if="title" class="hero-header__title">{{ title }}</h1>
+        <p v-if="subtitle" class="hero-header__subtitle">{{ subtitle }}</p>
+      </div>
+
+      <div v-if="$slots.aside" class="hero-header__aside">
+        <slot name="aside" />
+      </div>
+    </section>
   </div>
 </template>
 
 <style scoped lang="scss">
+@use "@/styles/layout" as *;
+@use "@/styles/media" as *;
+
 .hero-header {
-  position: relative;
-  height: 30vh;
-  min-height: 200px;
-  display: flex;
-  align-items: center;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--ant-color-primary) 40%, transparent) 0%,
-    transparent 70%
-  );
+  @include pageContentContainer;
+  margin-top: 1.75rem;
+  margin-bottom: 1.5rem;
 
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(
-      circle at center,
-      rgba(0, 0, 0, 0.1) 0%,
-      rgba(0, 0, 0, 0.6) 100%
-    );
-  }
-
-  &__overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to bottom,
-      transparent 0%,
-      rgba(0, 0, 0, 0.8) 100%
-    );
-  }
-
-  &__content {
-    position: relative;
-    z-index: 2;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 2rem;
+  &__card {
+    display: flex;
+    align-items: center;
+    gap: 24px;
     width: 100%;
+    text-align: left;
+    padding: 1.75rem 2rem;
+    border-radius: var(--fv-radius-lg);
+    background: var(--fv-color-bg-primary);
+    box-shadow: var(--fv-shadow-card);
+    border: 1px solid color-mix(in srgb, var(--fv-color-border) 55%, transparent);
+
+    @include mediaMax(640px) {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 1.5rem;
+    }
   }
 
   &__badge {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(20px);
-    padding: 0.5rem 1.25rem;
-    border-radius: 50px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    font-size: 1rem;
-    font-weight: 600;
-    color: white;
-    margin-bottom: 0.75rem;
-    max-width: max-content;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
 
-    &__count {
-      background: rgba(255, 255, 255, 0.2);
-      padding: 0.2rem 0.6rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
+    &--negative {
+      background: var(--fv-color-negative-soft);
+      color: var(--fv-color-brand);
+    }
+
+    &--warning {
+      background: var(--fv-color-warning-soft);
+      color: color-mix(
+        in srgb,
+        var(--fv-color-warning) 55%,
+        var(--fv-color-text-primary)
+      );
+    }
+
+    &--accent {
+      background: var(--fv-color-accent-soft);
+      color: var(--fv-color-accent);
+    }
+
+    &--positive {
+      background: var(--fv-color-positive-soft);
+      color: var(--fv-color-positive);
     }
   }
 
-  &__badge-icon {
-    width: 24px;
-    height: 24px;
+  &__text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__eyebrow {
+    margin: 0 0 8px;
+    font-family: var(--fv-font-display);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fv-color-text-tertiary);
   }
 
   &__title {
-    font-size: clamp(2rem, 5vw, 3.5rem);
-    font-weight: 700;
-    background: linear-gradient(
-      135deg,
-      white 0%,
-      rgba(255, 255, 255, 0.8) 100%
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0 0 0.5rem 0;
-    line-height: 1.1;
+    margin: 0;
+    font-family: var(--fv-font-display);
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    font-weight: 500;
+    line-height: 1.15;
     letter-spacing: -0.02em;
+    color: var(--fv-color-text-primary);
   }
 
   &__subtitle {
-    font-size: clamp(1rem, 2vw, 1.3rem);
-    color: rgba(255, 255, 255, 0.9);
-    margin: 0;
-    font-weight: 300;
-    max-width: 500px;
+    margin: 8px 0 0;
+    max-width: 640px;
+    font-size: clamp(0.95rem, 2vw, 1.05rem);
+    font-weight: 400;
+    color: var(--fv-color-text-secondary);
+  }
+
+  &__aside {
+    flex-shrink: 0;
+
+    @include mediaMax(640px) {
+      width: 100%;
+    }
   }
 }
 </style>

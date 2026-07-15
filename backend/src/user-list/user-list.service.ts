@@ -117,6 +117,7 @@ export class UserListService {
         name: dto.name.trim(),
         nameNormalized: normalizedName,
         description: dto.description?.trim() || null,
+        color: dto.color ?? undefined,
         labels,
       },
       include: {
@@ -163,6 +164,7 @@ export class UserListService {
         name,
         nameNormalized,
         description: dto.description !== undefined ? dto.description.trim() : undefined,
+        color: dto.color !== undefined ? dto.color : undefined,
         labels: dto.labels ? this.normalizeLabels(dto.labels) : undefined,
       },
       include: {

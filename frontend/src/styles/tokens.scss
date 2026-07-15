@@ -1,24 +1,25 @@
 :root {
-  /* Layout tokens */
-  --page-max-width: 1800px;
-  --page-content-padding-x: 2rem;
-  --page-content-padding-x-desktop: 3rem;
-  --grid-max-width: 1400px;
+  /* Layout */
+  --fv-layout-max-width: 1800px;
+  --fv-layout-gutter: 2rem;
+  --fv-layout-gutter-lg: 3rem;
+  --fv-layout-grid-max-width: 1400px;
 
-  /* Radius tokens */
-  --radius-sm: 12px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  /* Radius */
+  --fv-radius-sm: 12px; /* контролы, поля, кнопки, чипы */
+  --fv-radius-md: 16px; /* карточки */
+  --fv-radius-lg: 24px; /* hero, шторки, модалки */
 
-  /* Shadow tokens (semantic) */
-  --shadow-card: var(--shadow);
-  --shadow-elevated: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
-  --shadow-modal: var(--shadow), 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  --shadow-primary-sm: 0 4px 16px color-mix(in srgb, var(--ant-color-primary) 30%, transparent);
-  --shadow-primary-md: 0 8px 24px color-mix(in srgb, var(--ant-color-primary) 40%, transparent);
+  /* Shadow (композитные, поверх --fv-shadow-low из theme-variables) */
+  --fv-shadow-card: var(--fv-shadow-low);
+  --fv-shadow-elevated: var(--fv-shadow-low), 0 20px 40px rgba(0, 0, 0, 0.1);
+  --fv-shadow-modal: var(--fv-shadow-low), 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --fv-shadow-brand-sm: 0 4px 16px
+    color-mix(in srgb, var(--fv-color-brand) 30%, transparent);
+  --fv-shadow-brand-md: 0 8px 24px
+    color-mix(in srgb, var(--fv-color-brand) 40%, transparent);
 }
 
 :where(.ant-message) {
   z-index: 12000 !important;
 }
-

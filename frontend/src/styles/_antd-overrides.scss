@@ -10,31 +10,31 @@
 }
 
 @mixin antFocusRing($mixPercent: 10%) {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ant-color-primary) $mixPercent, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fv-color-accent) $mixPercent, transparent);
 }
 
 @mixin antFocusRingImportant($mixPercent: 10%) {
   box-shadow: 0 0 0 3px
-    color-mix(in srgb, var(--ant-color-primary) $mixPercent, transparent) !important;
+    color-mix(in srgb, var(--fv-color-accent) $mixPercent, transparent) !important;
 }
 
 @mixin antModalFormControls {
   :deep(.ant-form-item-label > label) {
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--fv-color-text-primary);
     font-size: 1rem;
   }
 
   :deep(.ant-input, .ant-picker, .ant-textarea) {
-    border-radius: var(--radius-sm) !important;
-    border: 2px solid var(--border-color) !important;
+    border-radius: var(--fv-radius-sm) !important;
+    border: 2px solid var(--fv-color-border) !important;
     transition: all 0.2s ease !important;
     height: 48px !important;
     box-shadow: none !important;
 
     &:focus,
     &:hover {
-      border-color: var(--ant-color-primary) !important;
+      border-color: var(--fv-color-accent) !important;
       @include antFocusRingImportant(10%);
     }
   }
@@ -50,14 +50,14 @@
 }
 
 @mixin mutedInsetPanel {
-  background: color-mix(in srgb, var(--bg-secondary) 50%, transparent);
+  background: color-mix(in srgb, var(--fv-color-bg-secondary) 50%, transparent);
   border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fv-color-border) 30%, transparent);
 }
 
 @mixin spinnerRing {
-  border: 3px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-  border-top: 3px solid var(--ant-color-primary);
+  border: 3px solid color-mix(in srgb, var(--fv-color-border) 50%, transparent);
+  border-top: 3px solid var(--fv-color-accent);
   border-radius: 50%;
   animation: uiSpinnerSpin 1s linear infinite;
 }

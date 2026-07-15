@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-import { currentTheme, themes } from "@/composable";
+import { currentTheme, setTheme, themes, type Theme } from "@/composable";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import type { SelectProps } from "ant-design-vue";
 import { computed, onMounted, ref, watch } from "vue";
 import {
   type SettingBlockProps,
@@ -26,14 +25,23 @@ const isFriends = computed(() => props.type === "friends");
 
 const userId = computed(() => mainStore.userData?.id || "");
 
-const themeOptions: SelectProps["options"] = themes.map((theme) => ({
-  label: theme.charAt(0).toUpperCase() + theme.slice(1),
-  value: theme,
-}));
-
-const filterOption = (input: string, option: any) => {
-  return option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+const THEME_META: Record<
+  Theme,
+  { label: string; canvas: string; accent: string }
+> = {
+  light: { label: "Светлая", canvas: "#ffffff", accent: "#ff0032" },
+  dark: { label: "Тёмная", canvas: "#141414", accent: "#177ddc" },
+  emerald: { label: "Изумруд", canvas: "#f0fdf4", accent: "#10b981" },
+  corporate: { label: "Корпоратив", canvas: "#f8fafc", accent: "#1e40af" },
+  synthwave: { label: "Синтвейв", canvas: "#1e1e3f", accent: "#ec4899" },
+  retro: { label: "Ретро", canvas: "#fef3c7", accent: "#f59e0b" },
+  cyberpunk: { label: "Киберпанк", canvas: "#1e1b4b", accent: "#8b5cf6" },
 };
+
+const themeSwatches = themes.map((value) => ({
+  value,
+  ...THEME_META[value],
+}));
 
 const stats = computed(() => {
   const data = userMoviesStore.stats;
@@ -42,7 +50,10 @@ const stats = computed(() => {
     return null;
   }
 
-  const keys = Object.keys(StatsBlockType) as StatsBlockType[];
+  // Эталон: «Смотреть позже» в статистике не показываем (есть в аналитике/коллекции)
+  const keys = (Object.keys(StatsBlockType) as StatsBlockType[]).filter(
+    (type) => type !== StatsBlockType.totalSeeLater,
+  );
 
   return keys.map((type) => ({
     type,
@@ -123,21 +134,28 @@ const isFriendsEmptySocial = computed(() => {
       <h3 class="setting-block__title">{{ props.title }}</h3>
     </div>
 
-    <p class="setting-block__description">
+    <p v-if="props.description" class="setting-block__description">
       {{ props.description }}
     </p>
 
-    <a-select
-      v-if="isTheme"
-      v-model:value="currentTheme"
-      :allow-clear="true"
-      :filter-option="filterOption"
-      :options="themeOptions"
-      :style="{ width: '100%' }"
-      placeholder="Выберите тему"
-      show-search
-      size="large"
-    />
+    <div v-if="isTheme" class="theme-swatches">
+      <button
+        v-for="t in themeSwatches"
+        :key="t.value"
+        type="button"
+        class="theme-swatches__item"
+        :class="{ 'theme-swatches__item--active': currentTheme === t.value }"
+        @click="setTheme(t.value)"
+      >
+        <span class="theme-swatches__chip" :style="{ background: t.canvas }">
+          <span
+            class="theme-swatches__dot"
+            :style="{ background: t.accent }"
+          ></span>
+        </span>
+        <span class="theme-swatches__label">{{ t.label }}</span>
+      </button>
+    </div>
 
     <div v-if="isStats" class="setting-block__stats">
       <div v-if="isStatsLoading" class="setting-block__stats-loading">
@@ -146,7 +164,7 @@ const isFriendsEmptySocial = computed(() => {
       </div>
       <div v-else>
         <div v-if="isStatsFailed || !stats" class="setting-block__stats-error">
-          <BaseIcon class="setting-block__error-icon" name="mdi:alert-circle" />
+          <BaseIcon class="setting-block__error-icon" name="ph:warning-circle" />
           <span>Ошибка загрузки статистики</span>
           <a-button
             class="setting-block__retry-btn"
@@ -180,7 +198,7 @@ const isFriendsEmptySocial = computed(() => {
           class="setting-block__friends-empty-hint"
         >
           <BaseIcon
-            name="mdi:account-multiple-outline"
+            name="ph:users-three"
             class="setting-block__friends-empty-icon"
           />
           <p class="setting-block__friends-empty-text">
@@ -190,47 +208,29 @@ const isFriendsEmptySocial = computed(() => {
         </div>
         <div class="friends-stats">
           <div class="friends-stats__item">
-            <div class="friends-stats__icon-wrap" aria-hidden="true">
-              <BaseIcon
-                name="mdi:account-multiple"
-                class="friends-stats__icon"
-              />
-            </div>
-            <div class="friends-stats__info">
-              <span class="friends-stats__label">Друзей</span>
-              <span class="friends-stats__value">{{
-                friendsStore.stats.friendsCount
-              }}</span>
-            </div>
+            <span class="friends-stats__value">{{
+              friendsStore.stats.friendsCount
+            }}</span>
+            <span class="friends-stats__label">Друзей</span>
           </div>
           <div class="friends-stats__item">
-            <div class="friends-stats__icon-wrap" aria-hidden="true">
-              <BaseIcon name="mdi:account-heart" class="friends-stats__icon" />
-            </div>
-            <div class="friends-stats__info">
-              <span class="friends-stats__label">Подписчиков</span>
-              <span class="friends-stats__value">{{
-                friendsStore.stats.subscribersCount
-              }}</span>
-            </div>
+            <span class="friends-stats__value">{{
+              friendsStore.stats.subscribersCount
+            }}</span>
+            <span class="friends-stats__label">Подписчиков</span>
           </div>
           <div class="friends-stats__item">
-            <div class="friends-stats__icon-wrap" aria-hidden="true">
-              <BaseIcon name="mdi:account-star" class="friends-stats__icon" />
-            </div>
-            <div class="friends-stats__info">
-              <span class="friends-stats__label">Подписок</span>
-              <span class="friends-stats__value">{{
-                friendsStore.stats.subscriptionsCount
-              }}</span>
-            </div>
+            <span class="friends-stats__value">{{
+              friendsStore.stats.subscriptionsCount
+            }}</span>
+            <span class="friends-stats__label">Подписок</span>
           </div>
         </div>
         <div class="friends-actions">
           <a-button type="primary" size="large" block @click="goToFriendsPage">
             <template #icon>
               <BaseIcon
-                name="mdi:account-group"
+                name="ph:users"
                 class="friends-actions__icon"
               />
             </template>
@@ -238,7 +238,7 @@ const isFriendsEmptySocial = computed(() => {
           </a-button>
           <a-button size="large" block @click="goToChatPage">
             <template #icon>
-              <BaseIcon name="mdi:message-text" class="friends-actions__icon" />
+              <BaseIcon name="ph:chat-circle" class="friends-actions__icon" />
             </template>
             Сообщения
           </a-button>
@@ -246,7 +246,7 @@ const isFriendsEmptySocial = computed(() => {
       </div>
       <div v-else class="setting-block__friends-fallback">
         <BaseIcon
-          name="mdi:account-question-outline"
+          name="ph:user-plus"
           class="setting-block__friends-fallback-icon"
         />
         <p class="setting-block__friends-fallback-text">
@@ -264,6 +264,48 @@ const isFriendsEmptySocial = computed(() => {
 <style lang="scss" scoped>
 @use "../../../../styles/antd-overrides" as *;
 
+.theme-swatches {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+
+  &__item {
+    padding: 10px;
+    border: 2px solid var(--fv-color-border);
+    border-radius: 14px;
+    background: var(--fv-color-bg-secondary);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+
+    &--active {
+      border-color: var(--fv-color-accent);
+    }
+  }
+
+  &__chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    margin-bottom: 7px;
+    border-radius: 9px;
+    border: 1px solid var(--fv-color-border);
+  }
+
+  &__dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+  }
+
+  &__label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
+  }
+}
+
 .setting-block {
   display: flex;
   flex-direction: column;
@@ -279,26 +321,25 @@ const isFriendsEmptySocial = computed(() => {
   &__icon {
     width: 28px;
     height: 28px;
-    color: var(--ant-color-primary);
+    color: var(--fv-color-accent);
   }
 
   &__title {
     margin: 0;
     font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--text-primary);
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
   }
 
   &__description {
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
     margin-bottom: 1rem;
     line-height: 1.6;
   }
 
   &__stats {
-    padding: 1rem;
-    @include mutedInsetPanel;
-    border: 0;
+    // Эталон: строки статистики прямо на белой карточке, без серой подложки
+    padding: 0;
   }
 
   &__stats-loading {
@@ -309,7 +350,7 @@ const isFriendsEmptySocial = computed(() => {
     gap: 1rem;
     padding: 2rem 1rem;
     text-align: center;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__loader {
@@ -326,7 +367,7 @@ const isFriendsEmptySocial = computed(() => {
     gap: 1rem;
     padding: 2rem 1rem;
     text-align: center;
-    color: color-mix(in srgb, var(--ant-color-error) 80%, var(--text-primary));
+    color: color-mix(in srgb, var(--ant-color-error) 80%, var(--fv-color-text-primary));
   }
 
   &__error-icon {
@@ -358,11 +399,11 @@ const isFriendsEmptySocial = computed(() => {
     border-radius: 12px;
     background: color-mix(
       in srgb,
-      var(--ant-color-primary) 8%,
-      var(--bg-primary)
+      var(--fv-color-accent) 8%,
+      var(--fv-color-bg-primary)
     );
     border: 1px solid
-      color-mix(in srgb, var(--ant-color-primary) 22%, var(--border-color));
+      color-mix(in srgb, var(--fv-color-accent) 22%, var(--fv-color-border));
   }
 
   &__friends-empty-icon {
@@ -370,14 +411,14 @@ const isFriendsEmptySocial = computed(() => {
     width: 24px;
     height: 24px;
     margin-top: 2px;
-    color: var(--ant-color-primary);
+    color: var(--fv-color-accent);
   }
 
   &__friends-empty-text {
     margin: 0;
     font-size: 0.92rem;
     line-height: 1.55;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__friends-fallback {
@@ -389,14 +430,14 @@ const isFriendsEmptySocial = computed(() => {
     padding: 2rem 1.25rem;
     text-align: center;
     border-radius: 12px;
-    border: 1px dashed var(--border-color);
-    background: var(--bg-primary);
+    border: 1px dashed var(--fv-color-border);
+    background: var(--fv-color-bg-primary);
   }
 
   &__friends-fallback-icon {
     width: 40px;
     height: 40px;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
     opacity: 0.85;
   }
 
@@ -405,76 +446,38 @@ const isFriendsEmptySocial = computed(() => {
     max-width: 28rem;
     font-size: 0.95rem;
     line-height: 1.5;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 }
 
+// Эталон: 3 центрированных тайла в ряд (число + подпись)
 .friends-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.625rem;
 
   &__item {
     display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.125rem;
-    min-height: 4.25rem;
-    background: var(--bg-primary);
-    border-radius: 14px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 1px 2px
-      color-mix(in srgb, var(--text-primary) 4%, transparent);
-  }
-
-  &__icon-wrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 3rem;
-    height: 3rem;
-    border-radius: 12px;
-    background: color-mix(
-      in srgb,
-      var(--ant-color-primary) 12%,
-      var(--bg-secondary)
-    );
-    border: 1px solid
-      color-mix(in srgb, var(--ant-color-primary) 18%, transparent);
-  }
-
-  &__icon {
-    width: 1.375rem;
-    height: 1.375rem;
-    color: var(--ant-color-primary);
-    display: block;
-  }
-
-  &__info {
-    display: flex;
     flex-direction: column;
-    justify-content: center;
-    gap: 0.2rem;
-    min-width: 0;
-    flex: 1;
+    align-items: center;
+    gap: 0.15rem;
+    text-align: center;
+    padding: 0.875rem 0.375rem;
+    background: var(--fv-color-bg-secondary);
+    border-radius: 14px;
+  }
+
+  &__value {
+    font-size: 1.5rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    color: var(--fv-color-text-primary);
   }
 
   &__label {
     font-size: 0.8125rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    line-height: 1.25;
-    color: var(--text-secondary);
-  }
-
-  &__value {
-    font-size: 1.625rem;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.025em;
-    line-height: 1.1;
-    color: var(--text-primary);
+    color: var(--fv-color-text-secondary);
   }
 }
 

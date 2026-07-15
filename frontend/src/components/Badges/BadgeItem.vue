@@ -29,6 +29,9 @@ const tierColor = computed(() => {
       </div>
       <div class="badge-item__info">
         <div class="badge-item__title">{{ badge.title }}</div>
+        <div v-if="badge.description" class="badge-item__desc">
+          {{ badge.description }}
+        </div>
         <div v-if="!badge.isUnlocked && badge.progress !== undefined" class="badge-item__progress">
           <a-progress
             :percent="badge.progress"
@@ -52,8 +55,8 @@ const tierColor = computed(() => {
   gap: 0.75rem;
   padding: 0.75rem;
   border-radius: 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: var(--fv-color-bg-secondary);
+  border: 1px solid var(--fv-color-border);
   transition: all 0.2s;
 
   &:hover {
@@ -62,20 +65,19 @@ const tierColor = computed(() => {
   }
 
   &--locked {
-    opacity: 0.5;
-    filter: grayscale(0.8);
+    opacity: 0.65;
   }
 
   &__icon {
     width: 48px;
     height: 48px;
-    border-radius: 50%;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    border: 3px solid;
-    background: var(--bg-primary);
+    border: 2px solid;
+    background: var(--fv-color-bg-primary);
   }
 
   &__info {
@@ -84,19 +86,25 @@ const tierColor = computed(() => {
 
   &__title {
     font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 0.25rem;
+    color: var(--fv-color-text-primary);
+  }
+
+  &__desc {
+    margin-top: 2px;
+    font-size: 0.82rem;
+    color: var(--fv-color-text-secondary);
   }
 
   &__progress {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    margin-top: 0.4rem;
   }
 
   &__progress-text {
     font-size: 0.75rem;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 }
 </style>
