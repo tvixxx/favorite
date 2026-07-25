@@ -138,7 +138,7 @@ const watchProgressPercent = (item: UserMovie): number => {
   if (movie.isSerial && movie.episodeCount && item.currentEpisode) {
     return Math.min(
       100,
-      Math.round((item.currentEpisode / movie.episodeCount) * 100),
+      Math.round((item.currentEpisode / movie.episodeCount) * 100)
     );
   }
 
@@ -190,7 +190,9 @@ const getQueryValue = (value: unknown): string | null => {
   return null;
 };
 
-const normalizeWatchStatus = (value: string | null): WatchStatus | undefined => {
+const normalizeWatchStatus = (
+  value: string | null
+): WatchStatus | undefined => {
   if (!value) {
     return undefined;
   }
@@ -205,7 +207,9 @@ const normalizeWatchStatus = (value: string | null): WatchStatus | undefined => 
 };
 
 const applyRoutePresetFilters = async () => {
-  const watchStatus = normalizeWatchStatus(getQueryValue(route.query.watchStatus));
+  const watchStatus = normalizeWatchStatus(
+    getQueryValue(route.query.watchStatus)
+  );
   const isSerialRaw = getQueryValue(route.query.isSerial);
   const seeLaterRaw = getQueryValue(route.query.seeLater);
   const hasPreset =
@@ -219,18 +223,18 @@ const applyRoutePresetFilters = async () => {
     isSerialRaw === null
       ? undefined
       : isSerialRaw === "true"
-        ? true
-        : isSerialRaw === "false"
-          ? false
-          : undefined;
+      ? true
+      : isSerialRaw === "false"
+      ? false
+      : undefined;
   const seeLater =
     seeLaterRaw === null
       ? undefined
       : seeLaterRaw === "true"
-        ? true
-        : seeLaterRaw === "false"
-          ? false
-          : undefined;
+      ? true
+      : seeLaterRaw === "false"
+      ? false
+      : undefined;
 
   userMoviesStore.setFilters({
     ...userMoviesStore.filters,
@@ -277,9 +281,14 @@ const toggleQuickAddPanel = () => {
   }
 };
 
-const buildQuickAddOptionLabel = (movie: MovieApiResponse, isExisting: boolean) => {
+const buildQuickAddOptionLabel = (
+  movie: MovieApiResponse,
+  isExisting: boolean
+) => {
   const mediaType = movie.isSerial ? "сериал" : "фильм";
-  const year = movie.publishDate ? formatYear(movie.publishDate) : "год не указан";
+  const year = movie.publishDate
+    ? formatYear(movie.publishDate)
+    : "год не указан";
   const suffix = isExisting ? " • уже в коллекции" : "";
 
   return `${movie.title} • ${mediaType} • ${year}${suffix}`;
@@ -710,13 +719,12 @@ watch(
     gap: 0.42rem;
     cursor: pointer;
     box-shadow: var(--fv-shadow-brand-md);
-    transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 28px color-mix(in srgb, var(--fv-color-brand) 40%, transparent);
+      box-shadow: 0 12px 28px
+        color-mix(in srgb, var(--fv-color-brand) 40%, transparent);
     }
 
     &_active {
@@ -754,5 +762,4 @@ watch(
   opacity: 0;
   transform: translateY(8px) scale(0.98);
 }
-
 </style>
