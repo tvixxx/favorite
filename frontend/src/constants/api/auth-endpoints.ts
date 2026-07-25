@@ -5,3 +5,4 @@ export const REGISTER_USER_ENDPOINT = `${API_BASE_URL}/${APP_ENDPOINTS.register}
 export const AUTH_USER_ENDPOINT = `${API_BASE_URL}/${APP_ENDPOINTS.login}`;
 export const AUTH_REFRESH_ENDPOINT = `${API_BASE_URL}/${APP_ENDPOINTS.authRefresh}`;
 export const AUTH_ME_ENDPOINT = `${API_BASE_URL}/${APP_ENDPOINTS.authMe}`;
+export const LOGOUT_ENDPOINT = `${API_BASE_URL}/${APP_ENDPOINTS.logout}`;

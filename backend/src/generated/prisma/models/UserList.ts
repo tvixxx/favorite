@@ -30,6 +30,7 @@ export type UserListMinAggregateOutputType = {
   name: string | null
   nameNormalized: string | null
   description: string | null
+  color: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -40,6 +41,7 @@ export type UserListMaxAggregateOutputType = {
   name: string | null
   nameNormalized: string | null
   description: string | null
+  color: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -50,6 +52,7 @@ export type UserListCountAggregateOutputType = {
   name: number
   nameNormalized: number
   description: number
+  color: number
   labels: number
   createdAt: number
   updatedAt: number
@@ -63,6 +66,7 @@ export type UserListMinAggregateInputType = {
   name?: true
   nameNormalized?: true
   description?: true
+  color?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -73,6 +77,7 @@ export type UserListMaxAggregateInputType = {
   name?: true
   nameNormalized?: true
   description?: true
+  color?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -83,6 +88,7 @@ export type UserListCountAggregateInputType = {
   name?: true
   nameNormalized?: true
   description?: true
+  color?: true
   labels?: true
   createdAt?: true
   updatedAt?: true
@@ -167,6 +173,7 @@ export type UserListGroupByOutputType = {
   name: string
   nameNormalized: string
   description: string | null
+  color: string | null
   labels: string[]
   createdAt: Date
   updatedAt: Date
@@ -199,6 +206,7 @@ export type UserListWhereInput = {
   name?: Prisma.StringFilter<"UserList"> | string
   nameNormalized?: Prisma.StringFilter<"UserList"> | string
   description?: Prisma.StringNullableFilter<"UserList"> | string | null
+  color?: Prisma.StringNullableFilter<"UserList"> | string | null
   labels?: Prisma.StringNullableListFilter<"UserList">
   createdAt?: Prisma.DateTimeFilter<"UserList"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserList"> | Date | string
@@ -212,6 +220,7 @@ export type UserListOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   nameNormalized?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
+  color?: Prisma.SortOrderInput | Prisma.SortOrder
   labels?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -229,6 +238,7 @@ export type UserListWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"UserList"> | string
   nameNormalized?: Prisma.StringFilter<"UserList"> | string
   description?: Prisma.StringNullableFilter<"UserList"> | string | null
+  color?: Prisma.StringNullableFilter<"UserList"> | string | null
   labels?: Prisma.StringNullableListFilter<"UserList">
   createdAt?: Prisma.DateTimeFilter<"UserList"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserList"> | Date | string
@@ -242,6 +252,7 @@ export type UserListOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   nameNormalized?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
+  color?: Prisma.SortOrderInput | Prisma.SortOrder
   labels?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -259,6 +270,7 @@ export type UserListScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"UserList"> | string
   nameNormalized?: Prisma.StringWithAggregatesFilter<"UserList"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"UserList"> | string | null
+  color?: Prisma.StringNullableWithAggregatesFilter<"UserList"> | string | null
   labels?: Prisma.StringNullableListFilter<"UserList">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserList"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"UserList"> | Date | string
@@ -269,6 +281,7 @@ export type UserListCreateInput = {
   name: string
   nameNormalized: string
   description?: string | null
+  color?: string | null
   labels?: Prisma.UserListCreatelabelsInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -282,6 +295,7 @@ export type UserListUncheckedCreateInput = {
   name: string
   nameNormalized: string
   description?: string | null
+  color?: string | null
   labels?: Prisma.UserListCreatelabelsInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -293,6 +307,7 @@ export type UserListUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   labels?: Prisma.UserListUpdatelabelsInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -306,6 +321,7 @@ export type UserListUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   labels?: Prisma.UserListUpdatelabelsInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -318,6 +334,7 @@ export type UserListCreateManyInput = {
   name: string
   nameNormalized: string
   description?: string | null
+  color?: string | null
   labels?: Prisma.UserListCreatelabelsInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -328,6 +345,7 @@ export type UserListUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   labels?: Prisma.UserListUpdatelabelsInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -339,6 +357,7 @@ export type UserListUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   labels?: Prisma.UserListUpdatelabelsInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -365,6 +384,7 @@ export type UserListCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   nameNormalized?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  color?: Prisma.SortOrder
   labels?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -376,6 +396,7 @@ export type UserListMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   nameNormalized?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  color?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -386,6 +407,7 @@ export type UserListMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   nameNormalized?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  color?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -465,6 +487,7 @@ export type UserListCreateWithoutUserInput = {
   name: string
   nameNormalized: string
   description?: string | null
+  color?: string | null
   labels?: Prisma.UserListCreatelabelsInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -476,6 +499,7 @@ export type UserListUncheckedCreateWithoutUserInput = {
   name: string
   nameNormalized: string
   description?: string | null
+  color?: string | null
   labels?: Prisma.UserListCreatelabelsInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -517,6 +541,7 @@ export type UserListScalarWhereInput = {
   name?: Prisma.StringFilter<"UserList"> | string
   nameNormalized?: Prisma.StringFilter<"UserList"> | string
   description?: Prisma.StringNullableFilter<"UserList"> | string | null
+  color?: Prisma.StringNullableFilter<"UserList"> | string | null
   labels?: Prisma.StringNullableListFilter<"UserList">
   createdAt?: Prisma.DateTimeFilter<"UserList"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserList"> | Date | string
@@ -527,6 +552,7 @@ export type UserListCreateWithoutItemsInput = {
   name: string
   nameNormalized: string
   description?: string | null
+  color?: string | null
   labels?: Prisma.UserListCreatelabelsInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -539,6 +565,7 @@ export type UserListUncheckedCreateWithoutItemsInput = {
   name: string
   nameNormalized: string
   description?: string | null
+  color?: string | null
   labels?: Prisma.UserListCreatelabelsInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -565,6 +592,7 @@ export type UserListUpdateWithoutItemsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   labels?: Prisma.UserListUpdatelabelsInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -577,6 +605,7 @@ export type UserListUncheckedUpdateWithoutItemsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   labels?: Prisma.UserListUpdatelabelsInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -587,6 +616,7 @@ export type UserListCreateManyUserInput = {
   name: string
   nameNormalized: string
   description?: string | null
+  color?: string | null
   labels?: Prisma.UserListCreatelabelsInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -597,6 +627,7 @@ export type UserListUpdateWithoutUserInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   labels?: Prisma.UserListUpdatelabelsInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -608,6 +639,7 @@ export type UserListUncheckedUpdateWithoutUserInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   labels?: Prisma.UserListUpdatelabelsInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -619,6 +651,7 @@ export type UserListUncheckedUpdateManyWithoutUserInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameNormalized?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   labels?: Prisma.UserListUpdatelabelsInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -661,6 +694,7 @@ export type UserListSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   name?: boolean
   nameNormalized?: boolean
   description?: boolean
+  color?: boolean
   labels?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -675,6 +709,7 @@ export type UserListSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   name?: boolean
   nameNormalized?: boolean
   description?: boolean
+  color?: boolean
   labels?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -687,6 +722,7 @@ export type UserListSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   name?: boolean
   nameNormalized?: boolean
   description?: boolean
+  color?: boolean
   labels?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -699,12 +735,13 @@ export type UserListSelectScalar = {
   name?: boolean
   nameNormalized?: boolean
   description?: boolean
+  color?: boolean
   labels?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserListOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "nameNormalized" | "description" | "labels" | "createdAt" | "updatedAt", ExtArgs["result"]["userList"]>
+export type UserListOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "nameNormalized" | "description" | "color" | "labels" | "createdAt" | "updatedAt", ExtArgs["result"]["userList"]>
 export type UserListInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   items?: boolean | Prisma.UserList$itemsArgs<ExtArgs>
@@ -729,6 +766,7 @@ export type $UserListPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     name: string
     nameNormalized: string
     description: string | null
+    color: string | null
     labels: string[]
     createdAt: Date
     updatedAt: Date
@@ -1162,6 +1200,7 @@ export interface UserListFieldRefs {
   readonly name: Prisma.FieldRef<"UserList", 'String'>
   readonly nameNormalized: Prisma.FieldRef<"UserList", 'String'>
   readonly description: Prisma.FieldRef<"UserList", 'String'>
+  readonly color: Prisma.FieldRef<"UserList", 'String'>
   readonly labels: Prisma.FieldRef<"UserList", 'String[]'>
   readonly createdAt: Prisma.FieldRef<"UserList", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"UserList", 'DateTime'>

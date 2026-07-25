@@ -1,95 +1,127 @@
+/* ============================================================
+   Дизайн-токены проекта Favorite (префикс --fv-). Два слоя:
+     1) palette (--fv-palette-*)  — сырые значения, в компонентах НЕ используем
+     2) semantic (--fv-color-*)   — их потребляют компоненты; тёмная и прочие
+        темы переопределяют ТОЛЬКО семантику → темизация автоматическая.
+   ============================================================ */
+
 :root {
-  // Базовые цвета
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f5;
-  --text-primary: #1f1f1f;
-  --text-secondary: #6b7280;
-  --color-success: #52c41a;
-  --color-warning: #faad14;
-  --border-color: #e5e7eb;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --ant-color-primary: #1677ff;
-  --ant-color-bg-container: #ffffff;
-  /* Иконки верхнего меню (ant-menu theme="dark") — контраст к тёмной плашке */
-  --nav-accent-icon: rgba(255, 255, 255, 0.92);
+  /* ---- Tier 1 · palette (light) ---- */
+  --fv-palette-red-500: #ff0032;
+  --fv-palette-red-600: #e50039;
+  --fv-palette-blue-500: #007cff;
+  --fv-palette-green-500: #26cd58;
+  --fv-palette-orange-500: #f95721;
+  --fv-palette-yellow-500: #fac031;
+  --fv-palette-ink: #1d2023;
+  --fv-palette-grey-600: #626c77;
+  --fv-palette-grey-400: #969fa8;
+  --fv-palette-stroke: #e2e5eb;
+  --fv-palette-mist: #f2f3f7;
+  --fv-palette-white: #ffffff;
+
+  /* ---- Tier 2 · semantic (light) ---- */
+  --fv-color-bg-primary: var(--fv-palette-white); // канва/карточки
+  --fv-color-bg-secondary: var(--fv-palette-mist); // фоны секций, soft-плашки
+  --fv-color-bg-container: var(--fv-palette-white);
+  --fv-color-text-primary: var(--fv-palette-ink);
+  --fv-color-text-secondary: var(--fv-palette-grey-600);
+  --fv-color-text-tertiary: var(--fv-palette-grey-400); // eyebrow, caption
+  --fv-color-border: var(--fv-palette-stroke);
+  --fv-color-brand: var(--fv-palette-red-500); // лого, CTA, сердечки, нотификации
+  --fv-color-brand-hover: var(--fv-palette-red-600);
+  --fv-color-accent: var(--fv-palette-blue-500); // функц.: ссылки, active, прогресс
+  --fv-color-positive: var(--fv-palette-green-500);
+  --fv-color-negative: var(--fv-palette-orange-500);
+  --fv-color-warning: var(--fv-palette-yellow-500);
+  --fv-color-nav-icon: rgba(255, 255, 255, 0.92);
+  // Эталон low: двухслойная мягкая нейтральная тень (tight ambient + softer cast)
+  --fv-shadow-low: 0 0 6px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.08);
+
+  /* мягкие «soft»-подложки — адаптируются к теме через семантику */
+  --fv-color-accent-soft: color-mix(in srgb, var(--fv-color-accent) 12%, transparent);
+  --fv-color-positive-soft: color-mix(in srgb, var(--fv-color-positive) 16%, transparent);
+  --fv-color-negative-soft: color-mix(in srgb, var(--fv-color-negative) 14%, transparent);
+  --fv-color-warning-soft: color-mix(in srgb, var(--fv-color-warning) 20%, transparent);
 }
 
+/* ---- Прочие темы: переопределяют только семантику ---- */
 :root[data-theme="dark"] {
-  --bg-primary: #141414;
-  --bg-secondary: #1f1f1f;
-  --text-primary: #ffffff;
-  --text-secondary: #d1d5db;
-  --color-success: #49aa19;
-  --color-warning: #d89614;
-  --border-color: #374151;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-  --ant-color-primary: #177ddc;
-  --ant-color-bg-container: #141414;
-  --nav-accent-icon: rgba(255, 255, 255, 0.92);
+  --fv-color-bg-primary: #1f1f1f; // карточки/шапки — светлее канвы (приподняты)
+  --fv-color-bg-secondary: #141414; // канва — темнее
+  --fv-color-bg-container: #1f1f1f;
+  --fv-color-text-primary: #ffffff;
+  --fv-color-text-secondary: #d1d5db;
+  --fv-color-text-tertiary: #8b93a1;
+  --fv-color-positive: #4ade80;
+  --fv-color-warning: #e0a92e;
+  --fv-color-border: #374151;
+  --fv-color-brand: #ff3355; // бренд-красный ярче для тёмного фона
+  --fv-color-accent: #4aa8ff; // функциональный синий ярче на тёмном
+  --fv-shadow-low: 0 2px 8px rgba(0, 0, 0, 0.45);
 }
 
 :root[data-theme="emerald"] {
-  --bg-primary: #f0fdf4;
-  --bg-secondary: #d1fae5;
-  --text-primary: #065f46;
-  --text-secondary: #047857;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --border-color: #a7f3d0;
-  --shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.2);
-  --ant-color-primary: #10b981;
-  --ant-color-bg-container: #f0fdf4;
-  --nav-accent-icon: #ecfdf5;
+  --fv-color-bg-primary: #f0fdf4;
+  --fv-color-bg-secondary: #d1fae5;
+  --fv-color-bg-container: #f0fdf4;
+  --fv-color-text-primary: #065f46;
+  --fv-color-text-secondary: #047857;
+  --fv-color-positive: #10b981;
+  --fv-color-warning: #f59e0b;
+  --fv-color-border: #a7f3d0;
+  --fv-color-brand: #10b981;
+  --fv-color-nav-icon: #ecfdf5;
+  --fv-shadow-low: 0 4px 6px -1px rgba(5, 150, 105, 0.2);
 }
 
 :root[data-theme="corporate"] {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --color-success: #16a34a;
-  --color-warning: #d97706;
-  --border-color: #cbd5e1;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --ant-color-primary: #1e40af;
-  --nav-accent-icon: rgba(255, 255, 255, 0.92);
+  --fv-color-bg-primary: #f8fafc;
+  --fv-color-bg-secondary: #e2e8f0;
+  --fv-color-text-primary: #1e293b;
+  --fv-color-text-secondary: #64748b;
+  --fv-color-positive: #16a34a;
+  --fv-color-warning: #d97706;
+  --fv-color-border: #cbd5e1;
+  --fv-color-brand: #1e40af;
+  --fv-shadow-low: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 :root[data-theme="synthwave"] {
-  --bg-primary: #0f0f23;
-  --bg-secondary: #1e1e3f;
-  --text-primary: #ec4899;
-  --text-secondary: #f472b6;
-  --color-success: #2dd4bf;
-  --color-warning: #fbbf24;
-  --border-color: #3730a3;
-  --shadow: 0 0 20px rgba(236, 72, 153, 0.3);
-  --ant-color-primary: #ec4899;
-  --nav-accent-icon: #fbcfe8;
+  --fv-color-bg-primary: #0f0f23;
+  --fv-color-bg-secondary: #1e1e3f;
+  --fv-color-text-primary: #ec4899;
+  --fv-color-text-secondary: #f472b6;
+  --fv-color-positive: #2dd4bf;
+  --fv-color-warning: #fbbf24;
+  --fv-color-border: #3730a3;
+  --fv-color-brand: #ec4899;
+  --fv-color-nav-icon: #fbcfe8;
+  --fv-shadow-low: 0 0 20px rgba(236, 72, 153, 0.3);
 }
 
 :root[data-theme="retro"] {
-  --bg-primary: #fef3c7;
-  --bg-secondary: #fde68a;
-  --text-primary: #92400e;
-  --text-secondary: #b45309;
-  --color-success: #84cc16;
-  --color-warning: #f59e0b;
-  --border-color: #f59e0b;
-  --shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
-  --ant-color-primary: #f59e0b;
-  --nav-accent-icon: #fef08a;
+  --fv-color-bg-primary: #fef3c7;
+  --fv-color-bg-secondary: #fde68a;
+  --fv-color-text-primary: #92400e;
+  --fv-color-text-secondary: #b45309;
+  --fv-color-positive: #84cc16;
+  --fv-color-warning: #f59e0b;
+  --fv-color-border: #f59e0b;
+  --fv-color-brand: #f59e0b;
+  --fv-color-nav-icon: #fef08a;
+  --fv-shadow-low: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
 }
 
 :root[data-theme="cyberpunk"] {
-  --bg-primary: #1e1b4b;
-  --bg-secondary: #312e81;
-  --text-primary: #a78bfa;
-  --text-secondary: #c4b5fd;
-  --color-success: #34d399;
-  --color-warning: #fbbf24;
-  --border-color: #6366f1;
-  --shadow: 0 0 15px rgba(139, 92, 246, 0.4);
-  --ant-color-primary: #8b5cf6;
-  --nav-accent-icon: #e9d5ff;
+  --fv-color-bg-primary: #1e1b4b;
+  --fv-color-bg-secondary: #312e81;
+  --fv-color-text-primary: #a78bfa;
+  --fv-color-text-secondary: #c4b5fd;
+  --fv-color-positive: #34d399;
+  --fv-color-warning: #fbbf24;
+  --fv-color-border: #6366f1;
+  --fv-color-brand: #8b5cf6;
+  --fv-color-nav-icon: #e9d5ff;
+  --fv-shadow-low: 0 0 15px rgba(139, 92, 246, 0.4);
 }

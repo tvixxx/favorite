@@ -1,24 +1,157 @@
 :root {
-  /* Layout tokens */
-  --page-max-width: 1800px;
-  --page-content-padding-x: 2rem;
-  --page-content-padding-x-desktop: 3rem;
-  --grid-max-width: 1400px;
+  /* Layout */
+  --fv-layout-max-width: 1800px;
+  --fv-layout-gutter: 2rem;
+  --fv-layout-gutter-lg: 3rem;
+  --fv-layout-grid-max-width: 1400px;
 
-  /* Radius tokens */
-  --radius-sm: 12px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  /* ---- Spacing scale (эталон: база 4px, шаг кратен 4) ---- */
+  --fv-space-0: 0px;
+  --fv-space-2: 2px;
+  --fv-space-4: 4px;
+  --fv-space-8: 8px;
+  --fv-space-12: 12px;
+  --fv-space-16: 16px;
+  --fv-space-20: 20px;
+  --fv-space-24: 24px;
+  --fv-space-32: 32px;
+  --fv-space-40: 40px;
+  --fv-space-48: 48px;
+  --fv-space-64: 64px;
+  --fv-space-72: 72px;
+  --fv-space-80: 80px;
 
-  /* Shadow tokens (semantic) */
-  --shadow-card: var(--shadow);
-  --shadow-elevated: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
-  --shadow-modal: var(--shadow), 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  --shadow-primary-sm: 0 4px 16px color-mix(in srgb, var(--ant-color-primary) 30%, transparent);
-  --shadow-primary-md: 0 8px 24px color-mix(in srgb, var(--ant-color-primary) 40%, transparent);
+  /* Контейнерные gutters (эталон) */
+  --fv-gutter-mobile: 16px;
+  --fv-gutter-tablet: 24px;
+  --fv-gutter-desktop: 32px;
+
+  /* Radius */
+  --fv-radius-sm: 12px; /* контролы, поля, кнопки, чипы */
+  --fv-radius-md: 16px; /* карточки */
+  --fv-radius-lg: 24px; /* hero, шторки, модалки */
+
+  /* ---- Типографика (эталон MTS Granat 2.0, size / line-height) ----
+     promo, h1, h2 → display-шрифт; h3, h4, параграфы, caption → ui-шрифт. */
+  --fv-text-h1-size: 36px;
+  --fv-text-h1-lh: 40px;
+  --fv-text-h2-size: 32px;
+  --fv-text-h2-lh: 36px;
+  --fv-text-h3-size: 24px;
+  --fv-text-h3-lh: 28px;
+  --fv-text-h4-size: 20px;
+  --fv-text-h4-lh: 24px;
+  --fv-text-p1-size: 24px;
+  --fv-text-p1-lh: 32px;
+  --fv-text-p2-size: 20px;
+  --fv-text-p2-lh: 28px;
+  --fv-text-p3-size: 17px; /* базовый размер body */
+  --fv-text-p3-lh: 24px;
+  --fv-text-p4-size: 14px;
+  --fv-text-p4-lh: 20px;
+  --fv-text-caption-size: 12px;
+  --fv-text-caption-lh: 16px;
+
+  /* Веса */
+  --fv-weight-regular: 400;
+  --fv-weight-medium: 500;
+  --fv-weight-bold: 700;
+
+  /* Межбуквенные интервалы */
+  --fv-ls-h1: -1.5px;
+  --fv-ls-h2: -0.5px;
+  --fv-ls-tight: -0.4px;
+  --fv-ls-caps: 0.7px;
+
+  /* ---- Тени: 4 двухслойных тира (эталон). Мягкие, нейтральные ----
+     low — карточки/шапки (rest); middle — hover/контролы над карточками;
+     upper-middle — мобильные шторки; high — дропдауны/модалки/шторки. */
+  --fv-shadow-middle:
+    0 0 8px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.1);
+  --fv-shadow-upper-middle:
+    0 0 12px rgba(0, 0, 0, 0.08), 0 12px 32px rgba(0, 0, 0, 0.12);
+  --fv-shadow-high:
+    0 0 16px rgba(0, 0, 0, 0.08), 0 16px 48px rgba(0, 0, 0, 0.14);
+
+  /* Композитные алиасы (низ = семантический --fv-shadow-low из theme-variables) */
+  --fv-shadow-card: var(--fv-shadow-low);
+  --fv-shadow-elevated: var(--fv-shadow-upper-middle);
+  --fv-shadow-modal: var(--fv-shadow-high);
+  --fv-shadow-brand-sm: 0 4px 16px
+    color-mix(in srgb, var(--fv-color-brand) 30%, transparent);
+  --fv-shadow-brand-md: 0 8px 24px
+    color-mix(in srgb, var(--fv-color-brand) 40%, transparent);
+}
+
+/* ============================================================
+   Роль-классы типографики (эталон). Опциональные — навешивать на
+   заголовки/текст, чтобы не плодить ad-hoc font-size по компонентам.
+   ============================================================ */
+.fv-h1 {
+  font-family: var(--fv-font-display);
+  font-weight: var(--fv-weight-medium);
+  font-size: var(--fv-text-h1-size);
+  line-height: var(--fv-text-h1-lh);
+  letter-spacing: var(--fv-ls-h1);
+}
+.fv-h2 {
+  font-family: var(--fv-font-display);
+  font-weight: var(--fv-weight-medium);
+  font-size: var(--fv-text-h2-size);
+  line-height: var(--fv-text-h2-lh);
+  letter-spacing: var(--fv-ls-h2);
+}
+.fv-h3 {
+  font-family: var(--fv-font-ui);
+  font-weight: var(--fv-weight-medium);
+  font-size: var(--fv-text-h3-size);
+  line-height: var(--fv-text-h3-lh);
+}
+.fv-h4 {
+  font-family: var(--fv-font-ui);
+  font-weight: var(--fv-weight-medium);
+  font-size: var(--fv-text-h4-size);
+  line-height: var(--fv-text-h4-lh);
+}
+.fv-p1 {
+  font-family: var(--fv-font-ui);
+  font-weight: var(--fv-weight-regular);
+  font-size: var(--fv-text-p1-size);
+  line-height: var(--fv-text-p1-lh);
+}
+.fv-p2 {
+  font-family: var(--fv-font-ui);
+  font-weight: var(--fv-weight-regular);
+  font-size: var(--fv-text-p2-size);
+  line-height: var(--fv-text-p2-lh);
+}
+.fv-p3 {
+  font-family: var(--fv-font-ui);
+  font-weight: var(--fv-weight-regular);
+  font-size: var(--fv-text-p3-size);
+  line-height: var(--fv-text-p3-lh);
+}
+.fv-p4 {
+  font-family: var(--fv-font-ui);
+  font-weight: var(--fv-weight-regular);
+  font-size: var(--fv-text-p4-size);
+  line-height: var(--fv-text-p4-lh);
+}
+.fv-caption {
+  font-family: var(--fv-font-ui);
+  font-weight: var(--fv-weight-regular);
+  font-size: var(--fv-text-caption-size);
+  line-height: var(--fv-text-caption-lh);
+}
+.fv-caps {
+  font-family: var(--fv-font-display);
+  font-weight: var(--fv-weight-bold);
+  font-size: var(--fv-text-p4-size);
+  line-height: var(--fv-text-p4-lh);
+  letter-spacing: var(--fv-ls-caps);
+  text-transform: uppercase;
 }
 
 :where(.ant-message) {
   z-index: 12000 !important;
 }
-

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { TtlCache } from '../common/utils/ttl-cache';
 import {
   BadgeService,
   type LeaderboardBadgePreview,
@@ -213,8 +214,20 @@ function compareMovieRows(
   return a.movieId.localeCompare(b.movieId);
 }
 
+// Рейтинг меняется медленно → короткий TTL снимает и полное сканирование
+// user_movies, и N+1 по бейджам для всех одновременных зрителей.
+const LEADERBOARD_TTL_MS = 30_000;
+
 @Injectable()
 export class LeaderboardService {
+  // Агрегация по всем user_movies не зависит от sort/offset — кэшируем отдельно
+  private readonly aggCache = new TtlCache<UserAggRow[]>(LEADERBOARD_TTL_MS);
+  private readonly topUsersCache = new TtlCache<LeaderboardTopUsersResponseDto>(
+    LEADERBOARD_TTL_MS,
+  );
+  private readonly topMoviesCache =
+    new TtlCache<LeaderboardTopMoviesResponseDto>(LEADERBOARD_TTL_MS);
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly badgeService: BadgeService,
@@ -296,11 +309,29 @@ export class LeaderboardService {
     const sortBy = query.sortBy ?? LeaderboardSortBy.TOTAL_SCORE;
     const sortOrder = query.sortOrder ?? LeaderboardSortOrder.DESC;
 
-    const aggregated = await this.buildAggregatedRows();
-    aggregated.sort((a, b) => compareRows(a, b, sortBy, sortOrder));
+    const key = `${sortBy}|${sortOrder}|${offset}|${limit}`;
 
-    const total = aggregated.length;
-    const pageRows = aggregated.slice(offset, offset + limit);
+    return this.topUsersCache.wrap(key, () =>
+      this.computeTopUsers(limit, offset, sortBy, sortOrder),
+    );
+  }
+
+  private async computeTopUsers(
+    limit: number,
+    offset: number,
+    sortBy: LeaderboardSortBy,
+    sortOrder: LeaderboardSortOrder,
+  ): Promise<LeaderboardTopUsersResponseDto> {
+    // Агрегация шарится из кэша — копируем перед sort (мутирующий) во избежание гонок
+    const aggregated = await this.aggCache.wrap('all', () =>
+      this.buildAggregatedRows(),
+    );
+    const sorted = [...aggregated].sort((a, b) =>
+      compareRows(a, b, sortBy, sortOrder),
+    );
+
+    const total = sorted.length;
+    const pageRows = sorted.slice(offset, offset + limit);
 
     const items: LeaderboardUserItemDto[] = await Promise.all(
       pageRows.map(async (row, index) => {
@@ -337,6 +368,26 @@ export class LeaderboardService {
    * При большом каталоге имеет смысл вынести агрегацию в SQL.
    */
   public async getTopMovies(
+    query: LeaderboardTopMoviesQueryDto,
+  ): Promise<LeaderboardTopMoviesResponseDto> {
+    const key = JSON.stringify({
+      s: query.sortBy ?? null,
+      o: query.sortOrder ?? null,
+      off: query.offset ?? 0,
+      lim: query.limit ?? 20,
+      rmin: query.personalRateMin ?? null,
+      rmax: query.personalRateMax ?? null,
+      g: query.genres ?? null,
+      c: query.countryCodes ?? null,
+      a: query.actorIds ?? null,
+      pf: query.publishDateFrom ?? null,
+      pt: query.publishDateTo ?? null,
+    });
+
+    return this.topMoviesCache.wrap(key, () => this.computeTopMovies(query));
+  }
+
+  private async computeTopMovies(
     query: LeaderboardTopMoviesQueryDto,
   ): Promise<LeaderboardTopMoviesResponseDto> {
     const limit = Math.min(Math.max(query.limit ?? 20, 1), 20);

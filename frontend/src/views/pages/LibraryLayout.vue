@@ -1,29 +1,44 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from "vue";
-import { RouterView, useRoute } from "vue-router";
+import { RouterView, useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 
-import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
+import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { LIBRARY_NAV_ITEMS } from "@/constants/libraryNav";
 import type { LibraryHeroMeta } from "@/router/libraryHeroMeta";
-import {
-  useActorsStore,
-  useMoviesStore,
-  useUserListsStore,
-  useUserMoviesStore,
-} from "@/stores";
+import { useMainStore } from "@/state/state";
+import { useActorsStore, useUserMoviesStore } from "@/stores";
 
 const route = useRoute();
-const moviesStore = useMoviesStore();
+const router = useRouter();
+const mainStore = useMainStore();
 const userMoviesStore = useUserMoviesStore();
-const userListsStore = useUserListsStore();
 const actorsStore = useActorsStore();
 
 const { currentList } = storeToRefs(userMoviesStore);
 
+const userId = computed(() => mainStore.userData?.id || "");
+const isCollection = computed(() => route.name === "library-collection");
+const isActors = computed(() => route.name === "library-actors");
+const isLists = computed(() => route.name === "library-lists");
+
+// «Новый список» в шапке открывает модалку создания в MyListsPage через query-флаг
+const openNewList = (): void => {
+  void router.push({ query: { ...route.query, create: "1" } });
+};
+
+const loadCollectionStats = (): void => {
+  if (userId.value) {
+    void userMoviesStore.fetchUserMoviesStats(userId.value).catch(() => {});
+  }
+};
+
 onMounted(() => {
   void actorsStore.prefetchActorsTotal().catch(() => {});
+  loadCollectionStats();
 });
+
+watch(userId, () => loadCollectionStats());
 
 watch(
   () => {
@@ -54,8 +69,8 @@ const heroMeta = computed((): LibraryHeroMeta | undefined => {
       title: actor ? `Фильмы: ${actor.name}` : "Фильмы актёра",
       subtitle:
         "Общий каталог приложения с фильтром по выбранному актёру — откройте карточку, чтобы добавить фильм к себе",
-      badgeText: "В каталоге",
-      iconName: "mdi:account-star",
+      badgeText: "Медиатека",
+      iconName: "ph:user",
     };
   }
 
@@ -67,25 +82,61 @@ const heroMeta = computed((): LibraryHeroMeta | undefined => {
   return undefined;
 });
 
-const heroBadgeCount = computed(() => {
-  const name = route.name;
-  if (name === "library-collection") {
-    return currentList.value.length;
+const collectionCount = computed(
+  () => userMoviesStore.stats?.totalMovies ?? currentList.value.length,
+);
+
+const pluralTitles = (n: number): string => {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+
+  if (mod10 === 1 && mod100 !== 11) {
+    return "тайтл";
   }
 
-  if (name === "library-catalog" || name === "library-actor") {
-    return moviesStore.currentMoviesList.length;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+    return "тайтла";
   }
 
-  if (name === "library-actors") {
-    return actorsStore.actorsPageTotal;
+  return "тайтлов";
+};
+
+const heroSubtitle = computed(() => {
+  const meta = heroMeta.value;
+  if (!meta) {
+    return "";
   }
 
-  if (name === "library-lists") {
-    return userListsStore.lists.length;
+  if (isCollection.value) {
+    const n = collectionCount.value;
+
+    return `${n} ${pluralTitles(n)} · ${meta.subtitle}`;
   }
 
-  return undefined;
+  return meta.subtitle;
+});
+
+interface HeroStat {
+  value: number;
+  label: string;
+  accent?: boolean;
+}
+
+const heroStats = computed<HeroStat[]>(() => {
+  if (!isCollection.value) {
+    return [];
+  }
+
+  const s = userMoviesStore.stats;
+  if (!s) {
+    return [];
+  }
+
+  return [
+    { value: s.totalCompleted, label: "Просмотрено" },
+    { value: s.totalWatching, label: "Смотрю", accent: true },
+    { value: s.totalSeeLater, label: "Позже" },
+  ];
 });
 
 function isLibraryNavActive(to: string): boolean {
@@ -99,34 +150,78 @@ function isLibraryNavActive(to: string): boolean {
 
 <template>
   <div class="library-app-layout">
-    <HeroHeader
-      v-if="heroMeta"
-      class="library-app-layout__hero"
-      :title="heroMeta.title"
-      :subtitle="heroMeta.subtitle"
-      :badge-text="heroMeta.badgeText"
-      :badge-count="heroBadgeCount"
-      :icon-name="heroMeta.iconName"
-    />
-
     <div class="library-app-layout__body">
-      <aside
-        class="library-app-layout__aside"
-        aria-label="Разделы медиатеки"
-      >
-        <p class="library-app-layout__aside-title">Медиатека</p>
-        <nav class="library-nav">
+      <div v-if="heroMeta" class="library-hero">
+        <section class="library-hero__card">
+          <div class="library-hero__text">
+            <p class="library-hero__eyebrow">{{ heroMeta.badgeText }}</p>
+            <h1 class="library-hero__title">{{ heroMeta.title }}</h1>
+            <p class="library-hero__subtitle">{{ heroSubtitle }}</p>
+          </div>
+
+          <div v-if="heroStats.length" class="library-hero__stats">
+            <div
+              v-for="stat in heroStats"
+              :key="stat.label"
+              class="library-hero__stat"
+            >
+              <span
+                class="library-hero__stat-num"
+                :class="{ 'library-hero__stat-num--accent': stat.accent }"
+              >
+                {{ stat.value }}
+              </span>
+              <span class="library-hero__stat-label">{{ stat.label }}</span>
+            </div>
+          </div>
+
+          <label v-else-if="isActors" class="library-hero__search">
+            <BaseIcon name="ph:magnifying-glass" :width="20" :height="20" />
+            <input
+              v-model="actorsStore.actorsSearchQ"
+              type="text"
+              placeholder="Поиск актёров"
+            />
+          </label>
+
+          <button
+            v-else-if="isLists"
+            type="button"
+            class="library-hero__new-list"
+            @click="openNewList"
+          >
+            <BaseIcon name="ph:plus-bold" :width="18" :height="18" />
+            Новый список
+          </button>
+        </section>
+      </div>
+
+      <div class="library-subnav-wrap">
+        <nav class="library-subnav" aria-label="Разделы медиатеки">
           <RouterLink
             v-for="item in LIBRARY_NAV_ITEMS"
             :key="item.to"
             :to="item.to"
-            class="library-nav__link"
-            :class="{ 'library-nav__link--active': isLibraryNavActive(item.to) }"
+            class="library-subnav__chip"
+            :class="{
+              'library-subnav__chip--active': isLibraryNavActive(item.to),
+            }"
           >
             {{ item.label }}
           </RouterLink>
+
+          <button
+            v-if="isCollection"
+            type="button"
+            class="library-subnav__add"
+            @click="router.push('/create')"
+          >
+            <BaseIcon name="ph:plus-bold" :width="18" :height="18" />
+            Добавить
+          </button>
         </nav>
-      </aside>
+      </div>
+
       <main class="library-app-layout__main">
         <RouterView />
       </main>
@@ -144,127 +239,262 @@ function isLibraryNavActive(to: string): boolean {
   flex-direction: column;
   width: 100%;
 
-  &__hero {
-    width: 100%;
-    flex-shrink: 0;
-
-    :deep(.hero-header__subtitle) {
-      max-width: min(72ch, 100%);
-    }
-  }
-
   &__body {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.25rem;
     width: 100%;
-    max-width: calc(var(--page-max-width) + 260px);
-    margin: 0 auto;
-    padding: 1.75rem var(--page-content-padding-x) 0;
+    padding-top: 1.75rem;
     flex: 1;
-    align-items: stretch;
-
-    @include mediaTablet {
-      flex-direction: row;
-      align-items: flex-start;
-      gap: 1.75rem;
-      padding-top: 2rem;
-    }
-
-    @include mediaDesktopS {
-      padding-left: var(--page-content-padding-x-desktop);
-      padding-right: var(--page-content-padding-x-desktop);
-    }
-  }
-
-  &__aside {
-    flex-shrink: 0;
-    width: 100%;
-    padding: 1rem 0.85rem;
-    border-radius: var(--radius-lg, 14px);
-    background: var(--bg-primary);
-    border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-    box-shadow:
-      0 1px 2px color-mix(in srgb, #000 6%, transparent),
-      0 12px 32px color-mix(in srgb, #000 8%, transparent);
-
-    @include mediaTablet {
-      position: sticky;
-      top: 5.5rem;
-      width: 240px;
-      padding: 1.1rem 0.9rem;
-    }
-  }
-
-  &__aside-title {
-    margin: 0 0 0.65rem 0.15rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
   }
 
   &__main {
-    flex: 1;
-    min-width: 0;
     width: 100%;
+    min-width: 0;
   }
 }
 
-.library-nav {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 0.45rem;
+// Hero-карточка медиатеки (эталон): eyebrow + заголовок + подзаголовок + статы
+.library-hero {
+  @include pageContentContainer;
 
-  @include mediaTablet {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    gap: 0.4rem;
+  &__card {
+    display: flex;
+    align-items: center;
+    text-align: left; // перебиваем глобальный #app { text-align: center }
+    gap: 24px;
+    width: 100%;
+    padding: 1.75rem 2rem;
+    border-radius: var(--fv-radius-lg);
+    background: var(--fv-color-bg-primary);
+    box-shadow: var(--fv-shadow-card);
+    border: 1px solid color-mix(in srgb, var(--fv-color-border) 55%, transparent);
+
+    @include mediaMax(640px) {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 1.5rem;
+    }
   }
 
-  &__link {
-    display: block;
-    padding: 0.7rem 0.95rem;
-    border-radius: var(--radius-md, 10px);
-    font-weight: 600;
-    font-size: 0.88rem;
-    line-height: 1.35;
-    color: var(--text-secondary);
-    text-decoration: none;
-    border: 1px solid transparent;
-    background: color-mix(in srgb, var(--bg-secondary) 55%, var(--bg-primary));
-    transition:
-      color 0.2s ease,
-      border-color 0.2s ease,
-      background 0.2s ease,
-      box-shadow 0.2s ease;
+  &__text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__eyebrow {
+    margin: 0 0 8px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fv-color-text-tertiary);
+  }
+
+  &__title {
+    margin: 0;
+    font-family: var(--fv-font-display);
+    font-size: clamp(1.6rem, 4vw, 2.25rem);
+    font-weight: 500;
+    line-height: 1.1;
+    color: var(--fv-color-text-primary);
+  }
+
+  &__subtitle {
+    margin: 8px 0 0;
+    color: var(--fv-color-text-secondary);
+    font-size: 0.95rem;
+  }
+
+  &__stats {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+
+    @include mediaMax(640px) {
+      width: 100%;
+    }
+  }
+
+  &__stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 92px;
+    padding: 14px 20px;
+    border-radius: var(--fv-radius-md);
+    background: var(--fv-color-bg-secondary);
+
+    @include mediaMax(640px) {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  &__stat-num {
+    font-family: var(--fv-font-display);
+    font-size: 1.5rem;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--fv-color-text-primary);
+
+    &--accent {
+      color: var(--fv-color-accent);
+    }
+  }
+
+  &__stat-label {
+    font-size: 0.82rem;
+    color: var(--fv-color-text-secondary);
+  }
+
+  // Актёры: поиск справа в шапке
+  &__search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    width: 320px;
+    max-width: 100%;
+    height: 44px;
+    padding: 0 16px;
+    border-radius: var(--fv-radius-sm);
+    background: var(--fv-color-bg-secondary);
+    border: 1.5px solid transparent;
+    color: var(--fv-color-text-tertiary);
+    transition: border-color 0.15s ease;
+
+    &:focus-within {
+      border-color: var(--fv-color-accent);
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      background: none;
+      outline: none;
+      font: inherit;
+      font-size: 1rem;
+      color: var(--fv-color-text-primary);
+    }
+
+    @include mediaMax(640px) {
+      width: 100%;
+    }
+  }
+
+  // Мои списки: кнопка «Новый список» справа в шапке (эталон, brand-акцент)
+  &__new-list {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    height: 44px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: var(--fv-radius-sm);
+    background: var(--fv-color-brand);
+    color: #fff;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
 
     &:hover {
-      color: var(--ant-color-primary);
-      border-color: color-mix(
+      background: color-mix(in srgb, var(--fv-color-brand), #000 10%);
+    }
+
+    @include mediaMax(640px) {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+.library-subnav-wrap {
+  @include pageContentContainer;
+}
+
+/* Подразделы медиатеки — строка чипов (эталон): активный = тёмная ink-плашка */
+.library-subnav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+
+  // Мобилка: чипы в один ряд с горизонтальным скроллом (без переноса, эталон)
+  @include mediaMax(768px) {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  &__chip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--fv-color-border);
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-primary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+
+    &:hover {
+      background: color-mix(
         in srgb,
-        var(--ant-color-primary) 28%,
-        var(--border-color)
+        var(--fv-color-text-primary) 6%,
+        var(--fv-color-bg-secondary)
       );
-      background: var(--bg-primary);
     }
 
     &--active {
-      color: var(--ant-color-primary);
-      border-color: color-mix(
-        in srgb,
-        var(--ant-color-primary) 42%,
-        transparent
-      );
-      background: color-mix(
-        in srgb,
-        var(--ant-color-primary) 10%,
-        var(--bg-primary)
-      );
-      box-shadow: 0 0 0 1px
-        color-mix(in srgb, var(--ant-color-primary) 12%, transparent);
+      background: var(--fv-color-text-primary);
+      color: var(--fv-color-bg-primary);
+      border-color: transparent;
+    }
+  }
+
+  &__add {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    margin-left: auto;
+    padding: 0 22px;
+    border: 0;
+    border-radius: var(--fv-radius-sm);
+    background: var(--fv-color-brand);
+    color: #fff;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: color-mix(in srgb, var(--fv-color-brand), #000 10%);
+    }
+
+    // На мобиле добавление — через центральный FAB нижнего таб-бара
+    @include mediaMax(768px) {
+      display: none;
     }
   }
 }

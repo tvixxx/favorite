@@ -5,19 +5,19 @@ export const SETTING_BLOCKS: SettingBlockProps[] = [
     type: "theme",
     title: "Цветовая тема",
     description: "Выберите тему, которая вам больше нравится",
-    icon: "mdi:theme-light-dark",
+    icon: "ph:palette",
   },
   {
     type: "stats",
     title: "Статистика",
-    description: "Информация по фильмам и сериалам",
-    icon: "mdi:information-slab-symbol",
+    description: "",
+    icon: "ph:chart-bar",
   },
   {
     type: "friends",
     title: "Друзья",
     description: "Управление друзьями и подписками",
-    icon: "mdi:account-group",
+    icon: "ph:users-three",
   },
 ];
 

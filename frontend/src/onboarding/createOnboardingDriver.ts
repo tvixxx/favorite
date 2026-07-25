@@ -49,8 +49,6 @@ export function createOnboardingDriver(
   router: Router,
   callbacks: OnboardingDriverCallbacks,
 ): Driver {
-  let tourRef: Driver | undefined;
-
   const refreshTourAfterDomLayout = async (): Promise<void> => {
     await nextTick();
 
@@ -63,7 +61,7 @@ export function createOnboardingDriver(
     });
 
     await sleep(120);
-    tourRef?.refresh();
+    tourRef.refresh();
   };
 
   const baseConfig: Config = {
@@ -79,7 +77,7 @@ export function createOnboardingDriver(
     progressText: "{{current}} из {{total}}",
     allowClose: true,
     onHighlighted: () => {
-      tourRef?.refresh();
+      tourRef.refresh();
     },
     onDestroyed: () => {
       callbacks.onCompleted();
@@ -184,7 +182,7 @@ export function createOnboardingDriver(
     ],
   };
 
-  tourRef = driver(baseConfig);
+  const tourRef = driver(baseConfig);
 
   return tourRef;
 }

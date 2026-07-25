@@ -5,8 +5,9 @@ import { message } from "ant-design-vue";
 
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
-import ListError from "@/components/List/ListError/ListError.vue";
+import DetailSkeleton from "@/components/Skeleton/DetailSkeleton.vue";
+import StateBlock from "@/components/StateBlock/StateBlock.vue";
+import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import { GenreLabels } from "@/components/Genres/constants/genres.constants";
 import { countriesLabelsRu } from "@/constants/countries/production-countries";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
@@ -105,19 +106,25 @@ async function addToCollection() {
     </template>
 
     <template #body>
-      <ListError
+      <StateBlock
         v-if="moviesStore.isMovieError"
-        :is-error="!!moviesStore.isMovieError"
-        :repeat-fn="() => movieId && moviesStore.getMovieDetail(movieId)"
-        repeat-text="Повторить"
+        compact
+        v-bind="STATE_PRESETS.detailError"
+        :actions="[
+          {
+            label: 'Повторить',
+            icon: 'ph:arrow-clockwise',
+            kind: 'primary',
+            onClick: () => {
+              if (movieId) {
+                void moviesStore.getMovieDetail(movieId);
+              }
+            },
+          },
+        ]"
       />
 
-      <ListLoading
-        v-else-if="moviesStore.isMovieLoading"
-        :center="true"
-        loading-text="Загружаем…"
-        size="large"
-      />
+      <DetailSkeleton v-else-if="moviesStore.isMovieLoading" />
 
       <div v-else-if="movie" class="catalog-preview">
         <div class="catalog-preview__hero">
@@ -174,7 +181,7 @@ async function addToCollection() {
               <div v-if="movie.publishDate" class="catalog-preview__meta-line">
                 <BaseIcon
                   class="catalog-preview__meta-icon"
-                  name="mdi:calendar-blank-outline"
+                  name="ph:calendar-blank"
                   :width="14"
                   :height="14"
                 />
@@ -193,7 +200,7 @@ async function addToCollection() {
               >
                 <BaseIcon
                   class="catalog-preview__meta-icon"
-                  name="mdi:earth"
+                  name="ph:globe"
                   :width="14"
                   :height="14"
                 />
@@ -212,7 +219,7 @@ async function addToCollection() {
               >
                 <BaseIcon
                   class="catalog-preview__meta-icon"
-                  name="mdi:television"
+                  name="ph:monitor"
                   :width="14"
                   :height="14"
                 />
@@ -231,7 +238,7 @@ async function addToCollection() {
               >
                 <BaseIcon
                   class="catalog-preview__meta-icon"
-                  name="mdi:playlist-play"
+                  name="ph:playlist"
                   :width="14"
                   :height="14"
                 />
@@ -249,7 +256,7 @@ async function addToCollection() {
 
         <div v-if="movie.description?.trim()" class="catalog-preview__section">
           <h3 class="catalog-preview__section-title">
-            <BaseIcon name="mdi:text" :width="20" :height="20" />
+            <BaseIcon name="ph:text-align-left" :width="20" :height="20" />
             Описание
           </h3>
           <p class="catalog-preview__desc">{{ movie.description }}</p>
@@ -257,7 +264,7 @@ async function addToCollection() {
 
         <div v-if="hasActors" class="catalog-preview__section">
           <h3 class="catalog-preview__section-title">
-            <BaseIcon name="mdi:account-group" :width="20" :height="20" />
+            <BaseIcon name="ph:users-three" :width="20" :height="20" />
             Актёры
           </h3>
           <div class="catalog-preview__actors">
@@ -267,7 +274,7 @@ async function addToCollection() {
               class="catalog-preview__actor"
             >
               <div class="catalog-preview__actor-avatar">
-                <BaseIcon name="mdi:account" :width="18" :height="18" />
+                <BaseIcon name="ph:user" :width="18" :height="18" />
               </div>
               <span>{{ actor.name }}</span>
             </div>
@@ -277,7 +284,7 @@ async function addToCollection() {
         <div class="catalog-preview__section">
           <h3 class="catalog-preview__section-title">
             <BaseIcon
-              name="mdi:comment-text-outline"
+              name="ph:chat-text"
               :width="20"
               :height="20"
             />
@@ -307,7 +314,7 @@ async function addToCollection() {
 
           <div v-else class="catalog-preview__empty">
             <BaseIcon
-              name="mdi:comment-remove-outline"
+              name="ph:chat-text"
               :width="40"
               :height="40"
             />
@@ -319,7 +326,7 @@ async function addToCollection() {
 
     <template #footer>
       <a-button type="primary" size="large" @click="addToCollection">
-        <BaseIcon name="mdi:library-plus" :width="18" :height="18" />
+        <BaseIcon name="ph:plus-circle" :width="18" :height="18" />
         Добавить в мою коллекцию
       </a-button>
     </template>
@@ -339,10 +346,10 @@ async function addToCollection() {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  background: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow);
+  background: var(--fv-color-bg-primary);
+  border-radius: var(--fv-radius-lg);
+  border: 1px solid var(--fv-color-border);
+  box-shadow: var(--fv-shadow-low);
   overflow: hidden;
 
   @include mediaTablet {
@@ -355,7 +362,7 @@ async function addToCollection() {
   width: 100%;
   min-height: 220px;
   max-height: 320px;
-  background: var(--bg-secondary);
+  background: var(--fv-color-bg-secondary);
 
   @include mediaTablet {
     width: 220px;
@@ -388,8 +395,8 @@ async function addToCollection() {
 .catalog-preview__title {
   margin: 0;
   font-size: clamp(1.2rem, 3vw, 1.5rem);
-  font-weight: 700;
-  color: color-mix(in srgb, var(--ant-color-primary) 88%, var(--text-primary));
+  font-weight: 500;
+  color: color-mix(in srgb, var(--fv-color-accent) 88%, var(--fv-color-text-primary));
   line-height: 1.28;
   letter-spacing: -0.015em;
 }
@@ -405,25 +412,25 @@ async function addToCollection() {
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 500;
-  background: color-mix(in srgb, var(--bg-secondary) 92%, var(--bg-primary));
-  color: color-mix(in srgb, var(--text-secondary) 92%, var(--text-primary));
-  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+  background: color-mix(in srgb, var(--fv-color-bg-secondary) 92%, var(--fv-color-bg-primary));
+  color: color-mix(in srgb, var(--fv-color-text-secondary) 92%, var(--fv-color-text-primary));
+  border: 1px solid color-mix(in srgb, var(--fv-color-border) 85%, transparent);
 
   &_accent {
     background: color-mix(
       in srgb,
-      var(--ant-color-primary) 8%,
-      var(--bg-secondary)
+      var(--fv-color-accent) 8%,
+      var(--fv-color-bg-secondary)
     );
     color: color-mix(
       in srgb,
-      var(--ant-color-primary) 82%,
-      var(--text-primary)
+      var(--fv-color-accent) 82%,
+      var(--fv-color-text-primary)
     );
     border-color: color-mix(
       in srgb,
-      var(--ant-color-primary) 22%,
-      var(--border-color)
+      var(--fv-color-accent) 22%,
+      var(--fv-color-border)
     );
   }
 }
@@ -438,9 +445,9 @@ async function addToCollection() {
   flex-wrap: wrap;
   gap: 0.15rem 0.35rem;
   padding: 0.28rem 0.65rem 0.32rem;
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--bg-secondary) 70%, var(--bg-primary));
-  border: 1px solid color-mix(in srgb, var(--border-color) 88%, transparent);
+  border-radius: var(--fv-radius-sm);
+  background: color-mix(in srgb, var(--fv-color-bg-secondary) 70%, var(--fv-color-bg-primary));
+  border: 1px solid color-mix(in srgb, var(--fv-color-border) 88%, transparent);
   box-shadow: none;
 }
 
@@ -448,19 +455,19 @@ async function addToCollection() {
   font-size: 1.0625rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--text-primary);
+  color: var(--fv-color-text-primary);
 }
 
 .catalog-preview__rating-denom {
   font-size: 0.72rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--fv-color-text-secondary);
 }
 
 .catalog-preview__rating-note {
   font-size: 0.6875rem;
   font-weight: 500;
-  color: color-mix(in srgb, var(--text-secondary) 92%, transparent);
+  color: color-mix(in srgb, var(--fv-color-text-secondary) 92%, transparent);
   letter-spacing: 0.02em;
 }
 
@@ -469,7 +476,7 @@ async function addToCollection() {
   font-size: 0.8125rem;
   line-height: 1.4;
   font-weight: 400;
-  color: color-mix(in srgb, var(--text-secondary) 96%, transparent);
+  color: color-mix(in srgb, var(--fv-color-text-secondary) 96%, transparent);
 }
 
 .catalog-preview__meta {
@@ -478,7 +485,7 @@ async function addToCollection() {
   gap: 0.28rem;
   margin-top: 0.15rem;
   padding-top: 0.35rem;
-  border-top: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--fv-color-border) 65%, transparent);
 }
 
 .catalog-preview__meta-line {
@@ -493,7 +500,7 @@ async function addToCollection() {
   align-self: flex-start;
   margin-top: 0.2rem;
   opacity: 0.38;
-  color: var(--text-secondary);
+  color: var(--fv-color-text-secondary);
 }
 
 .catalog-preview__meta-inline {
@@ -504,25 +511,25 @@ async function addToCollection() {
 }
 
 .catalog-preview__meta-k {
-  color: color-mix(in srgb, var(--text-secondary) 94%, transparent);
+  color: color-mix(in srgb, var(--fv-color-text-secondary) 94%, transparent);
   font-weight: 500;
 }
 
 .catalog-preview__meta-sep {
   font-weight: 400;
-  color: color-mix(in srgb, var(--text-secondary) 45%, transparent);
+  color: color-mix(in srgb, var(--fv-color-text-secondary) 45%, transparent);
 }
 
 .catalog-preview__meta-v {
   font-weight: 500;
-  color: color-mix(in srgb, var(--text-primary) 92%, var(--text-secondary));
+  color: color-mix(in srgb, var(--fv-color-text-primary) 92%, var(--fv-color-text-secondary));
 }
 
 .catalog-preview__section {
   padding: 1rem 1.1rem;
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--bg-secondary) 55%, var(--bg-primary));
-  border: 1px solid var(--border-color);
+  border-radius: var(--fv-radius-md);
+  background: color-mix(in srgb, var(--fv-color-bg-secondary) 55%, var(--fv-color-bg-primary));
+  border: 1px solid var(--fv-color-border);
 }
 
 .catalog-preview__section-title {
@@ -532,30 +539,30 @@ async function addToCollection() {
   margin: 0 0 0.65rem;
   font-size: 0.98rem;
   font-weight: 600;
-  color: color-mix(in srgb, var(--text-primary) 94%, var(--text-secondary));
+  color: color-mix(in srgb, var(--fv-color-text-primary) 94%, var(--fv-color-text-secondary));
 
   svg {
     flex-shrink: 0;
     opacity: 0.5;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 }
 
 .catalog-preview__count {
   margin-left: auto;
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 500;
   padding: 0.1rem 0.5rem;
   border-radius: 999px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
+  background: var(--fv-color-bg-primary);
+  border: 1px solid var(--fv-color-border);
+  color: var(--fv-color-text-secondary);
 }
 
 .catalog-preview__desc {
   margin: 0;
   line-height: 1.55;
-  color: var(--text-primary);
+  color: var(--fv-color-text-primary);
   white-space: pre-wrap;
 }
 
@@ -571,8 +578,8 @@ async function addToCollection() {
   gap: 0.45rem;
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
+  background: var(--fv-color-bg-primary);
+  border: 1px solid var(--fv-color-border);
   font-size: 0.9rem;
   font-weight: 500;
 }
@@ -584,8 +591,8 @@ async function addToCollection() {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
+  background: var(--fv-color-bg-secondary);
+  color: var(--fv-color-text-secondary);
 }
 
 .catalog-preview__reviews {
@@ -596,9 +603,9 @@ async function addToCollection() {
 
 .catalog-preview__review {
   padding: 0.65rem 0.85rem;
-  border-radius: var(--radius-sm);
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
+  border-radius: var(--fv-radius-sm);
+  background: var(--fv-color-bg-primary);
+  border: 1px solid var(--fv-color-border);
 }
 
 .catalog-preview__review-head {
@@ -607,15 +614,15 @@ async function addToCollection() {
 
 .catalog-preview__review-rate {
   font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--ant-color-primary);
+  font-weight: 500;
+  color: var(--fv-color-accent);
 }
 
 .catalog-preview__review-text {
   margin: 0;
   font-size: 0.92rem;
   line-height: 1.45;
-  color: var(--text-primary);
+  color: var(--fv-color-text-primary);
 }
 
 .catalog-preview__empty {
@@ -626,7 +633,7 @@ async function addToCollection() {
   gap: 0.5rem;
   padding: 1.25rem;
   text-align: center;
-  color: var(--text-secondary);
+  color: var(--fv-color-text-secondary);
   font-size: 0.95rem;
 
   svg {

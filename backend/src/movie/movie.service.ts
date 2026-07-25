@@ -181,7 +181,12 @@ class MovieService {
       include: {
         actors: true,
         poster: true,
-        reviews: true,
+        // Инлайн отдаём только 10 свежих (превью показывает latest-10);
+        // полный список — через пагинированный getReviewsByMovieId
+        reviews: {
+          take: 10,
+          orderBy: { createdAt: 'desc' },
+        },
       },
     });
 

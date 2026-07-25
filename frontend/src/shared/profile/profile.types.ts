@@ -27,10 +27,10 @@ export interface StatsBlockItem {
 }
 
 export enum StatsBlockTitle {
-  totalMovies = "В коллекции:",
-  totalFavorites = "В избранном:",
-  totalSeeLater = "Смотреть позже:",
-  totalWatching = "Смотрю:",
-  totalCompleted = "Просмотрено:",
-  totalSerials = "Сериалов:",
+  totalMovies = "В коллекции",
+  totalFavorites = "В избранном",
+  totalSeeLater = "Смотреть позже",
+  totalWatching = "Смотрю",
+  totalCompleted = "Просмотрено",
+  totalSerials = "Сериалов",
 }

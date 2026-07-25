@@ -8,6 +8,7 @@ import { useMainStore } from "@/state/state";
 import { useUserListsStore, useUserMoviesStore } from "@/stores";
 import { formatDate, formatYear } from "@/utils";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
+import { DEFAULT_LIST_COLOR, LIST_COLOR_SWATCHES } from "@/constants/listColors";
 import { GenreLabels } from "@/components/Genres/constants/genres.constants";
 import { countriesLabelsRu } from "@/constants/countries/production-countries";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
@@ -18,8 +19,11 @@ import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import MovieShareButton from "@/components/MovieShareButton/MovieShareButton.vue";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
-import ListError from "@/components/List/ListError/ListError.vue";
-import ListLoading from "@/components/List/ListLoading/ListLoading.vue";
+import StateBlock from "@/components/StateBlock/StateBlock.vue";
+import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
+import DetailSkeleton from "@/components/Skeleton/DetailSkeleton.vue";
+import RowsSkeleton from "@/components/Skeleton/RowsSkeleton.vue";
+import { useMinLoading } from "@/components/Skeleton/useMinLoading";
 import { WatchStatus, type UserMovie } from "@/stores";
 import ReviewsWidget from "@/components/Reviews/ReviewsWidget.vue";
 import type { UserListDetail, UserListSummary } from "@/stores/userLists/types";
@@ -49,11 +53,13 @@ const currentMovieId = router.currentRoute.value.params.id as string | null;
 const userId = computed(() => mainStore.userData?.id || "");
 
 const isLoading = ref(false);
+const showSkeleton = useMinLoading(() => isLoading.value);
 const isError = ref<string | null>(null);
 const currentUserMovie = ref<UserMovie | null>(null);
 const isListsModalVisible = ref(false);
 const newListName = ref("");
 const newListLabelsInput = ref("");
+const newListColor = ref<string>(DEFAULT_LIST_COLOR);
 const isListActionLoading = ref(false);
 const listIdsWithCurrentMovie = ref<Set<string>>(new Set());
 
@@ -589,11 +595,13 @@ const createListFromModal = async () => {
   try {
     const created = await userListsStore.createList(userId.value, {
       name: newListName.value.trim(),
+      color: newListColor.value,
       labels: parseListLabels(newListLabelsInput.value),
     });
 
     newListName.value = "";
     newListLabelsInput.value = "";
+    newListColor.value = DEFAULT_LIST_COLOR;
     await refreshMoviePresenceInLists();
     message.success(`Список «${created.name}» создан`);
   } catch (error: unknown) {
@@ -648,25 +656,32 @@ const addMovieToList = async (listId: string) => {
       :title="movie?.title ?? 'Детали фильма'"
       subtitle="Подробная информация о фильме"
       badge-text="Фильм"
-      icon-name="mdi:filmstrip"
+      icon-name="ph:film-slate"
     />
 
     <div class="movie-detail__content">
       <AppBackButton :fallback="detailBackFallback" />
 
-      <ListError
+      <StateBlock
         v-if="isError"
-        :is-error="isError"
-        :repeat-fn="() => router.go(0)"
-        repeat-text="Повторить"
+        v-bind="STATE_PRESETS.detailError"
+        :actions="[
+          {
+            label: 'Повторить',
+            icon: 'ph:arrow-clockwise',
+            kind: 'primary',
+            onClick: () => router.go(0),
+          },
+          {
+            label: 'Назад',
+            icon: 'ph:arrow-left',
+            kind: 'ghost',
+            onClick: () => router.back(),
+          },
+        ]"
       />
 
-      <ListLoading
-        v-else-if="isLoading"
-        :center="true"
-        loading-text="Загружаем фильм..."
-        size="large"
-      />
+      <DetailSkeleton v-else-if="showSkeleton" />
 
       <template v-else-if="currentUserMovie && movie">
         <div class="detail-card">
@@ -687,7 +702,7 @@ const addMovieToList = async (listId: string) => {
                 @click="toggleFavorite"
               >
                 <BaseIcon
-                  :name="currentUserMovie.isFavorite ? 'mdi:heart' : 'mdi:heart-outline'"
+                  :name="currentUserMovie.isFavorite ? 'ph:heart-fill' : 'ph:heart'"
                   :width="24"
                   :height="24"
                 />
@@ -718,7 +733,7 @@ const addMovieToList = async (listId: string) => {
                 v-if="currentUserMovie.seeLater"
                 class="detail-card__tag detail-card__tag_warning"
               >
-                <BaseIcon name="mdi:clock-outline" :width="14" :height="14" />
+                <BaseIcon name="ph:clock" :width="14" :height="14" />
                 Смотреть позже
               </span>
             </div>
@@ -740,7 +755,7 @@ const addMovieToList = async (listId: string) => {
 
             <div class="detail-card__meta">
               <div v-if="currentUserMovie.addedAt" class="detail-card__meta-item">
-                <BaseIcon name="mdi:eye" :width="18" :height="18" />
+                <BaseIcon name="ph:eye" :width="18" :height="18" />
                 <span class="detail-card__meta-label">Дата добавления</span>
                 <span class="detail-card__meta-value">
                   {{ formatDate(currentUserMovie.addedAt) }}
@@ -748,7 +763,7 @@ const addMovieToList = async (listId: string) => {
               </div>
 
               <div v-if="movie.publishDate" class="detail-card__meta-item">
-                <BaseIcon name="mdi:calendar" :width="18" :height="18" />
+                <BaseIcon name="ph:calendar-blank" :width="18" :height="18" />
                 <span class="detail-card__meta-label">Дата выхода</span>
                 <span class="detail-card__meta-value">
                   {{ formatYear(movie.publishDate) }}
@@ -759,7 +774,7 @@ const addMovieToList = async (listId: string) => {
                 v-if="movie.countryCodes?.length"
                 class="detail-card__meta-item"
               >
-                <BaseIcon name="mdi:earth" :width="18" :height="18" />
+                <BaseIcon name="ph:globe" :width="18" :height="18" />
                 <span class="detail-card__meta-label">Страны производства</span>
                 <span class="detail-card__meta-value">
                   {{ countriesLabelsRu(movie.countryCodes) }}
@@ -770,7 +785,7 @@ const addMovieToList = async (listId: string) => {
                 v-if="movie.isSerial && movie.seasonCount"
                 class="detail-card__meta-item"
               >
-                <BaseIcon name="mdi:television" :width="18" :height="18" />
+                <BaseIcon name="ph:monitor" :width="18" :height="18" />
                 <span class="detail-card__meta-label">Сезонов</span>
                 <span class="detail-card__meta-value">
                   {{ movie.seasonCount }}
@@ -781,7 +796,7 @@ const addMovieToList = async (listId: string) => {
                 v-if="movie.isSerial && movie.episodeCount"
                 class="detail-card__meta-item"
               >
-                <BaseIcon name="mdi:playlist-play" :width="18" :height="18" />
+                <BaseIcon name="ph:playlist" :width="18" :height="18" />
                 <span class="detail-card__meta-label">Эпизодов</span>
                 <span class="detail-card__meta-value">
                   {{ movie.episodeCount }}
@@ -792,7 +807,7 @@ const addMovieToList = async (listId: string) => {
                 class="detail-card__meta-item detail-card__meta-item_interactive"
                 @click.stop
               >
-                <BaseIcon name="mdi:clock-outline" :width="18" :height="18" />
+                <BaseIcon name="ph:clock" :width="18" :height="18" />
                 <span class="detail-card__meta-label">Смотреть позже</span>
                 <a-switch
                   :checked="currentUserMovie.seeLater"
@@ -824,7 +839,7 @@ const addMovieToList = async (listId: string) => {
                   class="detail-card__meta-list-btn"
                   @click="openListsModal"
                 >
-                  <BaseIcon name="mdi:playlist-plus" :width="16" :height="16" />
+                  <BaseIcon name="ph:list-plus" :width="16" :height="16" />
                   В список
                 </a-button>
               </div>
@@ -834,7 +849,7 @@ const addMovieToList = async (listId: string) => {
 
         <div v-if="movie.description" class="detail-section">
           <h2 class="detail-section__title">
-            <BaseIcon name="mdi:text" :width="22" :height="22" />
+            <BaseIcon name="ph:text-align-left" :width="22" :height="22" />
             Описание
           </h2>
           <p class="detail-section__text">{{ movie.description }}</p>
@@ -842,7 +857,7 @@ const addMovieToList = async (listId: string) => {
 
         <div v-if="hasActors" class="detail-section">
           <h2 class="detail-section__title">
-            <BaseIcon name="mdi:account-group" :width="22" :height="22" />
+            <BaseIcon name="ph:users-three" :width="22" :height="22" />
             Актёры
           </h2>
           <div class="actors-list">
@@ -852,7 +867,7 @@ const addMovieToList = async (listId: string) => {
               class="actors-list__item"
             >
               <div class="actors-list__avatar">
-                <BaseIcon name="mdi:account" :width="20" :height="20" />
+                <BaseIcon name="ph:user" :width="20" :height="20" />
               </div>
               <span class="actors-list__name">{{ actor.name }}</span>
             </div>
@@ -862,7 +877,7 @@ const addMovieToList = async (listId: string) => {
         <div v-if="hasSerialProgress" class="detail-section">
           <div class="detail-section__header">
             <h2 class="detail-section__title">
-              <BaseIcon name="mdi:progress-clock" :width="22" :height="22" />
+              <BaseIcon name="ph:clock-countdown" :width="22" :height="22" />
               Прогресс просмотра
             </h2>
             <a-button
@@ -872,13 +887,13 @@ const addMovieToList = async (listId: string) => {
               class="detail-section__edit-btn"
               @click="startEditProgress"
             >
-              <BaseIcon name="mdi:pencil" :width="16" :height="16" />
+              <BaseIcon name="ph:pencil-simple" :width="16" :height="16" />
               <span>Изменить</span>
             </a-button>
           </div>
 
           <div v-if="isSerialCompleted" class="serial-progress__completed">
-            <BaseIcon name="mdi:check-circle" :width="20" :height="20" />
+            <BaseIcon name="ph:check-circle" :width="20" :height="20" />
             <span>Сериал просмотрен полностью!</span>
           </div>
 
@@ -1029,7 +1044,7 @@ const addMovieToList = async (listId: string) => {
                 :loading="isProgressSaving"
                 @click="saveProgress"
               >
-                <BaseIcon name="mdi:check" :width="16" :height="16" />
+                <BaseIcon name="ph:check" :width="16" :height="16" />
                 Сохранить
               </a-button>
             </div>
@@ -1052,6 +1067,12 @@ const addMovieToList = async (listId: string) => {
     <template #body>
       <div class="lists-modal">
         <div class="lists-modal__create">
+          <div
+            class="lists-modal__preview"
+            :style="{ background: newListColor }"
+          >
+            {{ newListName.trim() || "Новый список" }}
+          </div>
           <a-input
             v-model:value="newListName"
             placeholder="Название списка"
@@ -1064,20 +1085,34 @@ const addMovieToList = async (listId: string) => {
             :maxlength="140"
             size="large"
           />
+          <div class="lists-modal__swatches" role="radiogroup" aria-label="Цвет обложки">
+            <button
+              v-for="swatch in LIST_COLOR_SWATCHES"
+              :key="swatch"
+              type="button"
+              class="lists-modal__swatch"
+              :class="{ 'lists-modal__swatch--active': newListColor === swatch }"
+              :style="{ background: swatch }"
+              :aria-label="`Цвет ${swatch}`"
+              :aria-checked="newListColor === swatch"
+              role="radio"
+              @click="newListColor = swatch"
+            ></button>
+          </div>
           <a-button
             type="primary"
             :loading="isListActionLoading"
+            :disabled="!newListName.trim()"
             @click="createListFromModal"
           >
             Создать список
           </a-button>
         </div>
 
-        <ListLoading
+        <RowsSkeleton
           v-if="userListsStore.isLoading"
-          :center="true"
-          loading-text="Загружаем списки..."
-          size="large"
+          :count="3"
+          :badge="false"
         />
 
         <div v-else-if="availableUserLists.length" class="lists-modal__list">
@@ -1143,11 +1178,11 @@ const addMovieToList = async (listId: string) => {
 .detail-card {
   display: flex;
   flex-direction: column;
-  background: var(--bg-primary);
+  background: var(--fv-color-bg-primary);
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-color);
+  box-shadow: var(--fv-shadow-low), 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--fv-color-border);
 
   @include mediaTablet {
     flex-direction: row;
@@ -1157,7 +1192,7 @@ const addMovieToList = async (listId: string) => {
     flex-shrink: 0;
     width: 100%;
     height: 360px;
-    background: var(--bg-secondary);
+    background: var(--fv-color-bg-secondary);
     overflow: hidden;
 
     @include mediaTablet {
@@ -1201,17 +1236,10 @@ const addMovieToList = async (listId: string) => {
 
   &__title {
     font-size: clamp(1.5rem, 4vw, 2.25rem);
-    font-weight: 800;
+    font-weight: 500;
     margin: 0;
     line-height: 1.2;
-    background: linear-gradient(
-      135deg,
-      var(--ant-color-primary),
-      var(--text-primary)
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--fv-color-text-primary);
   }
 
   &__favorite {
@@ -1219,9 +1247,9 @@ const addMovieToList = async (listId: string) => {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    border: 2px solid var(--border-color);
-    background: var(--bg-secondary);
-    color: var(--text-secondary);
+    border: 2px solid var(--fv-color-border);
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1229,19 +1257,19 @@ const addMovieToList = async (listId: string) => {
     transition: all 0.25s ease;
 
     &:hover {
-      border-color: var(--ant-color-primary);
-      color: var(--ant-color-primary);
+      border-color: var(--fv-color-brand);
+      color: var(--fv-color-brand);
       transform: scale(1.1);
     }
 
     &_active {
-      border-color: var(--ant-color-primary);
+      border-color: var(--fv-color-brand);
       background: color-mix(
         in srgb,
-        var(--ant-color-primary) 10%,
-        var(--bg-primary)
+        var(--fv-color-brand) 10%,
+        var(--fv-color-bg-primary)
       );
-      color: var(--ant-color-primary);
+      color: var(--fv-color-brand);
     }
   }
 
@@ -1256,20 +1284,20 @@ const addMovieToList = async (listId: string) => {
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 500;
-    background: var(--bg-secondary);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-secondary);
+    border: 1px solid var(--fv-color-border);
 
     &_accent {
       background: color-mix(
         in srgb,
-        var(--ant-color-primary) 10%,
-        var(--bg-primary)
+        var(--fv-color-accent) 10%,
+        var(--fv-color-bg-primary)
       );
-      color: var(--ant-color-primary);
+      color: var(--fv-color-accent);
       border-color: color-mix(
         in srgb,
-        var(--ant-color-primary) 30%,
+        var(--fv-color-accent) 30%,
         transparent
       );
     }
@@ -1290,32 +1318,32 @@ const addMovieToList = async (listId: string) => {
 
   &__rating-value {
     font-size: 2rem;
-    font-weight: 800;
-    color: var(--ant-color-primary);
+    font-weight: 500;
+    color: var(--fv-color-accent);
     line-height: 1;
   }
 
   &__rating-max {
     font-size: 1rem;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__rating-bar {
     flex: 1;
     height: 8px;
-    background: var(--bg-secondary);
+    background: var(--fv-color-bg-secondary);
     border-radius: 4px;
     overflow: hidden;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--fv-color-border);
   }
 
   &__rating-fill {
     height: 100%;
     background: linear-gradient(
       90deg,
-      var(--ant-color-primary),
-      color-mix(in srgb, var(--ant-color-primary) 60%, var(--bg-secondary))
+      var(--fv-color-accent),
+      color-mix(in srgb, var(--fv-color-accent) 60%, var(--fv-color-bg-secondary))
     );
     border-radius: 4px;
     transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1327,7 +1355,7 @@ const addMovieToList = async (listId: string) => {
     gap: 10px;
     padding-top: 1rem;
     border-top: 1px solid
-      color-mix(in srgb, var(--border-color) 50%, transparent);
+      color-mix(in srgb, var(--fv-color-border) 50%, transparent);
   }
 
   &__meta-item {
@@ -1335,11 +1363,11 @@ const addMovieToList = async (listId: string) => {
     align-items: center;
     gap: 10px;
     font-size: 0.9rem;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
 
     svg {
       flex-shrink: 0;
-      color: var(--ant-color-primary);
+      color: var(--fv-color-accent);
     }
 
     &_interactive {
@@ -1355,12 +1383,12 @@ const addMovieToList = async (listId: string) => {
 
   &__meta-label {
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__meta-value {
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--fv-color-text-primary);
     margin-left: auto;
   }
 
@@ -1376,13 +1404,13 @@ const addMovieToList = async (listId: string) => {
     gap: 4px;
     background: color-mix(
       in srgb,
-      var(--color-warning, #faad14) 10%,
-      var(--bg-primary)
+      var(--fv-color-warning, #faad14) 10%,
+      var(--fv-color-bg-primary)
     );
-    color: var(--color-warning, #faad14);
+    color: var(--fv-color-warning, #faad14);
     border-color: color-mix(
       in srgb,
-      var(--color-warning, #faad14) 30%,
+      var(--fv-color-warning, #faad14) 30%,
       transparent
     );
   }
@@ -1397,7 +1425,49 @@ const addMovieToList = async (listId: string) => {
     display: grid;
     gap: 0.75rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--fv-color-border) 65%, transparent);
+  }
+
+  &__preview {
+    display: flex;
+    align-items: flex-end;
+    min-height: 64px;
+    padding: 0.75rem 1rem;
+    border-radius: var(--fv-radius-md);
+    color: #fff;
+    font-family: var(--fv-font-display);
+    font-weight: 500;
+    font-size: 1.1rem;
+    text-align: left;
+    box-shadow: var(--fv-shadow-low);
+    transition: background 0.2s ease;
+  }
+
+  &__swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  &__swatch {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 999px;
+    cursor: pointer;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--fv-color-text-primary) 12%, transparent);
+    transition: transform 0.12s ease;
+
+    &:hover {
+      transform: scale(1.08);
+    }
+
+    &--active {
+      border-color: var(--fv-color-bg-primary);
+      box-shadow: 0 0 0 2px var(--fv-color-text-primary);
+    }
   }
 
   &__list {
@@ -1412,8 +1482,8 @@ const addMovieToList = async (listId: string) => {
     gap: 0.75rem;
     padding: 0.75rem;
     border-radius: 12px;
-    border: 1px solid var(--border-color);
-    background: color-mix(in srgb, var(--bg-secondary) 75%, transparent);
+    border: 1px solid var(--fv-color-border);
+    background: color-mix(in srgb, var(--fv-color-bg-secondary) 75%, transparent);
   }
 
   &__list-main {
@@ -1423,13 +1493,13 @@ const addMovieToList = async (listId: string) => {
 
   &__list-title {
     font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--text-primary);
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
   }
 
   &__list-meta {
     font-size: 0.82rem;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__labels {
@@ -1442,9 +1512,9 @@ const addMovieToList = async (listId: string) => {
   &__label {
     display: inline-flex;
     align-items: center;
-    border: 1px solid color-mix(in srgb, var(--ant-color-primary) 35%, transparent);
-    background: color-mix(in srgb, var(--ant-color-primary) 10%, var(--bg-primary));
-    color: var(--ant-color-primary);
+    border: 1px solid color-mix(in srgb, var(--fv-color-accent) 35%, transparent);
+    background: color-mix(in srgb, var(--fv-color-accent) 10%, var(--fv-color-bg-primary));
+    color: var(--fv-color-accent);
     border-radius: 999px;
     font-size: 0.75rem;
     font-weight: 600;
@@ -1455,18 +1525,18 @@ const addMovieToList = async (listId: string) => {
   &__empty {
     padding: 0.75rem;
     border-radius: 12px;
-    border: 1px dashed var(--border-color);
-    color: var(--text-secondary);
+    border: 1px dashed var(--fv-color-border);
+    color: var(--fv-color-text-secondary);
   }
 }
 
 .detail-section {
   margin-top: 1.5rem;
-  background: var(--bg-primary);
+  background: var(--fv-color-bg-primary);
   border-radius: 20px;
   padding: 2rem;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border-color);
+  box-shadow: var(--fv-shadow-low);
+  border: 1px solid var(--fv-color-border);
 
   &__header {
     display: flex;
@@ -1485,19 +1555,19 @@ const addMovieToList = async (listId: string) => {
     align-items: center;
     gap: 10px;
     font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-primary);
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
     margin: 0 0 1rem 0;
 
     svg {
-      color: var(--ant-color-primary);
+      color: var(--fv-color-accent);
     }
   }
 
   &__text {
     font-size: 1.05rem;
     line-height: 1.8;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
     margin: 0;
     white-space: pre-line;
   }
@@ -1525,14 +1595,14 @@ const addMovieToList = async (listId: string) => {
     gap: 8px;
     padding: 8px 16px;
     border-radius: 50px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    background: var(--fv-color-bg-secondary);
+    border: 1px solid var(--fv-color-border);
     transition: all 0.2s ease;
 
     &:hover {
-      border-color: var(--ant-color-primary);
+      border-color: var(--fv-color-accent);
       box-shadow: 0 2px 8px
-        color-mix(in srgb, var(--ant-color-primary) 15%, transparent);
+        color-mix(in srgb, var(--fv-color-accent) 15%, transparent);
     }
   }
 
@@ -1542,19 +1612,19 @@ const addMovieToList = async (listId: string) => {
     border-radius: 50%;
     background: color-mix(
       in srgb,
-      var(--ant-color-primary) 15%,
-      var(--bg-primary)
+      var(--fv-color-accent) 15%,
+      var(--fv-color-bg-primary)
     );
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--ant-color-primary);
+    color: var(--fv-color-accent);
   }
 
   &__name {
     font-size: 0.9rem;
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--fv-color-text-primary);
   }
 }
 
@@ -1569,9 +1639,9 @@ const addMovieToList = async (listId: string) => {
     gap: 8px;
     padding: 10px 16px;
     border-radius: 12px;
-    background: color-mix(in srgb, var(--color-success) 10%, var(--bg-primary));
-    border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
-    color: var(--color-success);
+    background: color-mix(in srgb, var(--fv-color-positive) 10%, var(--fv-color-bg-primary));
+    border: 1px solid color-mix(in srgb, var(--fv-color-positive) 30%, transparent);
+    color: var(--fv-color-positive);
     font-weight: 600;
     font-size: 0.9rem;
     margin-bottom: 0.5rem;
@@ -1583,8 +1653,8 @@ const addMovieToList = async (listId: string) => {
     gap: 8px;
     padding: 0.85rem;
     border-radius: 14px;
-    border: 1px solid var(--border-color);
-    background: color-mix(in srgb, var(--bg-secondary) 75%, transparent);
+    border: 1px solid var(--fv-color-border);
+    background: color-mix(in srgb, var(--fv-color-bg-secondary) 75%, transparent);
   }
 
   &__status-row {
@@ -1594,8 +1664,8 @@ const addMovieToList = async (listId: string) => {
     gap: 1rem;
     padding: 0.85rem;
     border-radius: 14px;
-    border: 1px solid var(--border-color);
-    background: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
+    border: 1px solid var(--fv-color-border);
+    background: color-mix(in srgb, var(--fv-color-bg-secondary) 80%, transparent);
     margin-bottom: 0.75rem;
   }
 
@@ -1610,13 +1680,13 @@ const addMovieToList = async (listId: string) => {
   &__status-label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__status-value {
     font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--text-primary);
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
   }
 
   &__status-select {
@@ -1624,8 +1694,8 @@ const addMovieToList = async (listId: string) => {
     max-width: 100%;
 
     :deep(.ant-segmented) {
-      background: color-mix(in srgb, var(--bg-primary) 80%, transparent);
-      border: 1px solid var(--border-color);
+      background: color-mix(in srgb, var(--fv-color-bg-primary) 80%, transparent);
+      border: 1px solid var(--fv-color-border);
       border-radius: 12px;
       padding: 4px;
     }
@@ -1633,15 +1703,15 @@ const addMovieToList = async (listId: string) => {
     :deep(.ant-segmented-item) {
       border-radius: 8px;
       font-weight: 600;
-      color: var(--text-secondary);
+      color: var(--fv-color-text-secondary);
     }
 
     :deep(.ant-segmented-item-selected) {
-      color: var(--text-primary);
+      color: var(--fv-color-text-primary);
       background: color-mix(
         in srgb,
-        var(--ant-color-primary) 14%,
-        var(--bg-primary)
+        var(--fv-color-accent) 14%,
+        var(--fv-color-bg-primary)
       );
       box-shadow: none;
     }
@@ -1659,20 +1729,20 @@ const addMovieToList = async (listId: string) => {
 
   &__preset-btn {
     border-radius: 999px;
-    border-color: var(--border-color);
-    color: var(--text-secondary);
+    border-color: var(--fv-color-border);
+    color: var(--fv-color-text-secondary);
 
     &_active {
-      color: var(--ant-color-primary);
+      color: var(--fv-color-accent);
       border-color: color-mix(
         in srgb,
-        var(--ant-color-primary) 40%,
+        var(--fv-color-accent) 40%,
         transparent
       );
       background: color-mix(
         in srgb,
-        var(--ant-color-primary) 10%,
-        var(--bg-primary)
+        var(--fv-color-accent) 10%,
+        var(--fv-color-bg-primary)
       );
     }
   }
@@ -1686,17 +1756,17 @@ const addMovieToList = async (listId: string) => {
   &__label-text {
     font-size: 0.9rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__label-value {
     font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--text-primary);
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
     background: color-mix(
       in srgb,
-      var(--ant-color-primary) 10%,
-      var(--bg-primary)
+      var(--fv-color-accent) 10%,
+      var(--fv-color-bg-primary)
     );
     padding: 2px 10px;
     border-radius: 12px;
@@ -1704,7 +1774,7 @@ const addMovieToList = async (listId: string) => {
 
   &__bar_complete {
     :deep(.ant-progress-bg) {
-      background-color: var(--color-success) !important;
+      background-color: var(--fv-color-positive) !important;
     }
   }
 
@@ -1722,14 +1792,14 @@ const addMovieToList = async (listId: string) => {
     gap: 0.75rem;
     padding: 0.6rem 0.75rem;
     border-radius: 12px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-secondary);
+    border: 1px solid var(--fv-color-border);
+    background: var(--fv-color-bg-secondary);
   }
 
   &__quick-label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__quick-controls {
@@ -1751,7 +1821,7 @@ const addMovieToList = async (listId: string) => {
   &__edit-label {
     font-size: 0.9rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__edit-actions {
@@ -1760,7 +1830,7 @@ const addMovieToList = async (listId: string) => {
     gap: 10px;
     padding-top: 0.5rem;
     border-top: 1px solid
-      color-mix(in srgb, var(--border-color) 50%, transparent);
+      color-mix(in srgb, var(--fv-color-border) 50%, transparent);
 
     :deep(.ant-btn-primary) {
       display: flex;

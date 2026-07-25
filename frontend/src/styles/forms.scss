@@ -1,0 +1,138 @@
+/**
+ * Единый вид полей ввода — эталон MTS Granat `.fld`:
+ *   покой  — серая заливка (bg-secondary) + рамка 1.5px transparent + radius 12;
+ *   фокус  — белый фон + синяя (accent) рамка, без внешнего кольца;
+ *   ошибка — негативная рамка.
+ * Применяется ко всем Ant-контролам глобально. Ant 4 инжектит стили в рантайме
+ * (cssinjs), поэтому для переопределения нужен !important.
+ */
+
+/* ── базовый вид ─────────────────────────────────────────────── */
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-number,
+.ant-picker,
+.ant-select:not(.ant-select-customize-input) .ant-select-selector,
+textarea.ant-input {
+  background-color: var(--fv-color-bg-secondary) !important;
+  border: 1.5px solid transparent !important;
+  border-radius: var(--fv-radius-sm) !important;
+  box-shadow: none !important;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease !important;
+}
+
+/* внутренний input внутри обёрток — прозрачный, без своей рамки */
+.ant-input-affix-wrapper > .ant-input,
+.ant-input-affix-wrapper > input.ant-input,
+.ant-input-number .ant-input-number-input,
+.ant-picker .ant-picker-input > input {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* hover — лёгкое затемнение заливки, пока поле не в фокусе */
+.ant-input:hover:not(:focus),
+.ant-input-affix-wrapper:hover:not(.ant-input-affix-wrapper-focused):not(:focus-within),
+.ant-input-number:hover:not(.ant-input-number-focused),
+.ant-picker:hover:not(.ant-picker-focused),
+.ant-select:not(.ant-select-focused):not(.ant-select-disabled)
+  .ant-select-selector:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--fv-color-bg-secondary),
+    #000 3%
+  ) !important;
+  border-color: transparent !important;
+}
+
+/* фокус — белый фон + синяя рамка, без кольца */
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused,
+.ant-input-affix-wrapper:focus-within,
+.ant-input-number-focused,
+.ant-picker-focused,
+.ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
+  background-color: var(--fv-color-bg-primary) !important;
+  border-color: var(--fv-color-accent) !important;
+  box-shadow: none !important;
+}
+
+/* ошибка (Ant status error) — негативная рамка вместо синей */
+.ant-input-status-error,
+.ant-input-affix-wrapper-status-error,
+.ant-form-item-has-error .ant-input,
+.ant-form-item-has-error .ant-input-affix-wrapper,
+.ant-form-item-has-error .ant-select .ant-select-selector,
+.ant-form-item-has-error .ant-picker {
+  border-color: var(--fv-color-negative) !important;
+  background-color: var(--fv-color-bg-primary) !important;
+}
+
+/* плейсхолдеры — третичный текст */
+.ant-input::placeholder,
+.ant-input-number-input::placeholder,
+.ant-picker-input > input::placeholder {
+  color: var(--fv-color-text-tertiary) !important;
+}
+
+/* disabled — приглушение */
+.ant-input[disabled],
+.ant-input-affix-wrapper-disabled,
+.ant-picker-disabled,
+.ant-input-number-disabled,
+.ant-select-disabled .ant-select-selector {
+  opacity: 0.55 !important;
+}
+
+/* ── Дропдаун Select: выбранное — нейтральный серый фон + синяя галочка
+   (вместо бренд-розового Ant по умолчанию) ── */
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background-color: var(--fv-color-bg-secondary) !important;
+  color: var(--fv-color-text-primary) !important;
+  font-weight: 500 !important;
+}
+
+.ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background-color: color-mix(
+    in srgb,
+    var(--fv-color-bg-secondary),
+    #000 3%
+  ) !important;
+}
+
+.ant-select-item-option-selected .ant-select-item-option-state {
+  color: var(--fv-color-accent) !important;
+}
+
+/* ── Свитч (Ant) — эталон: трек 44×26, ручка 20, on=green / off=grey ── */
+.ant-switch:not(.ant-switch-small) {
+  min-width: 44px !important;
+  height: 26px !important;
+  border-radius: 999px !important;
+  background: var(--fv-color-text-tertiary) !important;
+}
+
+.ant-switch:not(.ant-switch-small).ant-switch-checked {
+  background: var(--fv-color-positive) !important;
+}
+
+.ant-switch:not(.ant-switch-small) .ant-switch-handle {
+  width: 20px !important;
+  height: 20px !important;
+  top: 3px !important;
+  inset-inline-start: 3px !important;
+}
+
+.ant-switch:not(.ant-switch-small) .ant-switch-handle::before {
+  border-radius: 50% !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.ant-switch:not(.ant-switch-small).ant-switch-checked .ant-switch-handle {
+  inset-inline-start: calc(100% - 20px - 3px) !important;
+}

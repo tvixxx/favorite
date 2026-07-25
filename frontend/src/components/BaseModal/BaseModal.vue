@@ -1,28 +1,123 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from "vue";
+import { useMediaQuery } from "@vueuse/core";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import { useScrollLock } from "@/composable/useScrollLock";
 
 const modelValue = defineModel<boolean>();
 
 defineProps<{
-  layout?: "default" | "detail";
+  layout?: "default" | "detail" | "form";
+  /** Скрыть стандартную белую шапку — контент сам рисует обложку (edge-to-edge) */
+  headerless?: boolean;
+  /** Доступное имя диалога для headerless-режима (когда нет заголовка) */
+  ariaLabel?: string;
 }>();
 const emit = defineEmits<{ confirm: [] }>();
 
 const modal = ref<HTMLElement | null>(null);
 const previousFocus = ref<HTMLElement | null>(null);
+// Стабильный id заголовка → aria-labelledby (SR читает имя диалога)
+const titleId = useId();
 
-function lockScroll() {
-  document.body.style.overflow = "hidden";
+// <768px — модалка превращается в action sheet снизу (эталон)
+const isSheet = useMediaQuery("(max-width: 767.98px)");
+
+// Свайп вниз по листу для закрытия
+const dragOffset = ref(0);
+const dragStartY = ref<number | null>(null);
+const dragActive = ref(false);
+
+const dragStyle = computed(() =>
+  dragOffset.value > 0
+    ? { transform: `translateY(${dragOffset.value}px)`, transition: "none" }
+    : undefined,
+);
+
+function onTouchStart(e: TouchEvent): void {
+  if (!isSheet.value) {
+    return;
+  }
+
+  const body = modal.value?.querySelector(".modal__body");
+  // тянем лист только если тело прокручено к верху — иначе это обычный скролл
+  dragActive.value = !body || body.scrollTop <= 0;
+  dragStartY.value = e.touches[0]?.clientY ?? null;
 }
 
-function unlockScroll() {
-  document.body.style.overflow = "";
+function onTouchMove(e: TouchEvent): void {
+  if (!dragActive.value || dragStartY.value === null) {
+    return;
+  }
+
+  const delta = (e.touches[0]?.clientY ?? 0) - dragStartY.value;
+  dragOffset.value = Math.max(0, delta);
 }
 
-function onKeydown(e: KeyboardEvent) {
+function onTouchEnd(): void {
+  if (dragOffset.value > 90) {
+    modelValue.value = false;
+  }
+
+  dragOffset.value = 0;
+  dragStartY.value = null;
+  dragActive.value = false;
+}
+
+// Блокировка скролла страницы без сдвига лейаута (порт @angular/cdk BlockScrollStrategy)
+const { lock: lockScroll, unlock: unlockScroll } = useScrollLock();
+
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function getFocusable(): HTMLElement[] {
+  if (!modal.value) {
+    return [];
+  }
+
+  return Array.from(
+    modal.value.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+  ).filter((el) => el.offsetParent !== null);
+}
+
+function onKeydown(e: KeyboardEvent): void {
   if (e.key === "Escape") {
     modelValue.value = false;
+
+    return;
+  }
+
+  if (e.key !== "Tab" || !modal.value) {
+    return;
+  }
+
+  // Фокус-трап: Tab не выпускает фокус из диалога на фон
+  const focusable = getFocusable();
+  const active = document.activeElement as HTMLElement | null;
+
+  if (focusable.length === 0) {
+    e.preventDefault();
+    modal.value.focus();
+
+    return;
+  }
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (!active || !modal.value.contains(active)) {
+    e.preventDefault();
+    first.focus();
+
+    return;
+  }
+
+  if (e.shiftKey && active === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && active === last) {
+    e.preventDefault();
+    first.focus();
   }
 }
 
@@ -38,14 +133,23 @@ watch(modelValue, async (open) => {
   if (open) {
     setPrevFocus();
     lockScroll();
-    modal.value?.focus();
-    await nextTick();
+    dragOffset.value = 0;
     window.addEventListener("keydown", onKeydown);
+    await nextTick();
+    // Фокус переносим ПОСЛЕ рендера диалога (иначе .focus() — no-op) на контейнер:
+    // role=dialog + aria-labelledby → скринридер озвучивает заголовок
+    modal.value?.focus();
   } else {
     unlockScroll();
     window.removeEventListener("keydown", onKeydown);
     activatePrevFocus();
   }
+});
+
+// Если компонент размонтируют с открытой модалкой (напр. смена роута),
+// watcher закрытия не сработает — снимаем keydown вручную, чтобы не текло
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", onKeydown);
 });
 
 const close = () => (modelValue.value = false);
@@ -57,22 +161,45 @@ const handleConfirm = () => {
 
 <template>
   <Teleport to="body" :disabled="!modelValue">
-    <Transition name="fade">
-      <div v-if="modelValue" class="modal-backdrop" @click.self="close">
+    <Transition name="modal">
+      <div
+        v-if="modelValue"
+        class="modal-backdrop"
+        :class="{ 'modal-backdrop--sheet': isSheet }"
+        @click.self="close"
+      >
         <div
           ref="modal"
           class="modal"
-          :class="{ 'modal--detail': layout === 'detail' }"
+          :class="{
+            'modal--detail': layout === 'detail',
+            'modal--form': layout === 'form',
+            'modal--headerless': headerless,
+            'modal--sheet': isSheet,
+          }"
+          :style="dragStyle"
           role="dialog"
           aria-modal="true"
+          :aria-labelledby="!headerless ? titleId : undefined"
+          :aria-label="headerless ? ariaLabel : undefined"
           tabindex="-1"
+          @touchstart.passive="onTouchStart"
+          @touchmove.passive="onTouchMove"
+          @touchend="onTouchEnd"
         >
-          <div class="modal__header">
-            <h3 class="modal__header-text">
+          <div v-if="isSheet" class="modal__grabber" aria-hidden="true"></div>
+
+          <div v-if="!headerless" class="modal__header">
+            <h3 :id="titleId" class="modal__header-text">
               <slot name="title">Заголовок</slot>
             </h3>
-            <button @click="modelValue = false" class="modal__close">
-              <BaseIcon name="mdi:close" />
+            <button
+              type="button"
+              class="modal__close"
+              aria-label="Закрыть"
+              @click="modelValue = false"
+            >
+              <BaseIcon name="ph:x" />
             </button>
           </div>
 
@@ -95,13 +222,12 @@ const handleConfirm = () => {
 </template>
 
 <style lang="scss">
-@use "../../styles/antd-overrides" as *;
 @use "../../styles/media" as *;
 
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(20, 26, 40, 0.5);
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -110,12 +236,12 @@ const handleConfirm = () => {
     max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
   overflow-y: auto;
   overflow-x: hidden;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(3px);
 }
 
 .modal {
-  background: var(--bg-primary);
-  border-radius: var(--radius-lg);
+  background: var(--fv-color-bg-primary);
+  border-radius: var(--fv-radius-lg);
   max-width: min(90vw, 500px);
   max-height: min(90vh, 100dvh);
   width: 100%;
@@ -125,8 +251,8 @@ const handleConfirm = () => {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-  box-shadow: var(--shadow-modal);
-  border: 1px solid var(--border-color);
+  box-shadow: var(--fv-shadow-modal);
+  border: 1px solid var(--fv-color-border);
   animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
   &--detail {
@@ -145,6 +271,93 @@ const handleConfirm = () => {
       padding-bottom: 1.75rem;
     }
   }
+
+  // Компактная форма (эталон): узкая ширина + тело без внутреннего скролла
+  &--form {
+    max-width: min(94vw, 520px);
+
+    .modal__header {
+      padding: 1.5rem 1.75rem 1.25rem;
+    }
+
+    .modal__body {
+      max-height: none;
+      padding: 1rem 1.75rem;
+    }
+
+    .modal__footer {
+      padding: 1.25rem 1.75rem 1.75rem;
+    }
+  }
+
+  // Без белой шапки: контент рисует свою обложку edge-to-edge (эталон — детали списка)
+  &--headerless {
+    max-width: min(94vw, 560px);
+
+    .modal__body {
+      padding: 0;
+      // тело по высоте контента (не растягиваем — иначе пустой зазор до футера);
+      // при длинном контенте flex-shrink + overflow даёт скролл
+      flex: 0 1 auto;
+    }
+
+    .modal__footer {
+      padding: 1rem 1.5rem 1.5rem;
+      border-top: 0;
+    }
+  }
+
+  // <768px — action sheet снизу (эталон): выезд снизу, скругление только сверху
+  &--sheet {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    max-height: 85vh;
+    border-radius: 24px 24px 0 0;
+    animation: sheet-up 0.32s cubic-bezier(0.22, 0.85, 0.28, 1);
+    transition: transform 0.25s ease;
+
+    .modal__header {
+      padding-top: 26px; // место под grabber
+    }
+  }
+}
+
+.modal-backdrop--sheet {
+  justify-content: flex-end;
+  padding: 0;
+}
+
+/* Grabber-хват листа */
+.modal__grabber {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  z-index: 3;
+  width: 40px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(140, 146, 158, 0.9);
+  transform: translateX(-50%);
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal,
+  .modal--sheet {
+    animation: none;
+  }
+
+  .modal-enter-active,
+  .modal-leave-active {
+    transition: none;
+  }
 }
 
 .modal__header {
@@ -153,31 +366,24 @@ const handleConfirm = () => {
   align-items: center;
   justify-content: space-between;
   padding: 2rem 2.5rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--fv-color-border);
 }
 
 .modal__header-text {
-  color: var(--text-primary);
+  color: var(--fv-color-text-primary);
+  font-family: var(--fv-font-display);
   font-size: clamp(1.25rem, 4vw, 1.75rem);
-  font-weight: 800;
+  font-weight: 500;
   margin: 0;
-  background: linear-gradient(
-    135deg,
-    var(--ant-color-primary),
-    var(--text-primary)
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .modal__close {
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--fv-radius-sm);
   border: none;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
+  background: var(--fv-color-bg-secondary);
+  color: var(--fv-color-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -185,8 +391,8 @@ const handleConfirm = () => {
   transition: all 0.2s ease;
 
   &:hover {
-    background: var(--ant-color-primary);
-    color: white;
+    background: color-mix(in srgb, var(--fv-color-text-primary) 8%, transparent);
+    color: var(--fv-color-text-primary);
     transform: scale(1.05);
   }
 }
@@ -204,7 +410,7 @@ const handleConfirm = () => {
 .modal__footer {
   flex-shrink: 0;
   padding: 1.5rem 2.5rem 2.5rem;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--fv-color-border);
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
@@ -217,7 +423,7 @@ const handleConfirm = () => {
 .modal__btn-cancel,
 .modal__btn-confirm {
   height: 48px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--fv-radius-sm);
   font-weight: 600;
 }
 
@@ -225,15 +431,16 @@ const handleConfirm = () => {
   min-width: 140px;
 }
 
+/* Скрим плавно появляется и уходит (enter И leave — не мгновенно).
+   Внутренний .modal делает свой «pop» через animation: modalSlideIn. */
 .modal-enter-active,
 .modal-leave-active {
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: opacity 0.25s ease;
 }
 
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
-  transform: scale(0.9) translateY(20px);
 }
 
 @keyframes modalSlideIn {
@@ -247,7 +454,23 @@ const handleConfirm = () => {
   }
 }
 
-@include antModalFormControls;
+/* Поля ввода внутри модалки стилизуются глобально в styles/forms.scss
+   (эталон .fld: серая заливка + синий accent-фокус). */
+
+/* Кнопки футера крупнее — под эталон (~46px) */
+.modal__footer .ant-btn {
+  height: 46px;
+  padding-inline: 22px;
+  border-radius: var(--fv-radius-sm);
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.modal--sheet .modal__footer .ant-btn {
+  flex: 1;
+}
 
 @include mediaMobile {
   .modal__header,

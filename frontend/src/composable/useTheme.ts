@@ -12,33 +12,45 @@ export const themes = [
   "cyberpunk",
 ] as const;
 
+// Единый UI-шрифт для Ant-компонентов (совпадает с --fv-font-ui)
+const UI_FONT =
+  "'Favorite Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+
 export const themeConfigs = {
   light: {
     token: {
-      colorPrimary: "#1677ff",
-      borderRadius: 6,
+      colorPrimary: "#ff0032",
+      borderRadius: 12,
       colorBgContainer: "#ffffff",
+      fontFamily: UI_FONT,
     },
   },
   dark: {
+    token: {
+      colorPrimary: "#ff3355", // бренд-красный (ярче) — как в theme-variables.scss dark
+      fontFamily: UI_FONT,
+    },
     algorithm: theme.darkAlgorithm,
   },
   emerald: {
     token: {
       colorPrimary: "#10b981",
       colorBgContainer: "#f0fdf4",
+      fontFamily: UI_FONT,
     },
   },
   corporate: {
     token: {
       colorPrimary: "#1e40af",
       borderRadius: 4,
+      fontFamily: UI_FONT,
     },
   },
   synthwave: {
     token: {
       colorPrimary: "#ec4899",
       colorBgContainer: "#0f0f23",
+      fontFamily: UI_FONT,
     },
     algorithm: theme.darkAlgorithm,
   },
@@ -46,12 +58,14 @@ export const themeConfigs = {
     token: {
       colorPrimary: "#f59e0b",
       borderRadius: 8,
+      fontFamily: UI_FONT,
     },
   },
   cyberpunk: {
     token: {
       colorPrimary: "#8b5cf6",
       colorBgContainer: "#1e1b4b",
+      fontFamily: UI_FONT,
     },
     algorithm: theme.darkAlgorithm,
   },
@@ -61,16 +75,42 @@ export const themeConfig = computed(() => themeConfigs[currentTheme.value]);
 
 export type Theme = (typeof themes)[number];
 
-export const currentTheme = useStorage<Theme>("app-theme", "light");
+function getInitialTheme(): Theme {
+  const stored = localStorage.getItem("app-theme");
+
+  if (stored && (themes as readonly string[]).includes(stored)) {
+    return stored as Theme;
+  }
+
+  const prefersDark = window.matchMedia?.(
+    "(prefers-color-scheme: dark)"
+  ).matches;
+
+  return prefersDark ? "dark" : "light";
+}
+
+// useStorage применит дефолт только при отсутствии ключа: системная тема
+// подхватится лишь на первом заходе, дальше уважается выбор пользователя.
+export const currentTheme = useStorage<Theme>("app-theme", getInitialTheme());
 
 export const setTheme = (theme: Theme) => {
   currentTheme.value = theme;
   document.documentElement.setAttribute("data-theme", theme);
 
-  document.documentElement.style.setProperty(
-    "--ant-color-primary",
-    (themeConfigs[theme] as any)?.token?.colorPrimary || "#1677ff"
-  );
+  const configuredPrimary = (
+    themeConfigs[theme] as { token?: { colorPrimary?: string } }
+  )?.token?.colorPrimary;
+
+  // Если у темы есть свой primary в Ant-конфиге — синхронизируем CSS-переменную;
+  // иначе снимаем inline-override, чтобы применилось значение из theme-variables.scss.
+  if (configuredPrimary) {
+    document.documentElement.style.setProperty(
+      "--fv-color-brand",
+      configuredPrimary
+    );
+  } else {
+    document.documentElement.style.removeProperty("--fv-color-brand");
+  }
 };
 
 export function useTheme() {

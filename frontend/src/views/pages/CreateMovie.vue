@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { onMounted, reactive, ref, computed } from "vue";
+import { useRouter } from "vue-router";
 
 import { message, type FormInstance } from "ant-design-vue";
 import { useMoviesStore } from "@/stores/movies/moviesStore";
@@ -7,7 +8,6 @@ import { useUserMoviesStore } from "@/stores";
 import { useActorsStore } from "@/stores/actors/actorsStore";
 import { useMainStore } from "@/state/state";
 import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
-import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import { showErrorRequest } from "@/state/utils";
 import {
   Genre,
@@ -18,11 +18,9 @@ import { PRODUCTION_COUNTRIES } from "@/constants/countries/production-countries
 import { Movie } from "@/stores";
 import type { SelectProps } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import {
-  getApiResponseMessage,
-  isApiConflictError,
-} from "@/services/api";
+import { getApiResponseMessage, isApiConflictError } from "@/services/api";
 
+const router = useRouter();
 const moviesStore = useMoviesStore();
 const userMoviesStore = useUserMoviesStore();
 const actorsStore = useActorsStore();
@@ -107,6 +105,10 @@ const filterCountryOption = (input: string, option: { label?: string }) =>
 const filterGenreFormOption = (input: string, option: { label?: string }) =>
   (option?.label ?? "").toLowerCase().includes(input.toLowerCase());
 
+const cancel = (): void => {
+  router.back();
+};
+
 onMounted(async () => {
   try {
     await actorsStore.fetchActors();
@@ -166,104 +168,119 @@ const addNewMovie = async () => {
 
 <template>
   <div class="create-movie">
-    <HeroHeader title="Добавить" badge-text="Создание" icon-name="mdi:create" />
+    <div class="create-movie__wrap">
+      <AppBackButton
+        class="create-movie__back"
+        :fallback="{ path: '/library' }"
+      />
 
-    <div class="create-movie__content">
-      <AppBackButton :fallback="{ path: '/profile' }" />
-      <div class="form-card">
+      <div class="create-movie__card">
+        <p class="create-movie__eyebrow">Создание</p>
+        <h1 class="create-movie__title">Добавить фильм или сериал</h1>
+
         <a-form
           ref="formRef"
           :model="formData"
           name="create-movie-form"
-          @finish="addNewMovie"
           layout="vertical"
-          class="form-card__form"
+          class="cm-form"
+          @finish="addNewMovie"
         >
-          <div class="form-grid">
-            <div class="form-grid__col">
+          <div class="cm-grid">
+            <!-- ЛЕВО: поля -->
+            <div class="cm-fields">
               <a-form-item
                 label="Название фильма/сериала"
                 name="title"
-                :rules="[
-                  { required: true, message: 'Введите название фильма' },
-                ]"
+                :rules="[{ required: true, message: 'Введите название фильма' }]"
               >
                 <a-input
                   v-model:value="formData.title"
                   size="large"
-                  placeholder="Например: 'Интерстеллар'"
+                  placeholder="Например: Интерстеллар"
                 />
               </a-form-item>
 
               <a-form-item
                 label="Ссылка на постер"
                 name="imageUrl"
-                :rules="[
-                  { required: true, message: 'Введите ссылку на постер' },
-                ]"
+                :rules="[{ required: true, message: 'Введите ссылку на постер' }]"
               >
                 <a-input
                   v-model:value="formData.imageUrl"
                   size="large"
                   placeholder="https://image.tmdb.org/t/p/w500/..."
-                />
-              </a-form-item>
-
-              <!-- Actor Selection -->
-              <a-form-item label="Актеры" name="actorIds">
-                <a-select
-                  v-model:value="formData.actorIds"
-                  mode="tags"
-                  placeholder="Выберите или введите актеров"
-                  size="large"
-                  :loading="actorsStore.isActorsLoading"
-                  :disabled="actorsStore.isActorsLoading"
-                  @change="handleActorSelection"
                 >
-                  <a-select-option
-                    v-for="actor in actorsStore.getAllActors"
-                    :key="actor.id"
-                    :value="actor.id"
+                  <template #prefix>
+                    <BaseIcon name="ph:link" :width="18" :height="18" />
+                  </template>
+                </a-input>
+              </a-form-item>
+
+              <a-form-item label="Актёры" name="actorIds">
+                <div class="cm-actors">
+                  <BaseIcon
+                    class="cm-actors__icon"
+                    name="ph:user-plus"
+                    :width="18"
+                    :height="18"
+                  />
+                  <a-select
+                    v-model:value="formData.actorIds"
+                    mode="tags"
+                    placeholder="Выберите или введите актёров"
+                    size="large"
+                    :loading="actorsStore.isActorsLoading"
+                    :disabled="actorsStore.isActorsLoading"
+                    @change="handleActorSelection"
                   >
-                    {{ actor.name }}
-                  </a-select-option>
-                </a-select>
+                    <a-select-option
+                      v-for="actor in actorsStore.getAllActors"
+                      :key="actor.id"
+                      :value="actor.id"
+                    >
+                      {{ actor.name }}
+                    </a-select-option>
+                  </a-select>
+                </div>
               </a-form-item>
 
-              <a-form-item label="Дата выхода фильма" name="publishDate">
-                <a-date-picker
-                  v-model:value="formData.publishDate"
-                  size="large"
-                  picker="year"
-                  style="width: 100%"
-                  placeholder="Выберите дату выхода"
-                />
-              </a-form-item>
+              <div class="cm-row2">
+                <a-form-item label="Дата выхода" name="publishDate">
+                  <a-date-picker
+                    v-model:value="formData.publishDate"
+                    size="large"
+                    picker="year"
+                    style="width: 100%"
+                    placeholder="Выберите дату"
+                  />
+                </a-form-item>
 
-              <a-form-item
-                label="Страны производства"
-                name="countryCodes"
-                :rules="[
-                  {
-                    type: 'array',
-                    required: true,
-                    min: 1,
-                    message: 'Выберите хотя бы одну страну',
-                  },
-                ]"
-              >
-                <a-select
-                  v-model:value="formData.countryCodes"
-                  mode="multiple"
-                  show-search
-                  :filter-option="filterCountryOption"
-                  :max-tag-count="3"
-                  :options="countrySelectOptions"
-                  placeholder="Страны съёмок / ко-продукция"
-                  size="large"
-                  allow-clear
-                />
-              </a-form-item>
+                <a-form-item
+                  label="Страны"
+                  name="countryCodes"
+                  :rules="[
+                    {
+                      type: 'array',
+                      required: true,
+                      min: 1,
+                      message: 'Выберите хотя бы одну страну',
+                    },
+                  ]"
+                >
+                  <a-select
+                    v-model:value="formData.countryCodes"
+                    mode="multiple"
+                    show-search
+                    :filter-option="filterCountryOption"
+                    :max-tag-count="3"
+                    :options="countrySelectOptions"
+                    placeholder="Страны съёмок / ко-продукция"
+                    size="large"
+                    allow-clear
+                  />
+                </a-form-item>
+              </div>
 
               <a-form-item
                 label="Жанры"
@@ -287,135 +304,141 @@ const addNewMovie = async () => {
                   show-search
                 />
               </a-form-item>
-            </div>
 
-            <div class="form-grid__col">
-              <div class="form-preview">
-                <div class="preview-poster">
-                  <img
-                    :src="
-                      formData.imageUrl ||
-                      'https://placehold.co/280x200?text=Постер'
-                    "
-                    alt="Предпросмотр постера"
-                    class="preview-poster__img"
-                  />
-                  <div class="preview-poster__rating">
-                    {{ formData.personalRate || "?" }}/10
-                  </div>
-                </div>
+              <div class="cm-toggles">
+                <label class="cm-toggle">
+                  <a-switch v-model:checked="formData.seeLater" />
+                  <span>Смотреть позже</span>
+                </label>
+                <label class="cm-toggle">
+                  <a-switch v-model:checked="formData.isSerial" />
+                  <span>Сериал</span>
+                </label>
+              </div>
 
-                <a-form-item
-                  label="Ваш рейтинг"
-                  name="personalRate"
-                  class="rating-item"
-                >
-                  <a-rate
-                    v-model:value="formData.personalRate"
-                    :count="10"
-                    class="preview-rating"
+              <div v-if="formData.isSerial" class="cm-row2">
+                <a-form-item label="Количество сезонов" name="seasonCount">
+                  <a-input-number
+                    v-model:value="formData.seasonCount"
+                    :min="1"
+                    :precision="0"
+                    size="large"
+                    placeholder="Например: 5"
+                    style="width: 100%"
                   />
                 </a-form-item>
+
+                <a-form-item label="Количество эпизодов" name="episodeCount">
+                  <a-input-number
+                    v-model:value="formData.episodeCount"
+                    :min="1"
+                    :precision="0"
+                    size="large"
+                    placeholder="Например: 10"
+                    style="width: 100%"
+                  />
+                </a-form-item>
+              </div>
+
+              <div
+                v-if="formData.isSerial && (formData.seasonCount || formData.episodeCount)"
+                class="cm-row2"
+              >
+                <a-form-item
+                  v-if="formData.seasonCount"
+                  label="На каком сезоне остановились"
+                  name="currentSeason"
+                >
+                  <a-input-number
+                    v-model:value="formData.currentSeason"
+                    :min="1"
+                    :max="formData.seasonCount"
+                    :precision="0"
+                    size="large"
+                    placeholder="Например: 2"
+                    style="width: 100%"
+                  />
+                </a-form-item>
+
+                <a-form-item
+                  v-if="formData.episodeCount"
+                  label="На какой серии остановились"
+                  name="currentEpisode"
+                >
+                  <a-input-number
+                    v-model:value="formData.currentEpisode"
+                    :min="1"
+                    :max="formData.episodeCount"
+                    :precision="0"
+                    size="large"
+                    placeholder="Например: 5"
+                    style="width: 100%"
+                  />
+                </a-form-item>
+              </div>
+
+              <a-form-item label="Описание" name="description">
+                <a-textarea
+                  v-model:value="formData.description"
+                  :rows="4"
+                  placeholder="Расскажите о своих впечатлениях от фильма…"
+                  :maxlength="500"
+                  :show-count="true"
+                />
+              </a-form-item>
+            </div>
+
+            <!-- ПРАВО (десктоп) / превью сверху (мобайл): постер + оценка -->
+            <div class="cm-side">
+              <div
+                class="cm-poster"
+                :class="{ 'cm-poster--empty': !formData.imageUrl }"
+              >
+                <img
+                  v-if="formData.imageUrl"
+                  :src="formData.imageUrl"
+                  alt="Предпросмотр постера"
+                  class="cm-poster__img"
+                />
+                <span v-else class="cm-poster__ph">
+                  <BaseIcon
+                    class="cm-poster__ph-icon"
+                    name="ph:image"
+                    :width="24"
+                    :height="24"
+                  />
+                  <span class="cm-poster__ph-text">Постер</span>
+                </span>
+                <span class="cm-poster__badge">
+                  {{ formData.personalRate || "?" }}/10
+                </span>
+              </div>
+
+              <div class="cm-side__rating">
+                <p class="cm-side__label">Ваша оценка</p>
+                <a-rate
+                  v-model:value="formData.personalRate"
+                  :count="10"
+                  class="cm-stars"
+                />
               </div>
             </div>
           </div>
 
-          <a-form-item label="Смотреть позже?" name="seeLater">
-            <a-switch v-model:checked="formData.seeLater" />
-          </a-form-item>
-
-          <a-form-item label="Сериал?" name="isSerial">
-            <a-switch v-model:checked="formData.isSerial" />
-          </a-form-item>
-
-          <a-form-item
-            v-if="formData.isSerial"
-            label="Количество сезонов"
-            name="seasonCount"
-          >
-            <a-input-number
-              v-model:value="formData.seasonCount"
-              :min="1"
-              :precision="0"
-              size="large"
-              placeholder="Например: 5"
-              style="width: 100%"
-            />
-          </a-form-item>
-
-          <a-form-item
-            v-if="formData.isSerial"
-            label="Количество эпизодов"
-            name="episodeCount"
-          >
-            <a-input-number
-              v-model:value="formData.episodeCount"
-              :min="1"
-              :precision="0"
-              size="large"
-              placeholder="Например: 10"
-              style="width: 100%"
-            />
-          </a-form-item>
-
-          <a-form-item
-            v-if="formData.isSerial && formData.seasonCount"
-            label="На каком сезоне остановились"
-            name="currentSeason"
-          >
-            <a-input-number
-              v-model:value="formData.currentSeason"
-              :min="1"
-              :max="formData.seasonCount"
-              :precision="0"
-              size="large"
-              placeholder="Например: 2"
-              style="width: 100%"
-            />
-          </a-form-item>
-
-          <a-form-item
-            v-if="formData.isSerial && formData.episodeCount"
-            label="На какой серии остановились"
-            name="currentEpisode"
-          >
-            <a-input-number
-              v-model:value="formData.currentEpisode"
-              :min="1"
-              :max="formData.episodeCount"
-              :precision="0"
-              size="large"
-              placeholder="Например: 5"
-              style="width: 100%"
-            />
-          </a-form-item>
-
-          <a-form-item label="Описание" name="description">
-            <a-textarea
-              v-model:value="formData.description"
-              class="form-grid__textarea"
-              size="large"
-              :rows="4"
-              placeholder="Расскажите о своих впечатлениях от фильма..."
-              :maxlength="500"
-              :show-count="true"
-            />
-          </a-form-item>
-
-          <a-form-item class="form-actions">
-            <a-button size="large" class="form-actions__cancel">
+          <div class="cm-footer">
+            <a-button size="large" class="cm-footer__cancel" @click="cancel">
               Отмена
             </a-button>
             <a-button
               type="primary"
               html-type="submit"
               size="large"
-              class="form-actions__submit"
+              class="cm-footer__submit"
             >
-              <BaseIcon name="mdi:plus" class="btn-icon" />
+              <BaseIcon name="ph:plus" :width="18" :height="18" />
               Добавить
             </a-button>
-          </a-form-item>
+          </div>
         </a-form>
       </div>
     </div>
@@ -427,242 +450,345 @@ const addNewMovie = async () => {
 @use "@/styles/layout" as *;
 
 .create-movie {
-  @include pageShell(4rem);
-  display: flex;
-  flex-direction: column;
+  @include pageShell(2rem);
+  // #app задаёт глобальный text-align:center — выравниваем содержимое влево
+  text-align: left;
 
-  &__content {
-    max-width: 1000px;
+  &__wrap {
+    max-width: 1200px;
     margin: 0 auto;
     padding: 0 1rem;
   }
 
-  &__title {
-    font-size: clamp(2rem, 6vw, 3rem);
-    font-weight: 800;
-    margin: 0 0 1rem 0;
-    background: linear-gradient(
-      135deg,
-      var(--ant-color-primary),
-      var(--text-primary)
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-align: center;
+  &__back {
+    display: inline-flex;
+    margin-bottom: 1.25rem;
+
+    :deep(.app-back-btn) {
+      margin: 0;
+    }
   }
-}
 
-.form-card {
-  background: var(--bg-primary);
-  border-radius: 24px;
-  box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-  padding: 2.5rem;
-  margin: 2rem 0;
-
-  @include mediaMobileXL {
+  &__card {
+    background: var(--fv-color-bg-primary);
+    border: 1px solid var(--fv-color-border);
+    border-radius: var(--fv-radius-lg);
+    box-shadow: var(--fv-shadow-low);
     padding: 2rem;
-    margin: 1.5rem 0;
+
+    @include mediaTablet {
+      padding: 2.5rem;
+    }
   }
 
-  @include mediaTablet {
-    padding: 2.5rem;
-    margin: 2rem 0;
+  &__eyebrow {
+    margin: 0 0 6px;
+    font-family: var(--fv-font-display);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fv-color-text-tertiary);
+  }
+
+  &__title {
+    margin: 0 0 1.75rem;
+    font-family: var(--fv-font-display);
+    font-size: clamp(1.4rem, 3vw, 1.65rem);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--fv-color-text-primary);
   }
 }
 
-.form-grid {
+/* Сетка: форма слева (fluid) + постер/оценка справа (300px) */
+.cm-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
-  margin-bottom: 2rem;
 
-  @include mediaTablet {
-    grid-template-columns: minmax(280px, 350px) 280px;
-    gap: 2.5rem;
+  // 2 колонки только с 960px — до этого форма зажималась рядом с постером
+  @include mediaDesktopXS {
+    grid-template-columns: 1fr 300px;
+    gap: 2.25rem;
   }
+}
+
+.cm-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* два поля в ряд (Дата + Страны, сериал-поля) */
+.cm-row2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 16px;
+
+  @include mediaMobileXL {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* инлайн-тумблеры */
+.cm-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 30px;
+  margin: 4px 0 1.25rem;
+}
+
+.cm-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--fv-color-text-primary);
+  cursor: pointer;
+}
+
+/* правая колонка (десктоп) / компактное превью-строка (мобайл, эталон) */
+.cm-side {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  order: -1; // на мобиле превью сверху
+  margin-bottom: 8px;
 
   @include mediaDesktopXS {
-    gap: 3rem;
-  }
-
-  &__textarea {
-    height: 70px;
-  }
-}
-
-.form-grid__col {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  height: 100%;
-
-  :deep(.ant-form-item-control) {
-    align-items: flex-start;
+    display: block;
+    order: 0;
+    margin-bottom: 0;
+    position: sticky;
+    top: 1.5rem;
+    align-self: start;
   }
 }
 
-.preview-poster {
+.cm-side__rating {
+  min-width: 0;
+}
+
+.cm-poster {
   position: relative;
-  height: 200px;
-  border-radius: 20px;
+  flex: none;
+  aspect-ratio: 2 / 3;
+  width: 96px; // компактный постер на мобиле (эталон)
+  border-radius: var(--fv-radius-md);
   overflow: hidden;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--fv-shadow-low);
 
-  &::before {
-    content: "";
+  @include mediaDesktopXS {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  &--empty {
+    background: var(--fv-color-bg-secondary);
+    border: 1.5px dashed var(--fv-color-border);
+
+    @include mediaDesktopXS {
+      border: none;
+      background: linear-gradient(160deg, #c4cad6, #8b95a7);
+    }
+  }
+
+  &__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  &__ph {
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      180deg,
-      transparent 60%,
-      rgba(0, 0, 0, 0.7) 100%
-    );
-    z-index: 1;
-  }
-}
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: var(--fv-color-text-tertiary);
 
-.preview-poster__img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
-  display: block;
-}
-
-.preview-poster__rating {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: var(--ant-color-primary);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 20px;
-  font-weight: 700;
-  font-size: 0.875rem;
-  z-index: 2;
-}
-
-.rating-item {
-  :deep(.ant-form-item-label) {
-    padding-bottom: 0.5rem;
-  }
-}
-
-.preview-rating {
-  :deep(.ant-rate) {
-    font-size: 24px;
+    @include mediaDesktopXS {
+      gap: 0;
+      color: rgba(255, 255, 255, 0.8);
+    }
   }
 
-  @include mediaMobile {
-    :deep(.ant-rate) {
-      font-size: 20px;
+  &__ph-icon {
+    @include mediaDesktopXS {
+      display: none;
+    }
+  }
+
+  &__ph-text {
+    font-family: var(--fv-font-display);
+    font-weight: 700;
+    font-size: 11px;
+
+    @include mediaDesktopXS {
+      font-size: 26px;
+    }
+  }
+
+  &__badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: none; // на компактном мобильном постере не показываем
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--fv-color-accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.4;
+
+    @include mediaDesktopXS {
+      display: block;
+      top: 12px;
+      right: 12px;
+      padding: 4px 12px;
+      font-size: 13px;
     }
   }
 }
 
-.form-actions {
+.cm-side__label {
+  margin: 0 0 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fv-color-text-secondary);
+
+  @include mediaDesktopXS {
+    margin: 18px 0 8px;
+  }
+}
+
+.cm-stars {
+  font-size: 22px;
+  color: var(--fv-color-warning, #fac031);
+
+  @include mediaDesktopXS {
+    font-size: 26px;
+  }
+
+  :deep(.ant-rate-star:not(:last-child)) {
+    margin-inline-end: 3px;
+  }
+}
+
+/* селект «Актёры» с ведущей иконкой */
+.cm-actors {
+  position: relative;
+
+  &__icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    z-index: 1;
+    transform: translateY(-50%);
+    color: var(--fv-color-text-tertiary);
+    pointer-events: none;
+  }
+
+  // плейсхолдер, поле ввода (курсор) и теги — на одной линии за иконкой
+  :deep(.ant-select-selector) {
+    padding-inline-start: 40px !important;
+  }
+
+  :deep(.ant-select-selection-placeholder) {
+    inset-inline-start: 40px !important;
+  }
+
+  :deep(.ant-select-selection-search) {
+    margin-inline-start: 0 !important;
+    inset-inline-start: 0 !important;
+  }
+}
+
+/* футер */
+.cm-footer {
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
+  flex-wrap: wrap;
   justify-content: flex-end;
-  margin-top: 2rem;
-
-  @include mediaMobile {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  @include mediaMobileXL {
-    flex-direction: row;
-    gap: 1.25rem;
-  }
-
-  @include mediaTablet {
-    gap: 1.5rem;
-  }
-
-  &__cancel + &__submit {
-    margin-left: 16px;
-  }
+  gap: 12px;
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--fv-color-border);
 
   &__cancel,
   &__submit {
-    flex-shrink: 0;
-    height: 48px;
-    border-radius: 12px;
+    flex: 0 0 auto; // не растягивать
+    height: 46px;
+    padding: 0 22px;
+    border-radius: var(--fv-radius-sm);
+    font-weight: 500;
   }
 
   &__submit {
-    min-width: 180px;
-    max-width: 200px;
     display: inline-flex;
     align-items: center;
+    gap: 8px;
     justify-content: center;
-
-    .btn-icon {
-      margin-right: 8px;
-    }
   }
 }
 
-.btn-icon {
-  width: 20px;
-  height: 20px;
+/* лейблы полей — 14/500, вторичный цвет */
+:deep(.ant-form-item-label) {
+  padding-bottom: 6px;
+
+  > label {
+    height: auto;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--fv-color-text-secondary);
+  }
 }
 
-:deep(.ant-form-item-label > label) {
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 1rem;
+/* поля выше — под эталон 52px */
+:deep(.ant-input),
+:deep(.ant-picker),
+:deep(.ant-select:not(.ant-select-customize-input) .ant-select-selector) {
+  min-height: 52px;
 }
 
-.form-actions :deep(.ant-form-item-control-input-content) {
+:deep(.ant-input-affix-wrapper) {
+  min-height: 52px;
+}
+
+:deep(.ant-input-affix-wrapper .ant-input) {
+  min-height: auto;
+}
+
+:deep(.ant-picker-input > input) {
+  min-height: auto;
+}
+
+/* число сезонов/эпизодов — компактное чистое поле (44px), текст по центру,
+   без некрасивых стрелок-степперов (ввод с клавиатуры, min/max сохранены) */
+:deep(.ant-input-number) {
+  min-height: 44px;
   display: flex;
   align-items: center;
-  justify-content: center;
 }
 
-:deep(.ant-input, .ant-picker, .ant-textarea) {
-  border-radius: 12px;
-  border: 2px solid var(--border-color);
-  transition: all 0.2s ease;
-  height: 48px;
-
-  &:focus,
-  &:hover {
-    border-color: var(--ant-color-primary);
-    box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--ant-color-primary) 10%, transparent);
-  }
+:deep(.ant-input-number-input) {
+  height: 42px;
 }
 
-:deep(.ant-form-item-has-error .ant-input) {
-  border-color: var(--ant-color-error);
+:deep(.ant-input-number-handler-wrap) {
+  display: none;
 }
 
-:deep(.ant-textarea) {
-  height: auto;
-  min-height: 120px;
-  resize: vertical;
-}
-
-@include mediaMobile {
-  .create-movie__content {
-    padding: 0 1rem;
-  }
-
-  .form-card {
-    border-radius: 16px;
-    margin: 1rem 0;
-  }
+/* textarea — авто-высота */
+:deep(textarea.ant-input) {
+  min-height: 96px;
+  padding: 12px 16px;
 }
 </style>

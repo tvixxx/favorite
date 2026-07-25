@@ -1,0 +1,74 @@
+/**
+ * Типографика проекта Favorite.
+ *   • Favorite Display — широкий геометрический шрифт: заголовки, промо, eyebrow
+ *   • Favorite Sans    — рабочий UI-шрифт: весь текст/интерфейс
+ */
+
+/* ---- Favorite Display — заголовки / промо ---- */
+@font-face {
+  font-family: "Favorite Display";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src:
+    url("../assets/fonts/fv-display-medium.woff2") format("woff2"),
+    url("../assets/fonts/fv-display-medium.woff") format("woff");
+}
+@font-face {
+  font-family: "Favorite Display";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src:
+    url("../assets/fonts/fv-display-bold.woff2") format("woff2"),
+    url("../assets/fonts/fv-display-bold.woff") format("woff");
+}
+
+/* ---- Favorite Sans — UI / body ---- */
+@font-face {
+  font-family: "Favorite Sans";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src:
+    url("../assets/fonts/fv-sans-regular.woff2") format("woff2"),
+    url("../assets/fonts/fv-sans-regular.woff") format("woff");
+}
+@font-face {
+  font-family: "Favorite Sans";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src:
+    url("../assets/fonts/fv-sans-medium.woff2") format("woff2"),
+    url("../assets/fonts/fv-sans-medium.woff") format("woff");
+}
+@font-face {
+  font-family: "Favorite Sans";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src:
+    url("../assets/fonts/fv-sans-bold.woff2") format("woff2"),
+    url("../assets/fonts/fv-sans-bold.woff") format("woff");
+}
+
+:root {
+  --fv-font-display: "Favorite Display", "Segoe UI", system-ui, sans-serif;
+  --fv-font-ui:
+    "Favorite Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+}
+
+body {
+  font-family: var(--fv-font-ui);
+}
+
+/* Крупные дисплейные заголовки и промо */
+h1,
+h2,
+.hero__title,
+.page-title,
+.topbar__logo {
+  font-family: var(--fv-font-display);
+}

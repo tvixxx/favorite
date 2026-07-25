@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { isSuccessStatus } from "@/utils";
+import { isNotificationTypeEnabled } from "@/composable/useNotificationPrefs";
 import type { NotificationDto } from "./types";
 
 export const useNotificationsStore = defineStore("notifications", () => {
@@ -71,6 +72,11 @@ export const useNotificationsStore = defineStore("notifications", () => {
   };
 
   const applyIncoming = (dto: NotificationDto) => {
+    // Клиентский гейт: если тип уведомления выключен в настройках — не показываем
+    if (!isNotificationTypeEnabled(dto.type)) {
+      return;
+    }
+
     const idx = items.value.findIndex((n) => n.id === dto.id);
 
     if (idx >= 0) {

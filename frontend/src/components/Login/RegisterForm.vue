@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { reactive } from "vue";
 import { Icon } from "@iconify/vue";
 import { message } from "ant-design-vue";
+import type { Rule } from "ant-design-vue/es/form";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "@/constants";
 import { ERROR_REGISTRATION_TEXT } from "@/state/constants";
 
@@ -22,51 +23,35 @@ const formState = reactive<FormState>({
   password: "",
 });
 
-const onFinish = (values: FormState) => {
-  register(values);
+// Полевая валидация Ant → inline-ошибки под полем + aria-invalid + красная рамка (forms.scss)
+const rules: Record<string, Rule[]> = {
+  name: [
+    { required: true, whitespace: true, message: "Введите имя", trigger: "blur" },
+  ],
+  email: [
+    { required: true, whitespace: true, message: "Введите email", trigger: "blur" },
+    { pattern: EMAIL_REGEX, message: "Введите корректный email", trigger: "blur" },
+  ],
+  password: [
+    { required: true, whitespace: true, message: "Введите пароль", trigger: "blur" },
+    {
+      pattern: PASSWORD_REGEX,
+      message: "Минимум 6 символов, включая буквы и цифры",
+      trigger: "blur",
+    },
+  ],
 };
 
-const register = async ({ email, password, name }: FormState) => {
-  const trimmedName = name?.trim();
-  const trimmedEmail = email?.trim();
-  const trimmedPassword = password?.trim();
-
-  if (!trimmedName) {
-    message.error("Имя обязательно для заполнения");
-
-    return;
-  }
-
-  if (!trimmedEmail) {
-    message.error("Email обязателен для заполнения");
-
-    return;
-  }
-
-  if (!trimmedPassword) {
-    message.error("Пароль обязателен для заполнения");
-
-    return;
-  }
-
-  if (!EMAIL_REGEX.test(trimmedEmail)) {
-    message.error("Введите корректный email");
-
-    return;
-  }
-
-  if (!PASSWORD_REGEX.test(trimmedPassword)) {
-    message.error(
-      "Пароль должен содержать минимум 6 символов, включая буквы и цифры"
-    );
-
-    return;
-  }
-
+// @finish срабатывает только после успешной валидации — здесь остаётся лишь запрос
+const onFinish = async (values: FormState): Promise<void> => {
   try {
-    await store.register({ email, password, name });
+    await store.register({
+      email: values.email,
+      password: values.password,
+      name: values.name,
+    });
     message.success("Регистрация прошла успешно!");
-    router.push("/profile");
+    router.push("/library/collection");
   } catch {
     message.error(ERROR_REGISTRATION_TEXT);
   }
@@ -78,7 +63,7 @@ const register = async ({ email, password, name }: FormState) => {
     <div class="register__container">
       <div class="register__header">
         <h1 class="register__title">
-          <Icon icon="mdi:account-plus" class="register__title-icon" />
+          <Icon icon="ph:user-plus" class="register__title-icon" />
           Регистрация
         </h1>
       </div>
@@ -86,13 +71,14 @@ const register = async ({ email, password, name }: FormState) => {
       <a-form
         class="register__form"
         :model="formState"
+        :rules="rules"
         name="register-form"
         autocomplete="off"
         @finish="onFinish"
       >
         <a-form-item name="name" class="register__field">
           <template #label>
-            <Icon icon="mdi:account-outline" class="register__field-icon" />
+            <Icon icon="ph:user" class="register__field-icon" />
             Имя
           </template>
           <a-input
@@ -104,7 +90,7 @@ const register = async ({ email, password, name }: FormState) => {
 
         <a-form-item name="email" class="register__field">
           <template #label>
-            <Icon icon="mdi:email-outline" class="register__field-icon" />
+            <Icon icon="ph:envelope-simple" class="register__field-icon" />
             Email
           </template>
           <a-input
@@ -116,7 +102,7 @@ const register = async ({ email, password, name }: FormState) => {
 
         <a-form-item name="password" class="register__field">
           <template #label>
-            <Icon icon="mdi:lock-outline" class="register__field-icon" />
+            <Icon icon="ph:lock-simple" class="register__field-icon" />
             Пароль
           </template>
           <a-input-password
@@ -169,8 +155,8 @@ const register = async ({ email, password, name }: FormState) => {
       border: none;
       background: linear-gradient(
         135deg,
-        var(--ant-color-primary),
-        color-mix(in srgb, var(--ant-color-primary), #000 15%)
+        var(--fv-color-brand),
+        color-mix(in srgb, var(--fv-color-brand), #000 15%)
       );
       font-weight: 600;
       font-size: 1rem;
@@ -188,7 +174,7 @@ const register = async ({ email, password, name }: FormState) => {
   }
 
   &__field-icon {
-    color: var(--ant-color-primary);
+    color: var(--fv-color-accent);
     width: 20px;
     height: 20px;
     margin-right: 0.5rem;

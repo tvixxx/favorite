@@ -51,31 +51,22 @@ onMounted(async () => {
 <style scoped lang="scss">
 @use "../../styles/media" as *;
 
+// Эталон: каждый блок — отдельная белая карточка (без общей серой обёртки)
 .settings-card {
   height: fit-content;
-  background: var(--bg-primary);
-  border-radius: 24px;
-  box-shadow: var(--shadow), 0 20px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-color);
-  padding: 1.5rem;
-
-  @include mediaMobileXL {
-    padding: 1.25rem;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 
   &__widget {
-    position: relative;
-    border-radius: 14px;
-    padding: 0.75rem;
-    background: color-mix(in srgb, var(--bg-secondary) 58%, transparent);
-    border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+    background: var(--fv-color-bg-primary);
+    border-radius: 24px;
+    box-shadow: var(--fv-shadow-low), 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--fv-color-border);
+    padding: 1.5rem;
 
-    & + & {
-      margin-top: 0.9rem;
-
-      &::before {
-        display: none;
-      }
+    @include mediaMobileXL {
+      padding: 1.25rem;
     }
   }
 }

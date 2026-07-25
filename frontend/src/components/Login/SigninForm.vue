@@ -4,6 +4,7 @@ import { reactive } from "vue";
 import { useMainStore } from "@/state/state";
 import { Icon } from "@iconify/vue";
 import { message } from "ant-design-vue";
+import type { Rule } from "ant-design-vue/es/form";
 import { EMAIL_REGEX } from "@/constants";
 import { ERROR_LOGIN_TEXT, SUCCESS_LOGIN_TEXT } from "@/state/constants";
 
@@ -20,38 +21,23 @@ const formState = reactive<FormState>({
   password: "",
 });
 
-const onFinish = (values: FormState) => {
-  login(values);
+// Полевая валидация Ant → inline-ошибки под полем + aria-invalid + красная рамка (forms.scss)
+const rules: Record<string, Rule[]> = {
+  email: [
+    { required: true, whitespace: true, message: "Введите email", trigger: "blur" },
+    { pattern: EMAIL_REGEX, message: "Введите корректный email", trigger: "blur" },
+  ],
+  password: [
+    { required: true, whitespace: true, message: "Введите пароль", trigger: "blur" },
+  ],
 };
 
-const login = async ({ email, password }: FormState) => {
-  const trimmedEmail = email?.trim();
-  const trimmedPassword = password?.trim();
-
-  if (!trimmedEmail) {
-    message.error("Email пропущен!");
-
-    return;
-  }
-
-  if (!trimmedPassword) {
-    message.error("Пароль пропущен!");
-
-    return;
-  }
-
-  if (!EMAIL_REGEX.test(trimmedEmail)) {
-    message.error("Введите корректный email");
-
-    return;
-  }
-
+// @finish срабатывает только после успешной валидации — здесь остаётся лишь запрос
+const onFinish = async (values: FormState): Promise<void> => {
   try {
-    await store.logIn({ email, password });
-    message.success(
-      `${SUCCESS_LOGIN_TEXT}, ${store.userData?.fullName || ""}!`
-    );
-    router.push("/profile");
+    await store.logIn({ email: values.email, password: values.password });
+    message.success(`${SUCCESS_LOGIN_TEXT}, ${store.userData?.fullName || ""}!`);
+    router.push("/library/collection");
   } catch {
     message.error(ERROR_LOGIN_TEXT);
   }
@@ -71,13 +57,14 @@ const login = async ({ email, password }: FormState) => {
       <a-form
         class="signin__form"
         :model="formState"
+        :rules="rules"
         name="login-form"
         autocomplete="off"
         @finish="onFinish"
       >
         <a-form-item name="email" class="signin__field">
           <template #label>
-            <Icon icon="mdi:email-outline" class="signin__field-icon" />
+            <Icon icon="ph:envelope-simple" class="signin__field-icon" />
             Email
           </template>
           <a-input
@@ -89,7 +76,7 @@ const login = async ({ email, password }: FormState) => {
 
         <a-form-item name="password" class="signin__field">
           <template #label>
-            <Icon icon="mdi:lock-outline" class="signin__field-icon" />
+            <Icon icon="ph:lock-simple" class="signin__field-icon" />
             Пароль
           </template>
           <a-input-password
@@ -142,8 +129,8 @@ const login = async ({ email, password }: FormState) => {
       border: none;
       background: linear-gradient(
         135deg,
-        var(--ant-color-primary),
-        color-mix(in srgb, var(--ant-color-primary), #000 15%)
+        var(--fv-color-brand),
+        color-mix(in srgb, var(--fv-color-brand), #000 15%)
       );
       font-weight: 600;
       font-size: 1rem;
@@ -161,7 +148,7 @@ const login = async ({ email, password }: FormState) => {
   }
 
   &__field-icon {
-    color: var(--ant-color-primary);
+    color: var(--fv-color-accent);
     width: 20px;
     height: 20px;
     margin-right: 0.5rem;

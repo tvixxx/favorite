@@ -1,7 +1,4 @@
-import {
-  forwardRef,
-  Inject,
-} from '@nestjs/common';
+import { forwardRef, Inject } from '@nestjs/common';
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -55,14 +52,14 @@ export class MessageGateway
 
       await this.userStatusService.setOnline(userId, client.id);
 
-      // Уведомить друзей что пользователь онлайн
+      // Уведомить друзей что пользователь онлайн (один запрос вместо N+1)
       const friends = await this.friendshipService.getFriends(userId);
-      for (const friend of friends) {
-        const friendStatus = await this.userStatusService.getStatus(
-          friend.friend.id,
-        );
-        if (friendStatus?.isOnline && friendStatus.socketId) {
-          this.server.to(friendStatus.socketId).emit('user:online', { userId });
+      const onlineFriends = await this.userStatusService.getOnlineFriends(
+        friends.map((f) => f.friend.id),
+      );
+      for (const status of onlineFriends) {
+        if (status.socketId) {
+          this.server.to(status.socketId).emit('user:online', { userId });
         }
       }
 
@@ -80,16 +77,14 @@ export class MessageGateway
 
       await this.userStatusService.setOffline(userId);
 
-      // Уведомить друзей что пользователь оффлайн
+      // Уведомить друзей что пользователь оффлайн (один запрос вместо N+1)
       const friends = await this.friendshipService.getFriends(userId);
-      for (const friend of friends) {
-        const friendStatus = await this.userStatusService.getStatus(
-          friend.friend.id,
-        );
-        if (friendStatus?.isOnline && friendStatus.socketId) {
-          this.server
-            .to(friendStatus.socketId)
-            .emit('user:offline', { userId });
+      const onlineFriends = await this.userStatusService.getOnlineFriends(
+        friends.map((f) => f.friend.id),
+      );
+      for (const status of onlineFriends) {
+        if (status.socketId) {
+          this.server.to(status.socketId).emit('user:offline', { userId });
         }
       }
 

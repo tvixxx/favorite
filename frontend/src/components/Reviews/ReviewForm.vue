@@ -91,7 +91,7 @@ const handleCancel = () => {
         class="review-form__submit"
       >
         <BaseIcon
-          :name="isEditing ? 'mdi:check' : 'mdi:plus'"
+          :name="isEditing ? 'ph:check' : 'ph:plus'"
           :width="18"
           :height="18"
         />

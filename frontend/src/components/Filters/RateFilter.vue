@@ -58,7 +58,28 @@ watch(
   &__label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--fv-color-text-secondary);
+  }
+
+  /* Слайдер рейтинга — функциональный синий (эталон UI-кит §08), а не красный primary */
+  &__slider {
+    :deep(.ant-slider-track) {
+      background-color: var(--fv-color-accent) !important;
+    }
+
+    :deep(.ant-slider-handle::after) {
+      box-shadow: 0 0 0 2px var(--fv-color-accent) !important;
+    }
+
+    &:hover {
+      :deep(.ant-slider-track) {
+        background-color: var(--fv-color-accent) !important;
+      }
+
+      :deep(.ant-slider-handle::after) {
+        box-shadow: 0 0 0 4px var(--fv-color-accent) !important;
+      }
+    }
   }
 }
 </style>

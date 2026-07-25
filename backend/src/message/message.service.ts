@@ -82,6 +82,19 @@ export class MessageService {
       unreadCount: number;
     }> = [];
 
+    // Непрочитанные по всем собеседникам — одним groupBy вместо count-а на каждого (N+1)
+    const unreadGroups = await this.prismaService.message.groupBy({
+      by: ['senderId'],
+      where: {
+        receiverId: userId,
+        isRead: false,
+      },
+      _count: { _all: true },
+    });
+    const unreadByPeer = new Map(
+      unreadGroups.map((g) => [g.senderId, g._count._all]),
+    );
+
     for (const [peerId, lastMessage] of latestByPeer) {
       const otherUser =
         lastMessage.senderId === userId
@@ -92,18 +105,10 @@ export class MessageService {
         continue;
       }
 
-      const unreadCount = await this.prismaService.message.count({
-        where: {
-          senderId: peerId,
-          receiverId: userId,
-          isRead: false,
-        },
-      });
-
       result.push({
         otherUser,
         lastMessage,
-        unreadCount,
+        unreadCount: unreadByPeer.get(peerId) ?? 0,
       });
     }
 

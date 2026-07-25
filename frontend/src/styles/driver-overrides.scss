@@ -1,24 +1,20 @@
 .driver-active {
-  .ant-layout-header {
-    overflow: visible !important;
-  }
-
-  .navigation .ant-menu.ant-menu-horizontal,
-  .navigation .ant-menu-overflow {
+  /* sticky-шапка не должна обрезать подсветку онбординга */
+  .topbar {
     overflow: visible !important;
   }
 
   /*
    * driver.css: :not(body):has(> .driver-active-element) { overflow: hidden !important }
-   * Значит прямой родитель подсветки (часто li.ant-menu-item) режет «дырку» в маске.
+   * Значит прямой родитель подсветки режет «дырку» в маске — снимаем обрезку.
    */
-  .navigation :has(> .driver-active-element) {
+  .topbar :has(> .driver-active-element) {
     overflow: visible !important;
   }
 }
 
-.navigation .driver-active-element[data-tour="nav-library"],
-.navigation .driver-active-element[data-tour="nav-notifications"] {
+.topbar .driver-active-element[data-tour="nav-library"],
+.topbar .driver-active-element[data-tour="nav-notifications"] {
   position: relative;
   z-index: 3;
 }
