@@ -394,6 +394,7 @@ const onGlobalKeydown = (event: KeyboardEvent) => {
 
 const handleFiltersUpdate = async (filters: UserMoviesFilters) => {
   userMoviesStore.setFilters(filters);
+  userMoviesStore.setCurrentPage(1);
 
   if (!userId.value) {
     return;
