@@ -169,6 +169,7 @@ const rating = computed(() => {
   }
 
   &__title {
+    font-family: var(--fv-font-display);
     font-weight: 500;
     font-size: 14px;
     line-height: 1.25;

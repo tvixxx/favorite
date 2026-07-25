@@ -18,7 +18,7 @@ import {
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    redirect: "/profile",
+    redirect: "/library/collection",
   },
   {
     path: "/login",
@@ -207,7 +207,7 @@ router.beforeEach(async (to, _, next) => {
   }
 
   if (guestOnly && store.isLoggedIn) {
-    next("/profile");
+    next("/library/collection");
 
     return;
   }

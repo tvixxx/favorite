@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import NavigationLinks from "@/components/NavigationLinks/NavigationLinks.vue";
 import MobileTabBar from "@/components/MobileTabBar/MobileTabBar.vue";
 import OnboardingModal from "@/components/Onboarding/OnboardingModal.vue";
+import AppSpinner from "@/components/AppSpinner/AppSpinner.vue";
 import { useMainStore } from "@/state/state";
 import { ConfigProvider } from "ant-design-vue";
 import { themeConfig, useHotThemeKeys, useTheme } from "@/composable";
@@ -99,7 +100,9 @@ onMounted(async () => {
     <Suspense>
       <router-view />
       <template #fallback>
-        <div>Загрузка...</div>
+        <div class="app-suspense-fallback">
+          <AppSpinner :size="32" />
+        </div>
       </template>
     </Suspense>
   </ConfigProvider>
@@ -114,6 +117,14 @@ onMounted(async () => {
   color: var(--fv-color-text-primary);
   width: 100%;
   height: 100%;
+}
+
+/* Фолбэк ленивой подгрузки роутов — брендовый спиннер по центру, без «голого» текста */
+.app-suspense-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
 }
 
 body {

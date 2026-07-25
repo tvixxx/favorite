@@ -32,7 +32,7 @@ const onConfirm = (): void => {
 </script>
 
 <template>
-  <BaseModal v-model="open" headerless>
+  <BaseModal v-model="open" headerless :aria-label="props.title">
     <template #body>
       <div class="confirm-dialog__body">
         <span class="confirm-dialog__icon" aria-hidden="true">
@@ -49,6 +49,14 @@ const onConfirm = (): void => {
       <div class="confirm-dialog__footer">
         <button
           type="button"
+          class="confirm-dialog__btn confirm-dialog__btn--ghost"
+          :disabled="props.loading"
+          @click="open = false"
+        >
+          {{ props.cancelText }}
+        </button>
+        <button
+          type="button"
           class="confirm-dialog__btn confirm-dialog__btn--danger"
           :disabled="props.loading"
           @click="onConfirm"
@@ -56,20 +64,14 @@ const onConfirm = (): void => {
           <AppSpinner v-if="props.loading" :size="18" on-dark />
           {{ props.confirmText }}
         </button>
-        <button
-          type="button"
-          class="confirm-dialog__btn confirm-dialog__btn--ghost"
-          :disabled="props.loading"
-          @click="open = false"
-        >
-          {{ props.cancelText }}
-        </button>
       </div>
     </template>
   </BaseModal>
 </template>
 
 <style scoped lang="scss">
+@use "@/styles/media" as *;
+
 .confirm-dialog {
   &__body {
     display: flex;
@@ -85,9 +87,10 @@ const onConfirm = (): void => {
     width: 64px;
     height: 64px;
     margin-bottom: 16px;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--fv-color-brand) 12%, transparent);
-    color: var(--fv-color-brand);
+    // Эталон delete-confirm: negative-soft заливка в скруглённом квадрате (r14)
+    border-radius: 14px;
+    background: var(--fv-color-negative-soft);
+    color: var(--fv-color-negative);
   }
 
   &__title {
@@ -109,9 +112,15 @@ const onConfirm = (): void => {
 
   &__footer {
     display: flex;
-    flex-direction: column;
+    // Мобайл: колонка, primary (Удалить) сверху; десктоп: строка справа
+    flex-direction: column-reverse;
     gap: 10px;
     width: 100%;
+
+    @include mediaTablet {
+      flex-direction: row;
+      justify-content: flex-end;
+    }
   }
 
   &__btn {
@@ -130,6 +139,12 @@ const onConfirm = (): void => {
     transition:
       background 0.15s ease,
       opacity 0.15s ease;
+
+    @include mediaTablet {
+      width: auto;
+      min-width: 130px;
+      padding-inline: 22px;
+    }
 
     &:disabled {
       opacity: 0.6;

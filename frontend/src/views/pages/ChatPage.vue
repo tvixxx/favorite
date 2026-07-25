@@ -9,6 +9,7 @@ import ChatMessageContent from "@/components/ChatMessageContent/ChatMessageConte
 import SocialHubTabs from "@/components/SocialHubTabs/SocialHubTabs.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import RowsSkeleton from "@/components/Skeleton/RowsSkeleton.vue";
+import SkeletonBar from "@/components/Skeleton/SkeletonBar.vue";
 import { useMinLoading } from "@/components/Skeleton/useMinLoading";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
@@ -117,12 +118,17 @@ const formatTime = (dateString: string) => {
   }
 };
 
+// Скроллим вниз при новом сообщении — следим за длиной + id последнего,
+// а не за глубоким обходом всего треда (deep-watch дёргался и на isRead)
 watch(
-  () => chatStore.currentMessages,
+  () => {
+    const msgs = chatStore.currentMessages;
+
+    return `${msgs.length}:${msgs[msgs.length - 1]?.id ?? ""}`;
+  },
   () => {
     scrollToBottom();
   },
-  { deep: true },
 );
 
 onMounted(async () => {
@@ -322,6 +328,33 @@ onMounted(async () => {
                 onClick: reloadMessages,
               },
             ]"
+          />
+
+          <div
+            v-else-if="
+              chatStore.isMessagesLoading && !chatStore.currentMessages.length
+            "
+            class="chat-page__msg-skel"
+          >
+            <div
+              v-for="n in 6"
+              :key="`msg-skel-${n}`"
+              class="msg-skel"
+              :class="
+                n % 2 === 0 ? 'msg-skel--sent' : 'msg-skel--received'
+              "
+            >
+              <SkeletonBar
+                :width="n % 2 === 0 ? '55%' : '45%'"
+                height="38px"
+                radius="16px"
+              />
+            </div>
+          </div>
+
+          <StateBlock
+            v-else-if="!chatStore.currentMessages.length"
+            v-bind="STATE_PRESETS.chatThreadEmpty"
           />
 
           <div
@@ -540,6 +573,26 @@ onMounted(async () => {
     gap: 0.75rem;
     background: var(--fv-color-bg-secondary);
   }
+
+  // Скелетон сообщений: чередующиеся «пузыри» слева/справа
+  &__msg-skel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .msg-skel {
+      display: flex;
+
+      &--sent {
+        justify-content: flex-end;
+      }
+
+      &--received {
+        justify-content: flex-start;
+      }
+    }
+  }
+
 
   &__input {
     padding: 12px 16px;
@@ -774,18 +827,4 @@ onMounted(async () => {
   }
 }
 
-.loader {
-  width: 24px;
-  height: 24px;
-  border: 3px solid var(--fv-color-border);
-  border-top-color: var(--fv-color-accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
 </style>

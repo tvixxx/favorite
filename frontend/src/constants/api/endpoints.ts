@@ -4,6 +4,7 @@ export const APP_ENDPOINTS = {
   authRefresh: "auth/refresh",
   authMe: "auth/@me",
   register: "auth/register",
+  logout: "auth/logout",
   movies: "movies",
   moviesStats: "movies/stats",
   profile: "profile",

@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { reactive } from "vue";
 import { Icon } from "@iconify/vue";
 import { message } from "ant-design-vue";
+import type { Rule } from "ant-design-vue/es/form";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "@/constants";
 import { ERROR_REGISTRATION_TEXT } from "@/state/constants";
 
@@ -22,51 +23,35 @@ const formState = reactive<FormState>({
   password: "",
 });
 
-const onFinish = (values: FormState) => {
-  register(values);
+// Полевая валидация Ant → inline-ошибки под полем + aria-invalid + красная рамка (forms.scss)
+const rules: Record<string, Rule[]> = {
+  name: [
+    { required: true, whitespace: true, message: "Введите имя", trigger: "blur" },
+  ],
+  email: [
+    { required: true, whitespace: true, message: "Введите email", trigger: "blur" },
+    { pattern: EMAIL_REGEX, message: "Введите корректный email", trigger: "blur" },
+  ],
+  password: [
+    { required: true, whitespace: true, message: "Введите пароль", trigger: "blur" },
+    {
+      pattern: PASSWORD_REGEX,
+      message: "Минимум 6 символов, включая буквы и цифры",
+      trigger: "blur",
+    },
+  ],
 };
 
-const register = async ({ email, password, name }: FormState) => {
-  const trimmedName = name?.trim();
-  const trimmedEmail = email?.trim();
-  const trimmedPassword = password?.trim();
-
-  if (!trimmedName) {
-    message.error("Имя обязательно для заполнения");
-
-    return;
-  }
-
-  if (!trimmedEmail) {
-    message.error("Email обязателен для заполнения");
-
-    return;
-  }
-
-  if (!trimmedPassword) {
-    message.error("Пароль обязателен для заполнения");
-
-    return;
-  }
-
-  if (!EMAIL_REGEX.test(trimmedEmail)) {
-    message.error("Введите корректный email");
-
-    return;
-  }
-
-  if (!PASSWORD_REGEX.test(trimmedPassword)) {
-    message.error(
-      "Пароль должен содержать минимум 6 символов, включая буквы и цифры"
-    );
-
-    return;
-  }
-
+// @finish срабатывает только после успешной валидации — здесь остаётся лишь запрос
+const onFinish = async (values: FormState): Promise<void> => {
   try {
-    await store.register({ email, password, name });
+    await store.register({
+      email: values.email,
+      password: values.password,
+      name: values.name,
+    });
     message.success("Регистрация прошла успешно!");
-    router.push("/profile");
+    router.push("/library/collection");
   } catch {
     message.error(ERROR_REGISTRATION_TEXT);
   }
@@ -86,6 +71,7 @@ const register = async ({ email, password, name }: FormState) => {
       <a-form
         class="register__form"
         :model="formState"
+        :rules="rules"
         name="register-form"
         autocomplete="off"
         @finish="onFinish"

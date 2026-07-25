@@ -11,6 +11,7 @@ import { useMinLoading } from "@/components/Skeleton/useMinLoading";
 import type { UserData } from "@/state/types";
 import ProfileSettings from "@/components/ProfileSettings/ProfileSettings.vue";
 import BadgesList from "@/components/Badges/BadgesList.vue";
+import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import SettingBlock from "@/components/ProfileSettings/components/SettingBlock/SettingBlock.vue";
 import { message } from "ant-design-vue";
 import { GenreLabels } from "@/components/Genres/constants/genres.constants";
@@ -19,7 +20,7 @@ import {
   SUCCESS_UPDATE_USER_NAME_TEXT,
 } from "@/state/constants";
 import { useBadgesStore, useUserMoviesStore } from "@/stores";
-import { useStorage } from "@vueuse/core";
+import { useNotificationPrefs } from "@/composable/useNotificationPrefs";
 import { avatarGradient } from "@/composable/useAvatarGradient";
 
 const store = useMainStore();
@@ -37,10 +38,13 @@ const isModalVisible = ref(false);
 const isSaving = ref(false);
 const editForm = ref({ fullName: "" });
 
-// Настройки уведомлений хранятся локально (без изменений бэка)
-const notifyNewMessages = useStorage("fv-notify-new-messages", true);
-const notifyFriendRequests = useStorage("fv-notify-friend-requests", true);
-const notifyRecommendations = useStorage("fv-notify-recommendations", false);
+// Настройки уведомлений (локально, без бэка). Единый источник ключей в composable;
+// эти же значения гейтят входящие уведомления в notificationsStore.applyIncoming
+const {
+  newMessages: notifyNewMessages,
+  friendRequests: notifyFriendRequests,
+  recommendations: notifyRecommendations,
+} = useNotificationPrefs();
 const achievementsView = ref<"unlocked" | "locked">("unlocked");
 
 const user = computed<UserData | null>(() => store.userData ?? null);
@@ -150,6 +154,18 @@ const signOut = () => {
   router.push("/login");
 };
 
+const retryBadges = (): void => {
+  if (userId.value) {
+    void badgesStore.fetchUserBadges(userId.value);
+  }
+};
+
+const retryAnalytics = (): void => {
+  if (userId.value) {
+    void userMoviesStore.fetchUserMoviesAnalytics(userId.value);
+  }
+};
+
 onMounted(async () => {
   if (userId.value) {
     await Promise.all([
@@ -229,10 +245,21 @@ onMounted(async () => {
             :badge="false"
           />
 
-          <div v-else-if="badgesStore.isError" class="badges-card__error">
-            <BaseIcon name="ph:warning-circle" class="badges-card__error-icon" />
-            <span>Ошибка загрузки достижений</span>
-          </div>
+          <StateBlock
+            v-else-if="badgesStore.isError"
+            compact
+            variant="error"
+            icon="ph:warning-circle"
+            title="Не удалось загрузить достижения"
+            :actions="[
+              {
+                label: 'Повторить',
+                icon: 'ph:arrow-clockwise',
+                kind: 'primary',
+                onClick: retryBadges,
+              },
+            ]"
+          />
 
           <div v-else class="badges-card__content">
             <div class="badges-card__seg" role="tablist">
@@ -286,16 +313,21 @@ onMounted(async () => {
               />
             </div>
 
-            <div
+            <StateBlock
               v-else-if="userMoviesStore.isAnalyticsError || !analytics"
-              class="analytics-card__error"
-            >
-              <BaseIcon
-                name="ph:warning-circle"
-                class="analytics-card__error-icon"
-              />
-              <span>Не удалось загрузить аналитику</span>
-            </div>
+              compact
+              variant="error"
+              icon="ph:warning-circle"
+              title="Не удалось загрузить аналитику"
+              :actions="[
+                {
+                  label: 'Повторить',
+                  icon: 'ph:arrow-clockwise',
+                  kind: 'primary',
+                  onClick: retryAnalytics,
+                },
+              ]"
+            />
 
             <div v-else class="analytics-card__content">
               <div class="analytics-tiles">
@@ -834,7 +866,7 @@ onMounted(async () => {
   &__icon {
     width: 96px;
     height: 96px;
-    color: var(--ant-color-warning);
+    color: var(--fv-color-warning);
     margin-bottom: 2rem;
     opacity: 0.8;
 
@@ -938,7 +970,7 @@ onMounted(async () => {
     gap: 1rem;
     padding: 3rem 1rem;
     text-align: center;
-    color: var(--ant-color-error);
+    color: var(--fv-color-negative);
   }
 
   &__error-icon {
@@ -1042,7 +1074,7 @@ onMounted(async () => {
   }
 
   &__error {
-    color: var(--ant-color-error);
+    color: var(--fv-color-negative);
   }
 
   &__error-icon {

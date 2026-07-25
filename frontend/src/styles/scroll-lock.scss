@@ -1,0 +1,10 @@
+/* Блокировка скролла страницы без сдвига лейаута.
+   Класс вешается на <html> из composable useScrollLock (порт @angular/cdk
+   BlockScrollStrategy). См. подробности в composable/useScrollLock.ts.
+   - position: fixed + инлайновый top/left = -scroll держат визуальную позицию;
+   - overflow-y: scroll всегда резервирует жёлоб скроллбара → нет сдвига по X. */
+html.fv-scroll-block {
+  position: fixed;
+  width: 100%;
+  overflow-y: scroll;
+}

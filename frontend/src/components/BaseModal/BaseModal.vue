@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from "vue";
 import { useMediaQuery } from "@vueuse/core";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import { useScrollLock } from "@/composable/useScrollLock";
 
 const modelValue = defineModel<boolean>();
 
@@ -9,11 +10,15 @@ defineProps<{
   layout?: "default" | "detail" | "form";
   /** Скрыть стандартную белую шапку — контент сам рисует обложку (edge-to-edge) */
   headerless?: boolean;
+  /** Доступное имя диалога для headerless-режима (когда нет заголовка) */
+  ariaLabel?: string;
 }>();
 const emit = defineEmits<{ confirm: [] }>();
 
 const modal = ref<HTMLElement | null>(null);
 const previousFocus = ref<HTMLElement | null>(null);
+// Стабильный id заголовка → aria-labelledby (SR читает имя диалога)
+const titleId = useId();
 
 // <768px — модалка превращается в action sheet снизу (эталон)
 const isSheet = useMediaQuery("(max-width: 767.98px)");
@@ -59,42 +64,60 @@ function onTouchEnd(): void {
   dragActive.value = false;
 }
 
-// реальная ширина скроллбара ОС (0 для overlay-скроллбаров, напр. macOS по умолчанию)
-function measureScrollbarWidth(): number {
-  const probe = document.createElement("div");
+// Блокировка скролла страницы без сдвига лейаута (порт @angular/cdk BlockScrollStrategy)
+const { lock: lockScroll, unlock: unlockScroll } = useScrollLock();
 
-  probe.style.cssText =
-    "position:absolute;top:-9999px;width:100px;height:100px;overflow:scroll";
-  document.body.appendChild(probe);
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-  const width = probe.offsetWidth - probe.clientWidth;
-
-  probe.remove();
-
-  return width;
-}
-
-function lockScroll() {
-  const doc = document.documentElement;
-  // страница реально прокручивается → при overflow:hidden скроллбар исчезнет
-  const pageScrolls = doc.scrollHeight > doc.clientHeight;
-  const scrollbarWidth = pageScrolls ? measureScrollbarWidth() : 0;
-
-  document.body.style.overflow = "hidden";
-
-  if (scrollbarWidth > 0) {
-    document.body.style.paddingRight = `${scrollbarWidth}px`;
+function getFocusable(): HTMLElement[] {
+  if (!modal.value) {
+    return [];
   }
+
+  return Array.from(
+    modal.value.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+  ).filter((el) => el.offsetParent !== null);
 }
 
-function unlockScroll() {
-  document.body.style.overflow = "";
-  document.body.style.paddingRight = "";
-}
-
-function onKeydown(e: KeyboardEvent) {
+function onKeydown(e: KeyboardEvent): void {
   if (e.key === "Escape") {
     modelValue.value = false;
+
+    return;
+  }
+
+  if (e.key !== "Tab" || !modal.value) {
+    return;
+  }
+
+  // Фокус-трап: Tab не выпускает фокус из диалога на фон
+  const focusable = getFocusable();
+  const active = document.activeElement as HTMLElement | null;
+
+  if (focusable.length === 0) {
+    e.preventDefault();
+    modal.value.focus();
+
+    return;
+  }
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (!active || !modal.value.contains(active)) {
+    e.preventDefault();
+    first.focus();
+
+    return;
+  }
+
+  if (e.shiftKey && active === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && active === last) {
+    e.preventDefault();
+    first.focus();
   }
 }
 
@@ -111,14 +134,22 @@ watch(modelValue, async (open) => {
     setPrevFocus();
     lockScroll();
     dragOffset.value = 0;
-    modal.value?.focus();
-    await nextTick();
     window.addEventListener("keydown", onKeydown);
+    await nextTick();
+    // Фокус переносим ПОСЛЕ рендера диалога (иначе .focus() — no-op) на контейнер:
+    // role=dialog + aria-labelledby → скринридер озвучивает заголовок
+    modal.value?.focus();
   } else {
     unlockScroll();
     window.removeEventListener("keydown", onKeydown);
     activatePrevFocus();
   }
+});
+
+// Если компонент размонтируют с открытой модалкой (напр. смена роута),
+// watcher закрытия не сработает — снимаем keydown вручную, чтобы не текло
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", onKeydown);
 });
 
 const close = () => (modelValue.value = false);
@@ -130,7 +161,7 @@ const handleConfirm = () => {
 
 <template>
   <Teleport to="body" :disabled="!modelValue">
-    <Transition name="fade">
+    <Transition name="modal">
       <div
         v-if="modelValue"
         class="modal-backdrop"
@@ -149,6 +180,8 @@ const handleConfirm = () => {
           :style="dragStyle"
           role="dialog"
           aria-modal="true"
+          :aria-labelledby="!headerless ? titleId : undefined"
+          :aria-label="headerless ? ariaLabel : undefined"
           tabindex="-1"
           @touchstart.passive="onTouchStart"
           @touchmove.passive="onTouchMove"
@@ -157,10 +190,15 @@ const handleConfirm = () => {
           <div v-if="isSheet" class="modal__grabber" aria-hidden="true"></div>
 
           <div v-if="!headerless" class="modal__header">
-            <h3 class="modal__header-text">
+            <h3 :id="titleId" class="modal__header-text">
               <slot name="title">Заголовок</slot>
             </h3>
-            <button @click="modelValue = false" class="modal__close">
+            <button
+              type="button"
+              class="modal__close"
+              aria-label="Закрыть"
+              @click="modelValue = false"
+            >
               <BaseIcon name="ph:x" />
             </button>
           </div>
@@ -189,7 +227,7 @@ const handleConfirm = () => {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(20, 26, 40, 0.5);
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -198,7 +236,7 @@ const handleConfirm = () => {
     max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
   overflow-y: auto;
   overflow-x: hidden;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(3px);
 }
 
 .modal {
@@ -311,8 +349,14 @@ const handleConfirm = () => {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .modal,
   .modal--sheet {
     animation: none;
+  }
+
+  .modal-enter-active,
+  .modal-leave-active {
+    transition: none;
   }
 }
 
@@ -387,15 +431,16 @@ const handleConfirm = () => {
   min-width: 140px;
 }
 
+/* Скрим плавно появляется и уходит (enter И leave — не мгновенно).
+   Внутренний .modal делает свой «pop» через animation: modalSlideIn. */
 .modal-enter-active,
 .modal-leave-active {
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: opacity 0.25s ease;
 }
 
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
-  transform: scale(0.9) translateY(20px);
 }
 
 @keyframes modalSlideIn {

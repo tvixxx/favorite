@@ -35,7 +35,8 @@
   --fv-color-negative: var(--fv-palette-orange-500);
   --fv-color-warning: var(--fv-palette-yellow-500);
   --fv-color-nav-icon: rgba(255, 255, 255, 0.92);
-  --fv-shadow-low: 0 2px 8px rgba(29, 32, 35, 0.08); // мягкая нейтральная тень
+  // Эталон low: двухслойная мягкая нейтральная тень (tight ambient + softer cast)
+  --fv-shadow-low: 0 0 6px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.08);
 
   /* мягкие «soft»-подложки — адаптируются к теме через семантику */
   --fv-color-accent-soft: color-mix(in srgb, var(--fv-color-accent) 12%, transparent);

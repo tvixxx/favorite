@@ -12,6 +12,7 @@ import "ant-design-vue/dist/reset.css";
 import "driver.js/dist/driver.css";
 import "./styles/driver-overrides.scss";
 import "./styles/forms.scss";
+import "./styles/scroll-lock.scss";
 import { createPinia } from "pinia";
 
 registerSW({ immediate: true });

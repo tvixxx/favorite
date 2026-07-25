@@ -182,15 +182,20 @@ async function enrichMissingChips(text: string) {
     uniqueTitles.add(m[1]);
   }
 
+  // Резолвим недостающие тайтлы параллельно (был последовательный водопад запросов)
+  const missingTitles = [...uniqueTitles].filter(
+    (title) => !chips.value.some((c) => c.title === title),
+  );
+
+  const resolved = await Promise.all(
+    missingTitles.map((title) =>
+      findUserMovieByQuotedTitle(props.userId, title),
+    ),
+  );
+
   const additions: MovieChip[] = [];
 
-  for (const title of uniqueTitles) {
-    if (chips.value.some((c) => c.title === title)) {
-      continue;
-    }
-
-    const um = await findUserMovieByQuotedTitle(props.userId, title);
-
+  for (const um of resolved) {
     if (um) {
       additions.push({
         movieId: um.movieId,

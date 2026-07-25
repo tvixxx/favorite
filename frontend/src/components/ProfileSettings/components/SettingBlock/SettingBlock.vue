@@ -8,6 +8,8 @@ import {
   StatsBlockType,
 } from "@/shared/profile/profile.types";
 import StatsBlock from "@/components/ProfileSettings/components/Stats/StatsBlock.vue";
+import StateBlock from "@/components/StateBlock/StateBlock.vue";
+import RowsSkeleton from "@/components/Skeleton/RowsSkeleton.vue";
 import { useUserMoviesStore, useFriendsStore } from "@/stores";
 import { useMainStore } from "@/state/state";
 import { STAT_BLOCK_TITLES } from "@/components/ProfileSettings/constants";
@@ -158,37 +160,33 @@ const isFriendsEmptySocial = computed(() => {
     </div>
 
     <div v-if="isStats" class="setting-block__stats">
-      <div v-if="isStatsLoading" class="setting-block__stats-loading">
-        <div class="setting-block__loader"></div>
-        <span>Загрузка статистики...</span>
-      </div>
-      <div v-else>
-        <div v-if="isStatsFailed || !stats" class="setting-block__stats-error">
-          <BaseIcon class="setting-block__error-icon" name="ph:warning-circle" />
-          <span>Ошибка загрузки статистики</span>
-          <a-button
-            class="setting-block__retry-btn"
-            size="small"
-            type="primary"
-            @click="retryStats"
-          >
-            Повторить
-          </a-button>
-        </div>
-        <div v-else class="setting-block__stats-content">
-          <StatsBlock :items="stats" />
-        </div>
+      <RowsSkeleton v-if="isStatsLoading" :count="4" :badge="false" />
+      <StateBlock
+        v-else-if="isStatsFailed || !stats"
+        compact
+        variant="error"
+        icon="ph:warning-circle"
+        title="Не удалось загрузить статистику"
+        :actions="[
+          {
+            label: 'Повторить',
+            icon: 'ph:arrow-clockwise',
+            kind: 'primary',
+            onClick: retryStats,
+          },
+        ]"
+      />
+      <div v-else class="setting-block__stats-content">
+        <StatsBlock :items="stats" />
       </div>
     </div>
 
     <div v-if="isFriends" class="setting-block__friends">
-      <div
+      <RowsSkeleton
         v-if="friendsStatsLoading || friendsStore.isLoading"
-        class="setting-block__stats-loading"
-      >
-        <div class="setting-block__loader"></div>
-        <span>Загрузка...</span>
-      </div>
+        :count="3"
+        :badge="false"
+      />
       <div
         v-else-if="friendsStore.stats"
         class="setting-block__friends-content"
@@ -244,19 +242,22 @@ const isFriendsEmptySocial = computed(() => {
           </a-button>
         </div>
       </div>
-      <div v-else class="setting-block__friends-fallback">
-        <BaseIcon
-          name="ph:user-plus"
-          class="setting-block__friends-fallback-icon"
-        />
-        <p class="setting-block__friends-fallback-text">
-          Не удалось загрузить данные о друзьях. Проверьте соединение и
-          попробуйте снова.
-        </p>
-        <a-button type="primary" @click="retryFriendsStats">
-          Повторить
-        </a-button>
-      </div>
+      <StateBlock
+        v-else
+        compact
+        variant="error"
+        icon="ph:wifi-slash"
+        title="Не удалось загрузить"
+        description="Проверьте соединение и попробуйте снова."
+        :actions="[
+          {
+            label: 'Повторить',
+            icon: 'ph:arrow-clockwise',
+            kind: 'primary',
+            onClick: retryFriendsStats,
+          },
+        ]"
+      />
     </div>
   </section>
 </template>
@@ -342,44 +343,6 @@ const isFriendsEmptySocial = computed(() => {
     padding: 0;
   }
 
-  &__stats-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    padding: 2rem 1rem;
-    text-align: center;
-    color: var(--fv-color-text-secondary);
-  }
-
-  &__loader {
-    width: 40px;
-    height: 40px;
-    @include spinnerRing;
-  }
-
-  &__stats-error {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    padding: 2rem 1rem;
-    text-align: center;
-    color: color-mix(in srgb, var(--ant-color-error) 80%, var(--fv-color-text-primary));
-  }
-
-  &__error-icon {
-    width: 2rem;
-    height: 2rem;
-    color: var(--ant-color-error);
-  }
-
-  &__retry-btn {
-    margin-top: 1rem;
-  }
-
   &__friends {
     padding: 1rem;
     @include mutedInsetPanel;
@@ -421,33 +384,6 @@ const isFriendsEmptySocial = computed(() => {
     color: var(--fv-color-text-secondary);
   }
 
-  &__friends-fallback {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    padding: 2rem 1.25rem;
-    text-align: center;
-    border-radius: 12px;
-    border: 1px dashed var(--fv-color-border);
-    background: var(--fv-color-bg-primary);
-  }
-
-  &__friends-fallback-icon {
-    width: 40px;
-    height: 40px;
-    color: var(--fv-color-text-secondary);
-    opacity: 0.85;
-  }
-
-  &__friends-fallback-text {
-    margin: 0;
-    max-width: 28rem;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: var(--fv-color-text-secondary);
-  }
 }
 
 // Эталон: 3 центрированных тайла в ряд (число + подпись)

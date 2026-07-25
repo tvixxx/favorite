@@ -85,8 +85,7 @@ onMounted(() => {
     />
 
     <template v-else>
-      <a-spin :spinning="isLoading" size="large" tip="Обновляем список...">
-        <div class="lb-list">
+      <div class="lb-list" :class="{ 'lb-list--busy': isLoading }">
           <LeaderboardRow
             v-for="row in items"
             :key="row.movieId"
@@ -122,7 +121,6 @@ onMounted(() => {
             @change="(p: number) => void store.setPage(p)"
           />
         </div>
-      </a-spin>
     </template>
 
     <CatalogMoviePreviewModal v-model="previewOpen" :movie-id="previewMovieId" />
@@ -162,6 +160,13 @@ onMounted(() => {
     justify-content: center;
     padding: 2rem 0 1rem;
   }
+}
+
+// Пагинация: список слегка гаснет во время обновления (без блокирующего оверлея)
+.lb-list--busy {
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
 }
 
 .lb-list {

@@ -182,8 +182,8 @@ const confirmDelete = (): void => {
     }
 
     &--danger:hover {
-      border-color: var(--ant-color-error, #ff4d4f);
-      color: var(--ant-color-error, #ff4d4f);
+      border-color: var(--fv-color-negative);
+      color: var(--fv-color-negative);
     }
   }
 

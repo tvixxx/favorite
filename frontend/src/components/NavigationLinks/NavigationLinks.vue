@@ -7,6 +7,7 @@ import { BellOutlined } from "@ant-design/icons-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
+import SkeletonBar from "@/components/Skeleton/SkeletonBar.vue";
 import { INFO_LOGOUT_TEXT } from "@/state/constants";
 import { useNotificationsStore } from "@/stores/notifications/notificationsStore";
 import { useChatStore } from "@/stores/chat/chatStore";
@@ -195,6 +196,12 @@ const onDropdownOpenChange = async (open: boolean) => {
   }
 };
 
+const retryNotifications = (): void => {
+  if (userId.value) {
+    void notificationsStore.fetchNotifications(userId.value);
+  }
+};
+
 const handleNotificationClick = async (n: NotificationDto) => {
   const uid = userId.value;
 
@@ -294,7 +301,33 @@ const handleMarkAllRead = async () => {
               </a-button>
             </div>
 
-            <a-spin v-if="notificationsStore.isLoading" size="small" />
+            <div v-if="notificationsStore.isLoading" class="notif-panel__loading">
+              <div
+                v-for="n in 4"
+                :key="`notif-skel-${n}`"
+                class="notif-panel__skel-row"
+              >
+                <SkeletonBar height="12px" width="80%" radius="6px" />
+                <SkeletonBar height="10px" width="45%" radius="6px" />
+              </div>
+            </div>
+
+            <StateBlock
+              v-else-if="notificationsStore.isError"
+              class="notif-panel__empty"
+              compact
+              variant="error"
+              icon="ph:warning-circle"
+              title="Не удалось загрузить"
+              :actions="[
+                {
+                  label: 'Повторить',
+                  icon: 'ph:arrow-clockwise',
+                  kind: 'primary',
+                  onClick: retryNotifications,
+                },
+              ]"
+            />
 
             <StateBlock
               v-else-if="notificationsStore.items.length === 0"
@@ -770,6 +803,19 @@ const handleMarkAllRead = async () => {
 
   &__empty {
     margin: 16px 0;
+  }
+
+  &__loading {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 12px 4px;
+  }
+
+  &__skel-row {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
   }
 
   &__list {

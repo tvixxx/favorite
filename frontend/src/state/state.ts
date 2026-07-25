@@ -5,6 +5,7 @@ import {
   AUTH_USER_ENDPOINT,
   CURRENT_USER,
   CURRENT_USER_TOKEN,
+  LOGOUT_ENDPOINT,
   REGISTER_USER_ENDPOINT,
   USERS_ENDPOINTS,
 } from "@/constants";
@@ -223,8 +224,17 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     useNotificationsStore().resetSession();
   }
 
-  function logOut(): void {
+  async function logOut(): Promise<void> {
+    // Локально разлогиниваемся сразу (без гонки с guest-guard),
     clearAuthState();
+
+    // …и гасим серверную сессию: бэкенд чистит httpOnly refresh-cookie.
+    // Best-effort — при сетевой ошибке локально мы уже разлогинены.
+    try {
+      await useFetch(LOGOUT_ENDPOINT, { method: FETCH_METHOD.post });
+    } catch {
+      // no-op
+    }
   }
 
   function applyAccessToken(newToken: string): void {

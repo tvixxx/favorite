@@ -151,10 +151,14 @@ const handleDelete = async (reviewId: string) => {
         />
       </div>
 
-      <div v-else class="reviews-widget__empty">
-        <BaseIcon name="ph:chat-text" :width="40" :height="40" />
-        <p>Отзывов пока нет. Будьте первым!</p>
-      </div>
+      <StateBlock
+        v-else
+        compact
+        variant="empty"
+        icon="ph:chat-text"
+        title="Отзывов пока нет"
+        description="Будьте первым!"
+      />
     </template>
 
     <div v-if="isLoggedIn" class="reviews-widget__form-section">

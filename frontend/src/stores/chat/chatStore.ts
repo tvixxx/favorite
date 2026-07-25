@@ -47,6 +47,7 @@ export const useChatStore = defineStore("chat", () => {
   const isLoading = ref(false);
   const isError = ref<string | null>(null);
   const isMessagesError = ref(false);
+  const isMessagesLoading = ref(false);
 
   const userStatusStore = useUserStatusStore();
 
@@ -77,8 +78,45 @@ export const useChatStore = defineStore("chat", () => {
     }
   };
 
+  // Локально обновить беседу входящим сообщением (без полного refetch на каждое).
+  // Возвращает false, если собеседник новый — тогда вызывающий подтянет список.
+  const patchConversationFromMessage = (
+    message: Message,
+    me: string,
+  ): boolean => {
+    const peerId =
+      message.senderId === me ? message.receiverId : message.senderId;
+
+    const existing = conversations.value.find(
+      (c) => c.otherUser.id === peerId,
+    );
+
+    if (!existing) {
+      return false;
+    }
+
+    existing.lastMessage = message;
+
+    // входящее и не в открытом чате → +1 непрочитанное
+    const inbound = message.senderId === peerId;
+    if (inbound && currentChatUserId.value !== peerId) {
+      existing.unreadCount += 1;
+    }
+
+    // поднять беседу наверх (последняя активность)
+    const idx = conversations.value.indexOf(existing);
+    if (idx > 0) {
+      conversations.value.splice(idx, 1);
+      conversations.value.unshift(existing);
+    }
+
+    return true;
+  };
+
   const connect = (userId: string) => {
-    if (socket.value?.connected) {
+    // Любой существующий сокет (в т.ч. переподключающийся) не пересоздаём —
+    // иначе старый осиротеет с автопереподключением и слушателями
+    if (socket.value) {
       return;
     }
 
@@ -119,7 +157,11 @@ export const useChatStore = defineStore("chat", () => {
 
       messages.value.get(peerId)?.push(message);
 
-      await fetchConversations(userId);
+      // Патчим беседу локально; полный refetch — только для нового собеседника
+      const patched = patchConversationFromMessage(message, me);
+      if (!patched) {
+        await fetchConversations(userId);
+      }
 
       const openPeer = currentChatUserId.value;
 
@@ -166,12 +208,18 @@ export const useChatStore = defineStore("chat", () => {
 
   const disconnect = () => {
     if (socket.value) {
+      socket.value.removeAllListeners();
       socket.value.disconnect();
       socket.value = null;
       isConnected.value = false;
       currentUserId.value = null;
       userStatusStore.clearStatuses();
     }
+
+    // Чистим чат-состояние, чтобы не текло между сессиями (logout)
+    conversations.value = [];
+    messages.value = new Map();
+    currentChatUserId.value = null;
   };
 
   const fetchConversations = async (userId: string) => {
@@ -203,6 +251,7 @@ export const useChatStore = defineStore("chat", () => {
     limit = 50,
   ) => {
     isMessagesError.value = false;
+    isMessagesLoading.value = true;
 
     try {
       const response = await useFetch<Message[]>(
@@ -220,6 +269,8 @@ export const useChatStore = defineStore("chat", () => {
     } catch (error) {
       console.error("Failed to load messages:", error);
       isMessagesError.value = true;
+    } finally {
+      isMessagesLoading.value = false;
     }
   };
 
@@ -282,6 +333,7 @@ export const useChatStore = defineStore("chat", () => {
     isLoading,
     isError,
     isMessagesError,
+    isMessagesLoading,
     totalUnreadCount,
     currentMessages,
     connect,

@@ -175,9 +175,11 @@ export const useFriendsStore = defineStore('friends', () => {
       );
 
       if (isSuccessStatus(response.status)) {
-        await fetchFriends(userId);
-        await fetchRequests(userId);
-        await fetchStats(userId);
+        await Promise.all([
+          fetchFriends(userId),
+          fetchRequests(userId),
+          fetchStats(userId),
+        ]);
 
         return response.data;
       }
@@ -196,8 +198,7 @@ export const useFriendsStore = defineStore('friends', () => {
       );
 
       if (isSuccessStatus(response.status)) {
-        await fetchRequests(userId);
-        await fetchStats(userId);
+        await Promise.all([fetchRequests(userId), fetchStats(userId)]);
 
         return response.data;
       }
@@ -216,9 +217,11 @@ export const useFriendsStore = defineStore('friends', () => {
       );
 
       if (isSuccessStatus(response.status)) {
-        await fetchFriends(userId);
-        await fetchSubscriptions(userId);
-        await fetchStats(userId);
+        await Promise.all([
+          fetchFriends(userId),
+          fetchSubscriptions(userId),
+          fetchStats(userId),
+        ]);
 
         return response.data;
       }

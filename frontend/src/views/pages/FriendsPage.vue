@@ -10,6 +10,8 @@ import BaseIcon from '@/components/BaseIcon/BaseIcon.vue';
 import BaseRadio from '@/components/BaseRadio/BaseRadio.vue';
 import StateBlock from '@/components/StateBlock/StateBlock.vue';
 import { STATE_PRESETS } from '@/components/StateBlock/stateBlockPresets';
+import SkeletonBar from '@/components/Skeleton/SkeletonBar.vue';
+import { useMinLoading } from '@/components/Skeleton/useMinLoading';
 import { useFetch, FETCH_METHOD } from '@/composable';
 import { isSuccessStatus } from '@/utils';
 import { friendlyRequestError } from '@/utils/friendlyError';
@@ -147,7 +149,7 @@ const isUserOnline = (otherUserId: string) => {
   return userStatusStore.isUserOnline(otherUserId);
 };
 
-onMounted(async () => {
+const loadAll = async () => {
   if (!userId.value) {
     return;
   }
@@ -159,7 +161,12 @@ onMounted(async () => {
     friendsStore.fetchRequests(userId.value),
     friendsStore.fetchStats(userId.value),
   ]);
-});
+};
+
+// Скелетон с минимальной длительностью — чтобы не мигал на быстрых ответах
+const showSkeleton = useMinLoading(() => friendsStore.isLoading);
+
+onMounted(loadAll);
 </script>
 
 <template>
@@ -198,7 +205,36 @@ onMounted(async () => {
       </div>
     </div>
 
-    <Tabs default-active-key="friends" class="friends-page__tabs">
+    <StateBlock
+      v-if="friendsStore.isError"
+      class="friends-page__state"
+      variant="error"
+      icon="ph:wifi-slash"
+      title="Не удалось загрузить"
+      description="Проверьте соединение и попробуйте ещё раз."
+      :actions="[
+        {
+          label: 'Повторить',
+          icon: 'ph:arrow-clockwise',
+          kind: 'primary',
+          onClick: loadAll,
+        },
+      ]"
+    />
+
+    <div v-else-if="showSkeleton" class="friends-page__tabs">
+      <div class="user-grid">
+        <div v-for="n in 6" :key="n" class="user-card user-card--skel">
+          <SkeletonBar width="52px" height="52px" circle />
+          <div class="user-card__info">
+            <SkeletonBar height="14px" width="60%" radius="6px" />
+            <SkeletonBar height="11px" width="40%" radius="6px" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <Tabs v-else default-active-key="friends" class="friends-page__tabs">
       <TabPane
         key="friends"
         :tab="`Друзья (${friendsStore.stats?.friendsCount ?? 0})`"
@@ -584,6 +620,22 @@ onMounted(async () => {
     border-radius: 16px;
     padding: 1.5rem;
     border: 1px solid var(--fv-color-border);
+  }
+
+  // Ошибка загрузки на уровне страницы — на той же поверхности, что и табы
+  &__state {
+    background: var(--fv-color-bg-primary);
+    border: 1px solid var(--fv-color-border);
+    border-radius: 16px;
+  }
+}
+
+// Скелетон карточки пользователя (та же раскладка, что и .user-card)
+.user-card--skel {
+  pointer-events: none;
+
+  .user-card__info {
+    gap: 8px;
   }
 }
 

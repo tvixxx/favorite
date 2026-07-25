@@ -20,6 +20,12 @@
   flex-direction: column;
   align-items: center;
 
+  // Эталон: на мобиле боковой gutter 16px (не 32px)
+  @include mediaMax(767.98px) {
+    padding-left: var(--fv-gutter-mobile);
+    padding-right: var(--fv-gutter-mobile);
+  }
+
   @include mediaDesktopS {
     padding: 0 var(--fv-layout-gutter-lg);
   }
