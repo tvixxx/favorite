@@ -77,3 +77,9 @@ export type UserStatus = Prisma.UserStatusModel
  * 
  */
 export type Notification = Prisma.NotificationModel
+/**
+ * Model Feedback
+ * Обращения из формы «Обратная связь» (/feedback).
+ * Читается администратором через GET /feedback.
+ */
+export type Feedback = Prisma.FeedbackModel

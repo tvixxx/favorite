@@ -151,6 +151,16 @@ const routes: Array<RouteRecordRaw> = [
     },
   },
   {
+    path: "/feedback",
+    name: "feedback",
+    component: () => import("@/views/pages/FeedbackPage.vue"),
+    meta: {
+      requiresAuth: true,
+      // Внизу — своя кнопка «Отправить» (эталон), таб-бар прячем
+      hideMobileTabBar: true,
+    },
+  },
+  {
     path: "/friends",
     name: "friends",
     component: () => import("@/views/pages/FriendsPage.vue"),

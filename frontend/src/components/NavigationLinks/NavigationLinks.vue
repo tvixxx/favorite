@@ -406,6 +406,10 @@ const handleMarkAllRead = async () => {
               <BaseIcon name="ph:question" :width="18" :height="18" />
               <span>Помощь и онбординг</span>
             </button>
+            <button class="acctmenu__item" @click="goTo('/feedback')">
+              <BaseIcon name="ph:megaphone" :width="18" :height="18" />
+              <span>Обратная связь</span>
+            </button>
 
             <div class="acctmenu__divider"></div>
 
@@ -484,6 +488,18 @@ const handleMarkAllRead = async () => {
           @click="goTo('/profile')"
         >
           Профиль
+        </button>
+
+        <div class="drawer-nav__divider"></div>
+
+        <button
+          type="button"
+          class="drawer-nav__link drawer-nav__link_feedback"
+          :class="{ 'is-active': route.path.startsWith('/feedback') }"
+          @click="goTo('/feedback')"
+        >
+          <BaseIcon name="ph:megaphone" :width="18" :height="18" />
+          Обратная связь
         </button>
 
         <a-button danger block class="drawer-nav__signout" @click="signOut">
@@ -902,6 +918,19 @@ const handleMarkAllRead = async () => {
   &__signout {
     margin-top: 12px;
   }
+  &__divider {
+    height: 1px;
+    margin: 8px 4px;
+    background: var(--fv-color-border);
+  }
+
+  // Пункт с иконкой (эталон: последний пункт бургера)
+  &__link_feedback {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
 }
 
 @media (max-width: 768px) {

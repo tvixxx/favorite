@@ -11,6 +11,7 @@ export const APP_ENDPOINTS = {
   uploads: "uploads",
   users: "users",
   actors: "actors",
+  feedback: "feedback",
 } as const;
 
 export type AppEndpoints = keyof typeof APP_ENDPOINTS | string;
