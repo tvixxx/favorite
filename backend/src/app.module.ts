@@ -23,6 +23,7 @@ import { UserStatusModule } from './user-status/user-status.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { UserListModule } from './user-list/user-list.module';
 import { NotificationModule } from './notification/notification.module';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { NotificationModule } from './notification/notification.module';
     LeaderboardModule,
     UserListModule,
     NotificationModule,
+    FeedbackModule,
   ],
   controllers: [AppController],
   providers: [AppService],

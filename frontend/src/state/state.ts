@@ -39,7 +39,11 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     },
   );
 
-  const state = ref<State>(DEFAULT_MAIN_STATE);
+  // Состояние копируем: DEFAULT_MAIN_STATE — общая константа, её нельзя мутировать
+  const state = ref<State>(structuredClone(DEFAULT_MAIN_STATE));
+
+  /** Разделяемый запрос проверки сессии — чтобы не гонять `/auth/@me` дважды */
+  let authRequest: Promise<void> | null = null;
 
   const user = computed(() => state.value.user);
   const isFetchingUser = computed(() => state.value.isFetchingUser);
@@ -129,23 +133,31 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     }
   }
 
+  /**
+   * Проверяет сессию по `/auth/@me`.
+   *
+   * Вызывается и из router-guard, и (исторически) из других мест, поэтому
+   * параллельные вызовы ждут ОДИН запрос. Раньше второй вызов подставлял
+   * `loggedIn` из localStorage, не дожидаясь ответа, — из-за этого можно было
+   * оказаться «залогиненным» с истёкшим токеном и увидеть шапку на /login.
+   */
   async function fetchUser(): Promise<void> {
-    if (user.value.isAuthLoaded || isFetchingUser.value) {
-      if (userDataRaw.value && !state.value.user.data) {
-        const userObj: UserData = {
-          ...userDataRaw.value,
-          accessToken: accessToken.value || userDataRaw.value.accessToken || "",
-        };
-        state.value.user.data = userObj;
-        state.value.user.loggedIn = !!userDataRaw.value;
-      } else {
-        state.value.user.data = userDataRaw.value;
-        state.value.user.loggedIn = !!userDataRaw.value;
-      }
-
+    if (user.value.isAuthLoaded) {
       return;
     }
 
+    if (authRequest) {
+      return authRequest;
+    }
+
+    authRequest = requestCurrentUser().finally(() => {
+      authRequest = null;
+    });
+
+    return authRequest;
+  }
+
+  async function requestCurrentUser(): Promise<void> {
     state.value.isFetchingUser = true;
 
     try {

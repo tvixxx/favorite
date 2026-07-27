@@ -2,9 +2,9 @@
 import { useMainStore } from "@/state/state";
 import { useRouter } from "vue-router";
 import { reactive } from "vue";
-import { Icon } from "@iconify/vue";
 import { message } from "ant-design-vue";
 import type { Rule } from "ant-design-vue/es/form";
+import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "@/constants";
 import { ERROR_REGISTRATION_TEXT } from "@/state/constants";
 
@@ -23,7 +23,7 @@ const formState = reactive<FormState>({
   password: "",
 });
 
-// Полевая валидация Ant → inline-ошибки под полем + aria-invalid + красная рамка (forms.scss)
+// Полевая валидация Ant → inline-ошибки под полем + aria-invalid + красная рамка
 const rules: Record<string, Rule[]> = {
   name: [
     { required: true, whitespace: true, message: "Введите имя", trigger: "blur" },
@@ -59,142 +59,55 @@ const onFinish = async (values: FormState): Promise<void> => {
 </script>
 
 <template>
-  <div class="register">
-    <div class="register__container">
-      <div class="register__header">
-        <h1 class="register__title">
-          <Icon icon="ph:user-plus" class="register__title-icon" />
-          Регистрация
-        </h1>
-      </div>
-
-      <a-form
-        class="register__form"
-        :model="formState"
-        :rules="rules"
-        name="register-form"
-        autocomplete="off"
-        @finish="onFinish"
+  <a-form
+    class="auth-form"
+    :model="formState"
+    :rules="rules"
+    name="register-form"
+    autocomplete="off"
+    @finish="onFinish"
+  >
+    <a-form-item name="name">
+      <a-input
+        v-model:value="formState.name"
+        placeholder="Ваше имя"
+        size="large"
       >
-        <a-form-item name="name" class="register__field">
-          <template #label>
-            <Icon icon="ph:user" class="register__field-icon" />
-            Имя
-          </template>
-          <a-input
-            v-model:value="formState.name"
-            placeholder="Введите имя"
-            size="large"
-          />
-        </a-form-item>
+        <template #prefix>
+          <BaseIcon name="ph:user" :width="20" :height="20" />
+        </template>
+      </a-input>
+    </a-form-item>
 
-        <a-form-item name="email" class="register__field">
-          <template #label>
-            <Icon icon="ph:envelope-simple" class="register__field-icon" />
-            Email
-          </template>
-          <a-input
-            v-model:value="formState.email"
-            placeholder="Введите email"
-            size="large"
-          />
-        </a-form-item>
+    <a-form-item name="email">
+      <a-input v-model:value="formState.email" placeholder="Email" size="large">
+        <template #prefix>
+          <BaseIcon name="ph:envelope-simple" :width="20" :height="20" />
+        </template>
+      </a-input>
+    </a-form-item>
 
-        <a-form-item name="password" class="register__field">
-          <template #label>
-            <Icon icon="ph:lock-simple" class="register__field-icon" />
-            Пароль
-          </template>
-          <a-input-password
-            v-model:value="formState.password"
-            placeholder="Введите пароль"
-            size="large"
-          />
-        </a-form-item>
+    <a-form-item name="password">
+      <a-input-password
+        v-model:value="formState.password"
+        placeholder="Пароль"
+        size="large"
+      >
+        <template #prefix>
+          <BaseIcon name="ph:lock-simple" :width="20" :height="20" />
+        </template>
+      </a-input-password>
+    </a-form-item>
 
-        <a-form-item class="register__submit">
-          <a-button type="primary" html-type="submit" size="large" block>
-            Зарегистрироваться
-          </a-button>
-        </a-form-item>
-      </a-form>
-    </div>
-  </div>
+    <a-form-item>
+      <a-button
+        type="primary"
+        html-type="submit"
+        class="auth-form__submit"
+        size="large"
+      >
+        Зарегистрироваться
+      </a-button>
+    </a-form-item>
+  </a-form>
 </template>
-
-<style lang="scss">
-@use "../../styles/media" as *;
-@use "@/styles/auth" as *;
-
-.register {
-  @include authShell;
-
-  &__container {
-    max-width: 420px;
-    width: 100%;
-    margin: 0 auto;
-  }
-
-  &__header {
-    text-align: center;
-    margin-bottom: 2.5rem;
-  }
-
-  &__title {
-    @include authTitle("register");
-  }
-
-  @include authAntForm("register");
-
-  &__submit {
-    margin-bottom: 0 !important;
-
-    :deep(.ant-btn-primary) {
-      height: 52px;
-      border-radius: 12px;
-      border: none;
-      background: linear-gradient(
-        135deg,
-        var(--fv-color-brand),
-        color-mix(in srgb, var(--fv-color-brand), #000 15%)
-      );
-      font-weight: 600;
-      font-size: 1rem;
-      box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
-
-      &:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 8px 20px rgba(24, 144, 255, 0.4);
-      }
-
-      &:active {
-        transform: translateY(0);
-      }
-    }
-  }
-
-  &__field-icon {
-    color: var(--fv-color-accent);
-    width: 20px;
-    height: 20px;
-    margin-right: 0.5rem;
-  }
-
-  @include mediaTablet {
-    padding: 3rem 2rem;
-
-    &__container {
-      max-width: 480px;
-    }
-
-  }
-
-  @include mediaDesktopXS {
-    padding: 4rem 3rem;
-
-    &__container {
-      max-width: 500px;
-    }
-  }
-}
-</style>

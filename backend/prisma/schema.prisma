@@ -16,47 +16,48 @@ enum UserRole {
 }
 
 model User {
-  id        String      @id @default(uuid())
-  email     String      @unique
+  id        String   @id @default(uuid())
+  email     String   @unique
   password  String
   fullName  String
-  role      UserRole   @default(USER) @map("role")
+  role      UserRole @default(USER) @map("role")
   tags      Genre?
-  createdAt DateTime    @default(now()) @map("created_at")
-  updatedAt DateTime    @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  userMovies           UserMovie[]  @relation("user_movies")
-  lists                UserList[]   @relation("user_lists")
-  reviews              Review[]     @relation("user_reviews")
-  friendshipsRequested Friendship[] @relation("friendship_requester")
-  friendshipsReceived  Friendship[] @relation("friendship_addressee")
+  userMovies           UserMovie[]    @relation("user_movies")
+  lists                UserList[]     @relation("user_lists")
+  reviews              Review[]       @relation("user_reviews")
+  friendshipsRequested Friendship[]   @relation("friendship_requester")
+  friendshipsReceived  Friendship[]   @relation("friendship_addressee")
   sentMessages         Message[]      @relation("sent_messages")
   receivedMessages     Message[]      @relation("received_messages")
   status               UserStatus?    @relation("user_status")
   notifications        Notification[] @relation("user_notifications")
+  feedbacks            Feedback[]     @relation("user_feedbacks")
 
   @@map("users")
 }
 
 model Movie {
-  id                    String    @id @default(uuid())
-  title                 String
-  titleNormalized       String    @default("") @map("title_normalized")
-  description           String
-  countryCodes          String[]  @default(["US"]) @map("country_codes")
-  genres                Genre[]
-  publishDate           DateTime? @map("publish_date")
-  isSerial              Boolean   @default(false) @map("is_serial")
-  seasonCount           Int?      @map("season_count")
-  episodeCount          Int?      @map("episode_count")
-  posterId              String?   @unique @map("poster_id")
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
+  id              String    @id @default(uuid())
+  title           String
+  titleNormalized String    @default("") @map("title_normalized")
+  description     String
+  countryCodes    String[]  @default(["US"]) @map("country_codes")
+  genres          Genre[]
+  publishDate     DateTime? @map("publish_date")
+  isSerial        Boolean   @default(false) @map("is_serial")
+  seasonCount     Int?      @map("season_count")
+  episodeCount    Int?      @map("episode_count")
+  posterId        String?   @unique @map("poster_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  poster     MoviePoster? @relation("movie_poster", fields: [posterId], references: [id])
-  reviews    Review[]     @relation("movie_reviews")
-  actors     Actor[]      @relation("movie_actors")
-  userMovies UserMovie[]  @relation("movie_users")
+  poster     MoviePoster?   @relation("movie_poster", fields: [posterId], references: [id])
+  reviews    Review[]       @relation("movie_reviews")
+  actors     Actor[]        @relation("movie_actors")
+  userMovies UserMovie[]    @relation("movie_users")
   listItems  UserListItem[] @relation("movie_list_items")
 
   @@index([publishDate, title])
@@ -131,15 +132,15 @@ model UserMovie {
 }
 
 model UserList {
-  id             String         @id @default(uuid())
-  userId         String         @map("user_id")
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
   name           String
-  nameNormalized String         @map("name_normalized")
+  nameNormalized String   @map("name_normalized")
   description    String?
-  color          String?        @default("#FF0032")
-  labels         String[]       @default([])
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @updatedAt @map("updated_at")
+  color          String?  @default("#FF0032")
+  labels         String[] @default([])
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   user  User           @relation("user_lists", fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   items UserListItem[] @relation("list_items")
@@ -189,7 +190,7 @@ enum Genre {
   WAR
   WESTERN
   DOCUMENTARY
-  Sci_fi @map("Sci-fi")
+  Sci_fi      @map("Sci-fi")
 
   @@map("enum_genre")
 }
@@ -280,4 +281,46 @@ model Notification {
 
   @@index([userId, createdAt(sort: Desc)])
   @@map("notifications")
+}
+
+/// Обращения из формы «Обратная связь» (/feedback).
+/// Читается администратором через GET /feedback.
+model Feedback {
+  id        String         @id @default(uuid())
+  /// null — если автора удалили: обращение остаётся
+  userId    String?        @map("user_id")
+  type      FeedbackType
+  message   String
+  /// Необязательная почта для ответа (может отличаться от почты аккаунта)
+  email     String?
+  /// Автоконтекст: откуда писал и в каком окружении
+  pageUrl   String?        @map("page_url")
+  userAgent String?        @map("user_agent")
+  viewport  String?
+  status    FeedbackStatus @default(NEW)
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  user User? @relation("user_feedbacks", fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  /// Выборка в админке: свежие в рамках статуса
+  @@index([status, createdAt])
+  @@index([userId])
+  @@map("feedback")
+}
+
+enum FeedbackType {
+  IDEA
+  BUG
+  OTHER
+
+  @@map("enum_feedback_type")
+}
+
+enum FeedbackStatus {
+  NEW
+  IN_PROGRESS
+  DONE
+
+  @@map("enum_feedback_status")
 }

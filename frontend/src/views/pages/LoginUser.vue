@@ -1,119 +1,179 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import RegisterForm from "@/components/Login/RegisterForm.vue";
 import SigninForm from "@/components/Login/SigninForm.vue";
 
-const showRegisterTemplate = ref(false);
-const regText = "Зарегистрироваться?";
-const signInText = "Войти?";
+/**
+ * Экран входа/регистрации (эталон): логотип, карточка 400px и сегмент-переключатель
+ * «Вход | Регистрация» внутри карточки — вместо кнопки-переключателя над формой.
+ */
 
-const changeView = (): void => {
-  showRegisterTemplate.value = !showRegisterTemplate.value;
-};
+type AuthMode = "login" | "register";
+
+const mode = ref<AuthMode>("login");
 </script>
 
 <template>
   <div class="auth-page">
-    <div class="auth-page__toggle">
-      <a-button
-        class="auth-page__toggle-btn"
-        size="large"
-        :type="showRegisterTemplate ? 'default' : 'primary'"
-        @click="changeView"
-      >
-        {{ showRegisterTemplate ? signInText : regText }}
-      </a-button>
-    </div>
+    <div class="auth-page__inner">
+      <div class="auth-page__brand">
+        <span class="auth-page__brand-mark">
+          <BaseIcon name="ph:film-slate-fill" :width="22" :height="22" />
+        </span>
+        <span class="auth-page__brand-text">favorite</span>
+      </div>
 
-    <div class="auth-page__form-wrapper">
-      <RegisterForm v-if="showRegisterTemplate" />
-      <SigninForm v-else />
+      <div class="auth-page__card">
+        <div class="auth-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            class="auth-tabs__btn"
+            :class="{ 'auth-tabs__btn--on': mode === 'login' }"
+            :aria-selected="mode === 'login'"
+            @click="mode = 'login'"
+          >
+            Вход
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="auth-tabs__btn"
+            :class="{ 'auth-tabs__btn--on': mode === 'register' }"
+            :aria-selected="mode === 'register'"
+            @click="mode = 'register'"
+          >
+            Регистрация
+          </button>
+        </div>
+
+        <RegisterForm v-if="mode === 'register'" />
+        <SigninForm v-else />
+      </div>
     </div>
   </div>
 </template>
 
 <style lang="scss">
-@use "../../styles/media" as *;
-@use "@/styles/layout" as *;
-
 .auth-page {
-  @include pageShell(0);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 1rem;
-  gap: 2rem;
+  min-height: 100vh;
+  padding: 24px;
+  background: var(--fv-color-bg-secondary);
+  // #app центрирует текст глобально — внутри выравниваем сами
+  text-align: left;
 
-  &__toggle {
+  &__inner {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  &__brand {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    max-width: 420px;
+    gap: 10px;
+    margin-bottom: 28px;
   }
 
-  &__toggle-btn {
+  &__brand-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--fv-color-brand);
+    color: #fff;
+  }
+
+  &__brand-text {
+    font-family: var(--fv-font-display);
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    color: var(--fv-color-text-primary);
+  }
+
+  &__card {
+    padding: 30px;
+    border-radius: var(--fv-radius-lg);
+    background: var(--fv-color-bg-primary);
+    box-shadow: var(--fv-shadow-low);
+
+    @media (max-width: 480px) {
+      padding: 22px;
+    }
+  }
+}
+
+/* Сегмент «Вход | Регистрация» (эталон .authtab) */
+.auth-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 26px;
+  border-radius: 12px;
+  background: var(--fv-color-bg-secondary);
+
+  &__btn {
+    flex: 1;
+    height: 42px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--fv-color-text-secondary);
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+
+    &--on {
+      background: var(--fv-color-bg-primary);
+      box-shadow: var(--fv-shadow-low);
+      color: var(--fv-color-text-primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--fv-color-accent);
+      outline-offset: -2px;
+    }
+  }
+}
+
+/* Поля и кнопка обеих форм (эталон .fld 52px / .btnp) */
+.auth-form {
+  .ant-form-item {
+    margin-bottom: 14px;
+  }
+
+  .ant-input-affix-wrapper {
+    height: 52px;
+    padding: 0 14px;
+  }
+
+  .ant-input-prefix {
+    margin-inline-end: 10px;
+    color: var(--fv-color-text-tertiary);
+  }
+
+  &__submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     width: 100%;
     height: 52px;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 1rem;
-
-    :deep(.ant-btn-primary) {
-      background: linear-gradient(
-        135deg,
-        var(--fv-color-brand),
-        color-mix(in srgb, var(--fv-color-brand), #000 15%)
-      );
-      border: none;
-      box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
-
-      &:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 8px 20px rgba(24, 144, 255, 0.4);
-      }
-    }
-
-    :deep(.ant-btn-default:hover) {
-      border-color: var(--fv-color-accent);
-    }
-  }
-
-  &__form-wrapper {
-    width: 100%;
-    max-width: 420px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  @include mediaMobileXL {
-    padding: 1rem 0.75rem;
-    gap: 1.5rem;
-
-    &__toggle-btn {
-      height: 48px;
-      font-size: 0.95rem;
-    }
-  }
-
-  @include mediaTablet {
-    padding: 2rem 1.5rem;
-    gap: 2.5rem;
-
-    &__form-wrapper {
-      max-width: 480px;
-    }
-  }
-
-  @include mediaDesktopXS {
-    padding: 3rem 2rem;
-    gap: 3rem;
-
-    &__form-wrapper {
-      max-width: 500px;
-    }
+    margin-top: 8px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
   }
 }
 </style>

@@ -16,11 +16,21 @@ const store = useMainStore();
 const chatStore = useChatStore();
 const notificationsStore = useNotificationsStore();
 
+const route = useRoute();
+
 const isAuthLoaded = computed(() => store.user.isAuthLoaded);
-const showNavMenu = computed(() => isAuthLoaded.value && store.isLoggedIn);
+
+// Гостевые экраны (вход/регистрация) — без шапки и таб-бара, даже если
+// состояние авторизации ещё «догоняет»
+const isGuestRoute = computed(() =>
+  route.matched.some((record) => record.meta.guest),
+);
+
+const showNavMenu = computed(
+  () => isAuthLoaded.value && store.isLoggedIn && !isGuestRoute.value,
+);
 
 // Экраны со своей нижней панелью действий (детальная) прячут таб-бар
-const route = useRoute();
 const hideMobileTabBar = computed(() =>
   route.matched.some((record) => record.meta.hideMobileTabBar),
 );
@@ -80,16 +90,11 @@ watch(
   { immediate: true },
 );
 
-onMounted(async () => {
+onMounted(() => {
   useTheme();
   useHotThemeKeys();
-
-  if (!isAuthLoaded.value) {
-    try {
-      await store.fetchUser();
-      // eslint-disable-next-line
-    } catch {}
-  }
+  // Сессию проверяет router-guard до первого рендера — второй вызов
+  // fetchUser здесь создавал гонку и «моргание» состояния авторизации
 });
 </script>
 
@@ -146,8 +151,10 @@ body {
     padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Экран со своей нижней панелью (детальная) — таб-бара нет, отступ не нужен */
-  #app:has(.detail-actionbar) {
+  /* Экраны со своей нижней панелью (детальная, обратная связь):
+     таб-бар скрыт, значит место под него не нужно */
+  #app:has(.detail-actionbar),
+  #app:has(.feedback-actionbar) {
     padding-bottom: 0;
   }
 }

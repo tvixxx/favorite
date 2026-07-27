@@ -23,10 +23,19 @@ const api = axios.create({
 
 function forceLogoutAndRedirectToLogin(): void {
   window.dispatchEvent(new CustomEvent("auth:logout"));
+
+  // Первая навигация ещё не завершилась (сюда попадаем из router-guard, который
+  // проверяет сессию): push отсюда прервал бы её и оставил пустой каркас —
+  // без шапки и с пустым контентом. Редиректом в этом случае занимается guard.
+  if (!router.currentRoute.value.matched.length) {
+    return;
+  }
+
   const currentRoute = router.currentRoute.value.path;
 
   if (currentRoute !== LOGIN_ROUTE) {
-    router.push(LOGIN_ROUTE);
+    // replace, чтобы «назад» не возвращал на страницу с истёкшей сессией
+    router.replace(LOGIN_ROUTE);
   }
 }
 
