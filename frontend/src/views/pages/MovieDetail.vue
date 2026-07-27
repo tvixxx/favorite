@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useMediaQuery } from "@vueuse/core";
 import { useRoute, useRouter } from "vue-router";
 import type { RouteLocationRaw } from "vue-router";
 import { message } from "ant-design-vue";
@@ -12,13 +13,13 @@ import { DEFAULT_LIST_COLOR, LIST_COLOR_SWATCHES } from "@/constants/listColors"
 import { GenreLabels } from "@/components/Genres/constants/genres.constants";
 import { countriesLabelsRu } from "@/constants/countries/production-countries";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
+import { MOVIES_ENDPOINTS } from "@/constants";
+import { isSuccessStatus } from "@/utils";
 import { FETCH_METHOD, useFetch } from "@/composable";
 
-import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import MovieShareButton from "@/components/MovieShareButton/MovieShareButton.vue";
-import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import DetailSkeleton from "@/components/Skeleton/DetailSkeleton.vue";
@@ -26,6 +27,9 @@ import RowsSkeleton from "@/components/Skeleton/RowsSkeleton.vue";
 import { useMinLoading } from "@/components/Skeleton/useMinLoading";
 import { WatchStatus, type UserMovie } from "@/stores";
 import ReviewsWidget from "@/components/Reviews/ReviewsWidget.vue";
+import { useReviews } from "@/composable/useReviews";
+import WatchStatusSelect from "@/components/WatchStatusSelect/WatchStatusSelect.vue";
+import RateMovieModal from "@/components/RateMovieModal/RateMovieModal.vue";
 import type { UserListDetail, UserListSummary } from "@/stores/userLists/types";
 
 const mainStore = useMainStore();
@@ -49,7 +53,115 @@ const detailBackFallback = computed((): RouteLocationRaw => {
   return { path: "/library/collection" };
 });
 
-const currentMovieId = router.currentRoute.value.params.id as string | null;
+// Хлебные крошки (эталон): родительский раздел — откуда пришли
+const crumbParentLabel = computed(() =>
+  route.query.libActor ? "Актёры" : "Моя коллекция",
+);
+
+const goToCrumbParent = (): void => {
+  router.push(detailBackFallback.value);
+};
+
+const goToActor = (actorId: string): void => {
+  router.push({ name: "library-actor", params: { actorId } });
+};
+
+// «Лора Хэддок» → «ЛХ» (на мобиле актёры показываются чипами с инициалами)
+const actorInitials = (name: string): string =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+
+// Мобильная детальная разбита на три экрана с липкими табами (эталон):
+// правки прогресса/отзыва не требуют скролла через всю страницу
+const isMobile = useMediaQuery("(max-width: 767.98px)");
+
+type DetailTab = "overview" | "progress" | "reviews";
+
+const activeTab = ref<DetailTab>("overview");
+
+// Счётчик на табе «Отзывы» — из общего состояния виджета отзывов
+const { totalReviews: reviewsTotal } = useReviews();
+
+// У фильмов нет блока прогресса — таб не показываем
+const detailTabs = computed<Array<{ key: DetailTab; label: string; count: number }>>(
+  () => {
+    const tabs: Array<{ key: DetailTab; label: string; count: number }> = [
+      { key: "overview", label: "Обзор", count: 0 },
+    ];
+
+    if (hasSerialProgress.value) {
+      tabs.push({ key: "progress", label: "Прогресс", count: 0 });
+    }
+
+    tabs.push({ key: "reviews", label: "Отзывы", count: reviewsTotal.value });
+
+    return tabs;
+  },
+);
+
+// Если активный таб недоступен (фильм без прогресса) — падаем на «Обзор»
+const effectiveTab = computed<DetailTab>(() =>
+  detailTabs.value.some((tab) => tab.key === activeTab.value)
+    ? activeTab.value
+    : "overview",
+);
+
+const showTab = (tab: DetailTab): boolean =>
+  !isMobile.value || effectiveTab.value === tab;
+
+// «Похожее из вашей коллекции» — непросмотренные тайтлы того же жанра.
+// Блок не рендерим, если совпадений нет (пустое состояние тут не нужно)
+interface SimilarMovie {
+  movieId: string;
+  title: string;
+  isSerial: boolean;
+  publishDate: string | null;
+  posterUrl: string | null;
+}
+
+const similarMovies = ref<SimilarMovie[]>([]);
+
+const loadSimilar = async (movieId: string): Promise<void> => {
+  try {
+    const { data, status } = await useFetch<SimilarMovie[]>(
+      `${MOVIES_ENDPOINTS}/${movieId}/similar?limit=4`,
+      { method: FETCH_METHOD.get },
+    );
+
+    similarMovies.value = isSuccessStatus(status) ? (data ?? []) : [];
+  } catch {
+    // Блок необязательный — молча оставляем пустым
+    similarMovies.value = [];
+  }
+};
+
+const openSimilar = (movieId: string): void => {
+  router.push({ name: "detail", params: { id: movieId } });
+};
+
+const isRateModalVisible = ref(false);
+
+// Модалка сохранила оценку — обновляем панель без перезагрузки
+const onRateSaved = (rate: number): void => {
+  if (currentUserMovie.value) {
+    currentUserMovie.value = {
+      ...currentUserMovie.value,
+      personalRate: rate,
+    };
+  }
+};
+
+// Реактивный id: с блоком «Похожее» можно уйти на другой фильм, оставаясь
+// в том же компоненте — иначе контент не перезагружался бы
+const currentMovieId = computed<string | null>(() => {
+  const raw = route.params.id;
+
+  return typeof raw === "string" && raw ? raw : null;
+});
 const userId = computed(() => mainStore.userData?.id || "");
 
 const isLoading = ref(false);
@@ -63,38 +175,51 @@ const newListColor = ref<string>(DEFAULT_LIST_COLOR);
 const isListActionLoading = ref(false);
 const listIdsWithCurrentMovie = ref<Set<string>>(new Set());
 
-onMounted(async () => {
-  if (mainStore.isLoggedIn && userId.value && currentMovieId) {
-    isLoading.value = true;
-    isError.value = null;
+const loadDetail = async (): Promise<void> => {
+  const movieId = currentMovieId.value;
 
-    try {
-      const userMovie = userMoviesStore.userMovies.find(
-        (um) => um.movieId === currentMovieId
-      );
+  if (!mainStore.isLoggedIn || !userId.value || !movieId) {
+    return;
+  }
 
-      if (userMovie) {
-        currentUserMovie.value = userMovie;
-      } else {
-        const loaded = await userMoviesStore.fetchUserMovieById(
-          userId.value,
-          currentMovieId
-        );
+  isError.value = null;
 
-        if (loaded) {
-          currentUserMovie.value = loaded;
-        } else {
-          isError.value = "Фильм не найден в вашей коллекции";
-        }
-      }
-    } catch {
+  // Если фильм уже в загруженной коллекции — показываем сразу, без скелетона.
+  // Но в списке нет averageRating, поэтому деталь всё равно догружаем.
+  const cached = userMoviesStore.userMovies.find(
+    (um) => um.movieId === movieId
+  );
+
+  if (cached) {
+    currentUserMovie.value = cached;
+  }
+
+  isLoading.value = !cached;
+
+  try {
+    const loaded = await userMoviesStore.fetchUserMovieById(
+      userId.value,
+      movieId
+    );
+
+    if (loaded) {
+      currentUserMovie.value = loaded;
+    } else if (!cached) {
+      isError.value = "Фильм не найден в вашей коллекции";
+    }
+  } catch {
+    if (!cached) {
       message.error("Не удалось загрузить фильм");
       isError.value = "Не удалось загрузить фильм";
-    } finally {
-      isLoading.value = false;
     }
+  } finally {
+    isLoading.value = false;
   }
-});
+
+  void loadSimilar(movieId);
+};
+
+onMounted(loadDetail);
 
 onBeforeUnmount(() => {
   currentUserMovie.value = null;
@@ -105,36 +230,138 @@ const editSeason = ref<number | undefined>(undefined);
 const editEpisode = ref<number | undefined>(undefined);
 const isProgressSaving = ref(false);
 
-const WATCH_STATUS_OPTIONS: Array<{ value: WatchStatus; label: string }> = [
-  { value: WatchStatus.NOT_STARTED, label: "Не начато" },
-  { value: WatchStatus.WATCHING, label: "Смотрю" },
-  { value: WatchStatus.COMPLETED, label: "Завершено" },
-  { value: WatchStatus.DROPPED, label: "Брошено" },
-];
+// Переход на другой фильм без размонтирования компонента
+watch(currentMovieId, (next, prev) => {
+  if (!next || next === prev) {
+    return;
+  }
 
+  currentUserMovie.value = null;
+  similarMovies.value = [];
+  activeTab.value = "overview";
+  isEditingProgress.value = false;
+  void loadDetail();
+});
+
+// «Просмотрено» — как на остальных экранах (профиль, фильтры, Медиатека)
 const WATCH_STATUS_LABELS: Record<WatchStatus, string> = {
   [WatchStatus.NOT_STARTED]: "Не начато",
   [WatchStatus.WATCHING]: "Смотрю",
-  [WatchStatus.COMPLETED]: "Завершено",
+  [WatchStatus.COMPLETED]: "Просмотрено",
   [WatchStatus.DROPPED]: "Брошено",
 };
-
-type ProgressPreset = {
-  id: "start" | "complete" | "drop";
-  label: string;
-  status: WatchStatus;
-};
-
-const PROGRESS_PRESETS: ProgressPreset[] = [
-  { id: "start", label: "Начал смотреть", status: WatchStatus.WATCHING },
-  { id: "complete", label: "Досмотрел", status: WatchStatus.COMPLETED },
-  { id: "drop", label: "Бросил", status: WatchStatus.DROPPED },
-];
 
 const movie = computed(() => currentUserMovie.value?.movie);
 const posterSrc = computed(() => movie.value?.imageUrl || FALLBACK_IMAGE_URL);
 
-const ratePercent = computed(() => ((currentUserMovie.value?.personalRate ?? 0) / 10) * 100);
+// Плитка «Средняя» в панели: средний балл по отзывам (приходит с бэка)
+const hasAverageRating = computed(
+  () => movie.value?.averageRating !== null && movie.value?.averageRating !== undefined,
+);
+
+// Полоса рейтинга в мобильном hero
+const averageRatingPercent = computed(() => {
+  const avg = movie.value?.averageRating;
+
+  if (avg === null || avg === undefined) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, avg * 10));
+});
+
+const averageRatingLabel = computed(() => {
+  const avg = movie.value?.averageRating;
+
+  if (avg === null || avg === undefined) {
+    return "нет";
+  }
+
+  return avg.toFixed(1).replace(".", ",");
+});
+
+/**
+ * Чипы дат (эталон): «Начал» — при «смотрю» и дальше, «Досмотрел» — только
+ * у просмотренных, «Бросил» — только у брошенных. При «не начато» чипов нет.
+ * Активный чип — синий, пройденный этап — серый.
+ */
+type DateChip = {
+  key: string;
+  icon: string;
+  label: string;
+  active: boolean;
+};
+
+// В чипах дата компактная — «12 мая» (эталон); год добавляем, только если не текущий
+const formatChipDate = (raw: string): string => {
+  const date = new Date(raw);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const sameYear = date.getFullYear() === new Date().getFullYear();
+
+  return date.toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    ...(sameYear ? {} : { year: "numeric" }),
+  });
+};
+
+const dateChips = computed<DateChip[]>(() => {
+  const um = currentUserMovie.value;
+
+  if (!um || um.watchStatus === WatchStatus.NOT_STARTED) {
+    return [];
+  }
+
+  const chips: DateChip[] = [];
+
+  if (um.startedAt) {
+    chips.push({
+      key: "started",
+      icon: "ph:play-circle",
+      label: `Начал ${formatChipDate(um.startedAt)}`,
+      active: um.watchStatus === WatchStatus.WATCHING,
+    });
+  }
+
+  if (um.watchStatus === WatchStatus.COMPLETED && um.completedAt) {
+    chips.push({
+      key: "completed",
+      icon: "ph:flag-checkered",
+      label: `Досмотрел ${formatChipDate(um.completedAt)}`,
+      active: true,
+    });
+  }
+
+  if (um.watchStatus === WatchStatus.DROPPED && um.droppedAt) {
+    chips.push({
+      key: "dropped",
+      icon: "ph:x-circle",
+      label: `Бросил ${formatChipDate(um.droppedAt)}`,
+      active: true,
+    });
+  }
+
+  return chips;
+});
+
+// Подпись в футере панели: «2 сезона, 14 серий»
+const seasonsEpisodesLabel = computed(() => {
+  const parts: string[] = [];
+
+  if (movie.value?.seasonCount) {
+    parts.push(`${movie.value.seasonCount} сезона`);
+  }
+
+  if (movie.value?.episodeCount) {
+    parts.push(`${movie.value.episodeCount} серий`);
+  }
+
+  return parts.join(", ");
+});
 
 const hasActors = computed(
   () => movie.value?.actors && movie.value.actors.length > 0
@@ -233,23 +460,6 @@ const currentWatchStatusLabel = computed(() => {
   return WATCH_STATUS_LABELS[status];
 });
 
-const activeProgressPresetId = computed<ProgressPreset["id"] | null>(() => {
-  if (!currentUserMovie.value) {
-    return null;
-  }
-
-  switch (currentUserMovie.value.watchStatus) {
-    case WatchStatus.WATCHING:
-      return "start";
-    case WatchStatus.COMPLETED:
-      return "complete";
-    case WatchStatus.DROPPED:
-      return "drop";
-    default:
-      return null;
-  }
-});
-
 const startEditProgress = () => {
   editSeason.value = currentUserMovie.value?.currentSeason ?? undefined;
   editEpisode.value = currentUserMovie.value?.currentEpisode ?? undefined;
@@ -288,36 +498,11 @@ const saveProgress = async () => {
   }
 };
 
-const updateWatchStatus = async (nextStatus: WatchStatus) => {
-  if (!currentUserMovie.value) {
-    return;
-  }
-
-  isProgressSaving.value = true;
-
-  try {
-    const updated = await userMoviesStore.updateUserMovie(
-      userId.value,
-      currentUserMovie.value.movieId,
-      {
-        watchStatus: nextStatus,
-      },
-    );
-
-    currentUserMovie.value = updated;
-    message.success("Статус обновлён");
-  } catch {
-    message.error("Не удалось обновить статус просмотра");
-  } finally {
-    isProgressSaving.value = false;
-  }
-};
-
-const onWatchStatusChange = (nextStatus: WatchStatus) => {
-  void updateWatchStatus(nextStatus);
-};
-
-const applyProgressPreset = async (preset: ProgressPreset) => {
+/**
+ * Смена статуса просмотра из селекта в панели фильма (эталон 1c):
+ * выбор статуса сразу пересчитывает прогресс сезонов/серий.
+ */
+const changeWatchStatus = async (nextStatus: WatchStatus) => {
   if (!currentUserMovie.value) {
     return;
   }
@@ -328,10 +513,10 @@ const applyProgressPreset = async (preset: ProgressPreset) => {
     currentEpisode?: number;
     lastWatchedAt?: string;
   } = {
-    watchStatus: preset.status,
+    watchStatus: nextStatus,
   };
 
-  if (preset.status === WatchStatus.WATCHING) {
+  if (nextStatus === WatchStatus.WATCHING) {
     const hasSeasonProgress = (currentUserMovie.value.currentSeason ?? 0) > 0;
     const hasEpisodeProgress = (currentUserMovie.value.currentEpisode ?? 0) > 0;
 
@@ -344,7 +529,7 @@ const applyProgressPreset = async (preset: ProgressPreset) => {
     }
   }
 
-  if (preset.status === WatchStatus.COMPLETED) {
+  if (nextStatus === WatchStatus.COMPLETED) {
     if (movie.value?.seasonCount) {
       payload.currentSeason = movie.value.seasonCount;
     }
@@ -354,17 +539,11 @@ const applyProgressPreset = async (preset: ProgressPreset) => {
     }
   }
 
-  if (preset.status === WatchStatus.DROPPED) {
+  if (nextStatus === WatchStatus.DROPPED) {
     payload.lastWatchedAt = new Date().toISOString();
   }
 
-  const hasChanges =
-    currentUserMovie.value.watchStatus !== payload.watchStatus ||
-    payload.currentSeason !== undefined ||
-    payload.currentEpisode !== undefined ||
-    payload.lastWatchedAt !== undefined;
-
-  if (!hasChanges) {
+  if (currentUserMovie.value.watchStatus === nextStatus) {
     return;
   }
 
@@ -380,11 +559,17 @@ const applyProgressPreset = async (preset: ProgressPreset) => {
     currentUserMovie.value = updated;
     message.success("Статус обновлён");
   } catch {
-    message.error("Не удалось применить пресет статуса");
+    message.error("Не удалось обновить статус просмотра");
   } finally {
     isProgressSaving.value = false;
   }
 };
+
+// v-model селекта: значение читаем из userMovie, запись — через changeWatchStatus
+const watchStatusModel = computed<WatchStatus>({
+  get: () => currentUserMovie.value?.watchStatus ?? WatchStatus.NOT_STARTED,
+  set: (next) => void changeWatchStatus(next),
+});
 
 const canDecreaseSeason = computed(() => {
   return (currentUserMovie.value?.currentSeason ?? 0) > 0;
@@ -652,15 +837,22 @@ const addMovieToList = async (listId: string) => {
 
 <template>
   <div class="movie-detail">
-    <HeroHeader
-      :title="movie?.title ?? 'Детали фильма'"
-      subtitle="Подробная информация о фильме"
-      badge-text="Фильм"
-      icon-name="ph:film-slate"
-    />
-
     <div class="movie-detail__content">
-      <AppBackButton :fallback="detailBackFallback" />
+      <!-- Хлебные крошки вместо кнопки «Назад» (эталон) -->
+      <nav class="detail-crumbs" aria-label="Навигация">
+        <button type="button" class="detail-crumbs__link" @click="goToCrumbParent">
+          {{ crumbParentLabel }}
+        </button>
+        <BaseIcon
+          class="detail-crumbs__sep"
+          name="ph:caret-right"
+          :width="12"
+          :height="12"
+        />
+        <span class="detail-crumbs__current">
+          {{ movie?.title ?? "Детали" }}
+        </span>
+      </nav>
 
       <StateBlock
         v-if="isError"
@@ -681,178 +873,139 @@ const addMovieToList = async (listId: string) => {
         ]"
       />
 
-      <DetailSkeleton v-else-if="showSkeleton" />
+      <DetailSkeleton v-else-if="showSkeleton" layout="page" />
 
       <template v-else-if="currentUserMovie && movie">
-        <div class="detail-card">
-          <div class="detail-card__poster">
-            <img
-              :src="posterSrc"
-              :alt="`${movie.title} постер`"
-              class="detail-card__poster-img"
-            />
-          </div>
+        <!-- Мобильный hero (эталон): постер на весь экран, поверх — навигация,
+             чипы года/типа и название; ниже рейтинг и быстрые действия -->
+        <template v-if="isMobile">
+          <div class="detail-hero">
+            <img class="detail-hero__bg" :src="posterSrc" :alt="movie.title" />
+            <div class="detail-hero__scrim"></div>
 
-          <div class="detail-card__info">
-            <div class="detail-card__header">
-              <h1 class="detail-card__title">{{ movie.title }}</h1>
-              <button
-                class="detail-card__favorite"
-                :class="{ 'detail-card__favorite_active': currentUserMovie.isFavorite }"
-                @click="toggleFavorite"
-              >
-                <BaseIcon
-                  :name="currentUserMovie.isFavorite ? 'ph:heart-fill' : 'ph:heart'"
-                  :width="24"
-                  :height="24"
-                />
-              </button>
-            </div>
+            <button
+              type="button"
+              class="detail-hero__nav"
+              aria-label="Назад"
+              @click="goToCrumbParent"
+            >
+              <BaseIcon name="ph:arrow-left" :width="19" :height="19" />
+            </button>
 
-            <div class="detail-card__tags">
-              <span
-                v-for="g in movie.genres ?? []"
-                :key="g"
-                class="detail-card__tag"
-              >
-                {{ GenreLabels[g] ?? g }}
-              </span>
-              <span v-if="movie.publishDate" class="detail-card__tag">
-                {{ formatYear(movie.publishDate) }}
-              </span>
-              <span v-if="!movie.isSerial" class="detail-card__tag">
-                Фильм
-              </span>
-              <span
-                v-if="movie.isSerial"
-                class="detail-card__tag detail-card__tag_accent"
-              >
-                Сериал
-              </span>
-              <span
-                v-if="currentUserMovie.seeLater"
-                class="detail-card__tag detail-card__tag_warning"
-              >
-                <BaseIcon name="ph:clock" :width="14" :height="14" />
-                Смотреть позже
-              </span>
-            </div>
+            <button
+              type="button"
+              class="detail-hero__nav detail-hero__nav_right"
+              :class="{ 'detail-hero__nav_on': currentUserMovie.isFavorite }"
+              :aria-label="
+                currentUserMovie.isFavorite
+                  ? 'Убрать из избранного'
+                  : 'Добавить в избранное'
+              "
+              @click="toggleFavorite"
+            >
+              <BaseIcon
+                :name="currentUserMovie.isFavorite ? 'ph:heart-fill' : 'ph:heart'"
+                :width="18"
+                :height="18"
+              />
+            </button>
 
-            <div class="detail-card__rating">
-              <div class="detail-card__rating-score">
-                <span class="detail-card__rating-value">
-                  {{ currentUserMovie.personalRate || 0 }}
-                </span>
-                <span class="detail-card__rating-max">/10</span>
-              </div>
-              <div class="detail-card__rating-bar">
-                <div
-                  class="detail-card__rating-fill"
-                  :style="{ width: `${ratePercent}%` }"
-                />
-              </div>
-            </div>
-
-            <div class="detail-card__meta">
-              <div v-if="currentUserMovie.addedAt" class="detail-card__meta-item">
-                <BaseIcon name="ph:eye" :width="18" :height="18" />
-                <span class="detail-card__meta-label">Дата добавления</span>
-                <span class="detail-card__meta-value">
-                  {{ formatDate(currentUserMovie.addedAt) }}
-                </span>
-              </div>
-
-              <div v-if="movie.publishDate" class="detail-card__meta-item">
-                <BaseIcon name="ph:calendar-blank" :width="18" :height="18" />
-                <span class="detail-card__meta-label">Дата выхода</span>
-                <span class="detail-card__meta-value">
+            <div class="detail-hero__bottom">
+              <div class="detail-hero__chips">
+                <span v-if="movie.publishDate" class="detail-hero__chip">
                   {{ formatYear(movie.publishDate) }}
                 </span>
-              </div>
-
-              <div
-                v-if="movie.countryCodes?.length"
-                class="detail-card__meta-item"
-              >
-                <BaseIcon name="ph:globe" :width="18" :height="18" />
-                <span class="detail-card__meta-label">Страны производства</span>
-                <span class="detail-card__meta-value">
-                  {{ countriesLabelsRu(movie.countryCodes) }}
+                <span class="detail-hero__chip">
+                  {{ movie.isSerial ? "сериал" : "фильм" }}
                 </span>
               </div>
-
-              <div
-                v-if="movie.isSerial && movie.seasonCount"
-                class="detail-card__meta-item"
-              >
-                <BaseIcon name="ph:monitor" :width="18" :height="18" />
-                <span class="detail-card__meta-label">Сезонов</span>
-                <span class="detail-card__meta-value">
-                  {{ movie.seasonCount }}
-                </span>
-              </div>
-
-              <div
-                v-if="movie.isSerial && movie.episodeCount"
-                class="detail-card__meta-item"
-              >
-                <BaseIcon name="ph:playlist" :width="18" :height="18" />
-                <span class="detail-card__meta-label">Эпизодов</span>
-                <span class="detail-card__meta-value">
-                  {{ movie.episodeCount }}
-                </span>
-              </div>
-
-              <div
-                class="detail-card__meta-item detail-card__meta-item_interactive"
-                @click.stop
-              >
-                <BaseIcon name="ph:clock" :width="18" :height="18" />
-                <span class="detail-card__meta-label">Смотреть позже</span>
-                <a-switch
-                  :checked="currentUserMovie.seeLater"
-                  size="small"
-                  class="detail-card__meta-switch"
-                  @change="toggleSeeLater"
-                />
-              </div>
-
-              <div
-                v-if="currentMovieId && movie"
-                class="detail-card__meta-item detail-card__meta-item_interactive detail-card__meta-item_share"
-                @click.stop
-              >
-                <MovieShareButton
-                  :movie-id="currentMovieId"
-                  :movie-title="movie.title"
-                />
-              </div>
-
-              <div
-                v-if="currentMovieId && movie"
-                class="detail-card__meta-item detail-card__meta-item_interactive"
-                @click.stop
-              >
-                <a-button
-                  type="default"
-                  size="small"
-                  class="detail-card__meta-list-btn"
-                  @click="openListsModal"
-                >
-                  <BaseIcon name="ph:list-plus" :width="16" :height="16" />
-                  В список
-                </a-button>
-              </div>
+              <h1 class="detail-hero__title">{{ movie.title }}</h1>
             </div>
           </div>
+
+          <div class="detail-mobile-bar">
+            <div class="detail-mobile-rate">
+              <span class="detail-mobile-rate__num">
+                {{ hasAverageRating ? averageRatingLabel : "—" }}
+              </span>
+              <span class="detail-mobile-rate__max">/10</span>
+              <span class="detail-mobile-rate__track">
+                <span
+                  class="detail-mobile-rate__fill"
+                  :style="{ width: `${averageRatingPercent}%` }"
+                />
+              </span>
+            </div>
+
+            <div class="detail-mobile-status">
+              <span class="detail-mobile-status__label">Статус</span>
+              <WatchStatusSelect
+                v-model="watchStatusModel"
+                :disabled="isProgressSaving"
+              />
+            </div>
+
+            <div class="detail-mobile-actions">
+              <MovieShareButton
+                v-if="currentMovieId"
+                :movie-id="currentMovieId"
+                :movie-title="movie.title"
+              />
+              <button
+                type="button"
+                class="detail-mobile-actions__icon"
+                :class="{
+                  'detail-mobile-actions__icon_on': currentUserMovie.seeLater,
+                }"
+                aria-label="Смотреть позже"
+                :aria-pressed="currentUserMovie.seeLater"
+                @click="toggleSeeLater"
+              >
+                <BaseIcon name="ph:clock" :width="20" :height="20" />
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <div class="detail-grid">
+        <div class="detail-main">
+        <!-- Мобильные табы (эталон): контент детальной разбит на три экрана -->
+        <div v-if="isMobile" class="detail-tabs" role="tablist">
+          <button
+            v-for="tab in detailTabs"
+            :key="tab.key"
+            type="button"
+            role="tab"
+            class="detail-tabs__btn"
+            :class="{ 'detail-tabs__btn--on': activeTab === tab.key }"
+            :aria-selected="activeTab === tab.key"
+            @click="activeTab = tab.key"
+          >
+            {{ tab.label }}
+            <span v-if="tab.count" class="detail-tabs__count">
+              {{ tab.count }}
+            </span>
+          </button>
         </div>
 
-        <div v-if="movie.description" class="detail-section">
+        <div v-show="showTab('overview')" class="detail-tabpanel">
+        <div
+          v-if="movie.description || movie.genres?.length"
+          class="detail-section"
+        >
           <h2 class="detail-section__title">
             <BaseIcon name="ph:text-align-left" :width="22" :height="22" />
             Описание
           </h2>
-          <p class="detail-section__text">{{ movie.description }}</p>
+          <p v-if="movie.description" class="detail-section__text">
+            {{ movie.description }}
+          </p>
+          <!-- Жанры: в панели их нет (эталон — метастрока год·тип·страны) -->
+          <div v-if="movie.genres?.length" class="detail-genres">
+            <span v-for="g in movie.genres" :key="g" class="detail-genres__chip">
+              {{ GenreLabels[g] ?? g }}
+            </span>
+          </div>
         </div>
 
         <div v-if="hasActors" class="detail-section">
@@ -860,20 +1013,112 @@ const addMovieToList = async (listId: string) => {
             <BaseIcon name="ph:users-three" :width="22" :height="22" />
             Актёры
           </h2>
-          <div class="actors-list">
-            <div
+          <!-- Карточки актёров (эталон): аватар + имя + переход к фильмографии -->
+          <div class="actors-grid">
+            <button
               v-for="actor in movie.actors"
               :key="actor.id"
-              class="actors-list__item"
+              type="button"
+              class="actor-card"
+              @click="goToActor(actor.id)"
             >
-              <div class="actors-list__avatar">
-                <BaseIcon name="ph:user" :width="20" :height="20" />
-              </div>
-              <span class="actors-list__name">{{ actor.name }}</span>
-            </div>
+              <span class="actor-card__avatar">
+                <BaseIcon
+                  class="actor-card__avatar-icon"
+                  name="ph:user"
+                  :width="21"
+                  :height="21"
+                />
+                <span class="actor-card__initials">
+                  {{ actorInitials(actor.name) }}
+                </span>
+              </span>
+              <span class="actor-card__info">
+                <span class="actor-card__name">{{ actor.name }}</span>
+                <span class="actor-card__role">Актёр</span>
+              </span>
+              <BaseIcon
+                class="actor-card__caret"
+                name="ph:caret-right"
+                :width="15"
+                :height="15"
+              />
+            </button>
           </div>
         </div>
 
+        <div v-if="isMobile" class="detail-section detail-info">
+          <div v-if="movie.countryCodes?.length" class="detail-info__row">
+            <span class="detail-info__label">
+              <BaseIcon name="ph:globe" :width="18" :height="18" />
+              Страны
+            </span>
+            <b class="detail-info__value">
+              {{ countriesLabelsRu(movie.countryCodes) }}
+            </b>
+          </div>
+
+          <div v-if="movie.isSerial && movie.seasonCount" class="detail-info__row">
+            <span class="detail-info__label">
+              <BaseIcon name="ph:monitor" :width="18" :height="18" />
+              Сезонов
+            </span>
+            <b class="detail-info__value">{{ movie.seasonCount }}</b>
+          </div>
+
+          <div v-if="movie.isSerial && movie.episodeCount" class="detail-info__row">
+            <span class="detail-info__label">
+              <BaseIcon name="ph:playlist" :width="18" :height="18" />
+              Эпизодов
+            </span>
+            <b class="detail-info__value">{{ movie.episodeCount }}</b>
+          </div>
+
+          <div v-if="currentUserMovie.addedAt" class="detail-info__row">
+            <span class="detail-info__label">
+              <BaseIcon name="ph:eye" :width="18" :height="18" />
+              Добавлено
+            </span>
+            <b class="detail-info__value">
+              {{ formatDate(currentUserMovie.addedAt) }}
+            </b>
+          </div>
+        </div>
+        <div v-if="similarMovies.length" class="detail-section">
+          <h2 class="detail-section__title">
+            <BaseIcon name="ph:squares-four" :width="22" :height="22" />
+            Похожее из вашей коллекции
+          </h2>
+          <div class="similar-grid">
+            <button
+              v-for="item in similarMovies"
+              :key="item.movieId"
+              type="button"
+              class="similar-card"
+              @click="openSimilar(item.movieId)"
+            >
+              <span class="similar-card__poster">
+                <img
+                  v-if="item.posterUrl"
+                  :src="item.posterUrl"
+                  :alt="item.title"
+                  loading="lazy"
+                />
+              </span>
+              <span class="similar-card__title">{{ item.title }}</span>
+              <span class="similar-card__meta">
+                <template v-if="item.publishDate">
+                  {{ formatYear(item.publishDate) }} ·
+                </template>
+                {{ item.isSerial ? "сериал" : "фильм" }}
+              </span>
+            </button>
+          </div>
+        </div>
+        </div>
+        <!-- /Обзор -->
+
+        <div v-show="showTab('progress')" class="detail-tabpanel">
         <div v-if="hasSerialProgress" class="detail-section">
           <div class="detail-section__header">
             <h2 class="detail-section__title">
@@ -894,41 +1139,33 @@ const addMovieToList = async (listId: string) => {
 
           <div v-if="isSerialCompleted" class="serial-progress__completed">
             <BaseIcon name="ph:check-circle" :width="20" :height="20" />
-            <span>Сериал просмотрен полностью!</span>
+            <span>Сериал просмотрен полностью</span>
           </div>
 
+          <!-- Статус здесь только читается: управление — в панели фильма (эталон) -->
           <div class="serial-progress__status-row">
-            <div class="serial-progress__status-info">
-              <span class="serial-progress__status-label">Статус</span>
-              <span class="serial-progress__status-value">
+            <span class="serial-progress__status-info">
+              Статус:
+              <b class="serial-progress__status-value">
                 {{ currentWatchStatusLabel }}
-              </span>
-            </div>
-            <a-segmented
-              :value="currentUserMovie.watchStatus"
-              :options="WATCH_STATUS_OPTIONS"
-              size="middle"
-              class="serial-progress__status-select"
-              :disabled="isProgressSaving"
-              @change="onWatchStatusChange"
-            />
+              </b>
+            </span>
+            <span class="serial-progress__status-hint">
+              Меняется в панели фильма
+            </span>
           </div>
 
-          <div class="serial-progress__presets">
-            <a-button
-              v-for="preset in PROGRESS_PRESETS"
-              :key="preset.id"
-              size="small"
-              class="serial-progress__preset-btn"
-              :class="{
-                'serial-progress__preset-btn_active':
-                  activeProgressPresetId === preset.id,
-              }"
-              :disabled="isProgressSaving"
-              @click="applyProgressPreset(preset)"
+          <!-- Даты статусов (эталон): состав зависит от текущего статуса -->
+          <div v-if="dateChips.length" class="serial-progress__date-chips">
+            <span
+              v-for="chip in dateChips"
+              :key="chip.key"
+              class="date-chip"
+              :class="{ 'date-chip--active': chip.active }"
             >
-              {{ preset.label }}
-            </a-button>
+              <BaseIcon :name="chip.icon" :width="14" :height="14" />
+              {{ chip.label }}
+            </span>
           </div>
 
           <div v-if="!isEditingProgress" class="serial-progress">
@@ -939,14 +1176,13 @@ const addMovieToList = async (listId: string) => {
                   {{ currentUserMovie.currentSeason ?? 0 }} / {{ movie.seasonCount }}
                 </span>
               </div>
-              <a-progress
-                :percent="seasonProgress"
-                :show-info="false"
-                :class="{
-                  'serial-progress__bar_complete': seasonProgress === 100,
-                }"
-                size="small"
-              />
+              <div class="serial-progress__track">
+                <div
+                  class="serial-progress__fill"
+                  :class="{ 'serial-progress__fill_done': isSerialCompleted }"
+                  :style="{ width: `${seasonProgress}%` }"
+                />
+              </div>
             </div>
 
             <div v-if="movie.episodeCount" class="serial-progress__item">
@@ -956,53 +1192,61 @@ const addMovieToList = async (listId: string) => {
                   {{ currentUserMovie.currentEpisode ?? 0 }} / {{ movie.episodeCount }}
                 </span>
               </div>
-              <a-progress
-                :percent="episodeProgress"
-                :show-info="false"
-                :class="{
-                  'serial-progress__bar_complete': episodeProgress === 100,
-                }"
-                size="small"
-              />
+              <div class="serial-progress__track">
+                <div
+                  class="serial-progress__fill"
+                  :class="{ 'serial-progress__fill_done': isSerialCompleted }"
+                  :style="{ width: `${episodeProgress}%` }"
+                />
+              </div>
             </div>
 
+            <!-- Эталон: серая плашка + белый сегмент с «−1 / +1» -->
             <div class="serial-progress__quick-actions">
               <div v-if="movie.seasonCount" class="serial-progress__quick-group">
                 <span class="serial-progress__quick-label">Сезон</span>
-                <div class="serial-progress__quick-controls">
-                  <a-button
-                    size="small"
+                <div class="serial-progress__seg">
+                  <button
+                    type="button"
+                    class="serial-progress__seg-btn"
                     :disabled="isProgressSaving || !canDecreaseSeason"
+                    aria-label="Уменьшить сезон"
                     @click="decreaseSeason"
                   >
-                    -1
-                  </a-button>
-                  <a-button
-                    size="small"
+                    −1
+                  </button>
+                  <button
+                    type="button"
+                    class="serial-progress__seg-btn"
                     :disabled="isProgressSaving || !canIncreaseSeason"
+                    aria-label="Увеличить сезон"
                     @click="increaseSeason"
                   >
                     +1
-                  </a-button>
+                  </button>
                 </div>
               </div>
               <div v-if="movie.episodeCount" class="serial-progress__quick-group">
                 <span class="serial-progress__quick-label">Эпизод</span>
-                <div class="serial-progress__quick-controls">
-                  <a-button
-                    size="small"
+                <div class="serial-progress__seg">
+                  <button
+                    type="button"
+                    class="serial-progress__seg-btn"
                     :disabled="isProgressSaving || !canDecreaseEpisode"
+                    aria-label="Уменьшить эпизод"
                     @click="decreaseEpisode"
                   >
-                    -1
-                  </a-button>
-                  <a-button
-                    size="small"
+                    −1
+                  </button>
+                  <button
+                    type="button"
+                    class="serial-progress__seg-btn"
                     :disabled="isProgressSaving || !canIncreaseEpisode"
+                    aria-label="Увеличить эпизод"
                     @click="increaseEpisode"
                   >
                     +1
-                  </a-button>
+                  </button>
                 </div>
               </div>
             </div>
@@ -1051,15 +1295,231 @@ const addMovieToList = async (listId: string) => {
           </div>
         </div>
 
+        </div>
+        <!-- /Прогресс -->
+
+        <div v-show="showTab('reviews')" class="detail-tabpanel">
         <div
           v-if="currentMovieId"
           class="movie-detail__review-widget review-widget"
         >
           <ReviewsWidget :movie-id="currentMovieId" />
         </div>
+        </div>
+        <!-- /Отзывы -->
+        </div>
+        <!-- /detail-main -->
+
+        <!-- Липкая панель фильма (эталон 2c) -->
+        <aside class="detail-side">
+          <div class="detail-panel">
+            <div class="detail-panel__head">
+              <div class="detail-panel__poster">
+                <img
+                  :src="posterSrc"
+                  :alt="`${movie.title} постер`"
+                  class="detail-panel__poster-img"
+                />
+              </div>
+
+              <div class="detail-panel__info">
+                <h1 class="detail-panel__title">{{ movie.title }}</h1>
+                <!-- Метастрока вместо чипов: это факты, а не фильтры -->
+                <div class="detail-panel__meta">
+                  <span v-if="movie.publishDate" class="detail-panel__meta-item">
+                    <BaseIcon name="ph:calendar-blank" :width="13" :height="13" />
+                    {{ formatYear(movie.publishDate) }}
+                  </span>
+                  <span
+                    class="detail-panel__meta-item detail-panel__meta-item_kind"
+                  >
+                    <BaseIcon
+                      :name="movie.isSerial ? 'ph:monitor' : 'ph:film-slate'"
+                      :width="13"
+                      :height="13"
+                    />
+                    {{ movie.isSerial ? "сериал" : "фильм" }}
+                  </span>
+                  <span
+                    v-if="movie.countryCodes?.length"
+                    class="detail-panel__meta-item detail-panel__meta-item_country"
+                  >
+                    <BaseIcon name="ph:globe" :width="13" :height="13" />
+                    {{ countriesLabelsRu(movie.countryCodes) }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="detail-panel__rates">
+                <div class="detail-panel__rate">
+                  <span class="detail-panel__rate-label">Моя оценка</span>
+                  <span class="detail-panel__rate-value">
+                    <b
+                      class="detail-panel__rate-num detail-panel__rate-num_mine"
+                      :class="{
+                        'detail-panel__rate-num_empty':
+                          !currentUserMovie.personalRate,
+                      }"
+                    >
+                      {{ currentUserMovie.personalRate || "нет" }}
+                    </b>
+                    <span
+                      v-if="currentUserMovie.personalRate"
+                      class="detail-panel__rate-max"
+                    >
+                      /10
+                    </span>
+                  </span>
+                </div>
+                <div class="detail-panel__rate">
+                  <span class="detail-panel__rate-label">Средняя</span>
+                  <span class="detail-panel__rate-value">
+                    <b
+                      class="detail-panel__rate-num"
+                      :class="{
+                        'detail-panel__rate-num_empty': !hasAverageRating,
+                      }"
+                    >
+                      {{ averageRatingLabel }}
+                    </b>
+                    <span v-if="hasAverageRating" class="detail-panel__rate-max">
+                      /10
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Статус просмотра (эталон 1c): единственная точка управления -->
+            <div class="detail-panel__status">
+              <span class="detail-panel__status-label">Статус</span>
+              <WatchStatusSelect
+                v-model="watchStatusModel"
+                :disabled="isProgressSaving"
+              />
+            </div>
+
+            <a-button
+              type="primary"
+              class="detail-panel__rate-cta"
+              @click="isRateModalVisible = true"
+            >
+              <BaseIcon name="ph:star" :width="18" :height="18" />
+              {{ currentUserMovie.personalRate ? "Изменить оценку" : "Оценить" }}
+            </a-button>
+
+            <!-- Действия: ряд иконок (эталон) -->
+            <div class="detail-panel__actions">
+              <button
+                type="button"
+                class="detail-panel__action"
+                :class="{
+                  'detail-panel__action_fav': currentUserMovie.isFavorite,
+                }"
+                :title="
+                  currentUserMovie.isFavorite
+                    ? 'В избранном'
+                    : 'Добавить в избранное'
+                "
+                :aria-label="
+                  currentUserMovie.isFavorite
+                    ? 'Убрать из избранного'
+                    : 'Добавить в избранное'
+                "
+                @click="toggleFavorite"
+              >
+                <BaseIcon
+                  :name="
+                    currentUserMovie.isFavorite ? 'ph:heart-fill' : 'ph:heart'
+                  "
+                  :width="20"
+                  :height="20"
+                />
+              </button>
+
+              <button
+                type="button"
+                class="detail-panel__action"
+                title="Добавить в список"
+                aria-label="Добавить в список"
+                @click="openListsModal"
+              >
+                <BaseIcon name="ph:list-plus" :width="20" :height="20" />
+              </button>
+
+              <MovieShareButton
+                v-if="currentMovieId"
+                compact
+                :movie-id="currentMovieId"
+                :movie-title="movie.title"
+              />
+
+              <button
+                type="button"
+                class="detail-panel__action"
+                :class="{
+                  'detail-panel__action_on': currentUserMovie.seeLater,
+                }"
+                :title="
+                  currentUserMovie.seeLater
+                    ? 'В списке «Смотреть позже»'
+                    : 'Смотреть позже'
+                "
+                aria-label="Смотреть позже"
+                :aria-pressed="currentUserMovie.seeLater"
+                @click="toggleSeeLater"
+              >
+                <BaseIcon name="ph:clock" :width="20" :height="20" />
+              </button>
+            </div>
+
+            <p class="detail-panel__footnote">
+              <template v-if="currentUserMovie.addedAt">
+                Добавлено {{ formatDate(currentUserMovie.addedAt) }}
+              </template>
+              <template v-if="movie.isSerial && seasonsEpisodesLabel">
+                · {{ seasonsEpisodesLabel }}
+              </template>
+            </p>
+          </div>
+        </aside>
+        </div>
+        <!-- /detail-grid -->
+
+        <!-- Мобилка: липкая панель действий над таб-баром (эталон) -->
+        <div v-if="isMobile" class="detail-actionbar">
+          <a-button
+            type="primary"
+            class="detail-actionbar__primary"
+            @click="isRateModalVisible = true"
+          >
+            <BaseIcon name="ph:star" :width="18" :height="18" />
+            {{ currentUserMovie.personalRate ? "Изменить оценку" : "Оценить" }}
+          </a-button>
+          <button
+            type="button"
+            class="detail-actionbar__icon"
+            aria-label="Добавить в список"
+            @click="openListsModal"
+          >
+            <BaseIcon name="ph:list-plus" :width="20" :height="20" />
+          </button>
+        </div>
       </template>
     </div>
   </div>
+
+  <RateMovieModal
+    v-if="currentMovieId && movie"
+    v-model="isRateModalVisible"
+    :movie-id="currentMovieId"
+    :title="movie.title"
+    :year="movie.publishDate ? formatYear(movie.publishDate) : ''"
+    :kind="movie.isSerial ? 'сериал' : 'фильм'"
+    :poster-url="movie.imageUrl"
+    :personal-rate="currentUserMovie?.personalRate"
+    @saved="onRateSaved"
+  />
 
   <BaseModal v-model="isListsModalVisible" layout="detail">
     <template #title>Добавить в пользовательский список</template>
@@ -1168,251 +1628,838 @@ const addMovieToList = async (listId: string) => {
   @include pageShell(4rem);
 
   &__content {
-    max-width: 1000px;
+    // Эталон: страница 1180px (контент 1fr + панель 348px + gap 22)
+    max-width: 1180px;
     margin: 0 auto;
-    padding: 0 1rem;
-  }
+    padding: 2rem 1rem 0;
+    // #app центрирует текст глобально — на детальной весь контент по левому краю
+    // (StateBlock/скелетоны центрируются своими стилями и не задеты)
+    text-align: left;
 
+    @include mediaTablet {
+      padding: 2.5rem 2rem 0;
+    }
+  }
 }
 
-.detail-card {
+/* ============ Каркас детальной (эталон): контент + липкая панель ============ */
+.detail-crumbs {
   display: flex;
-  flex-direction: column;
-  background: var(--fv-color-bg-primary);
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: var(--fv-shadow-low), 0 20px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--fv-color-border);
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--fv-color-text-secondary);
+  // #app центрирует текст глобально — крошки выравниваем слева
+  text-align: left;
 
-  @include mediaTablet {
-    flex-direction: row;
+  &__link {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    color: var(--fv-color-text-secondary);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--fv-color-text-primary);
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--fv-color-accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+  }
+
+  &__sep {
+    flex-shrink: 0;
+    color: var(--fv-color-text-tertiary);
+  }
+
+  &__current {
+    color: var(--fv-color-text-primary);
+    font-weight: 600;
+    min-width: 0;
+  }
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 348px;
+  gap: 22px;
+  align-items: start;
+
+  // ≤1080px — одна колонка, панель уезжает наверх
+  @media (max-width: 1080px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detail-main {
+  min-width: 0;
+
+  // первая секция без верхнего отступа — панель и контент выровнены по верху
+  > .detail-section:first-child,
+  > .detail-tabpanel:first-child > .detail-section:first-child {
+    margin-top: 0;
+  }
+}
+
+.detail-side {
+  position: sticky;
+  // Топбар проекта 64px + 16px зазор (в эталоне 96px при более высокой шапке)
+  top: 80px;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+  // padding+отрицательный margin, чтобы тень панели не срезалась скроллом
+  padding: 8px;
+  margin: -8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--fv-color-border) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--fv-color-border);
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  @media (max-width: 1080px) {
+    position: static;
+    order: -1;
+    max-height: none;
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* ============ Панель фильма ============ */
+.detail-panel {
+  padding: 22px;
+  border-radius: var(--fv-radius-lg);
+  background: var(--fv-color-bg-primary);
+  box-shadow: var(--fv-shadow-low);
+  text-align: left;
+
+  &__head {
+    display: grid;
+    grid-template-columns: 112px 1fr;
+    grid-template-areas: "poster info" "rates rates";
+    gap: 16px;
+    align-items: start;
+    margin-bottom: 18px;
+
+    // Планшет: плитки оценок встают справа под метастрокой — пустота уходит
+    @media (max-width: 1080px) {
+      grid-template-columns: 150px 1fr;
+      grid-template-areas: "poster info" "poster rates";
+      gap: 10px 22px;
+      align-content: start;
+    }
   }
 
   &__poster {
-    flex-shrink: 0;
-    width: 100%;
-    height: 360px;
-    background: var(--fv-color-bg-secondary);
+    grid-area: poster;
+    aspect-ratio: 2 / 3;
+    border-radius: 14px;
     overflow: hidden;
-
-    @include mediaTablet {
-      width: 300px;
-      height: auto;
-      min-height: 450px;
-    }
-
-    @include mediaDesktopXS {
-      width: 340px;
-    }
+    background: var(--fv-color-bg-secondary);
   }
 
   &__poster-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center top;
     display: block;
   }
 
   &__info {
-    flex: 1;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-
-    @include mediaTablet {
-      padding: 2rem;
-      gap: 1.5rem;
-    }
-  }
-
-  &__header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
+    grid-area: info;
+    min-width: 0;
   }
 
   &__title {
-    font-size: clamp(1.5rem, 4vw, 2.25rem);
-    font-weight: 500;
     margin: 0;
+    // Эталон: mts-h4 (UI-шрифт), 20/24
+    font-family: var(--fv-font-ui);
+    font-size: 20px;
+    font-weight: 600;
     line-height: 1.2;
     color: var(--fv-color-text-primary);
   }
 
-  &__favorite {
-    flex-shrink: 0;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 2px solid var(--fv-color-border);
-    background: var(--fv-color-bg-secondary);
-    color: var(--fv-color-text-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.25s ease;
-
-    &:hover {
-      border-color: var(--fv-color-brand);
-      color: var(--fv-color-brand);
-      transform: scale(1.1);
-    }
-
-    &_active {
-      border-color: var(--fv-color-brand);
-      background: color-mix(
-        in srgb,
-        var(--fv-color-brand) 10%,
-        var(--fv-color-bg-primary)
-      );
-      color: var(--fv-color-brand);
-    }
-  }
-
-  &__tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  &__tag {
-    padding: 4px 14px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    background: var(--fv-color-bg-secondary);
-    color: var(--fv-color-text-secondary);
-    border: 1px solid var(--fv-color-border);
-
-    &_accent {
-      background: color-mix(
-        in srgb,
-        var(--fv-color-accent) 10%,
-        var(--fv-color-bg-primary)
-      );
-      color: var(--fv-color-accent);
-      border-color: color-mix(
-        in srgb,
-        var(--fv-color-accent) 30%,
-        transparent
-      );
-    }
-  }
-
-  &__rating {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-
-  &__rating-score {
-    display: flex;
-    align-items: baseline;
-    gap: 2px;
-    flex-shrink: 0;
-  }
-
-  &__rating-value {
-    font-size: 2rem;
-    font-weight: 500;
-    color: var(--fv-color-accent);
-    line-height: 1;
-  }
-
-  &__rating-max {
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--fv-color-text-secondary);
-  }
-
-  &__rating-bar {
-    flex: 1;
-    height: 8px;
-    background: var(--fv-color-bg-secondary);
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid var(--fv-color-border);
-  }
-
-  &__rating-fill {
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      var(--fv-color-accent),
-      color-mix(in srgb, var(--fv-color-accent) 60%, var(--fv-color-bg-secondary))
-    );
-    border-radius: 4px;
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
+  // Метастрока: год · тип · страны (факты, не фильтры)
   &__meta {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-top: 1rem;
-    border-top: 1px solid
-      color-mix(in srgb, var(--fv-color-border) 50%, transparent);
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--fv-color-text-secondary);
   }
 
   &__meta-item {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-    font-size: 0.9rem;
-    color: var(--fv-color-text-secondary);
+    gap: 5px;
 
-    svg {
-      flex-shrink: 0;
+    // Разделитель «·» прилипает к своему элементу, а не висит в конце строки
+    // при переносе (панель узкая — «США, Великобритания» часто уезжает вниз)
+    + .detail-panel__meta-item::before {
+      content: "·";
+      margin-inline-end: 3px;
+      color: var(--fv-color-text-tertiary);
+    }
+
+    &_kind {
+      color: var(--fv-color-accent);
+      font-weight: 500;
+    }
+
+    // В узкой панели страны всё равно не влезают в строку с годом и типом —
+    // отдаём им отдельную строку без разделителя (иначе «·» висит перед ними).
+    // Класс удвоен: иначе правило-разделитель выше выигрывает по специфичности.
+    &_country {
+      flex-basis: 100%;
+
+      &.detail-panel__meta-item::before {
+        content: none;
+      }
+
+      // Панель развёрнута наверх — места хватает, возвращаем в общую строку
+      @media (max-width: 1080px) {
+        flex-basis: auto;
+
+        &.detail-panel__meta-item::before {
+          content: "·";
+          margin-inline-end: 3px;
+          color: var(--fv-color-text-tertiary);
+        }
+      }
+    }
+  }
+
+  &__rates {
+    grid-area: rates;
+    display: flex;
+    gap: 12px;
+  }
+
+  &__rate {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: var(--fv-color-bg-secondary);
+  }
+
+  &__rate-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: var(--fv-color-text-secondary);
+  }
+
+  &__rate-value {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  &__rate-num {
+    font-family: var(--fv-font-display);
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--fv-color-text-primary);
+
+    &_mine {
       color: var(--fv-color-accent);
     }
 
-    &_interactive {
-      padding: 6px 0;
-      border-radius: 8px;
-      transition: background 0.2s ease;
+    // Нет оценки: display-шрифт 24/700 превращал «—» в жирную черту
+    &_empty {
+      font-family: var(--fv-font-ui);
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--fv-color-text-tertiary);
     }
   }
 
-  &__meta-switch {
-    margin-left: auto;
+  &__rate-max {
+    font-size: 13px;
+    color: var(--fv-color-text-tertiary);
   }
 
-  &__meta-label {
+  &__status {
+    margin-bottom: 18px;
+  }
+
+  &__status-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--fv-color-text-secondary);
   }
 
-  &__meta-value {
-    font-weight: 600;
+  // Основное действие — оценить (эталон: primary во всю ширину панели)
+  &__rate-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 46px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  // Действия — ряд равных иконок (перенос текста исключён)
+  &__actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  &__action {
+    display: inline-flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: var(--fv-color-bg-secondary);
     color: var(--fv-color-text-primary);
-    margin-left: auto;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+
+    &:hover {
+      background: color-mix(
+        in srgb,
+        var(--fv-color-text-primary) 8%,
+        var(--fv-color-bg-secondary)
+      );
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--fv-color-accent);
+      outline-offset: 2px;
+    }
+
+    // В избранном — красная подложка (эталон)
+    &_fav {
+      background: var(--fv-color-negative-soft);
+      color: var(--fv-color-brand);
+
+      &:hover {
+        background: color-mix(
+          in srgb,
+          var(--fv-color-brand) 18%,
+          transparent
+        );
+      }
+    }
+
+    &_on {
+      background: var(--fv-color-accent-soft);
+      color: var(--fv-color-accent);
+
+      &:hover {
+        background: color-mix(
+          in srgb,
+          var(--fv-color-accent) 20%,
+          transparent
+        );
+      }
+    }
   }
 
-  &__meta-list-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+  // «Поделиться» — общий компонент, приводим к виду соседних иконок
+  &__actions :deep(.movie-share-btn) {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 8px;
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-primary);
+    box-shadow: none;
+
+    &:hover {
+      background: color-mix(
+        in srgb,
+        var(--fv-color-text-primary) 8%,
+        var(--fv-color-bg-secondary)
+      );
+      color: var(--fv-color-text-primary);
+    }
   }
 
-  &__tag_warning {
+  &__footnote {
+    margin: 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--fv-color-border);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--fv-color-text-secondary);
+  }
+}
+
+/* «Похожее»: сетка постеров (эталон) */
+.similar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+.similar-card {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover .similar-card__poster {
+    transform: translateY(-4px);
+    box-shadow: var(--fv-shadow-middle);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--fv-color-accent);
+    outline-offset: 3px;
+    border-radius: 14px;
+  }
+
+  &__poster {
+    display: block;
+    aspect-ratio: 2 / 3;
+    margin-bottom: 9px;
+    border-radius: 14px;
+    background: var(--fv-color-bg-secondary);
+    overflow: hidden;
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+  }
+
+  &__title {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__meta {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--fv-color-text-tertiary);
+  }
+}
+
+/* Инфо-строки (эталон .mrow) — мобильная замена метастроки панели */
+.detail-info {
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--fv-color-border);
+
+    &:first-child {
+      padding-top: 0;
+    }
+
+    &:last-child {
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+  }
+
+  &__label {
     display: inline-flex;
     align-items: center;
+    gap: 8px;
+    color: var(--fv-color-text-secondary);
+
+    svg {
+      color: var(--fv-color-accent);
+    }
+  }
+
+  &__value {
+    color: var(--fv-color-text-primary);
+    text-align: right;
+  }
+}
+
+/* ===== Мобильный hero (эталон): постер на весь экран ===== */
+.detail-hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  height: min(420px, 56vh);
+  padding: 20px;
+  // Растягиваем на всю ширину, компенсируя padding контейнера
+  margin: 0 -1rem;
+  overflow: hidden;
+
+  &__bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  // Затемнение снизу, чтобы название и чипы читались на любом постере
+  &__scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(20, 26, 40, 0.35) 0%,
+      rgba(20, 26, 40, 0.15) 35%,
+      rgba(20, 26, 40, 0.92) 100%
+    );
+  }
+
+  &__nav {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    cursor: pointer;
+
+    &_right {
+      left: auto;
+      right: 16px;
+    }
+
+    &_on {
+      color: var(--fv-color-brand);
+      background: rgba(255, 255, 255, 0.92);
+    }
+  }
+
+  &__bottom {
+    position: relative;
+    z-index: 2;
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  &__title {
+    margin: 0;
+    font-family: var(--fv-font-display);
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.05;
+    color: #fff;
+  }
+}
+
+/* Блок под hero: рейтинг, статус, быстрые действия */
+.detail-mobile-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 0;
+}
+
+.detail-mobile-rate {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  &__num {
+    font-family: var(--fv-font-display);
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--fv-color-accent);
+  }
+
+  &__max {
+    color: var(--fv-color-text-tertiary);
+  }
+
+  &__track {
+    flex: 1;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--fv-color-bg-secondary);
+    overflow: hidden;
+  }
+
+  &__fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--fv-color-accent);
+  }
+}
+
+.detail-mobile-status {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &__label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fv-color-text-secondary);
+  }
+}
+
+.detail-mobile-actions {
+  display: flex;
+  gap: 10px;
+
+  // Канва страницы сама mist — серые кнопки на ней сливались, поэтому белые
+  :deep(.movie-share-btn) {
+    flex: 1;
+    height: 48px;
+    margin: 0;
+    border: 1px solid var(--fv-color-border);
+    border-radius: 8px;
+    background: var(--fv-color-bg-primary);
+    color: var(--fv-color-text-primary);
+    font-size: 15px;
+    font-weight: 500;
+    box-shadow: none;
+  }
+
+  &__icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 48px;
+    border: 1px solid var(--fv-color-border);
+    border-radius: 8px;
+    background: var(--fv-color-bg-primary);
+    color: var(--fv-color-text-primary);
+    cursor: pointer;
+
+    &_on {
+      border-color: transparent;
+      background: var(--fv-color-accent-soft);
+      color: var(--fv-color-accent);
+    }
+  }
+}
+
+/* ===== Мобильная детальная: табы, панель действий, чипы актёров ===== */
+.detail-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  background: var(--fv-color-bg-secondary);
+  // Табы липнут под шапкой, чтобы переключаться не прокручивая наверх
+  position: sticky;
+  top: 64px;
+  z-index: 5;
+
+  &__btn {
+    display: inline-flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
     gap: 4px;
-    background: color-mix(
-      in srgb,
-      var(--fv-color-warning, #faad14) 10%,
-      var(--fv-color-bg-primary)
-    );
-    color: var(--fv-color-warning, #faad14);
-    border-color: color-mix(
-      in srgb,
-      var(--fv-color-warning, #faad14) 30%,
-      transparent
-    );
+    height: 36px;
+    padding: 0 6px;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fv-color-text-secondary);
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+
+    &--on {
+      background: var(--fv-color-bg-primary);
+      box-shadow: var(--fv-shadow-low);
+      color: var(--fv-color-text-primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--fv-color-accent);
+      outline-offset: -2px;
+    }
+  }
+
+  &__count {
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--fv-color-accent-soft);
+    color: var(--fv-color-accent);
+    font-size: 11px;
+    font-weight: 500;
+  }
+}
+
+/* Липкая панель действий: над мобильным таб-баром (64px + safe-area) */
+.detail-actionbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  // Таб-бар на детальной скрыт — панель занимает низ (эталон)
+  padding: 12px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--fv-color-border);
+  background: color-mix(in srgb, var(--fv-color-bg-primary) 94%, transparent);
+  backdrop-filter: blur(10px);
+
+  &__primary {
+    display: inline-flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 48px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  &__icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-primary);
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--fv-color-accent);
+      outline-offset: 2px;
+    }
+  }
+}
+
+/* Инициалы в аватаре актёра — только в мобильных чипах */
+.actor-card__initials {
+  display: none;
+}
+
+/* Чип даты статуса: активный этап — синий, пройденный — нейтральный (эталон) */
+.date-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--fv-color-border);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fv-color-text-secondary);
+  white-space: nowrap;
+
+  &--active {
+    border-color: var(--fv-color-accent);
+    background: var(--fv-color-accent-soft);
+    color: var(--fv-color-accent);
+  }
+}
+
+/* Жанры — чипами в блоке «Описание» (в панели эталона их нет) */
+.detail-genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid var(--fv-color-border);
+    border-radius: 999px;
+    background: var(--fv-color-bg-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
   }
 }
 
@@ -1531,12 +2578,11 @@ const addMovieToList = async (listId: string) => {
 }
 
 .detail-section {
-  margin-top: 1.5rem;
+  margin-top: 22px;
   background: var(--fv-color-bg-primary);
-  border-radius: 20px;
-  padding: 2rem;
+  border-radius: var(--fv-radius-lg);
+  padding: 26px;
   box-shadow: var(--fv-shadow-low);
-  border: 1px solid var(--fv-color-border);
 
   &__header {
     display: flex;
@@ -1580,81 +2626,146 @@ const addMovieToList = async (listId: string) => {
   }
 }
 
-.detail-section + .movie-detail__review-widget {
-  margin-top: 1.5rem;
+.movie-detail__review-widget {
+  // Как между секциями (эталон). Через смежный селектор нельзя: контент
+  // разбит на .detail-tabpanel, и прогресс с отзывами — не соседи
+  margin-top: 22px;
 }
 
-.actors-list {
+.actors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.actor-card {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 9px 12px 9px 9px;
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  background: var(--fv-color-bg-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 
-  &__item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 50px;
-    background: var(--fv-color-bg-secondary);
-    border: 1px solid var(--fv-color-border);
-    transition: all 0.2s ease;
+  &:hover {
+    border-color: var(--fv-color-accent);
+    background: var(--fv-color-accent-soft);
+  }
 
-    &:hover {
-      border-color: var(--fv-color-accent);
-      box-shadow: 0 2px 8px
-        color-mix(in srgb, var(--fv-color-accent) 15%, transparent);
-    }
+  &:focus-visible {
+    outline: 2px solid var(--fv-color-accent);
+    outline-offset: 2px;
   }
 
   &__avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: color-mix(
-      in srgb,
-      var(--fv-color-accent) 15%,
-      var(--fv-color-bg-primary)
-    );
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--fv-color-accent-soft);
     color: var(--fv-color-accent);
   }
 
+  &__info {
+    min-width: 0;
+  }
+
   &__name {
-    font-size: 0.9rem;
+    display: block;
+    font-size: 14px;
     font-weight: 500;
     color: var(--fv-color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__role {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--fv-color-text-tertiary);
+  }
+
+  &__caret {
+    flex-shrink: 0;
+    margin-inline-start: auto;
+    color: var(--fv-color-text-tertiary);
   }
 }
 
 .serial-progress {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  // Между строками прогресса нужен воздух: с эталонными 14px полоса «Сезоны»
+  // визуально прилипала к подписи «Эпизоды»
+  gap: 18px;
 
+  // Эталон: positive-soft подложка, текст и иконка затемнены для контраста
+  // (светло-зелёный на светлом фоне читался плохо). color-mix вместо хардкода
+  // #0F5C26/#0F7A32 — чтобы не потерять читаемость в тёмной теме.
   &__completed {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--fv-color-positive) 10%, var(--fv-color-bg-primary));
-    border: 1px solid color-mix(in srgb, var(--fv-color-positive) 30%, transparent);
-    color: var(--fv-color-positive);
-    font-weight: 600;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: var(--fv-color-positive-soft);
+    color: color-mix(
+      in srgb,
+      var(--fv-color-positive) 45%,
+      var(--fv-color-text-primary)
+    );
+    font-weight: 500;
     font-size: 0.9rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 16px;
+
+    svg {
+      color: color-mix(
+        in srgb,
+        var(--fv-color-positive) 55%,
+        var(--fv-color-text-primary)
+      );
+    }
   }
 
+  // Эталон: без серой карточки — только подпись, бейдж и полоса
   &__item {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 0.85rem;
-    border-radius: 14px;
-    border: 1px solid var(--fv-color-border);
-    background: color-mix(in srgb, var(--fv-color-bg-secondary) 75%, transparent);
+    gap: 6px;
+  }
+
+  // Полоса прогресса: 8px, полностью скруглённая (было 6px от a-progress)
+  &__track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--fv-color-bg-secondary);
+    overflow: hidden;
+  }
+
+  &__fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--fv-color-accent);
+    transition:
+      width 0.4s ease,
+      background 0.2s ease;
+
+    // Зеленеет только у просмотренных (цвет идёт от статуса, не от 100%)
+    &_done {
+      background: var(--fv-color-positive);
+    }
   }
 
   &__status-row {
@@ -1662,89 +2773,32 @@ const addMovieToList = async (listId: string) => {
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.85rem;
+    flex-wrap: wrap;
+    padding: 12px 16px;
     border-radius: 14px;
-    border: 1px solid var(--fv-color-border);
-    background: color-mix(in srgb, var(--fv-color-bg-secondary) 80%, transparent);
-    margin-bottom: 0.75rem;
+    background: var(--fv-color-bg-secondary);
+    margin-bottom: 14px;
   }
 
   &__status-info {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.5rem;
-    padding-left: 0.15rem;
-  }
-
-  &__status-label {
-    font-size: 0.85rem;
-    font-weight: 600;
     color: var(--fv-color-text-secondary);
   }
 
   &__status-value {
-    font-size: 0.95rem;
-    font-weight: 500;
     color: var(--fv-color-text-primary);
+    font-weight: 600;
   }
 
-  &__status-select {
-    min-width: 280px;
-    max-width: 100%;
-
-    :deep(.ant-segmented) {
-      background: color-mix(in srgb, var(--fv-color-bg-primary) 80%, transparent);
-      border: 1px solid var(--fv-color-border);
-      border-radius: 12px;
-      padding: 4px;
-    }
-
-    :deep(.ant-segmented-item) {
-      border-radius: 8px;
-      font-weight: 600;
-      color: var(--fv-color-text-secondary);
-    }
-
-    :deep(.ant-segmented-item-selected) {
-      color: var(--fv-color-text-primary);
-      background: color-mix(
-        in srgb,
-        var(--fv-color-accent) 14%,
-        var(--fv-color-bg-primary)
-      );
-      box-shadow: none;
-    }
+  &__status-hint {
+    font-size: 0.8rem;
+    color: var(--fv-color-text-tertiary);
   }
 
-  &__presets {
+  &__date-chips {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
     flex-wrap: wrap;
-    margin-top: 0.25rem;
-    margin-bottom: 0.85rem;
-    padding-left: 0.1rem;
-  }
-
-  &__preset-btn {
-    border-radius: 999px;
-    border-color: var(--fv-color-border);
-    color: var(--fv-color-text-secondary);
-
-    &_active {
-      color: var(--fv-color-accent);
-      border-color: color-mix(
-        in srgb,
-        var(--fv-color-accent) 40%,
-        transparent
-      );
-      background: color-mix(
-        in srgb,
-        var(--fv-color-accent) 10%,
-        var(--fv-color-bg-primary)
-      );
-    }
+    gap: 8px;
+    margin-bottom: 16px;
   }
 
   &__label {
@@ -1754,58 +2808,88 @@ const addMovieToList = async (listId: string) => {
   }
 
   &__label-text {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--fv-color-text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
   }
 
   &__label-value {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--fv-color-text-primary);
-    background: color-mix(
-      in srgb,
-      var(--fv-color-accent) 10%,
-      var(--fv-color-bg-primary)
-    );
     padding: 2px 10px;
-    border-radius: 12px;
-  }
-
-  &__bar_complete {
-    :deep(.ant-progress-bg) {
-      background-color: var(--fv-color-positive) !important;
-    }
+    border-radius: 999px;
+    background: var(--fv-color-accent-soft);
+    color: var(--fv-color-accent);
+    font-size: 13px;
+    // В шрифте есть 400/500/700 — при 600 браузер подставлял 700 (перетяжелён)
+    font-weight: 500;
   }
 
   &__quick-actions {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-    gap: 0.75rem;
-    flex-wrap: wrap;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    // До плашек с кнопками — чуть больше, чем между строками прогресса
+    margin-top: 2px;
+
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
   }
 
+  // Эталон: серая плашка без рамки, radius 12, padding 10/14
   &__quick-group {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.6rem 0.75rem;
+    gap: 12px;
+    padding: 10px 14px;
     border-radius: 12px;
-    border: 1px solid var(--fv-color-border);
     background: var(--fv-color-bg-secondary);
   }
 
   &__quick-label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--fv-color-text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
   }
 
-  &__quick-controls {
+  // Сегмент «−1 / +1»: белая подложка, кнопки без рамок (эталон .seg)
+  &__seg {
     display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 10px;
+    background: var(--fv-color-bg-primary);
+  }
+
+  &__seg-btn {
+    height: 34px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+
+    &:hover:not(:disabled) {
+      background: var(--fv-color-bg-secondary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--fv-color-accent);
+      outline-offset: -2px;
+    }
+
+    &:disabled {
+      color: var(--fv-color-text-tertiary);
+      cursor: default;
+      opacity: 0.6;
+    }
   }
 
   &_editing {
@@ -1847,12 +2931,88 @@ const addMovieToList = async (listId: string) => {
   @media (max-width: 640px) {
     &__status-row {
       flex-direction: column;
-      align-items: stretch;
-    }
-
-    &__status-select {
-      min-width: 100%;
+      align-items: flex-start;
+      gap: 0.35rem;
     }
   }
 }
+/* Мобильные переопределения — в конце файла, чтобы перебивать базовые правила */
+@media (max-width: 767.98px) {
+  .movie-detail__content {
+    // Hero прижат к краям, поэтому боковой отступ гасим здесь
+    padding-top: 0;
+    // Место под липкую панель действий
+    padding-bottom: 96px;
+  }
+
+  // На мобиле роль панели играет hero + блок под ним
+  .detail-crumbs,
+  .detail-side {
+    display: none;
+  }
+
+  // Актёры превращаются в чипы (эталон)
+  .actors-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .actor-card {
+    width: auto;
+    min-height: 36px;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 13px 4px 5px;
+    border-radius: 999px;
+    border-color: var(--fv-color-border);
+
+    &__avatar {
+      width: 26px;
+      height: 26px;
+      flex: none;
+      background: var(--fv-color-accent-soft);
+      color: var(--fv-color-accent);
+    }
+
+    &__avatar-icon {
+      display: none;
+    }
+
+    &__initials {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    &__info {
+      display: flex;
+      align-items: center;
+    }
+
+    &__name {
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    // В чипе роль и стрелка не нужны
+    &__role,
+    &__caret {
+      display: none;
+    }
+  }
+
+  // Тач-таргеты 44px (эталон)
+  .serial-progress__seg-btn {
+    min-width: 44px;
+    height: 44px;
+  }
+
+  .serial-progress__quick-group {
+    padding: 9px 12px;
+  }
+}
+
 </style>

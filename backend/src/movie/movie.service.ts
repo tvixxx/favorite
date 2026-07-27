@@ -13,6 +13,7 @@ import type {
   Review,
 } from '../generated/prisma/client';
 import { MoviesStatsResponse } from './dto/movies-stats.dto';
+import { WatchStatus } from '../generated/prisma/enums';
 import { normalizeMovieTitle } from '../common/utils';
 
 interface MovieFilters {
@@ -21,6 +22,14 @@ interface MovieFilters {
   publishDateFrom?: string;
   publishDateTo?: string;
   actorIds?: string[];
+}
+
+export interface SimilarMovieDto {
+  movieId: string;
+  title: string;
+  isSerial: boolean;
+  publishDate: string | null;
+  posterUrl: string | null;
 }
 
 export type MovieWithAverageRating = Movie & {
@@ -223,6 +232,122 @@ class MovieService {
     });
   }
 
+  /**
+   * «Похожее из вашей коллекции»: тайтлы пользователя того же жанра, которые он
+   * ещё не просмотрел. Никаких рекомендаций «наугад» — только своя коллекция,
+   * поэтому на маленькой базе выдача остаётся осмысленной.
+   *
+   * `scope` заложен на будущее: `global` (популярное у других, чего нет у меня)
+   * подключается тем же эндпоинтом без правок фронта.
+   */
+  public async findSimilarFromCollection(
+    movieId: string,
+    userId: string,
+    limit = 4,
+  ): Promise<SimilarMovieDto[]> {
+    const source = await this.prismaService.movie.findUnique({
+      where: { id: movieId },
+      select: { genres: true, isSerial: true },
+    });
+
+    if (!source) {
+      return [];
+    }
+
+    const sourceGenresList = source.genres ?? [];
+
+    // Жанры у тайтла могут быть не заполнены (или ни с чем не совпасть) —
+    // тогда подбираем по типу: сериал к сериалу, фильм к фильму
+    const genreWhere = sourceGenresList.length
+      ? { movie: { genres: { hasSome: sourceGenresList } } }
+      : { movie: { isSerial: source.isSerial } };
+
+    // Берём запас и ранжируем по числу совпавших жанров уже в памяти:
+    // Prisma не умеет сортировать по размеру пересечения массивов
+    const candidates = await this.prismaService.userMovie.findMany({
+      where: {
+        userId,
+        movieId: { not: movieId },
+        watchStatus: { not: WatchStatus.COMPLETED },
+        ...genreWhere,
+      },
+      select: {
+        movieId: true,
+        movie: {
+          select: {
+            title: true,
+            genres: true,
+            isSerial: true,
+            publishDate: true,
+            poster: { select: { url: true } },
+          },
+        },
+      },
+      take: 40,
+      orderBy: { addedAt: 'desc' },
+    });
+
+    const sourceGenres = new Set(sourceGenresList);
+
+    const ranked = candidates
+      .map((row) => ({
+        movieId: row.movieId,
+        title: row.movie.title,
+        isSerial: row.movie.isSerial,
+        publishDate: row.movie.publishDate?.toISOString() ?? null,
+        posterUrl: row.movie.poster?.url ?? null,
+        matches: row.movie.genres.filter((genre) => sourceGenres.has(genre))
+          .length,
+      }))
+      .sort((a, b) => b.matches - a.matches)
+      .slice(0, limit)
+      .map(({ matches: _matches, ...item }) => item);
+
+    if (ranked.length || !sourceGenresList.length) {
+      return ranked;
+    }
+
+    // Жанры есть, но пересечений не нашлось — показываем тайтлы того же типа
+    return this.findSimilarByKind(movieId, userId, source.isSerial, limit);
+  }
+
+  private async findSimilarByKind(
+    movieId: string,
+    userId: string,
+    isSerial: boolean,
+    limit: number,
+  ): Promise<SimilarMovieDto[]> {
+    const rows = await this.prismaService.userMovie.findMany({
+      where: {
+        userId,
+        movieId: { not: movieId },
+        watchStatus: { not: WatchStatus.COMPLETED },
+        movie: { isSerial },
+      },
+      select: {
+        movieId: true,
+        movie: {
+          select: {
+            title: true,
+            isSerial: true,
+            publishDate: true,
+            poster: { select: { url: true } },
+          },
+        },
+      },
+      take: limit,
+      orderBy: { addedAt: 'desc' },
+    });
+
+    return rows.map((row) => ({
+      movieId: row.movieId,
+      title: row.movie.title,
+      isSerial: row.movie.isSerial,
+      publishDate: row.movie.publishDate?.toISOString() ?? null,
+      posterUrl: row.movie.poster?.url ?? null,
+    }));
+  }
+
   public async getReviewsByMovieId(
     id: string,
     take: string = '10',
@@ -233,6 +358,15 @@ class MovieService {
       where: {
         movie: {
           id,
+        },
+      },
+      // Автор нужен списку отзывов на детальной («Аня · 2 часа назад»)
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+          },
         },
       },
       take: takeLimit,

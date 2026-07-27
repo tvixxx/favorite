@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import NavigationLinks from "@/components/NavigationLinks/NavigationLinks.vue";
 import MobileTabBar from "@/components/MobileTabBar/MobileTabBar.vue";
 import OnboardingModal from "@/components/Onboarding/OnboardingModal.vue";
@@ -17,6 +18,12 @@ const notificationsStore = useNotificationsStore();
 
 const isAuthLoaded = computed(() => store.user.isAuthLoaded);
 const showNavMenu = computed(() => isAuthLoaded.value && store.isLoggedIn);
+
+// Экраны со своей нижней панелью действий (детальная) прячут таб-бар
+const route = useRoute();
+const hideMobileTabBar = computed(() =>
+  route.matched.some((record) => record.meta.hideMobileTabBar),
+);
 
 const onboardingOpen = ref(false);
 
@@ -89,7 +96,7 @@ onMounted(async () => {
 <template>
   <ConfigProvider :theme="themeConfig">
     <NavigationLinks v-if="showNavMenu" />
-    <MobileTabBar v-if="showNavMenu" />
+    <MobileTabBar v-if="showNavMenu && !hideMobileTabBar" />
 
     <OnboardingModal
       v-if="store.userData?.id"
@@ -137,6 +144,11 @@ body {
 @media (max-width: 768px) {
   #app {
     padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Экран со своей нижней панелью (детальная) — таб-бара нет, отступ не нужен */
+  #app:has(.detail-actionbar) {
+    padding-bottom: 0;
   }
 }
 </style>

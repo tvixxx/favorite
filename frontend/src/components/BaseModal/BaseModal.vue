@@ -466,6 +466,9 @@ const handleConfirm = () => {
   font-size: 0.95rem;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  /* Иконка внутри кнопки не должна липнуть к тексту */
+  gap: 8px;
 }
 
 .modal--sheet .modal__footer .ant-btn {

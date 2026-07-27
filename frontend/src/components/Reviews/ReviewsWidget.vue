@@ -168,10 +168,11 @@ const handleDelete = async (reviewId: string) => {
         </h4>
         <a-button
           v-if="isEditing"
-          type="primary"
-          size="medium"
+          type="text"
+          class="reviews-widget__cancel-edit"
           @click="cancelEdit"
         >
+          <BaseIcon name="ph:x" :width="16" :height="16" />
           Отменить редактирование
         </a-button>
       </div>
@@ -192,16 +193,16 @@ const handleDelete = async (reviewId: string) => {
 <style scoped lang="scss">
 .reviews-widget {
   background: var(--fv-color-bg-primary);
-  border-radius: 20px;
-  padding: 2rem;
+  // Как остальные карточки детальной (эталон .card): r24, padding 26, без рамки
+  border-radius: var(--fv-radius-lg);
+  padding: 26px;
   box-shadow: var(--fv-shadow-low);
-  border: 1px solid var(--fv-color-border);
 
   &__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 1.5rem;
+    margin-bottom: 18px;
   }
 
   &__title {
@@ -240,30 +241,11 @@ const handleDelete = async (reviewId: string) => {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin-bottom: 1.5rem;
-  }
-
-  &__empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    padding: 2.5rem 1rem;
-    margin-bottom: 1.5rem;
-    border-radius: 12px;
-    background: var(--fv-color-bg-secondary);
-    border: 1px dashed var(--fv-color-border);
-    color: var(--fv-color-text-secondary);
-    text-align: center;
-
-    p {
-      margin: 0;
-      font-size: 0.95rem;
-    }
   }
 
   &__form-section {
-    padding-top: 1.5rem;
+    margin-top: 20px;
+    padding-top: 20px;
     border-top: 1px solid
       color-mix(in srgb, var(--fv-color-border) 50%, transparent);
   }
@@ -273,6 +255,21 @@ const handleDelete = async (reviewId: string) => {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 1rem;
+  }
+
+  // Эталон: ghost-кнопка с красным текстом, без заливки
+  &__cancel-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding-inline: 10px;
+    color: var(--fv-color-brand);
+
+    &:hover {
+      color: var(--fv-color-brand) !important;
+      background: var(--fv-color-negative-soft) !important;
+    }
   }
 
   &__form-title {

@@ -50,7 +50,9 @@ export type UserMovieMinAggregateOutputType = {
   currentEpisode: number | null
   addedAt: Date | null
   lastWatchedAt: Date | null
+  startedAt: Date | null
   completedAt: Date | null
+  droppedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -67,7 +69,9 @@ export type UserMovieMaxAggregateOutputType = {
   currentEpisode: number | null
   addedAt: Date | null
   lastWatchedAt: Date | null
+  startedAt: Date | null
   completedAt: Date | null
+  droppedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -84,7 +88,9 @@ export type UserMovieCountAggregateOutputType = {
   currentEpisode: number
   addedAt: number
   lastWatchedAt: number
+  startedAt: number
   completedAt: number
+  droppedAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -115,7 +121,9 @@ export type UserMovieMinAggregateInputType = {
   currentEpisode?: true
   addedAt?: true
   lastWatchedAt?: true
+  startedAt?: true
   completedAt?: true
+  droppedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -132,7 +140,9 @@ export type UserMovieMaxAggregateInputType = {
   currentEpisode?: true
   addedAt?: true
   lastWatchedAt?: true
+  startedAt?: true
   completedAt?: true
+  droppedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -149,7 +159,9 @@ export type UserMovieCountAggregateInputType = {
   currentEpisode?: true
   addedAt?: true
   lastWatchedAt?: true
+  startedAt?: true
   completedAt?: true
+  droppedAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -253,7 +265,9 @@ export type UserMovieGroupByOutputType = {
   currentEpisode: number | null
   addedAt: Date
   lastWatchedAt: Date | null
+  startedAt: Date | null
   completedAt: Date | null
+  droppedAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: UserMovieCountAggregateOutputType | null
@@ -293,7 +307,9 @@ export type UserMovieWhereInput = {
   currentEpisode?: Prisma.IntNullableFilter<"UserMovie"> | number | null
   addedAt?: Prisma.DateTimeFilter<"UserMovie"> | Date | string
   lastWatchedAt?: Prisma.DateTimeNullableFilter<"UserMovie"> | Date | string | null
+  startedAt?: Prisma.DateTimeNullableFilter<"UserMovie"> | Date | string | null
   completedAt?: Prisma.DateTimeNullableFilter<"UserMovie"> | Date | string | null
+  droppedAt?: Prisma.DateTimeNullableFilter<"UserMovie"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"UserMovie"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserMovie"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -312,7 +328,9 @@ export type UserMovieOrderByWithRelationInput = {
   currentEpisode?: Prisma.SortOrderInput | Prisma.SortOrder
   addedAt?: Prisma.SortOrder
   lastWatchedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  startedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  droppedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -335,7 +353,9 @@ export type UserMovieWhereUniqueInput = Prisma.AtLeast<{
   currentEpisode?: Prisma.IntNullableFilter<"UserMovie"> | number | null
   addedAt?: Prisma.DateTimeFilter<"UserMovie"> | Date | string
   lastWatchedAt?: Prisma.DateTimeNullableFilter<"UserMovie"> | Date | string | null
+  startedAt?: Prisma.DateTimeNullableFilter<"UserMovie"> | Date | string | null
   completedAt?: Prisma.DateTimeNullableFilter<"UserMovie"> | Date | string | null
+  droppedAt?: Prisma.DateTimeNullableFilter<"UserMovie"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"UserMovie"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserMovie"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -354,7 +374,9 @@ export type UserMovieOrderByWithAggregationInput = {
   currentEpisode?: Prisma.SortOrderInput | Prisma.SortOrder
   addedAt?: Prisma.SortOrder
   lastWatchedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  startedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  droppedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserMovieCountOrderByAggregateInput
@@ -379,7 +401,9 @@ export type UserMovieScalarWhereWithAggregatesInput = {
   currentEpisode?: Prisma.IntNullableWithAggregatesFilter<"UserMovie"> | number | null
   addedAt?: Prisma.DateTimeWithAggregatesFilter<"UserMovie"> | Date | string
   lastWatchedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"UserMovie"> | Date | string | null
+  startedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"UserMovie"> | Date | string | null
   completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"UserMovie"> | Date | string | null
+  droppedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"UserMovie"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserMovie"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"UserMovie"> | Date | string
 }
@@ -394,7 +418,9 @@ export type UserMovieCreateInput = {
   currentEpisode?: number | null
   addedAt?: Date | string
   lastWatchedAt?: Date | string | null
+  startedAt?: Date | string | null
   completedAt?: Date | string | null
+  droppedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutUserMoviesInput
@@ -413,7 +439,9 @@ export type UserMovieUncheckedCreateInput = {
   currentEpisode?: number | null
   addedAt?: Date | string
   lastWatchedAt?: Date | string | null
+  startedAt?: Date | string | null
   completedAt?: Date | string | null
+  droppedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -428,7 +456,9 @@ export type UserMovieUpdateInput = {
   currentEpisode?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   addedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastWatchedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  droppedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutUserMoviesNestedInput
@@ -447,7 +477,9 @@ export type UserMovieUncheckedUpdateInput = {
   currentEpisode?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   addedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastWatchedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  droppedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -464,7 +496,9 @@ export type UserMovieCreateManyInput = {
   currentEpisode?: number | null
   addedAt?: Date | string
   lastWatchedAt?: Date | string | null
+  startedAt?: Date | string | null
   completedAt?: Date | string | null
+  droppedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -479,7 +513,9 @@ export type UserMovieUpdateManyMutationInput = {
   currentEpisode?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   addedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastWatchedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  droppedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -496,7 +532,9 @@ export type UserMovieUncheckedUpdateManyInput = {
   currentEpisode?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   addedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastWatchedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  droppedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -528,7 +566,9 @@ export type UserMovieCountOrderByAggregateInput = {
   currentEpisode?: Prisma.SortOrder
   addedAt?: Prisma.SortOrder
   lastWatchedAt?: Prisma.SortOrder
+  startedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
+  droppedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -551,7 +591,9 @@ export type UserMovieMaxOrderByAggregateInput = {
   currentEpisode?: Prisma.SortOrder
   addedAt?: Prisma.SortOrder
   lastWatchedAt?: Prisma.SortOrder
+  startedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
+  droppedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -568,7 +610,9 @@ export type UserMovieMinOrderByAggregateInput = {
   currentEpisode?: Prisma.SortOrder
   addedAt?: Prisma.SortOrder
   lastWatchedAt?: Prisma.SortOrder
+  startedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
+  droppedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -677,7 +721,9 @@ export type UserMovieCreateWithoutUserInput = {
   currentEpisode?: number | null
   addedAt?: Date | string
   lastWatchedAt?: Date | string | null
+  startedAt?: Date | string | null
   completedAt?: Date | string | null
+  droppedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   movie: Prisma.MovieCreateNestedOneWithoutUserMoviesInput
@@ -694,7 +740,9 @@ export type UserMovieUncheckedCreateWithoutUserInput = {
   currentEpisode?: number | null
   addedAt?: Date | string
   lastWatchedAt?: Date | string | null
+  startedAt?: Date | string | null
   completedAt?: Date | string | null
+  droppedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -740,7 +788,9 @@ export type UserMovieScalarWhereInput = {
   currentEpisode?: Prisma.IntNullableFilter<"UserMovie"> | number | null
   addedAt?: Prisma.DateTimeFilter<"UserMovie"> | Date | string
   lastWatchedAt?: Prisma.DateTimeNullableFilter<"UserMovie"> | Date | string | null
+  startedAt?: Prisma.DateTimeNullableFilter<"UserMovie"> | Date | string | null
   completedAt?: Prisma.DateTimeNullableFilter<"UserMovie"> | Date | string | null
+  droppedAt?: Prisma.DateTimeNullableFilter<"UserMovie"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"UserMovie"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserMovie"> | Date | string
 }
@@ -755,7 +805,9 @@ export type UserMovieCreateWithoutMovieInput = {
   currentEpisode?: number | null
   addedAt?: Date | string
   lastWatchedAt?: Date | string | null
+  startedAt?: Date | string | null
   completedAt?: Date | string | null
+  droppedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutUserMoviesInput
@@ -772,7 +824,9 @@ export type UserMovieUncheckedCreateWithoutMovieInput = {
   currentEpisode?: number | null
   addedAt?: Date | string
   lastWatchedAt?: Date | string | null
+  startedAt?: Date | string | null
   completedAt?: Date | string | null
+  droppedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -814,7 +868,9 @@ export type UserMovieCreateManyUserInput = {
   currentEpisode?: number | null
   addedAt?: Date | string
   lastWatchedAt?: Date | string | null
+  startedAt?: Date | string | null
   completedAt?: Date | string | null
+  droppedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -829,7 +885,9 @@ export type UserMovieUpdateWithoutUserInput = {
   currentEpisode?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   addedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastWatchedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  droppedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   movie?: Prisma.MovieUpdateOneRequiredWithoutUserMoviesNestedInput
@@ -846,7 +904,9 @@ export type UserMovieUncheckedUpdateWithoutUserInput = {
   currentEpisode?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   addedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastWatchedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  droppedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -862,7 +922,9 @@ export type UserMovieUncheckedUpdateManyWithoutUserInput = {
   currentEpisode?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   addedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastWatchedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  droppedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -878,7 +940,9 @@ export type UserMovieCreateManyMovieInput = {
   currentEpisode?: number | null
   addedAt?: Date | string
   lastWatchedAt?: Date | string | null
+  startedAt?: Date | string | null
   completedAt?: Date | string | null
+  droppedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -893,7 +957,9 @@ export type UserMovieUpdateWithoutMovieInput = {
   currentEpisode?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   addedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastWatchedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  droppedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutUserMoviesNestedInput
@@ -910,7 +976,9 @@ export type UserMovieUncheckedUpdateWithoutMovieInput = {
   currentEpisode?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   addedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastWatchedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  droppedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -926,7 +994,9 @@ export type UserMovieUncheckedUpdateManyWithoutMovieInput = {
   currentEpisode?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   addedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastWatchedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  droppedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -945,7 +1015,9 @@ export type UserMovieSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   currentEpisode?: boolean
   addedAt?: boolean
   lastWatchedAt?: boolean
+  startedAt?: boolean
   completedAt?: boolean
+  droppedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -964,7 +1036,9 @@ export type UserMovieSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   currentEpisode?: boolean
   addedAt?: boolean
   lastWatchedAt?: boolean
+  startedAt?: boolean
   completedAt?: boolean
+  droppedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -983,7 +1057,9 @@ export type UserMovieSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   currentEpisode?: boolean
   addedAt?: boolean
   lastWatchedAt?: boolean
+  startedAt?: boolean
   completedAt?: boolean
+  droppedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1002,12 +1078,14 @@ export type UserMovieSelectScalar = {
   currentEpisode?: boolean
   addedAt?: boolean
   lastWatchedAt?: boolean
+  startedAt?: boolean
   completedAt?: boolean
+  droppedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserMovieOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "movieId" | "isFavorite" | "seeLater" | "personalRate" | "watchStatus" | "currentSeason" | "currentEpisode" | "addedAt" | "lastWatchedAt" | "completedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["userMovie"]>
+export type UserMovieOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "movieId" | "isFavorite" | "seeLater" | "personalRate" | "watchStatus" | "currentSeason" | "currentEpisode" | "addedAt" | "lastWatchedAt" | "startedAt" | "completedAt" | "droppedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["userMovie"]>
 export type UserMovieInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   movie?: boolean | Prisma.MovieDefaultArgs<ExtArgs>
@@ -1039,7 +1117,9 @@ export type $UserMoviePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     currentEpisode: number | null
     addedAt: Date
     lastWatchedAt: Date | null
+    startedAt: Date | null
     completedAt: Date | null
+    droppedAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["userMovie"]>
@@ -1478,7 +1558,9 @@ export interface UserMovieFieldRefs {
   readonly currentEpisode: Prisma.FieldRef<"UserMovie", 'Int'>
   readonly addedAt: Prisma.FieldRef<"UserMovie", 'DateTime'>
   readonly lastWatchedAt: Prisma.FieldRef<"UserMovie", 'DateTime'>
+  readonly startedAt: Prisma.FieldRef<"UserMovie", 'DateTime'>
   readonly completedAt: Prisma.FieldRef<"UserMovie", 'DateTime'>
+  readonly droppedAt: Prisma.FieldRef<"UserMovie", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"UserMovie", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"UserMovie", 'DateTime'>
 }

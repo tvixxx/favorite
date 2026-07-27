@@ -70,7 +70,11 @@ export class UserMovieService {
     dto: UpdateUserMovieDto,
     current?: Pick<
       UserMovie,
-      'watchStatus' | 'currentSeason' | 'currentEpisode' | 'completedAt'
+      | 'watchStatus'
+      | 'currentSeason'
+      | 'currentEpisode'
+      | 'completedAt'
+      | 'startedAt'
     >,
   ): UpdateUserMovieDto {
     const result: UpdateUserMovieDto = { ...dto };
@@ -178,14 +182,60 @@ export class UserMovieService {
       result.lastWatchedAt = now;
     }
 
+    this.applyStatusDates(result, current, now);
+
     return result;
   }
 
+  /**
+   * Даты смены статуса: их показывают чипы «Начал / Досмотрел / Бросил».
+   * `startedAt` выставляется один раз и живёт, пока не сбросят статус в
+   * «не начато»; `droppedAt` актуален только для брошенных.
+   */
+  private applyStatusDates(
+    result: UpdateUserMovieDto,
+    current: { startedAt?: Date | null } | undefined,
+    now: Date,
+  ): void {
+    if (result.watchStatus === undefined) {
+      return;
+    }
+
+    const hasStarted = !!(result.startedAt ?? current?.startedAt);
+
+    if (result.watchStatus === WatchStatus.NOT_STARTED) {
+      result.startedAt = null as unknown as Date;
+      result.droppedAt = null as unknown as Date;
+
+      return;
+    }
+
+    // Смотрю / просмотрено / брошено — просмотр начался
+    if (!hasStarted && result.startedAt === undefined) {
+      result.startedAt = now;
+    }
+
+    if (result.watchStatus === WatchStatus.DROPPED) {
+      if (result.droppedAt === undefined) {
+        result.droppedAt = now;
+      }
+
+      return;
+    }
+
+    result.droppedAt = null as unknown as Date;
+  }
+
+  /**
+   * @param withAverageRating подмешать средний балл по отзывам в movie
+   *   (нужно детальной странице; в мутациях не запрашиваем лишний aggregate)
+   */
   public async findByUserAndMovie(
     userId: string,
     movieId: string,
+    withAverageRating = false,
   ): Promise<UserMovie | null> {
-    return this.prismaService.userMovie.findUnique({
+    const query = this.prismaService.userMovie.findUnique({
       where: {
         userId_movieId: {
           userId,
@@ -201,6 +251,31 @@ export class UserMovieService {
         },
       },
     });
+
+    if (!withAverageRating) {
+      return query;
+    }
+
+    // Запросы независимы — считаем параллельно
+    const [userMovie, avg] = await Promise.all([
+      query,
+      this.prismaService.review.aggregate({
+        where: { movieId },
+        _avg: { rate: true },
+      }),
+    ]);
+
+    if (!userMovie) {
+      return null;
+    }
+
+    return {
+      ...userMovie,
+      movie: {
+        ...(userMovie as UserMovie & { movie: object }).movie,
+        averageRating: avg._avg.rate ?? null,
+      },
+    } as UserMovie;
   }
 
   public async findAllByUser(
@@ -470,6 +545,8 @@ export class UserMovieService {
       currentSeason: userMovie.currentSeason,
       currentEpisode: userMovie.currentEpisode,
       completedAt: userMovie.completedAt,
+      // Нужен, чтобы «Начал» не перезаписывался при каждой смене статуса
+      startedAt: userMovie.startedAt,
     });
 
     return this.prismaService.userMovie.update({
