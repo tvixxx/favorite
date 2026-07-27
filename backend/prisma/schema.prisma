@@ -113,7 +113,9 @@ model UserMovie {
   currentEpisode Int?        @map("current_episode")
   addedAt        DateTime    @default(now()) @map("added_at")
   lastWatchedAt  DateTime?   @map("last_watched_at")
+  startedAt      DateTime?   @map("started_at")
   completedAt    DateTime?   @map("completed_at")
+  droppedAt      DateTime?   @map("dropped_at")
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
 

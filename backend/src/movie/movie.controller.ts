@@ -27,7 +27,12 @@ import {
 } from '@nestjs/swagger';
 import { MoviesStatsResponse } from './dto/movies-stats.dto';
 import { ReviewResponse } from '../review/dto/review.dto';
-import { AuthCatalogWrite } from '../common/decorators';
+import {
+  AuthCatalogWrite,
+  AuthProtected,
+  Authorized,
+} from '../common/decorators';
+import type { User } from '../generated/prisma/client';
 
 @ApiTags('Movies')
 @Controller('movies')
@@ -126,6 +131,27 @@ export class MovieController {
   @Get(':id')
   public findById(@Param('id') id: string) {
     return this.movieService.findById(id);
+  }
+
+  @ApiOperation({
+    summary: 'Похожие тайтлы',
+    description:
+      'scope=collection (по умолчанию) — непросмотренные тайтлы из коллекции пользователя того же жанра',
+  })
+  @ApiOkResponse({ description: 'Список похожих (может быть пустым)' })
+  @AuthProtected()
+  @Get(':id/similar')
+  public findSimilar(
+    @Param('id') id: string,
+    @Authorized() user: User,
+    @Query('limit') limitRaw?: string,
+  ) {
+    const parsed = Number.parseInt(limitRaw ?? '', 10);
+    const limit = Number.isFinite(parsed)
+      ? Math.min(Math.max(parsed, 1), 12)
+      : 4;
+
+    return this.movieService.findSimilarFromCollection(id, user.id, limit);
   }
 
   @ApiOperation({

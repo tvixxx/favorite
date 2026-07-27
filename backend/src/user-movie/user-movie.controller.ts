@@ -204,7 +204,12 @@ export class UserMovieController {
     @Authorized() user: User,
   ) {
     this.ensureSelf(userId, user);
-    const row = await this.userMovieService.findByUserAndMovie(userId, movieId);
+    // true → в movie придёт averageRating (плитка «Средняя» на детальной)
+    const row = await this.userMovieService.findByUserAndMovie(
+      userId,
+      movieId,
+      true,
+    );
 
     if (!row) {
       throw new NotFoundException();

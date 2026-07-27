@@ -1420,7 +1420,9 @@ export const UserMovieScalarFieldEnum = {
   currentEpisode: 'currentEpisode',
   addedAt: 'addedAt',
   lastWatchedAt: 'lastWatchedAt',
+  startedAt: 'startedAt',
   completedAt: 'completedAt',
+  droppedAt: 'droppedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

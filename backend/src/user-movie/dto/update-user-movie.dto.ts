@@ -59,4 +59,16 @@ export class UpdateUserMovieDto {
   @Type(() => Date)
   @IsDate()
   completedAt?: Date;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  startedAt?: Date;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  droppedAt?: Date;
 }

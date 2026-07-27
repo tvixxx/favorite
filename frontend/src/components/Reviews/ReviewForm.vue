@@ -65,11 +65,16 @@ const handleCancel = () => {
     class="review-form"
     @finish="handleSubmit"
   >
-    <a-form-item label="Ваш рейтинг" name="rate" class="review-form__rating">
+    <a-form-item label="Ваша оценка" name="rate" class="review-form__rating">
       <a-rate v-model:value="reviewForm.rate" :count="10" />
     </a-form-item>
 
-    <a-form-item label="Отзыв" name="text">
+    <a-form-item
+      label="Отзыв"
+      name="text"
+      class="review-form__text"
+      :class="{ 'review-form__text_editing': isEditing }"
+    >
       <a-textarea
         v-model:value="reviewForm.text"
         size="large"
@@ -81,9 +86,7 @@ const handleCancel = () => {
     </a-form-item>
 
     <a-form-item class="review-form__actions">
-      <a-button size="large" @click="handleCancel">
-        {{ isEditing ? "Отменить редактирование" : "Отмена" }}
-      </a-button>
+      <a-button size="large" @click="handleCancel">Отмена</a-button>
       <a-button
         type="primary"
         html-type="submit"
@@ -106,6 +109,27 @@ const handleCancel = () => {
   &__rating {
     :deep(.ant-rate) {
       font-size: 24px;
+    }
+
+    // Мобилка (эталон): звёзды растянуты по ширине — удобнее попадать пальцем
+    @media (max-width: 767.98px) {
+      :deep(.ant-rate) {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+      }
+
+      :deep(.ant-rate-star:not(:last-child)) {
+        margin-inline-end: 0;
+      }
+    }
+  }
+
+  // В режиме правки поле подсвечено синей рамкой (эталон)
+  &__text_editing {
+    :deep(.ant-input),
+    :deep(textarea.ant-input) {
+      border-color: var(--fv-color-accent) !important;
     }
   }
 

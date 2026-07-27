@@ -44,7 +44,9 @@ export function mapUserMovieFromApi(raw: UserMovieApiResponse): UserMovie {
     currentEpisode: raw.currentEpisode,
     addedAt: raw.addedAt,
     lastWatchedAt: raw.lastWatchedAt,
+    startedAt: raw.startedAt ?? null,
     completedAt: raw.completedAt,
+    droppedAt: raw.droppedAt ?? null,
     movie: mapMovieFromApi(raw.movie),
   };
 }

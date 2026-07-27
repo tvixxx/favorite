@@ -103,6 +103,8 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("@/views/pages/MovieDetail.vue"),
     meta: {
       requiresAuth: true,
+      // На детальной низ занимает своя панель действий (эталон) — таб-бар прячем
+      hideMobileTabBar: true,
     },
   },
   {

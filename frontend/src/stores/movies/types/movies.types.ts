@@ -74,7 +74,9 @@ export interface UserMovieApiResponse {
   currentEpisode: number | null;
   addedAt: string;
   lastWatchedAt: string | null;
+  startedAt: string | null;
   completedAt: string | null;
+  droppedAt: string | null;
   createdAt: string;
   updatedAt: string;
   movie: MovieApiResponse;
@@ -93,7 +95,9 @@ export interface UserMovie {
   currentEpisode: number | null;
   addedAt: string;
   lastWatchedAt: string | null;
+  startedAt: string | null;
   completedAt: string | null;
+  droppedAt: string | null;
   movie: Movie;
 }
 
@@ -104,6 +108,13 @@ export interface Review {
   userId: string;
   movieId: string;
   createdAt?: string;
+  updatedAt?: string;
+  /** Автор отзыва — бэкенд отдаёт его в include */
+  user?: {
+    id: string;
+    fullName?: string;
+    email?: string;
+  };
 }
 
 export interface MoviesStats {
