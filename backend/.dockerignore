@@ -1,0 +1,18 @@
+# Зависимости ставятся внутри образа заново. Копировать хостовые нельзя:
+# argon2 — нативный модуль, собранный под arm64-darwin, в alpine он не запустится.
+node_modules
+dist
+
+# Секреты и дампы базы в образ не попадают никогда
+.env
+.env.*
+backups
+
+# Не нужно для сборки
+.git
+.gitignore
+Dockerfile
+.dockerignore
+test
+coverage
+*.log

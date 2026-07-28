@@ -122,7 +122,12 @@ export const useChatStore = defineStore("chat", () => {
 
     currentUserId.value = userId;
 
-    const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+    // За одним доменом сокет ходит на тот же origin (VITE_SOCKET_URL=""),
+    // путь /socket.io проксирует nginx. В деве — прямой адрес бэкенда.
+    const backendUrl =
+      import.meta.env.VITE_SOCKET_URL ??
+      import.meta.env.VITE_API_URL ??
+      "http://localhost:3005";
 
     socket.value = io(`${backendUrl}/chat`, {
       auth: { userId },

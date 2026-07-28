@@ -17,6 +17,9 @@ export const APP_ENDPOINTS = {
 export type AppEndpoints = keyof typeof APP_ENDPOINTS | string;
 
 // Updated to use local backend instead of mokky.dev
-export const API_BASE_URL = "http://localhost:3005";
+/** Адрес API. В проде за одним доменом это относительный «/api» (см. deploy/README.md) */
+export const API_BASE_URL =
+  import.meta.env.VITE_API_URL ?? "http://localhost:3005";
 
-export const API_BASE_HOST_URL = "http://localhost:3005";
+export const API_BASE_HOST_URL =
+  import.meta.env.VITE_API_URL ?? "http://localhost:3005";
