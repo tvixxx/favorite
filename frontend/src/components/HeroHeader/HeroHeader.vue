@@ -23,7 +23,7 @@ defineProps<Props>();
         class="hero-header__badge"
         :class="`hero-header__badge--${iconTone}`"
       >
-        <BaseIcon :name="iconName" :width="28" :height="28" />
+        <BaseIcon :name="iconName" :width="30" :height="30" />
       </div>
 
       <div class="hero-header__text">
@@ -54,11 +54,10 @@ defineProps<Props>();
     gap: 24px;
     width: 100%;
     text-align: left;
-    padding: 1.75rem 2rem;
+    padding: 26px;
     border-radius: var(--fv-radius-lg);
     background: var(--fv-color-bg-primary);
     box-shadow: var(--fv-shadow-card);
-    border: 1px solid color-mix(in srgb, var(--fv-color-border) 55%, transparent);
 
     @include mediaMax(640px) {
       flex-direction: column;
@@ -68,14 +67,19 @@ defineProps<Props>();
     }
   }
 
+  &__text {
+    flex: 1;
+    min-width: 0;
+  }
+
   &__badge {
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
 
     &--negative {
       background: var(--fv-color-negative-soft);
@@ -110,9 +114,9 @@ defineProps<Props>();
   &__eyebrow {
     margin: 0 0 8px;
     font-family: var(--fv-font-display);
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
+    font-size: var(--fv-text-p4-size);
+    font-weight: 700;
+    letter-spacing: var(--fv-ls-caps);
     text-transform: uppercase;
     color: var(--fv-color-text-tertiary);
   }

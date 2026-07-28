@@ -8,21 +8,22 @@ export interface LeaderboardHeroMeta {
   kind: "users" | "movies";
 }
 
-export const LEADERBOARD_HERO_USERS: LeaderboardHeroMeta = {
-  title: "Топ пользователей",
-  subtitle:
-    "Кто больше всего смотрит до конца: фильмы сразу в зачёт, сериалы — только после последней серии",
-  badgeText: "Участников",
+// Эталон: раздел различается сегментом, поэтому шапка у обеих вкладок одна —
+// eyebrow «Рейтинг», короткий заголовок «Топ», один подзаголовок
+const LEADERBOARD_HERO_BASE = {
+  title: "Топ",
+  subtitle: "Лучшие киноманы и фильмы сообщества",
+  badgeText: "Рейтинг",
   iconName: "ph:trophy-fill",
+} as const;
+
+export const LEADERBOARD_HERO_USERS: LeaderboardHeroMeta = {
+  ...LEADERBOARD_HERO_BASE,
   kind: "users",
 };
 
 export const LEADERBOARD_HERO_MOVIES: LeaderboardHeroMeta = {
-  title: "Топ фильмов и сериалов",
-  subtitle:
-    "Средняя пользовательская оценка из коллекций; без оценок считается 0 и попадает в диапазон, если в фильтре рейтинга есть 0",
-  badgeText: "В списке",
-  iconName: "ph:star-fill",
+  ...LEADERBOARD_HERO_BASE,
   kind: "movies",
 };
 

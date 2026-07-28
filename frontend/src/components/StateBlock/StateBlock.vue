@@ -129,7 +129,7 @@ const {
   &__title {
     margin: 0 0 7px;
     font-size: 1.2rem;
-    font-weight: 600;
+    font-weight: 500;
     line-height: 1.25;
     color: var(--fv-color-text-primary);
   }
@@ -161,16 +161,16 @@ const {
     justify-content: center;
     gap: 8px;
     height: 42px;
-    padding: 0 20px;
+    padding: 0 18px;
     border: 0;
-    border-radius: var(--fv-radius-sm);
+    border-radius: var(--fv-radius-control);
     font: inherit;
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
     transition:
-      background 0.15s ease,
-      opacity 0.15s ease;
+      background var(--fv-motion-fast) var(--fv-ease),
+      opacity var(--fv-motion-fast) var(--fv-ease);
 
     &:disabled {
       opacity: 0.6;

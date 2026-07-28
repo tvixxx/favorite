@@ -1,13 +1,12 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { movieCardMeta, movieCardTitle } from "@/utils";
+import { movieCardMeta, movieCardTitle, PLURAL, pluralize } from "@/utils";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { useMainStore } from "@/state/state";
 import { message } from "ant-design-vue";
 import { useUserMoviesStore } from "@/stores";
 
-import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import HeroHeader from "@/components/HeroHeader/HeroHeader.vue";
 import PosterGridSkeleton from "@/components/Skeleton/PosterGridSkeleton.vue";
 import { useMinLoading } from "@/components/Skeleton/useMinLoading";
@@ -40,6 +39,26 @@ const applyFavoriteScopeToStore = () => {
 const favoriteUserMovies = computed(() =>
   userMoviesStore.favoriteUserMovies
 );
+
+// Переключатель типа (эталон): фильтруем уже загруженное избранное на клиенте
+type FavoriteKind = "all" | "movies" | "serials";
+
+const KIND_TABS: { key: FavoriteKind; label: string }[] = [
+  { key: "all", label: "Все" },
+  { key: "movies", label: "Фильмы" },
+  { key: "serials", label: "Сериалы" },
+];
+
+const activeKind = ref<FavoriteKind>("all");
+
+const setKind = (kind: FavoriteKind): void => {
+  if (activeKind.value === kind) {
+    return;
+  }
+
+  activeKind.value = kind;
+  userMoviesStore.setCurrentPage(1);
+};
 
 const shouldFetchFavorites = computed(
   () =>
@@ -101,49 +120,40 @@ const handleSearch = async (value: string) => {
 
 /** Сетка и пагинация: при текстовом поиске показываем searchResults (API с isFavorite), иначе — избранное из userMovies */
 const favoritesForView = computed(() => {
-  if (userMoviesStore.searchQuery.trim()) {
-    return userMoviesStore.searchResults.filter((um) => um.isFavorite);
+  const source = userMoviesStore.searchQuery.trim()
+    ? userMoviesStore.searchResults.filter((um) => um.isFavorite)
+    : favoriteUserMovies.value;
+
+  if (activeKind.value === "all") {
+    return source;
   }
 
-  return favoriteUserMovies.value;
+  const wantSerial = activeKind.value === "serials";
+
+  return source.filter((um) => um.movie.isSerial === wantSerial);
 });
 
-const paginatedFavorites = computed(() => {
-  const favorites = favoritesForView.value;
-  const start = (userMoviesStore.currentPage - 1) * userMoviesStore.pageSize;
+const visibleFavorites = computed(() =>
+  favoritesForView.value.slice(
+    0,
+    userMoviesStore.currentPage * userMoviesStore.pageSize,
+  ),
+);
 
-  return favorites.slice(start, start + userMoviesStore.pageSize);
-});
+const restCount = computed(
+  () => favoritesForView.value.length - visibleFavorites.value.length,
+);
+
+const showMore = (): void => {
+  userMoviesStore.setCurrentPage(userMoviesStore.currentPage + 1);
+};
 
 const totalFavorites = computed(() => favoritesForView.value.length);
 
-const pluralTitles = (n: number): string => {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-
-  if (mod10 === 1 && mod100 !== 11) {
-    return "тайтл";
-  }
-
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
-    return "тайтла";
-  }
-
-  return "тайтлов";
-};
-
 const favoritesSubtitle = computed(
-  () =>
-    `${totalFavorites.value} ${pluralTitles(totalFavorites.value)} отмечено сердечком`,
+  () => `${pluralize(totalFavorites.value, PLURAL.title)} отмечено сердечком`,
 );
 const hasFilteredResults = computed(() => favoritesForView.value.length > 0);
-
-const showPaginator = computed(
-  () =>
-    !!favoritesForView.value.length &&
-    !userMoviesStore.isError &&
-    !userMoviesStore.isLoading
-);
 
 const showSkeleton = useMinLoading(() => userMoviesStore.isLoading);
 
@@ -158,6 +168,27 @@ const favoritesEmptyState = computed(() => {
       title: "Ничего не найдено",
       description: "В избранном ничего не найдено — измените запрос.",
       actions: [] as StateAction[],
+    };
+  }
+
+  // Если избранное есть, но отфильтровано по типу — это не «пусто», а «нет такого типа»
+  if (activeKind.value !== "all" && favoriteUserMovies.value.length) {
+    return {
+      variant: "empty" as const,
+      icon: activeKind.value === "serials" ? "ph:monitor-play" : "ph:film-slate",
+      title:
+        activeKind.value === "serials"
+          ? "Сериалов в избранном нет"
+          : "Фильмов в избранном нет",
+      description: "Переключите тип или отметьте сердечком что-нибудь ещё.",
+      actions: [
+        {
+          label: "Показать все",
+          icon: "ph:list",
+          kind: "primary",
+          onClick: () => setKind("all"),
+        },
+      ] as StateAction[],
     };
   }
 
@@ -233,10 +264,24 @@ onBeforeUnmount(() => {
     />
 
     <div class="favorites__content">
+      <div class="favorites__kinds" role="group" aria-label="Тип тайтла">
+        <button
+          v-for="tab in KIND_TABS"
+          :key="tab.key"
+          type="button"
+          class="favorites__kind"
+          :class="{ 'favorites__kind--active': activeKind === tab.key }"
+          @click="setKind(tab.key)"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+
       <CollectionFiltersBar
         :show-status="false"
         search-placeholder="Поиск по избранному"
         :search-handler="handleSearch"
+        :result-count="userMoviesStore.currentList.length"
         @update:filters="handleFiltersUpdate"
       />
       <StateBlock
@@ -257,24 +302,9 @@ onBeforeUnmount(() => {
       <StateBlock v-else-if="!hasFilteredResults" v-bind="favoritesEmptyState" />
 
       <div v-else class="favorites__section">
-        <div class="favorites__section-header">
-          <h2 class="favorites__section-title">
-            <BaseIcon name="ph:heart" />
-            Избранное
-          </h2>
-          <a-button
-            v-if="userMoviesStore.isError"
-            size="large"
-            class="favorites__refresh"
-            @click="() => void refetchFavorites()"
-          >
-            Обновить
-          </a-button>
-        </div>
-
         <div class="favorites__grid">
           <MovieCard
-            v-for="item in paginatedFavorites"
+            v-for="item in visibleFavorites"
             :key="item.id"
             :poster-src="getPosterSrc(item)"
             :title="movieCardTitle(item.movie)"
@@ -287,16 +317,11 @@ onBeforeUnmount(() => {
           />
         </div>
 
-        <div class="favorites__pagination" v-if="showPaginator">
-          <a-pagination
-            v-model:current="userMoviesStore.currentPage"
-            :total="totalFavorites"
-            :page-size="userMoviesStore.pageSize"
-            :page-size-options="['6', '12', '18', '24']"
-            show-size-changer
-            @change="userMoviesStore.setCurrentPage"
-            @showSizeChange="(_, size: number) => userMoviesStore.setPageSize(size)"
-          />
+        <div v-if="restCount > 0" class="favorites__more">
+          <a-button size="large" @click="showMore">
+            Показать ещё
+            <span class="favorites__more-count">{{ restCount }}</span>
+          </a-button>
         </div>
       </div>
     </div>
@@ -304,6 +329,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use "@/styles/scrollbar" as *;
 @use "../../styles/media" as *;
 @use "@/styles/layout" as *;
 @use "@/styles/card" as *;
@@ -323,29 +349,42 @@ onBeforeUnmount(() => {
     width: 100%;
   }
 
-  &__section-header {
+
+
+  // Переключатель типа: активный — тёмная ink-пилюля (эталон)
+  &__kinds {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--fv-color-border) 50%, transparent);
+    gap: 8px;
+    margin-bottom: 4px;
+    overflow-x: auto;
+
+    @include hideScrollbar();
   }
 
-  &__section-title {
-    font-size: 1.75rem;
-    font-weight: 500;
+  &__kind {
+    flex-shrink: 0;
+    height: 40px;
+    padding: 0 18px;
+    border: 1px solid var(--fv-color-border);
+    border-radius: 999px;
+    background: var(--fv-color-bg-primary);
     color: var(--fv-color-text-primary);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin: 0;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      background var(--fv-motion-fast) var(--fv-ease),
+      color var(--fv-motion-fast) var(--fv-ease);
 
-    svg {
-      width: 28px;
-      height: 28px;
-      color: var(--fv-color-brand);
+    &:hover:not(&--active) {
+      background: var(--fv-color-bg-secondary);
+    }
+
+    &--active {
+      background: var(--fv-color-text-primary);
+      border-color: transparent;
+      color: var(--fv-color-bg-primary);
     }
   }
 
@@ -374,11 +413,31 @@ onBeforeUnmount(() => {
     width: 100%;
   }
 
-  &__pagination {
+  // Догрузка: кнопка «Показать ещё» по центру под сеткой
+  &__more {
     display: flex;
     justify-content: center;
-    margin-top: 4rem;
-    padding: 2rem 0;
+    margin-top: 8px;
+    padding: 8px 0 32px;
+
+    .ant-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 46px;
+      padding: 0 22px;
+      border-radius: var(--fv-radius-control);
+      font-weight: 500;
+    }
+  }
+
+  &__more-count {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-secondary);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
   }
 
   &__empty-state {

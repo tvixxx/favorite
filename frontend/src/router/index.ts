@@ -34,6 +34,8 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("@/views/pages/CreateMovie.vue"),
     meta: {
       requiresAuth: true,
+      // Форма во весь экран со своей закреплённой кнопкой (эталон)
+      hideMobileTabBar: true,
     },
   },
   {

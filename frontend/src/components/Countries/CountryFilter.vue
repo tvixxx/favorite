@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SelectProps } from "ant-design-vue";
+import MultiSelectField from "@/components/MoviesFiltersPanel/MultiSelectField.vue";
 import {
   PRODUCTION_COUNTRIES,
   type ProductionCountryOption,
@@ -7,34 +7,17 @@ import {
 
 const selectedCountries = defineModel<string[]>({ default: () => [] });
 
-const options: SelectProps["options"] = PRODUCTION_COUNTRIES.map(
-  (c: ProductionCountryOption) => ({
-    label: c.label,
-    value: c.code,
-  })
-);
-
-const filterOption = (input: string, option: { label?: string }) =>
-  (option.label ?? "").toLowerCase().includes(input.toLowerCase());
+const options = PRODUCTION_COUNTRIES.map((c: ProductionCountryOption) => ({
+  value: c.code,
+  label: c.label,
+}));
 </script>
 
 <template>
-  <a-select
-    v-model:value="selectedCountries"
-    mode="multiple"
-    :allow-clear="true"
-    :filter-option="filterOption"
-    :max-tag-count="2"
+  <MultiSelectField
+    v-model="selectedCountries"
     :options="options"
-    class="country-filter"
-    placeholder="Страны"
-    show-search
-    size="large"
+    label="Страны"
+    placeholder="Добавить страну…"
   />
 </template>
-
-<style lang="scss" scoped>
-.country-filter {
-  min-width: 180px;
-}
-</style>

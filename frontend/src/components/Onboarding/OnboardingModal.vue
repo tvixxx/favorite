@@ -4,6 +4,14 @@ import { useRouter } from "vue-router";
 import { setOnboardingDone } from "@/composable/useOnboarding";
 import { createOnboardingDriver } from "@/onboarding/createOnboardingDriver";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
+import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+
+// Список того, что покажет тур — иконки синие, как в эталоне
+const TOUR_STEPS_PREVIEW: { icon: string; text: string }[] = [
+  { icon: "ph:squares-four", text: "Несколько шагов на странице коллекции" },
+  { icon: "ph:magnifying-glass", text: "Каталог с подсветкой фильтров" },
+  { icon: "ph:users-three", text: "Раздел «Друзья» и уведомления в шапке" },
+];
 
 const openModel = defineModel<boolean>("open", { required: true });
 
@@ -62,43 +70,46 @@ const startInteractiveTour = async (): Promise<void> => {
     <template #body>
       <div class="onboarding-modal__body">
         <p class="onboarding-modal__text">
-          Это приложение для <strong>личной медиатеки</strong>: коллекция, оценки,
-          статусы просмотра и свои списки.
+          Это приложение для <strong>личной медиатеки</strong>: коллекция,
+          оценки, статусы просмотра и свои списки.
         </p>
 
         <p class="onboarding-modal__text">
-          Рекомендуем пройти <strong>интерактивный тур</strong>, как в продуктах
-          Notion или Linear: мы подсветим меню «Медиатека», быстрый ввод и фильтры
-          коллекции, каталог, друзей по email и колокольчик уведомлений.
+          Рекомендуем пройти <strong>интерактивный тур</strong> — подсветим меню
+          «Медиатека», быстрый ввод и фильтры, каталог, друзей и колокольчик
+          уведомлений.
         </p>
 
-        <ul class="onboarding-modal__bullets">
-          <li>несколько шагов на странице коллекции;</li>
-          <li>переход в каталог с подсветкой фильтров;</li>
-          <li>раздел «Друзья» и уведомления в шапке.</li>
-        </ul>
-
-        <p class="onboarding-modal__text muted">
-          Тур можно закрыть в любой момент — мы сохраним отметку «обучение
-          пройдено» так же, как при «Пропустить».
-        </p>
+        <div class="onboarding-modal__steps">
+          <p
+            v-for="step in TOUR_STEPS_PREVIEW"
+            :key="step.icon"
+            class="onboarding-modal__step"
+          >
+            <BaseIcon :name="step.icon" :width="19" :height="19" />
+            {{ step.text }}
+          </p>
+        </div>
       </div>
     </template>
 
     <template #footer>
-      <div class="onboarding-modal__footer">
-        <a-button
-          type="link"
-          class="onboarding-modal__skip"
-          @click="finishAndSkip"
-        >
-          Пропустить
-        </a-button>
+      <a-button
+        type="link"
+        class="onboarding-modal__skip"
+        @click="finishAndSkip"
+      >
+        Пропустить
+      </a-button>
 
-        <a-button type="primary" @click="startInteractiveTour">
-          Запустить интерактивный тур
-        </a-button>
-      </div>
+      <a-button
+        type="primary"
+        class="onboarding-modal__start"
+        @click="startInteractiveTour"
+      >
+        <BaseIcon name="ph:play" :width="17" :height="17" />
+        Запустить тур
+      </a-button>
     </template>
   </BaseModal>
 </template>
@@ -109,44 +120,46 @@ const startInteractiveTour = async (): Promise<void> => {
 }
 
 .onboarding-modal__text {
-  margin: 0 0 0.75rem;
-  line-height: 1.55;
-  font-size: 15px;
-
-  &.muted {
-    margin-top: 1rem;
-    opacity: 0.85;
-    font-size: 13px;
-    line-height: 1.45;
-  }
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.onboarding-modal__bullets {
-  margin: 0.75rem 0 0;
-  padding-left: 1.25rem;
-  line-height: 1.55;
-  font-size: 14px;
+  margin: 0 0 16px;
+  font-size: var(--fv-text-p3-size);
+  line-height: var(--fv-text-p3-lh);
   color: var(--fv-color-text-secondary);
 
-  li {
-    margin-bottom: 0.35rem;
+  strong {
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
   }
 }
 
-.onboarding-modal__footer {
+/* Серый блок-список того, что покажет тур (эталон) */
+.onboarding-modal__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  margin-bottom: 6px;
+  border-radius: var(--fv-radius-md);
+  background: var(--fv-color-bg-secondary);
+}
+
+.onboarding-modal__step {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  font-size: var(--fv-text-p4-size);
+  line-height: var(--fv-text-p4-lh);
+  color: var(--fv-color-text-secondary);
+
+  svg {
+    flex-shrink: 0;
+    color: var(--fv-color-accent);
+  }
 }
 
 .onboarding-modal__skip {
+  margin-right: auto;
   padding-left: 0;
+  color: var(--fv-color-link);
 }
 </style>

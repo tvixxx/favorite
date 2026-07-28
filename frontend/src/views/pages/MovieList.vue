@@ -19,7 +19,7 @@ import { ERROR_FETCH_MOVIES_TEXT } from "@/state/constants";
 import type { UserMoviesFilters } from "@/stores";
 import MovieCard from "@/components/MovieCard/MovieCard.vue";
 import CollectionFiltersBar from "@/components/MoviesFiltersPanel/CollectionFiltersBar.vue";
-import { FETCH_METHOD, useFetch } from "@/composable";
+import { FETCH_METHOD, useFetch, useEscapeKey } from "@/composable";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
 
 const router = useRouter();
@@ -48,6 +48,16 @@ let quickAddDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const userId = computed(() => mainStore.userData?.id || "");
 const hasMovies = computed(() => userMoviesStore.currentList.length !== 0);
 const totalMovies = computed(() => userMoviesStore.currentList.length);
+
+// Догрузка вместо страниц (спека new-9): порция = pageSize
+const restCount = computed(
+  () => totalMovies.value - userMoviesStore.visibleUserMovies.length,
+);
+
+const showMore = (): void => {
+  userMoviesStore.setCurrentPage(userMoviesStore.currentPage + 1);
+};
+
 const userMovieIds = computed(() => {
   return new Set(userMoviesStore.userMovies.map((item) => item.movieId));
 });
@@ -273,6 +283,9 @@ const closeQuickAddPanel = () => {
   isQuickAddPanelOpen.value = false;
 };
 
+// Esc закрывает панель быстрого ввода (клик вне уже закрывает)
+useEscapeKey(isQuickAddPanelOpen, closeQuickAddPanel);
+
 const toggleQuickAddPanel = () => {
   if (isQuickAddPanelOpen.value) {
     closeQuickAddPanel();
@@ -493,6 +506,7 @@ watch(
     <div class="movie-list__content">
       <CollectionFiltersBar
         :search-handler="findMovie"
+        :result-count="totalMovies"
         @update:filters="handleFiltersUpdate"
       />
       <StateBlock
@@ -514,7 +528,7 @@ watch(
 
       <div v-else class="movie-list__grid">
         <MovieCard
-          v-for="item in userMoviesStore.paginatedUserMovies"
+          v-for="item in userMoviesStore.visibleUserMovies"
           :key="item.id"
           :poster-src="getPosterSrc(item)"
           :title="movieCardTitle(item.movie)"
@@ -533,18 +547,13 @@ watch(
       </div>
 
       <div
-        v-if="showPaginator && totalMovies > userMoviesStore.pageSize"
-        class="movie-list__pagination"
+        v-if="showPaginator && userMoviesStore.hasMoreUserMovies"
+        class="movie-list__more"
       >
-        <a-pagination
-          v-model:current="userMoviesStore.currentPage"
-          :page-size="userMoviesStore.pageSize"
-          :page-size-options="['6', '12', '18', '24']"
-          :total="totalMovies"
-          show-size-changer
-          @change="userMoviesStore.setCurrentPage"
-          @showSizeChange="(_, size: number) => userMoviesStore.setPageSize(size)"
-        />
+        <a-button size="large" @click="showMore">
+          Показать ещё
+          <span class="movie-list__more-count">{{ restCount }}</span>
+        </a-button>
       </div>
     </div>
 
@@ -565,6 +574,7 @@ watch(
             v-model:value="quickAddQuery"
             :options="quickAddOptions"
             :filter-option="false"
+            placement="topLeft"
             :not-found-content="
               quickAddQuery.trim().length >= QUICK_ADD_MIN_QUERY_LENGTH &&
               !isQuickAddLoading
@@ -624,11 +634,31 @@ watch(
     @include cardsGrid;
   }
 
-  &__pagination {
+  // Догрузка: кнопка «Показать ещё» по центру под сеткой
+  &__more {
     display: flex;
     justify-content: center;
-    margin-top: 4rem;
-    padding: 2rem 0;
+    margin-top: 8px;
+    padding: 8px 0 32px;
+
+    .ant-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 46px;
+      padding: 0 22px;
+      border-radius: var(--fv-radius-control);
+      font-weight: 500;
+    }
+  }
+
+  &__more-count {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-secondary);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
   }
 
   &__empty-state {
@@ -719,7 +749,7 @@ watch(
     gap: 0.42rem;
     cursor: pointer;
     box-shadow: var(--fv-shadow-brand-md);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform var(--fv-motion-slow) var(--fv-ease), box-shadow var(--fv-motion-slow) var(--fv-ease);
 
     &:hover {
       transform: translateY(-2px);
@@ -739,8 +769,8 @@ watch(
 
   @include mediaMax(768px) {
     right: 0.85rem;
-    // поднимаем над мобильным таб-баром (64px + safe-area)
-    bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 0.85rem);
+    // поднимаем над мобильным таб-баром (82px + safe-area)
+    bottom: calc(82px + env(safe-area-inset-bottom, 0px) + 0.85rem);
 
     &__button {
       padding: 0.55rem 0.8rem;
@@ -754,7 +784,7 @@ watch(
 
 .quick-add-fab-panel-enter-active,
 .quick-add-fab-panel-leave-active {
-  transition: all 0.2s ease;
+  transition: all var(--fv-motion-slow) var(--fv-ease);
 }
 
 .quick-add-fab-panel-enter-from,

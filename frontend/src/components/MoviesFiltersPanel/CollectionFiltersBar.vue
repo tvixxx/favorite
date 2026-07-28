@@ -3,12 +3,20 @@ import { computed, ref, watch } from "vue";
 import dayjs, { type Dayjs } from "dayjs";
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import FiltersSheet from "@/components/MoviesFiltersPanel/FiltersSheet.vue";
+import FiltersActiveTags, {
+  type FilterTag,
+} from "@/components/MoviesFiltersPanel/FiltersActiveTags.vue";
 import GenreFilter from "@/components/Genres/GenreFilter.vue";
 import CountryFilter from "@/components/Countries/CountryFilter.vue";
-import DateRangeFilter from "@/components/Filters/DateRangeFilter.vue";
+import PeriodChips from "@/components/Filters/PeriodChips.vue";
 import RateFilter from "@/components/Filters/RateFilter.vue";
 import { type UserMoviesFilters, WatchStatus } from "@/stores";
-import { type Genre } from "@/components/Genres/constants/genres.constants";
+import {
+  type Genre,
+  GenreLabels,
+} from "@/components/Genres/constants/genres.constants";
+import { PRODUCTION_COUNTRIES } from "@/constants/countries/production-countries";
 
 const props = withDefaults(
   defineProps<{
@@ -16,6 +24,8 @@ const props = withDefaults(
     /** Показывать статус-пилюли (коллекция — да; избранное — нет) */
     showStatus?: boolean;
     searchPlaceholder?: string;
+    /** Сколько тайтлов сейчас показано — число в кнопке «Показать» */
+    resultCount?: number;
   }>(),
   {
     showStatus: true,
@@ -60,6 +70,104 @@ const advancedCount = computed(() => {
 
   return n;
 });
+
+// Пресеты (эталон): один клик выставляет типовую комбинацию фильтров
+type PresetKey = "high-rate" | "fresh" | "later";
+
+const PRESETS: { key: PresetKey; label: string }[] = [
+  { key: "high-rate", label: "Высокий рейтинг" },
+  { key: "fresh", label: "Новинки 2020+" },
+  { key: "later", label: "Буду смотреть" },
+];
+
+const FRESH_FROM_YEAR = 2020;
+const HIGH_RATE_MIN = 7;
+
+const activePreset = computed<PresetKey | null>(() => {
+  if (activeStatus.value === "later") {
+    return "later";
+  }
+
+  if (rateRange.value[0] === HIGH_RATE_MIN && rateRange.value[1] === 10) {
+    return "high-rate";
+  }
+
+  const from = publishDateRange.value?.[0];
+
+  if (from && dayjs(from).year() === FRESH_FROM_YEAR) {
+    return "fresh";
+  }
+
+  return null;
+});
+
+const togglePreset = (key: PresetKey): void => {
+  const isActive = activePreset.value === key;
+
+  if (key === "later") {
+    setStatus(isActive ? "all" : "later");
+
+    return;
+  }
+
+  if (key === "high-rate") {
+    rateRange.value = isActive ? [...DEFAULT_RATE] : [HIGH_RATE_MIN, 10];
+
+    return;
+  }
+
+  publishDateRange.value = isActive
+    ? null
+    : [dayjs(`${FRESH_FROM_YEAR}-01-01`), dayjs()];
+};
+
+const countryLabel = (code: string): string =>
+  PRODUCTION_COUNTRIES.find((c) => c.code === code)?.label ?? code;
+
+const activeTags = computed<FilterTag[]>(() => {
+  const tags: FilterTag[] = selectedGenres.value.map((genre) => ({
+    key: `genre:${genre}`,
+    label: GenreLabels[genre],
+  }));
+
+  selectedCountries.value.forEach((code) => {
+    tags.push({ key: `country:${code}`, label: countryLabel(code) });
+  });
+
+  const [from, to] = publishDateRange.value ?? [];
+
+  if (from && to) {
+    tags.push({
+      key: "date",
+      label: `${dayjs(from).format("MM.YYYY")} — ${dayjs(to).format("MM.YYYY")}`,
+    });
+  }
+
+  if (rateActive.value) {
+    tags.push({
+      key: "rate",
+      label: `Оценка ${rateRange.value[0]}–${rateRange.value[1]}`,
+    });
+  }
+
+  return tags;
+});
+
+const removeTag = (key: string): void => {
+  const [type, value] = key.split(":");
+
+  if (type === "genre") {
+    selectedGenres.value = selectedGenres.value.filter((g) => g !== value);
+  } else if (type === "country") {
+    selectedCountries.value = selectedCountries.value.filter(
+      (c) => c !== value,
+    );
+  } else if (type === "date") {
+    publishDateRange.value = null;
+  } else if (type === "rate") {
+    rateRange.value = [...DEFAULT_RATE];
+  }
+};
 
 const buildFilters = (): UserMoviesFilters => {
   const [rateMin, rateMax] = rateRange.value;
@@ -166,9 +274,10 @@ const onSearchEnter = (): void => {
         type="button"
         class="collection-filters__toggle"
         :class="{ 'collection-filters__toggle--active': advancedCount > 0 }"
+        aria-label="Фильтры"
         @click="isDrawerOpen = true"
       >
-        <BaseIcon name="ph:sliders-horizontal" :width="18" :height="18" />
+        <BaseIcon name="ph:sliders-horizontal" :width="19" :height="19" />
         <span class="collection-filters__toggle-text">Фильтры</span>
         <span v-if="advancedCount" class="collection-filters__badge">{{
           advancedCount
@@ -176,49 +285,66 @@ const onSearchEnter = (): void => {
       </button>
     </div>
 
-    <a-drawer
-      v-model:open="isDrawerOpen"
-      title="Фильтры"
-      placement="right"
-      :width="380"
+    <FiltersActiveTags
+      :tags="activeTags"
+      @remove="removeTag"
+      @reset="resetAdvanced"
+    />
+
+    <FiltersSheet
+      v-model="isDrawerOpen"
+      :active-count="advancedCount"
+      :result-count="resultCount"
+      @reset="resetAdvanced"
     >
-      <div class="collection-filters__advanced">
-        <GenreFilter v-model="selectedGenres" />
-        <CountryFilter v-model="selectedCountries" />
-        <DateRangeFilter
-          v-model="publishDateRange"
-          label="Дата выхода"
-          :placeholder="['От', 'До']"
-        />
-        <RateFilter v-model="rateRange" />
+      <GenreFilter v-model="selectedGenres" />
+      <CountryFilter v-model="selectedCountries" />
+      <PeriodChips v-model="publishDateRange" />
+
+      <div class="collection-filters__presets">
+        <span class="collection-filters__presets-label">Быстрый выбор</span>
+        <div class="collection-filters__presets-row">
+          <button
+            v-for="preset in PRESETS"
+            :key="preset.key"
+            type="button"
+            class="collection-filters__preset"
+            :class="{
+              'collection-filters__preset--active': activePreset === preset.key,
+            }"
+            @click="togglePreset(preset.key)"
+          >
+            {{ preset.label }}
+          </button>
+        </div>
       </div>
 
-      <template #footer>
-        <div class="collection-filters__drawer-footer">
-          <a-button :disabled="advancedCount === 0" @click="resetAdvanced">
-            Сбросить
-          </a-button>
-          <a-button type="primary" @click="isDrawerOpen = false">Готово</a-button>
-        </div>
-      </template>
-    </a-drawer>
+      <RateFilter v-model="rateRange" />
+    </FiltersSheet>
   </div>
 </template>
 
 <style lang="scss" scoped>
 @use "@/styles/media" as *;
+@use "@/styles/scrollbar" as *;
 
 .collection-filters {
   margin-top: 16px;
   width: 100%;
 
   &__row {
-    display: flex;
-    flex-direction: column;
+    // До планшета: поиск и кнопка-иконка в одной строке, статусы — во второй
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "search filter"
+      "status status";
+    align-items: center;
     gap: 10px;
     width: 100%;
 
     @include mediaTablet {
+      display: flex;
       flex-direction: row;
       align-items: center;
       flex-wrap: wrap;
@@ -229,6 +355,7 @@ const onSearchEnter = (): void => {
   }
 
   &__search {
+    grid-area: search;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -237,7 +364,7 @@ const onSearchEnter = (): void => {
     border-radius: var(--fv-radius-sm);
     background: var(--fv-color-bg-primary);
     border: 1.5px solid transparent;
-    transition: border-color 0.15s ease;
+    transition: border-color var(--fv-motion-fast) var(--fv-ease);
 
     @include mediaTablet {
       // фикс. гибкий базис (без grow) — иначе конфликт с margin-left:auto у «Фильтры»
@@ -267,15 +394,13 @@ const onSearchEnter = (): void => {
   }
 
   &__statuses {
+    grid-area: status;
     display: flex;
     gap: 8px;
     // Эталон (мобилка): пилюли в один ряд со скроллом, без переноса на 2 строки
     overflow-x: auto;
-    scrollbar-width: none;
 
-    &::-webkit-scrollbar {
-      display: none;
-    }
+    @include hideScrollbar();
   }
 
   // Пилюли статуса: как чипы сабнава (активная = тёмная ink-плашка)
@@ -292,9 +417,9 @@ const onSearchEnter = (): void => {
     font-weight: 500;
     cursor: pointer;
     transition:
-      background 0.15s ease,
-      color 0.15s ease,
-      border-color 0.15s ease;
+      background var(--fv-motion-fast) var(--fv-ease),
+      color var(--fv-motion-fast) var(--fv-ease),
+      border-color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       background: var(--fv-color-bg-secondary);
@@ -322,28 +447,100 @@ const onSearchEnter = (): void => {
     }
   }
 
-  // Эталон: «Фильтры» — plain иконка + жирный текст, без рамки/фона
+  // Плашка 44px как в эталоне, но белая: канва страницы — mist, и mist-кнопка
+  // на ней пропадала. Применённые фильтры — синяя подложка с рамкой
   &__toggle {
+    position: relative;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 0;
+    flex-shrink: 0;
+    height: 44px;
+    padding: 0 16px;
     border: 0;
-    background: none;
+    border-radius: var(--fv-radius-sm);
+    background: var(--fv-color-bg-primary);
     color: var(--fv-color-text-primary);
     font: inherit;
-    font-size: 0.95rem;
+    font-size: 15px;
     font-weight: 500;
     cursor: pointer;
     white-space: nowrap;
-    transition: color 0.15s ease;
+    transition:
+      background var(--fv-motion-fast) var(--fv-ease),
+      color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
-      color: var(--fv-color-accent);
+      background: var(--fv-color-bg-secondary);
     }
 
     &--active {
-      color: var(--fv-color-accent);
+      background: var(--fv-color-bg-active-soft);
+      color: var(--fv-color-link);
+      box-shadow: inset 0 0 0 1.5px var(--fv-color-accent);
+    }
+    grid-area: filter;
+
+    // Эталон мобилки: иконка 46×46 в синей подложке справа от поиска
+    @include mediaMax(767.98px) {
+      width: 46px;
+      height: 46px;
+      padding: 0;
+      border-radius: 14px;
+      background: var(--fv-color-bg-active-soft);
+      color: var(--fv-color-link);
+
+      &:hover {
+        background: var(--fv-color-bg-active-soft);
+      }
+    }
+  }
+
+  &__toggle-text {
+    @include mediaMax(767.98px) {
+      display: none;
+    }
+  }
+
+  &__presets {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__presets-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fv-color-text-secondary);
+  }
+
+  &__presets-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  &__preset {
+    height: 36px;
+    padding: 0 16px;
+    border: 1px solid var(--fv-color-border);
+    border-radius: 999px;
+    background: var(--fv-color-bg-primary);
+    color: var(--fv-color-text-primary);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover:not(&--active) {
+      background: var(--fv-color-bg-secondary);
+    }
+
+    &--active {
+      background: var(--fv-color-text-primary);
+      border-color: transparent;
+      color: var(--fv-color-bg-primary);
     }
   }
 
@@ -351,26 +548,27 @@ const onSearchEnter = (): void => {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 18px;
-    height: 18px;
+    min-width: 20px;
+    height: 20px;
     padding: 0 5px;
     border-radius: 999px;
     background: var(--fv-color-brand);
     color: #fff;
-    font-size: 0.72rem;
-    font-weight: 600;
-  }
+    font-size: 12px;
+    font-weight: 700;
 
-  &__advanced {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-  }
-
-  &__drawer-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
+    // На мобильной иконке бейдж синий и вынесен в угол (эталон)
+    @include mediaMax(767.98px) {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0;
+      border: 2px solid var(--fv-color-bg-secondary);
+      background: var(--fv-color-accent);
+      font-size: 11px;
+    }
   }
 }
 </style>

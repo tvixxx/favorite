@@ -125,8 +125,8 @@ const emit = defineEmits<{
     background: var(--fv-color-bg-secondary);
     box-shadow: var(--fv-shadow-card);
     transition:
-      transform 0.18s ease,
-      box-shadow 0.18s ease;
+      transform var(--fv-motion-base) var(--fv-ease),
+      box-shadow var(--fv-motion-base) var(--fv-ease);
   }
 
   &:hover &__poster-wrap {
@@ -155,7 +155,7 @@ const emit = defineEmits<{
     background: color-mix(in srgb, var(--fv-color-accent) 16%, #fff);
     color: var(--fv-color-accent);
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   &__actions {
@@ -178,8 +178,8 @@ const emit = defineEmits<{
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
     transition:
-      transform 0.15s ease,
-      background 0.15s ease;
+      transform var(--fv-motion-fast) var(--fv-ease),
+      background var(--fv-motion-fast) var(--fv-ease);
 
     &:active {
       transform: scale(0.92);
@@ -218,7 +218,7 @@ const emit = defineEmits<{
     &__action--delete {
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.15s ease;
+      transition: opacity var(--fv-motion-fast) var(--fv-ease);
     }
 
     &:hover &__action--delete {

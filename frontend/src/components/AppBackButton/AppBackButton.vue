@@ -56,9 +56,9 @@ async function onClick() {
   font-weight: 500;
   cursor: pointer;
   transition:
-    color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    color var(--fv-motion-slow) var(--fv-ease),
+    transform var(--fv-motion-slow) var(--fv-ease),
+    box-shadow var(--fv-motion-slow) var(--fv-ease);
 
   &:hover {
     color: var(--fv-color-accent);

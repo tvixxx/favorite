@@ -50,8 +50,9 @@ const props = defineProps<StatsBlock>();
   }
 
   &__item-value {
+    font-variant-numeric: tabular-nums;
     margin: 0;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--fv-color-text-primary);
     font-size: 0.9rem;
     background: var(--fv-color-bg-secondary);

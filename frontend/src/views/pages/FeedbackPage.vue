@@ -8,7 +8,7 @@ import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import { useMainStore } from "@/state/state";
 import { FETCH_METHOD, useFetch } from "@/composable";
-import { FEEDBACK_ENDPOINT } from "@/constants";
+import { FEEDBACK_ENDPOINT, SUPPORT_EMAIL } from "@/constants";
 import { isSuccessStatus } from "@/utils";
 import { friendlyRequestError } from "@/utils/friendlyError";
 
@@ -22,7 +22,6 @@ type FeedbackType = "IDEA" | "BUG" | "OTHER";
 
 const MESSAGE_MIN = 10;
 const MESSAGE_MAX = 1000;
-const SUPPORT_EMAIL = "help@favorite.app";
 
 // Тон активной карточки подсказывает характер обращения:
 // идея — синий, ошибка — красный, другое — нейтральный
@@ -310,8 +309,6 @@ const submit = async (): Promise<void> => {
     max-width: 1180px;
     margin: 0 auto;
     padding: 2rem 1rem 0;
-    // #app центрирует текст глобально
-    text-align: left;
 
     @include mediaTablet {
       padding: 2.5rem 2rem 0;
@@ -334,7 +331,7 @@ const submit = async (): Promise<void> => {
     height: 38px;
     border: none;
     border-radius: 50%;
-    background: var(--fv-color-bg-primary);
+    background: var(--fv-color-bg-secondary);
     color: var(--fv-color-text-primary);
     cursor: pointer;
 
@@ -346,7 +343,7 @@ const submit = async (): Promise<void> => {
 
   &__mobile-title {
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   &__area {
@@ -478,9 +475,9 @@ const submit = async (): Promise<void> => {
   color: var(--fv-color-text-secondary);
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    color 0.15s ease;
+    border-color var(--fv-motion-fast) var(--fv-ease),
+    background var(--fv-motion-fast) var(--fv-ease),
+    color var(--fv-motion-fast) var(--fv-ease);
 
   &:hover:not(.feedback-type--on) {
     border-color: color-mix(
@@ -615,6 +612,31 @@ const submit = async (): Promise<void> => {
   // Место под закреплённую кнопку
   .feedback-page__content {
     padding-bottom: 96px;
+  }
+
+  // Карточку на мобиле оставляем, хотя во фрейме её нет: там поля и канва
+  // одного цвета (mist на mist) и поля просто пропадают
+  .feedback-card {
+    padding: 18px;
+  }
+
+  .feedback-label {
+    font-size: 13px;
+  }
+
+  .feedback-page__counter {
+    font-size: 11px;
+  }
+
+  .feedback-page__area {
+    font-size: 14px;
+    padding: 12px 14px;
+  }
+
+  .feedback-page__context {
+    gap: 7px;
+    align-items: flex-start;
+    font-size: 12px;
   }
 }
 </style>

@@ -56,26 +56,27 @@ const THEME_LABELS: Record<Theme, string> = {
   light: "Светлая",
   dark: "Тёмная",
   emerald: "Изумруд",
-  corporate: "Корпоратив",
-  synthwave: "Синтвейв",
+  corporate: "Деловая",
+  synthwave: "Synthwave",
   retro: "Ретро",
-  cyberpunk: "Киберпанк",
+  cyberpunk: "Cyberpunk",
 };
 
-const THEME_COLORS: Record<Theme, string> = {
-  light: "#ff0032",
-  dark: "#1f1f1f",
-  emerald: "#10b981",
-  corporate: "#1e40af",
-  synthwave: "#ec4899",
-  retro: "#f59e0b",
-  cyberpunk: "#8b5cf6",
+// Свотч показывает канву темы и точкой — её акцент (эталон)
+const THEME_SWATCHES: Record<Theme, { bg: string; accent: string }> = {
+  light: { bg: "#ffffff", accent: "#ff0032" },
+  dark: { bg: "#141414", accent: "#ff3355" },
+  emerald: { bg: "#f0fdf4", accent: "#10b981" },
+  corporate: { bg: "#f8fafc", accent: "#1e40af" },
+  synthwave: { bg: "#0f0f23", accent: "#ec4899" },
+  retro: { bg: "#fef3c7", accent: "#f59e0b" },
+  cyberpunk: { bg: "#1e1b4b", accent: "#8b5cf6" },
 };
 
 const themeSwatches = themes.map((value) => ({
   value,
   label: THEME_LABELS[value],
-  color: THEME_COLORS[value],
+  ...THEME_SWATCHES[value],
 }));
 
 const fullName = computed<string>(() => store.userData?.fullName?.trim() ?? "");
@@ -247,7 +248,13 @@ const handleMarkAllRead = async () => {
 
 <template>
   <header v-if="isLoggedIn" class="topbar">
-    <a class="topbar__logo" @click="router.push('/library/collection')">favorite</a>
+    <div class="topbar__inner">
+    <a class="topbar__logo" @click="router.push('/library/collection')">
+      <span class="topbar__logo-mark">
+        <BaseIcon name="ph:film-slate-fill" :width="19" :height="19" />
+      </span>
+      favorite
+    </a>
 
     <nav class="topbar__nav">
       <button
@@ -282,9 +289,12 @@ const handleMarkAllRead = async () => {
           tabindex="0"
           aria-label="Уведомления"
         >
-          <a-badge :count="notificationsStore.unreadCount" :overflow-count="99">
-            <BellOutlined class="topbar__bell-icon" />
-          </a-badge>
+          <BellOutlined class="topbar__bell-icon" />
+          <span
+            v-if="notificationsStore.unreadCount > 0"
+            class="topbar__bell-dot"
+            aria-hidden="true"
+          ></span>
         </span>
 
         <template #overlay>
@@ -425,15 +435,15 @@ const handleMarkAllRead = async () => {
               >
                 <span
                   class="acctmenu__swatch"
-                  :style="{ background: t.color }"
+                  :style="{ background: t.bg, '--swatch-accent': t.accent }"
                 ></span>
                 <span class="acctmenu__theme-label">{{ t.label }}</span>
                 <BaseIcon
                   v-if="currentTheme === t.value"
-                  name="ph:check"
+                  name="ph:check-circle"
                   class="acctmenu__check"
-                  :width="16"
-                  :height="16"
+                  :width="18"
+                  :height="18"
                 />
               </button>
             </div>
@@ -459,6 +469,8 @@ const handleMarkAllRead = async () => {
       </button>
     </div>
 
+    </div>
+
     <a-drawer
       v-model:open="drawerOpen"
       placement="right"
@@ -482,14 +494,6 @@ const handleMarkAllRead = async () => {
           >
         </button>
 
-        <button
-          type="button"
-          class="drawer-nav__link"
-          @click="goTo('/profile')"
-        >
-          Профиль
-        </button>
-
         <div class="drawer-nav__divider"></div>
 
         <button
@@ -501,80 +505,104 @@ const handleMarkAllRead = async () => {
           <BaseIcon name="ph:megaphone" :width="18" :height="18" />
           Обратная связь
         </button>
-
-        <a-button danger block class="drawer-nav__signout" @click="signOut">
-          Выйти
-        </a-button>
       </nav>
     </a-drawer>
   </header>
 
   <header v-else class="topbar topbar--auth">
-    <a class="topbar__logo" @click="router.push('/login')">favorite</a>
+    <div class="topbar__inner">
+      <a class="topbar__logo" @click="router.push('/login')">favorite</a>
 
-    <div class="topbar__actions">
-      <a-button type="primary" @click="router.push('/login')">Войти</a-button>
+      <div class="topbar__actions">
+        <a-button type="primary" @click="router.push('/login')">Войти</a-button>
+      </div>
     </div>
   </header>
 </template>
 
 <style lang="scss">
+@use "@/styles/scrollbar" as *;
+
 .topbar {
   position: sticky;
   top: 0;
   z-index: 100;
   box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  gap: 24px;
   width: 100%;
-  height: 64px;
-  padding: 0 var(--fv-layout-gutter);
-  background: var(--fv-color-bg-primary);
+  background: color-mix(in srgb, var(--fv-color-bg-primary) 92%, transparent);
+  backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--fv-color-border);
 
+  // Полоса шапки — во всю ширину, а её содержимое живёт в сетке 1200,
+  // как и страницы. Раньше ограничение стояло на самой шапке, и по краям
+  // проступала канва (на тёмной теме это выглядело как белые поля)
+  &__inner {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+    max-width: calc(var(--fv-layout-max-width) + var(--fv-layout-gutter) * 2);
+    height: 66px;
+    margin: 0 auto;
+    padding: 0 var(--fv-layout-gutter);
+  }
+
   &__logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     flex-shrink: 0;
     font-family: var(--fv-font-display);
-    font-weight: 500;
-    font-size: 22px;
-    letter-spacing: -0.01em;
-    color: var(--fv-color-brand);
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: -0.3px;
+    color: var(--fv-color-text-primary);
     text-decoration: none;
     cursor: pointer;
     user-select: none;
   }
 
+  &__logo-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: var(--fv-color-brand);
+    color: #fff;
+  }
+
   &__nav {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 22px;
   }
 
   &__nav-link {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 14px;
+    height: 66px;
+    padding: 0 2px;
     border: 0;
-    border-radius: 10px;
+    border-bottom: 2px solid transparent;
     background: none;
     font: inherit;
     font-size: 15px;
     color: var(--fv-color-text-secondary);
     cursor: pointer;
-    transition:
-      background 0.15s ease,
-      color 0.15s ease;
+    transition: color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       color: var(--fv-color-text-primary);
-      background: var(--fv-color-bg-secondary);
     }
 
     &.is-active {
-      color: var(--fv-color-brand);
-      background: color-mix(in srgb, var(--fv-color-brand) 8%, transparent);
+      color: var(--fv-color-text-primary);
+      font-weight: 500;
+      border-bottom-color: var(--fv-color-brand);
     }
   }
 
@@ -601,20 +629,21 @@ const handleMarkAllRead = async () => {
   }
 
   &__icon-btn {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     border: 0;
-    border-radius: 10px;
+    border-radius: 50%;
     background: none;
     color: var(--fv-color-text-secondary);
     cursor: pointer;
     transition:
-      background 0.15s ease,
-      color 0.15s ease;
+      background var(--fv-motion-fast) var(--fv-ease),
+      color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       color: var(--fv-color-text-primary);
@@ -622,8 +651,20 @@ const handleMarkAllRead = async () => {
     }
   }
 
+  // Эталон: не число, а точка с обводкой под цвет шапки
+  &__bell-dot {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 9px;
+    height: 9px;
+    border: 2px solid var(--fv-color-bg-primary);
+    border-radius: 50%;
+    background: var(--fv-color-brand);
+  }
+
   &__bell-icon {
-    font-size: 18px;
+    font-size: 21px;
     color: inherit;
 
     :deep(svg) {
@@ -643,7 +684,7 @@ const handleMarkAllRead = async () => {
   &__avatar {
     flex-shrink: 0;
     color: #fff !important;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   &__burger {
@@ -667,7 +708,7 @@ const handleMarkAllRead = async () => {
   padding: 8px;
   background: var(--fv-color-bg-primary);
   border: 1px solid var(--fv-color-border);
-  border-radius: 14px;
+  border-radius: var(--fv-radius-md);
   box-shadow: var(--fv-shadow-modal);
 
   &__head {
@@ -680,7 +721,7 @@ const handleMarkAllRead = async () => {
   &__avatar {
     flex-shrink: 0;
     color: #fff !important;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   &__id {
@@ -690,7 +731,7 @@ const handleMarkAllRead = async () => {
   }
 
   &__name {
-    font-weight: 600;
+    font-weight: 500;
     font-size: 14px;
     color: var(--fv-color-text-primary);
     overflow: hidden;
@@ -737,9 +778,10 @@ const handleMarkAllRead = async () => {
   }
 
   &__section-label {
+    text-transform: none;
     padding: 6px 12px 4px;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--fv-color-text-secondary);
@@ -770,16 +812,29 @@ const handleMarkAllRead = async () => {
     }
 
     &.is-active {
-      background: color-mix(in srgb, var(--fv-color-brand) 8%, transparent);
+      background: var(--fv-color-bg-active-soft);
     }
   }
 
   &__swatch {
+    position: relative;
     flex-shrink: 0;
-    width: 16px;
-    height: 16px;
-    border-radius: 5px;
-    border: 1px solid color-mix(in srgb, var(--fv-color-text-primary) 12%, transparent);
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    border: 1px solid var(--fv-color-border);
+
+    // Точка акцента в правом нижнем углу — как в эталоне
+    &::after {
+      content: "";
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--swatch-accent, transparent);
+    }
   }
 
   &__theme-label {
@@ -788,16 +843,18 @@ const handleMarkAllRead = async () => {
   }
 
   &__check {
-    color: var(--fv-color-brand);
+    color: var(--fv-color-link);
   }
 }
 
 /* Панель уведомлений (телепортируется в body — стили глобальные) */
 .notif-panel {
-  width: min(360px, calc(100vw - 24px));
+  width: min(344px, calc(100vw - 24px));
   max-height: 70vh;
-  padding: 12px;
+  padding: 8px;
   overflow: auto;
+
+  @include customScrollbar();
   background: var(--fv-color-bg-primary);
   color: var(--fv-color-text-primary);
   border: 1px solid var(--fv-color-border);
@@ -813,8 +870,8 @@ const handleMarkAllRead = async () => {
   }
 
   &__title {
-    font-weight: 600;
-    font-size: 14px;
+    font-weight: 700;
+    font-size: 16px;
   }
 
   &__empty {
@@ -896,7 +953,7 @@ const handleMarkAllRead = async () => {
 
     &.is-active {
       color: var(--fv-color-brand);
-      background: color-mix(in srgb, var(--fv-color-brand) 8%, transparent);
+      background: var(--fv-color-bg-active-soft);
     }
   }
 

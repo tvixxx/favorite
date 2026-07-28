@@ -1,15 +1,20 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
-import { reactive } from "vue";
+import { reactive, ref } from "vue";
 import { useMainStore } from "@/state/state";
 import { message } from "ant-design-vue";
 import type { Rule } from "ant-design-vue/es/form";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import BaseModal from "@/components/BaseModal/BaseModal.vue";
+import { SUPPORT_EMAIL } from "@/constants";
 import { EMAIL_REGEX } from "@/constants";
 import { ERROR_LOGIN_TEXT, SUCCESS_LOGIN_TEXT } from "@/state/constants";
 
 const store = useMainStore();
 const router = useRouter();
+
+// Восстановления пароля на бэкенде нет — отправляем в поддержку
+const isResetOpen = ref(false);
 
 interface FormState {
   email: string;
@@ -54,6 +59,7 @@ const onFinish = async (values: FormState): Promise<void> => {
     @finish="onFinish"
   >
     <a-form-item name="email">
+      <span class="auth-form__label">Email</span>
       <a-input v-model:value="formState.email" placeholder="Email" size="large">
         <template #prefix>
           <BaseIcon name="ph:envelope-simple" :width="20" :height="20" />
@@ -62,6 +68,7 @@ const onFinish = async (values: FormState): Promise<void> => {
     </a-form-item>
 
     <a-form-item name="password">
+      <span class="auth-form__label">Пароль</span>
       <a-input-password
         v-model:value="formState.password"
         placeholder="Пароль"
@@ -82,6 +89,42 @@ const onFinish = async (values: FormState): Promise<void> => {
       >
         Войти
       </a-button>
+
+      <button
+        type="button"
+        class="auth-form__forgot"
+        @click="isResetOpen = true"
+      >
+        Забыли пароль?
+      </button>
     </a-form-item>
   </a-form>
+
+  <BaseModal v-model="isResetOpen" layout="form">
+    <template #title>Забыли пароль?</template>
+    <template #body>
+      <p class="auth-reset__text">
+        Восстановление пока настраиваем. Напишите на
+        <a :href="`mailto:${SUPPORT_EMAIL}`">{{ SUPPORT_EMAIL }}</a> — вернём
+        доступ вручную.
+      </p>
+    </template>
+    <template #footer>
+      <a-button type="primary" @click="isResetOpen = false">Понятно</a-button>
+    </template>
+  </BaseModal>
 </template>
+
+<style lang="scss" scoped>
+.auth-reset__text {
+  margin: 0;
+  padding: 4px 0 8px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--fv-color-text-secondary);
+
+  a {
+    color: var(--fv-color-link);
+  }
+}
+</style>

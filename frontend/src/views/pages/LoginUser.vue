@@ -23,6 +23,7 @@ const mode = ref<AuthMode>("login");
         </span>
         <span class="auth-page__brand-text">favorite</span>
       </div>
+      <p class="auth-page__tagline">Ваша личная медиатека</p>
 
       <div class="auth-page__card">
         <div class="auth-tabs" role="tablist">
@@ -63,8 +64,6 @@ const mode = ref<AuthMode>("login");
   min-height: 100vh;
   padding: 24px;
   background: var(--fv-color-bg-secondary);
-  // #app центрирует текст глобально — внутри выравниваем сами
-  text-align: left;
 
   &__inner {
     width: 100%;
@@ -76,7 +75,13 @@ const mode = ref<AuthMode>("login");
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin-bottom: 28px;
+  }
+
+  &__tagline {
+    margin: 4px 0 28px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--fv-color-text-secondary);
   }
 
   &__brand-mark {
@@ -131,8 +136,8 @@ const mode = ref<AuthMode>("login");
     color: var(--fv-color-text-secondary);
     cursor: pointer;
     transition:
-      background 0.15s ease,
-      color 0.15s ease;
+      background var(--fv-motion-fast) var(--fv-ease),
+      color var(--fv-motion-fast) var(--fv-ease);
 
     &--on {
       background: var(--fv-color-bg-primary);
@@ -155,7 +160,7 @@ const mode = ref<AuthMode>("login");
 
   .ant-input-affix-wrapper {
     height: 52px;
-    padding: 0 14px;
+    padding: 0 16px;
   }
 
   .ant-input-prefix {
@@ -171,9 +176,89 @@ const mode = ref<AuthMode>("login");
     width: 100%;
     height: 52px;
     margin-top: 8px;
-    border-radius: 10px;
-    font-size: 15px;
+    border-radius: var(--fv-radius-control);
+    font-size: 16px;
     font-weight: 500;
+  }
+
+  // Лейблы над полями есть только в мобильном макете, на десктопе — плейсхолдеры
+  &__label {
+    display: none;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fv-color-text-secondary);
+  }
+
+  &__forgot {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--fv-color-link);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+  }
+}
+
+/* Мобильный макет эталона: белый экран без карточки, крупная app-иконка,
+   лейблы над полями */
+@media (max-width: 767.98px) {
+  .auth-page {
+    align-items: center;
+    padding: 24px;
+    background: var(--fv-color-bg-primary);
+
+    &__brand {
+      flex-direction: column;
+      gap: 0;
+    }
+
+    &__brand-mark {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 16px;
+      border-radius: 18px;
+
+      svg {
+        width: 34px;
+        height: 34px;
+      }
+    }
+
+    &__brand-text {
+      font-size: 26px;
+    }
+
+    &__card {
+      padding: 0;
+      background: none;
+      box-shadow: none;
+    }
+  }
+
+  .auth-tabs {
+    margin-bottom: 20px;
+  }
+
+  .auth-form {
+    .ant-form-item {
+      margin-bottom: 14px;
+    }
+
+    .ant-input-affix-wrapper {
+      height: 50px;
+      padding: 0 15px;
+    }
+
+    &__label {
+      display: block;
+    }
   }
 }
 </style>

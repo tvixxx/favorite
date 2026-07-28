@@ -7,12 +7,14 @@ import { useMinLoading } from "@/components/Skeleton/useMinLoading";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import LeaderboardRow from "@/components/Leaderboard/LeaderboardRow.vue";
+import { useRouter } from "vue-router";
 import { useLeaderboardMoviesStore } from "@/stores";
 import { formatYear } from "@/utils";
 
 const store = useLeaderboardMoviesStore();
 const { items, total, isLoading, isError, currentPage } = storeToRefs(store);
 
+const router = useRouter();
 const showSkeleton = useMinLoading(
   () => isLoading.value && !items.value.length,
 );
@@ -82,6 +84,14 @@ onMounted(() => {
     <StateBlock
       v-else-if="!isLoading && !items.length"
       v-bind="STATE_PRESETS.leaderboardEmpty"
+      :actions="[
+        {
+          label: 'Открыть каталог',
+          icon: 'ph:magnifying-glass',
+          kind: 'primary',
+          onClick: () => router.push('/library/catalog'),
+        },
+      ]"
     />
 
     <template v-else>
@@ -166,15 +176,14 @@ onMounted(() => {
 .lb-list--busy {
   opacity: 0.55;
   pointer-events: none;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--fv-motion-fast) var(--fv-ease);
 }
 
 .lb-list {
   width: 100%;
-  padding: 8px;
+  padding: 10px 8px;
   border-radius: var(--fv-radius-lg);
   background: var(--fv-color-bg-primary);
   box-shadow: var(--fv-shadow-card);
-  border: 1px solid color-mix(in srgb, var(--fv-color-border) 55%, transparent);
 }
 </style>

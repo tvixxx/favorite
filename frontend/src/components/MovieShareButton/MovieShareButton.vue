@@ -81,10 +81,10 @@ async function copyLink(e?: Event) {
   background: color-mix(in srgb, var(--fv-color-bg-secondary) 40%, var(--fv-color-bg-primary));
   color: var(--fv-color-text-secondary);
   font-size: 0.82rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: border-color var(--fv-motion-slow) var(--fv-ease), color var(--fv-motion-slow) var(--fv-ease), background var(--fv-motion-slow) var(--fv-ease),
+    box-shadow var(--fv-motion-slow) var(--fv-ease);
 
   &:hover {
     border-color: color-mix(

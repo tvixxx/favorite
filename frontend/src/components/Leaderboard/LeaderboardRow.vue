@@ -9,11 +9,14 @@ interface Props {
   /** Значение пилюли справа (баллы / средняя оценка) */
   metric: string | number;
   clickable?: boolean;
+  /** Строка текущего пользователя — подсвечена (эталон) */
+  highlighted?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   subtitle: "",
   clickable: false,
+  highlighted: false,
 });
 
 const emit = defineEmits<{ (e: "open"): void }>();
@@ -40,7 +43,10 @@ const medalTone = computed<"gold" | "silver" | "bronze" | "default">(() => {
     :is="clickable ? 'button' : 'div'"
     :type="clickable ? 'button' : undefined"
     class="lb-row"
-    :class="{ 'lb-row--clickable': clickable }"
+    :class="{
+      'lb-row--clickable': clickable,
+      'lb-row--highlighted': highlighted,
+    }"
     @click="clickable && emit('open')"
   >
     <div class="lb-row__left">
@@ -56,10 +62,19 @@ const medalTone = computed<"gold" | "silver" | "bronze" | "default">(() => {
       </div>
     </div>
 
+    <BaseIcon
+      v-if="medalTone !== 'default'"
+      class="lb-row__medal"
+      :class="`lb-row__medal--${medalTone}`"
+      name="ph:medal-fill"
+      :width="22"
+      :height="22"
+    />
+
     <div class="lb-row__metric">
       <BaseIcon
         class="lb-row__metric-star"
-        name="ph:star"
+        name="ph:star-fill"
         :width="16"
         :height="16"
       />
@@ -87,10 +102,22 @@ const medalTone = computed<"gold" | "silver" | "bronze" | "default">(() => {
     border-bottom: none;
   }
 
+  // Своя строка: синяя подложка, место и имя — синим (эталон)
+  &--highlighted {
+    border-radius: 12px;
+    border-bottom-color: transparent;
+    background: var(--fv-color-bg-active-soft);
+
+    .lb-row__place,
+    .lb-row__title {
+      color: var(--fv-color-link);
+    }
+  }
+
   &--clickable {
     cursor: pointer;
     border-radius: var(--fv-radius-sm);
-    transition: background 0.15s ease;
+    transition: background var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       background: var(--fv-color-bg-secondary);
@@ -176,12 +203,42 @@ const medalTone = computed<"gold" | "silver" | "bronze" | "default">(() => {
     border-radius: 999px;
     background: var(--fv-color-accent-soft);
     color: var(--fv-color-accent);
-    font-weight: 600;
+    font-weight: 500;
     font-size: 0.9rem;
+    // Числа в столбце не должны «прыгать» при пагинации
+    font-variant-numeric: tabular-nums;
   }
 
   &__metric-star {
     color: var(--fv-color-warning);
+  }
+
+  // Медаль — мобильная подача эталона; на десктопе метрика показывается пилюлей
+  &__medal {
+    display: none;
+    flex-shrink: 0;
+
+    &--gold {
+      color: #c9a227;
+    }
+
+    &--silver {
+      color: #9aa3ad;
+    }
+
+    &--bronze {
+      color: #b0743a;
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    &__medal {
+      display: block;
+    }
+
+    &__metric {
+      display: none;
+    }
   }
 }
 </style>

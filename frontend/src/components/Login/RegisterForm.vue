@@ -68,6 +68,7 @@ const onFinish = async (values: FormState): Promise<void> => {
     @finish="onFinish"
   >
     <a-form-item name="name">
+      <span class="auth-form__label">Ваше имя</span>
       <a-input
         v-model:value="formState.name"
         placeholder="Ваше имя"
@@ -80,6 +81,7 @@ const onFinish = async (values: FormState): Promise<void> => {
     </a-form-item>
 
     <a-form-item name="email">
+      <span class="auth-form__label">Email</span>
       <a-input v-model:value="formState.email" placeholder="Email" size="large">
         <template #prefix>
           <BaseIcon name="ph:envelope-simple" :width="20" :height="20" />
@@ -88,6 +90,7 @@ const onFinish = async (values: FormState): Promise<void> => {
     </a-form-item>
 
     <a-form-item name="password">
+      <span class="auth-form__label">Пароль</span>
       <a-input-password
         v-model:value="formState.password"
         placeholder="Пароль"

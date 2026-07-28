@@ -1,0 +1,89 @@
+/**
+ * Тултипы и тосты — «инвертированные поверхности» поверх контента.
+ * Спеки new-9: `Тултип - компонент` и `Тосты - компонент`.
+ * Ant рисует свою вёрстку в рантайме (cssinjs), поэтому переопределяем с !important.
+ */
+
+/* ── тултип ───────────────────────────────────────────────────
+   Пузырь всегда контрастен канве: тёмный на светлых темах и наоборот. */
+.ant-tooltip {
+  max-width: 240px;
+  --antd-arrow-background-color: var(--fv-color-bg-inverted);
+
+  .ant-tooltip-inner {
+    min-height: auto;
+    padding: 8px 12px !important;
+    border-radius: 10px !important;
+    background: var(--fv-color-bg-inverted) !important;
+    color: var(--fv-color-text-inverted) !important;
+    font-family: var(--fv-font-ui);
+    font-size: var(--fv-text-p4-size);
+    line-height: var(--fv-text-p4-lh);
+    font-weight: var(--fv-weight-regular);
+    box-shadow: var(--fv-shadow-high) !important;
+  }
+}
+
+/* Спека: на тач-устройствах подсказку не показываем — там нет ховера,
+   и она открывается по тапу, перехватывая нажатие */
+@media (hover: none) {
+  .ant-tooltip {
+    display: none !important;
+  }
+}
+
+/* ── тосты ────────────────────────────────────────────────────
+   Одна инвертированная плашка со статусной иконкой; на мобиле во всю ширину. */
+.ant-message-notice-content {
+  padding: 13px 16px !important;
+  border-radius: var(--fv-radius-sm) !important;
+  background: var(--fv-color-bg-inverted) !important;
+  color: var(--fv-color-text-inverted) !important;
+  box-shadow: var(--fv-shadow-high) !important;
+  max-width: 440px;
+
+  .ant-message-custom-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--fv-font-ui);
+    font-size: var(--fv-text-p4-size);
+    line-height: var(--fv-text-p4-lh);
+    text-align: left;
+  }
+
+  .anticon {
+    flex-shrink: 0;
+    font-size: 22px;
+    margin-inline-end: 0 !important;
+  }
+
+  .ant-message-success .anticon {
+    color: var(--fv-color-positive);
+  }
+
+  .ant-message-error .anticon {
+    color: var(--fv-color-negative);
+  }
+
+  .ant-message-warning .anticon {
+    color: var(--fv-color-warning);
+  }
+
+  .ant-message-info .anticon,
+  .ant-message-loading .anticon {
+    color: var(--fv-color-accent);
+  }
+}
+
+@media (max-width: 767.98px) {
+  .ant-message-notice {
+    padding-inline: 16px;
+  }
+
+  .ant-message-notice-content {
+    display: block;
+    max-width: none;
+    width: 100%;
+  }
+}

@@ -181,10 +181,15 @@ onMounted(async () => {
     <div class="profile-page__content">
       <template v-if="showContent">
         <section class="profile-hero">
-          <div class="profile-hero__avatar">{{ initials }}</div>
+          <div
+            class="profile-hero__avatar"
+            :style="{ background: avatarGradient(userId) }"
+          >
+            {{ initials }}
+          </div>
           <div class="profile-hero__info">
             <p class="profile-hero__eyebrow">Ваш кинопрофиль</p>
-            <h1 class="profile-hero__name" @click="showEditDisplayNameModal">
+            <h1 class="profile-hero__name">
               {{ fullName }}
             </h1>
             <div v-if="user" class="profile-hero__meta">
@@ -580,7 +585,7 @@ onMounted(async () => {
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background var(--fv-motion-fast) var(--fv-ease);
 
     &:hover:not(:disabled) {
       background: color-mix(
@@ -684,7 +689,7 @@ onMounted(async () => {
 
     // Эталон: основа 2/3 + боковая колонка 1/3 (высокий блок не ломает сетку)
     @include mediaDesktopXS {
-      grid-template-columns: 2fr 1fr;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
       gap: 1.25rem;
     }
   }
@@ -699,12 +704,17 @@ onMounted(async () => {
   // Друзья + Достижения в ряд (1fr/1fr), схлопывается в 1 колонку на узких
   &__top-row {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.25rem;
     align-items: stretch;
 
     @include mediaTablet {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    // Карточки не должны раздвигать треки длинным текстом
+    > * {
+      min-width: 0;
     }
   }
 
@@ -720,7 +730,6 @@ onMounted(async () => {
 .profile-hero {
   display: flex;
   align-items: center;
-  text-align: left; // перебиваем глобальный #app { text-align: center }
   gap: 24px;
   margin-top: 2rem;
   padding: 1.75rem 2rem;
@@ -731,9 +740,10 @@ onMounted(async () => {
 
   @include mediaMax(640px) {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 16px;
     padding: 1.5rem;
+    text-align: center;
   }
 
   &__avatar {
@@ -744,10 +754,9 @@ onMounted(async () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #3a6ff0, #1b2a6b);
     color: #fff;
-    font-size: 2rem;
-    font-weight: 500;
+    font-size: 34px;
+    font-weight: 700;
   }
 
   &__info {
@@ -823,7 +832,7 @@ onMounted(async () => {
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       background: color-mix(
@@ -843,7 +852,7 @@ onMounted(async () => {
 .friends-card {
   background: var(--fv-color-bg-primary);
   border-radius: 24px;
-  box-shadow: var(--fv-shadow-low), 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--fv-shadow-low);
   border: 1px solid var(--fv-color-border);
   padding: 1.5rem;
 }
@@ -851,7 +860,7 @@ onMounted(async () => {
 .guest-card {
   background: var(--fv-color-bg-primary);
   border-radius: 24px;
-  box-shadow: var(--fv-shadow-low), 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--fv-shadow-low);
   border: 1px solid var(--fv-color-border);
   padding: 4rem 2.5rem;
   text-align: center;
@@ -911,10 +920,9 @@ onMounted(async () => {
 }
 
 .badges-card {
-  align-self: start;
   background: var(--fv-color-bg-primary);
   border-radius: 24px;
-  box-shadow: var(--fv-shadow-low), 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--fv-shadow-low);
   border: 1px solid var(--fv-color-border);
   padding: 2rem;
 
@@ -1006,8 +1014,8 @@ onMounted(async () => {
     color: var(--fv-color-text-secondary);
     cursor: pointer;
     transition:
-      color 0.15s ease,
-      background 0.15s ease;
+      color var(--fv-motion-fast) var(--fv-ease),
+      background var(--fv-motion-fast) var(--fv-ease);
 
     &--on {
       background: var(--fv-color-bg-primary);
@@ -1020,7 +1028,7 @@ onMounted(async () => {
 .analytics-card {
   background: var(--fv-color-bg-primary);
   border-radius: 24px;
-  box-shadow: var(--fv-shadow-low), 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--fv-shadow-low);
   border: 1px solid var(--fv-color-border);
   padding: 1.5rem;
   display: flex;

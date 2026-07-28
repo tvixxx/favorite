@@ -37,7 +37,8 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
   // Pagination
   const currentPage = ref(1);
-  const pageSize = ref(6);
+  // Порция догрузки: 20 = 4 полных ряда сетки на десктопе (5 карточек в ряд)
+  const pageSize = ref(20);
 
   // Stats
   const stats = ref<UserMoviesStats | null>(null);
@@ -58,11 +59,14 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     return userMovies.value;
   });
 
-  const paginatedUserMovies = computed(() => {
-    const start = (currentPage.value - 1) * pageSize.value;
+  // Догрузка: показываем все порции до текущей включительно («Показать ещё»)
+  const visibleUserMovies = computed(() =>
+    currentList.value.slice(0, currentPage.value * pageSize.value),
+  );
 
-    return currentList.value.slice(start, start + pageSize.value);
-  });
+  const hasMoreUserMovies = computed(
+    () => visibleUserMovies.value.length < currentList.value.length,
+  );
 
   const totalPages = computed(() => {
     return Math.ceil(currentList.value.length / pageSize.value);
@@ -500,7 +504,8 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
     // Computed
     currentList,
-    paginatedUserMovies,
+    visibleUserMovies,
+    hasMoreUserMovies,
     totalPages,
     favoriteUserMovies,
     seeLaterUserMovies,

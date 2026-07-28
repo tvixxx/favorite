@@ -34,10 +34,10 @@ const THEME_META: Record<
   light: { label: "Светлая", canvas: "#ffffff", accent: "#ff0032" },
   dark: { label: "Тёмная", canvas: "#141414", accent: "#177ddc" },
   emerald: { label: "Изумруд", canvas: "#f0fdf4", accent: "#10b981" },
-  corporate: { label: "Корпоратив", canvas: "#f8fafc", accent: "#1e40af" },
-  synthwave: { label: "Синтвейв", canvas: "#1e1e3f", accent: "#ec4899" },
+  corporate: { label: "Деловая", canvas: "#f8fafc", accent: "#1e40af" },
+  synthwave: { label: "Synthwave", canvas: "#1e1e3f", accent: "#ec4899" },
   retro: { label: "Ретро", canvas: "#fef3c7", accent: "#f59e0b" },
-  cyberpunk: { label: "Киберпанк", canvas: "#1e1b4b", accent: "#8b5cf6" },
+  cyberpunk: { label: "Cyberpunk", canvas: "#1e1b4b", accent: "#8b5cf6" },
 };
 
 const themeSwatches = themes.map((value) => ({
@@ -267,7 +267,7 @@ const isFriendsEmptySocial = computed(() => {
 
 .theme-swatches {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(94px, 1fr));
   gap: 10px;
 
   &__item {
@@ -277,7 +277,7 @@ const isFriendsEmptySocial = computed(() => {
     background: var(--fv-color-bg-secondary);
     text-align: center;
     cursor: pointer;
-    transition: border-color 0.15s ease;
+    transition: border-color var(--fv-motion-fast) var(--fv-ease);
 
     &--active {
       border-color: var(--fv-color-accent);
@@ -344,8 +344,8 @@ const isFriendsEmptySocial = computed(() => {
   }
 
   &__friends {
-    padding: 1rem;
-    @include mutedInsetPanel;
+    // Эталон: плитки и кнопки лежат прямо на карточке, серые только сами плитки
+    padding: 0;
   }
 
   &__friends-content {

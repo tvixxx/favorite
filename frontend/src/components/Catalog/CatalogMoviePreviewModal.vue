@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import axios from "axios";
 import { message } from "ant-design-vue";
 
@@ -12,16 +12,22 @@ import { GenreLabels } from "@/components/Genres/constants/genres.constants";
 import { countriesLabelsRu } from "@/constants/countries/production-countries";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { formatAverageRating, formatYear } from "@/utils";
+import { useRouter } from "vue-router";
+
 import { useMainStore } from "@/state/state";
 import { useMoviesStore, useUserMoviesStore } from "@/stores";
 import type { Movie } from "@/stores/movies/types";
 
 const modelValue = defineModel<boolean>({ required: true });
 
+// После добавления тайтла футер меняется на отметку + переход на полную страницу
+const isAdded = ref(false);
+
 const props = defineProps<{
   movieId: string | null;
 }>();
 
+const router = useRouter();
 const mainStore = useMainStore();
 const moviesStore = useMoviesStore();
 const userMoviesStore = useUserMoviesStore();
@@ -56,6 +62,7 @@ watch(
     }
 
     moviesStore.setCurrentMovie(null);
+    isAdded.value = false;
 
     try {
       await moviesStore.getMovieDetail(id);
@@ -81,15 +88,11 @@ async function addToCollection() {
 
   try {
     await userMoviesStore.addUserMovie(userId.value, mid, {});
-    message.success(
-      movie.value?.title
-        ? `«${movie.value.title}» в вашей коллекции`
-        : "Добавлено в коллекцию"
-    );
-    modelValue.value = false;
+    isAdded.value = true;
   } catch (err: unknown) {
     if (axios.isAxiosError(err) && err.response?.status === 409) {
       message.warning("Этот фильм уже есть в вашей коллекции");
+      isAdded.value = true;
 
       return;
     }
@@ -97,10 +100,19 @@ async function addToCollection() {
     message.error("Не удалось добавить в коллекцию");
   }
 }
+
+function openFullPage(): void {
+  if (!props.movieId) {
+    return;
+  }
+
+  modelValue.value = false;
+  void router.push(`/detail/${props.movieId}`);
+}
 </script>
 
 <template>
-  <BaseModal v-model="modelValue" layout="detail">
+  <BaseModal v-model="modelValue" layout="quick">
     <template #title>
       {{ movie?.title ?? "Фильм" }}
     </template>
@@ -325,8 +337,21 @@ async function addToCollection() {
     </template>
 
     <template #footer>
-      <a-button type="primary" size="large" @click="addToCollection">
-        <BaseIcon name="ph:plus-circle" :width="18" :height="18" />
+      <template v-if="isAdded">
+        <span class="catalog-preview__added">
+          <BaseIcon name="ph:check-circle" :width="19" :height="19" />
+          Добавлено в коллекцию
+        </span>
+        <a-button size="large" @click="openFullPage">Открыть страницу</a-button>
+      </template>
+      <a-button
+        v-else
+        type="primary"
+        size="large"
+        class="catalog-preview__cta"
+        @click="addToCollection"
+      >
+        <BaseIcon name="ph:plus-circle" :width="19" :height="19" />
         Добавить в мою коллекцию
       </a-button>
     </template>
@@ -339,40 +364,49 @@ async function addToCollection() {
 .catalog-preview {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 14px;
+}
+
+// Отметка в футере после добавления (эталон m0433)
+.catalog-preview__added {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+  color: var(--fv-color-positive);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+// На мобиле CTA во всю ширину 52px (эталон)
+@media (max-width: 767.98px) {
+  .catalog-preview__cta {
+    width: 100%;
+    height: 52px;
+  }
 }
 
 .catalog-preview__hero {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: 170px 1fr;
   background: var(--fv-color-bg-primary);
-  border-radius: var(--fv-radius-lg);
-  border: 1px solid var(--fv-color-border);
+  border-radius: 18px;
   box-shadow: var(--fv-shadow-low);
   overflow: hidden;
 
-  @include mediaTablet {
-    flex-direction: row;
-    align-items: stretch;
+  // Эталон: ≤900px hero в одну колонку, постер сверху пропорцией 16/9
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
   }
 }
 
 .catalog-preview__poster {
-  width: 100%;
-  min-height: 220px;
-  max-height: 320px;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
   background: var(--fv-color-bg-secondary);
 
-  @include mediaTablet {
-    width: 220px;
-    min-height: 100%;
-    max-height: none;
-    flex-shrink: 0;
-  }
-
-  @include mediaDesktopXS {
-    width: 260px;
+  @media (max-width: 900px) {
+    aspect-ratio: 16 / 9;
   }
 }
 
@@ -385,53 +419,50 @@ async function addToCollection() {
 }
 
 .catalog-preview__main {
-  flex: 1;
-  padding: 1rem 1.25rem 1.25rem;
+  min-width: 0;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 0.62rem;
+
+  @media (max-width: 900px) {
+    padding: 14px 16px;
+  }
 }
 
 .catalog-preview__title {
-  margin: 0;
-  font-size: clamp(1.2rem, 3vw, 1.5rem);
+  margin: 0 0 10px;
+  font-size: 22px;
   font-weight: 500;
-  color: color-mix(in srgb, var(--fv-color-accent) 88%, var(--fv-color-text-primary));
-  line-height: 1.28;
-  letter-spacing: -0.015em;
+  line-height: 1.25;
+  color: var(--fv-color-link);
+
+  @media (max-width: 900px) {
+    font-size: 20px;
+  }
 }
 
 .catalog-preview__tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 7px;
+  margin-bottom: 12px;
 }
 
 .catalog-preview__tag {
-  padding: 0.2rem 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
   border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  background: color-mix(in srgb, var(--fv-color-bg-secondary) 92%, var(--fv-color-bg-primary));
-  color: color-mix(in srgb, var(--fv-color-text-secondary) 92%, var(--fv-color-text-primary));
-  border: 1px solid color-mix(in srgb, var(--fv-color-border) 85%, transparent);
+  font-size: 12px;
+  background: var(--fv-color-bg-secondary);
+  color: var(--fv-color-text-secondary);
 
+  // Тип тайтла в эталоне выделен синим
   &_accent {
-    background: color-mix(
-      in srgb,
-      var(--fv-color-accent) 8%,
-      var(--fv-color-bg-secondary)
-    );
-    color: color-mix(
-      in srgb,
-      var(--fv-color-accent) 82%,
-      var(--fv-color-text-primary)
-    );
-    border-color: color-mix(
-      in srgb,
-      var(--fv-color-accent) 22%,
-      var(--fv-color-border)
-    );
+    background: var(--fv-color-bg-active-soft);
+    color: var(--fv-color-link);
+    font-weight: 500;
   }
 }
 
@@ -442,18 +473,15 @@ async function addToCollection() {
 .catalog-preview__rating-badge {
   display: inline-flex;
   align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.15rem 0.35rem;
-  padding: 0.28rem 0.65rem 0.32rem;
-  border-radius: var(--fv-radius-sm);
-  background: color-mix(in srgb, var(--fv-color-bg-secondary) 70%, var(--fv-color-bg-primary));
-  border: 1px solid color-mix(in srgb, var(--fv-color-border) 88%, transparent);
-  box-shadow: none;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--fv-color-bg-secondary);
 }
 
 .catalog-preview__rating-num {
   font-size: 1.0625rem;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.02em;
   color: var(--fv-color-text-primary);
 }
@@ -482,10 +510,11 @@ async function addToCollection() {
 .catalog-preview__meta {
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
-  margin-top: 0.15rem;
-  padding-top: 0.35rem;
-  border-top: 1px solid color-mix(in srgb, var(--fv-color-border) 65%, transparent);
+  gap: 7px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--fv-color-border);
+  font-size: 13px;
 }
 
 .catalog-preview__meta-line {
@@ -526,20 +555,19 @@ async function addToCollection() {
 }
 
 .catalog-preview__section {
-  padding: 1rem 1.1rem;
-  border-radius: var(--fv-radius-md);
-  background: color-mix(in srgb, var(--fv-color-bg-secondary) 55%, var(--fv-color-bg-primary));
-  border: 1px solid var(--fv-color-border);
+  padding: 13px 15px;
+  border-radius: 14px;
+  background: var(--fv-color-bg-secondary);
 }
 
 .catalog-preview__section-title {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  margin: 0 0 0.65rem;
-  font-size: 0.98rem;
-  font-weight: 600;
-  color: color-mix(in srgb, var(--fv-color-text-primary) 94%, var(--fv-color-text-secondary));
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fv-color-text-primary);
 
   svg {
     flex-shrink: 0;
@@ -561,6 +589,7 @@ async function addToCollection() {
 
 .catalog-preview__desc {
   margin: 0;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--fv-color-text-primary);
   white-space: pre-wrap;
@@ -575,12 +604,12 @@ async function addToCollection() {
 .catalog-preview__actor {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.4rem 0.75rem;
+  gap: 8px;
+  height: 44px;
+  padding: 0 13px 0 7px;
   border-radius: 999px;
   background: var(--fv-color-bg-primary);
-  border: 1px solid var(--fv-color-border);
-  font-size: 0.9rem;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -588,8 +617,9 @@ async function addToCollection() {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: var(--fv-color-bg-secondary);
   color: var(--fv-color-text-secondary);
