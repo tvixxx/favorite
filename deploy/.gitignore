@@ -1,0 +1,5 @@
+# Секреты сервера: пароль базы, JWT, доступы к S3. Только .env.example в git.
+.env
+
+# nginx-конфиг с подставленным доменом, создаёт ./bootstrap.sh certs
+nginx/app-ssl.generated.conf

@@ -1,0 +1,16 @@
+# Зависимости ставятся внутри образа заново: в хостовых лежат esbuild и rollup,
+# собранные под darwin-arm64 — в alpine они не запустятся.
+# .env оставлен намеренно: переменные сборки (VITE_API_URL) передаются
+# аргументами и перебивают его значения.
+node_modules
+dist
+
+.env.local
+.env.*.local
+
+.git
+.gitignore
+Dockerfile
+.dockerignore
+coverage
+*.log
