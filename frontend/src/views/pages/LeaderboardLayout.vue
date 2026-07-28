@@ -75,5 +75,19 @@ const onSegmentChange = (value: string | number): void => {
     width: 100%;
     min-width: 0;
   }
+
+  // Мобильный эталон «Топа»: без карточки и кубка — eyebrow, заголовок и сегмент
+  // лежат прямо на канве
+  @media (max-width: 640px) {
+    :deep(.hero-header__card) {
+      padding: 0;
+      background: none;
+      box-shadow: none;
+    }
+
+    :deep(.hero-header__badge) {
+      display: none;
+    }
+  }
 }
 </style>

@@ -3,15 +3,25 @@ import { computed, ref, watch } from "vue";
 import dayjs, { type Dayjs } from "dayjs";
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import FiltersSheet from "@/components/MoviesFiltersPanel/FiltersSheet.vue";
+import FiltersActiveTags, {
+  type FilterTag,
+} from "@/components/MoviesFiltersPanel/FiltersActiveTags.vue";
 import GenreFilter from "@/components/Genres/GenreFilter.vue";
 import CountryFilter from "@/components/Countries/CountryFilter.vue";
-import DateRangeFilter from "@/components/Filters/DateRangeFilter.vue";
+import PeriodChips from "@/components/Filters/PeriodChips.vue";
 import { useMoviesStore } from "@/stores";
 import type { MoviesFilters } from "@/stores/movies/types";
-import { type Genre } from "@/components/Genres/constants/genres.constants";
+import {
+  type Genre,
+  GenreLabels,
+} from "@/components/Genres/constants/genres.constants";
+import { PRODUCTION_COUNTRIES } from "@/constants/countries/production-countries";
 
 const props = defineProps<{
   lockedActorIds?: string[];
+  /** Сколько тайтлов сейчас показано — число в кнопке «Показать» */
+  resultCount?: number;
 }>();
 
 const moviesStore = useMoviesStore();
@@ -30,6 +40,45 @@ const advancedCount = computed(() => {
 
   return n;
 });
+
+const countryLabel = (code: string): string =>
+  PRODUCTION_COUNTRIES.find((c) => c.code === code)?.label ?? code;
+
+const activeTags = computed<FilterTag[]>(() => {
+  const tags: FilterTag[] = selectedGenres.value.map((genre) => ({
+    key: `genre:${genre}`,
+    label: GenreLabels[genre],
+  }));
+
+  selectedCountries.value.forEach((code) => {
+    tags.push({ key: `country:${code}`, label: countryLabel(code) });
+  });
+
+  const [from, to] = publishDateRange.value ?? [];
+
+  if (from && to) {
+    tags.push({
+      key: "date",
+      label: `${dayjs(from).format("MM.YYYY")} — ${dayjs(to).format("MM.YYYY")}`,
+    });
+  }
+
+  return tags;
+});
+
+const removeTag = (key: string): void => {
+  const [type, value] = key.split(":");
+
+  if (type === "genre") {
+    selectedGenres.value = selectedGenres.value.filter((g) => g !== value);
+  } else if (type === "country") {
+    selectedCountries.value = selectedCountries.value.filter(
+      (c) => c !== value,
+    );
+  } else if (type === "date") {
+    publishDateRange.value = null;
+  }
+};
 
 const buildFilters = (): MoviesFilters => {
   const filters: MoviesFilters = {
@@ -124,9 +173,10 @@ const onSearchEnter = (): void => {
         type="button"
         class="catalog-filters__toggle"
         :class="{ 'catalog-filters__toggle--active': advancedCount > 0 }"
+        aria-label="Фильтры"
         @click="isDrawerOpen = true"
       >
-        <BaseIcon name="ph:sliders-horizontal" :width="18" :height="18" />
+        <BaseIcon name="ph:sliders-horizontal" :width="19" :height="19" />
         <span class="catalog-filters__toggle-text">Фильтры</span>
         <span v-if="advancedCount" class="catalog-filters__badge">{{
           advancedCount
@@ -134,31 +184,22 @@ const onSearchEnter = (): void => {
       </button>
     </div>
 
-    <a-drawer
-      v-model:open="isDrawerOpen"
-      title="Фильтры"
-      placement="right"
-      :width="380"
-    >
-      <div class="catalog-filters__advanced">
-        <GenreFilter v-model="selectedGenres" />
-        <CountryFilter v-model="selectedCountries" />
-        <DateRangeFilter
-          v-model="publishDateRange"
-          label="Дата выхода"
-          :placeholder="['От', 'До']"
-        />
-      </div>
+    <FiltersActiveTags
+      :tags="activeTags"
+      @remove="removeTag"
+      @reset="resetAdvanced"
+    />
 
-      <template #footer>
-        <div class="catalog-filters__drawer-footer">
-          <a-button :disabled="advancedCount === 0" @click="resetAdvanced">
-            Сбросить
-          </a-button>
-          <a-button type="primary" @click="isDrawerOpen = false">Готово</a-button>
-        </div>
-      </template>
-    </a-drawer>
+    <FiltersSheet
+      v-model="isDrawerOpen"
+      :active-count="advancedCount"
+      :result-count="resultCount"
+      @reset="resetAdvanced"
+    >
+      <GenreFilter v-model="selectedGenres" />
+      <CountryFilter v-model="selectedCountries" />
+      <PeriodChips v-model="publishDateRange" />
+    </FiltersSheet>
   </div>
 </template>
 
@@ -170,8 +211,9 @@ const onSearchEnter = (): void => {
   width: 100%;
 
   &__row {
+    // До планшета: поиск и кнопка-иконка в одной строке
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: 10px;
     width: 100%;
 
@@ -193,7 +235,7 @@ const onSearchEnter = (): void => {
     border-radius: var(--fv-radius-sm);
     background: var(--fv-color-bg-primary);
     border: 1.5px solid transparent;
-    transition: border-color 0.15s ease;
+    transition: border-color var(--fv-motion-fast) var(--fv-ease);
 
     @include mediaTablet {
       flex: 0 1 460px;
@@ -221,28 +263,58 @@ const onSearchEnter = (): void => {
     color: var(--fv-color-text-tertiary);
   }
 
-  // Эталон: «Фильтры» — plain иконка + жирный текст, без рамки/фона
+  // Плашка 44px как в эталоне, но белая: канва страницы — mist, и mist-кнопка
+  // на ней пропадала. Применённые фильтры — синяя подложка с рамкой
   &__toggle {
+    position: relative;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 0;
+    flex-shrink: 0;
+    height: 44px;
+    padding: 0 16px;
     border: 0;
-    background: none;
+    border-radius: var(--fv-radius-sm);
+    background: var(--fv-color-bg-primary);
     color: var(--fv-color-text-primary);
     font: inherit;
-    font-size: 0.95rem;
+    font-size: 15px;
     font-weight: 500;
     cursor: pointer;
     white-space: nowrap;
-    transition: color 0.15s ease;
+    transition:
+      background var(--fv-motion-fast) var(--fv-ease),
+      color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
-      color: var(--fv-color-accent);
+      background: var(--fv-color-bg-secondary);
     }
 
     &--active {
-      color: var(--fv-color-accent);
+      background: var(--fv-color-bg-active-soft);
+      color: var(--fv-color-link);
+      box-shadow: inset 0 0 0 1.5px var(--fv-color-accent);
+    }
+
+    // Эталон мобилки: иконка 46×46 в синей подложке справа от поиска
+    @include mediaMax(767.98px) {
+      width: 46px;
+      height: 46px;
+      padding: 0;
+      border-radius: 14px;
+      background: var(--fv-color-bg-active-soft);
+      color: var(--fv-color-link);
+
+      &:hover {
+        background: var(--fv-color-bg-active-soft);
+      }
+    }
+  }
+
+  &__toggle-text {
+    @include mediaMax(767.98px) {
+      display: none;
     }
   }
 
@@ -250,26 +322,27 @@ const onSearchEnter = (): void => {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 18px;
-    height: 18px;
+    min-width: 20px;
+    height: 20px;
     padding: 0 5px;
     border-radius: 999px;
     background: var(--fv-color-brand);
     color: #fff;
-    font-size: 0.72rem;
-    font-weight: 600;
-  }
+    font-size: 12px;
+    font-weight: 700;
 
-  &__advanced {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-  }
-
-  &__drawer-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
+    // На мобильной иконке бейдж синий и вынесен в угол (эталон)
+    @include mediaMax(767.98px) {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0;
+      border: 2px solid var(--fv-color-bg-secondary);
+      background: var(--fv-color-accent);
+      font-size: 11px;
+    }
   }
 }
 </style>

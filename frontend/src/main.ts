@@ -13,6 +13,7 @@ import "driver.js/dist/driver.css";
 import "./styles/driver-overrides.scss";
 import "./styles/forms.scss";
 import "./styles/scroll-lock.scss";
+import "./styles/feedback-overlays.scss";
 import { createPinia } from "pinia";
 
 registerSW({ immediate: true });
@@ -26,6 +27,8 @@ app.use(router);
 
 message.config({
   maxCount: 3,
+  // Спека тостов: 4с на обычный тост (у ant по умолчанию 3с)
+  duration: 4,
 });
 
 app.mount("#app");

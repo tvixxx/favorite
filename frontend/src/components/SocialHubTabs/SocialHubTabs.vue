@@ -76,23 +76,24 @@ const goFriends = (): void => {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    height: 40px;
-    padding: 0 18px;
+    // Эталон .chip: 36px, серая заливка в покое
+    height: 36px;
+    padding: 0 16px;
     border-radius: 999px;
-    border: 1px solid var(--fv-color-border);
-    background: var(--fv-color-bg-primary);
+    border: 1px solid transparent;
+    background: var(--fv-color-bg-secondary);
     color: var(--fv-color-text-primary);
     font: inherit;
-    font-size: 0.9rem;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition:
-      background 0.15s ease,
-      color 0.15s ease,
-      border-color 0.15s ease;
+      background var(--fv-motion-fast) var(--fv-ease),
+      color var(--fv-motion-fast) var(--fv-ease),
+      border-color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
-      background: var(--fv-color-bg-secondary);
+      background: var(--fv-color-bg-hover);
     }
 
     &:focus {

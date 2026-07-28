@@ -97,6 +97,7 @@ const go = (to: string): void => {
     <button
       v-for="tab in leftTabs"
       :key="tab.key"
+      :data-tour="`tab-${tab.key}`"
       type="button"
       class="mobile-tabbar__tab"
       :class="{ 'mobile-tabbar__tab--active': activeKey === tab.key }"
@@ -123,12 +124,13 @@ const go = (to: string): void => {
       aria-label="Добавить в коллекцию"
       @click="go('/create')"
     >
-      <BaseIcon name="ph:plus" :width="26" :height="26" />
+      <BaseIcon name="ph:plus" :width="28" :height="28" />
     </button>
 
     <button
       v-for="tab in rightTabs"
       :key="tab.key"
+      :data-tour="`tab-${tab.key}`"
       type="button"
       class="mobile-tabbar__tab"
       :class="{ 'mobile-tabbar__tab--active': activeKey === tab.key }"
@@ -159,10 +161,10 @@ const go = (to: string): void => {
   right: 0;
   bottom: 0;
   z-index: 90;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-around;
-  height: 64px;
-  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  height: calc(82px + env(safe-area-inset-bottom, 0px));
+  padding: 10px 8px env(safe-area-inset-bottom, 0px);
   background: var(--fv-color-bg-primary);
   border-top: 1px solid var(--fv-color-border);
 
@@ -176,7 +178,7 @@ const go = (to: string): void => {
     flex: 1;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 3px;
     padding: 0;
     border: 0;
     background: none;
@@ -184,7 +186,7 @@ const go = (to: string): void => {
     font-size: 11px;
     color: var(--fv-color-text-tertiary);
     cursor: pointer;
-    transition: color 0.15s ease;
+    transition: color var(--fv-motion-fast) var(--fv-ease);
 
     &--active {
       color: var(--fv-color-brand);
@@ -220,9 +222,9 @@ const go = (to: string): void => {
     flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    width: 52px;
-    height: 52px;
-    margin-top: -16px;
+    width: 56px;
+    height: 56px;
+    margin-top: -18px;
     border: 0;
     border-radius: 999px;
     background: var(--fv-color-brand);
@@ -230,8 +232,8 @@ const go = (to: string): void => {
     cursor: pointer;
     box-shadow: var(--fv-shadow-brand-md);
     transition:
-      transform 0.15s ease,
-      background 0.15s ease;
+      transform var(--fv-motion-fast) var(--fv-ease),
+      background var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       background: var(--fv-color-brand-hover);

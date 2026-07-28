@@ -309,8 +309,13 @@ onMounted(async () => {
               <span class="chat-page__header-username">
                 {{ selectedConversation?.otherUser.fullName }}
               </span>
-              <span class="chat-page__header-status">
-                {{ isOtherUserOnline ? "онлайн" : "не в сети" }}
+              <span
+                class="chat-page__header-status"
+                :class="{
+                  'chat-page__header-status--online': isOtherUserOnline,
+                }"
+              >
+                {{ isOtherUserOnline ? "в сети" : "не в сети" }}
               </span>
             </div>
           </div>
@@ -416,6 +421,8 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
+@use "@/styles/scrollbar" as *;
+
 .chat-page-shell {
   // контейнер как на Друзьях — чтобы отступы/позиция чипа совпадали (нет скачка)
   max-width: 1200px;
@@ -431,16 +438,18 @@ onMounted(async () => {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 1rem;
+  grid-template-columns: 300px 1fr;
+  gap: 0;
+  overflow: hidden;
+  border-radius: var(--fv-radius-lg);
+  background: var(--fv-color-bg-primary);
+  box-shadow: var(--fv-shadow-low);
 
   &__sidebar {
-    background: var(--fv-color-bg-primary);
-    border-radius: 16px;
-    border: 1px solid var(--fv-color-border);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    border-right: 1px solid var(--fv-color-border);
   }
 
   &__sidebar-header {
@@ -448,20 +457,27 @@ onMounted(async () => {
     flex-direction: column;
     align-items: stretch;
     gap: 0.75rem;
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--fv-color-border);
+    padding: 20px 18px 14px;
   }
 
   &__title {
-    font-size: 1.5rem;
+    font-size: var(--fv-text-h4-size);
+    line-height: var(--fv-text-h4-lh);
     font-weight: 500;
     margin: 0;
+  }
+
+  // В сети — зелёным (эталон)
+  &__header-status--online {
+    color: var(--fv-color-positive);
   }
 
   &__conversations {
     flex: 1;
     min-width: 0;
     overflow-y: auto;
+
+    @include customScrollbar();
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -494,9 +510,6 @@ onMounted(async () => {
   }
 
   &__main {
-    background: var(--fv-color-bg-primary);
-    border-radius: 16px;
-    border: 1px solid var(--fv-color-border);
     display: flex;
     flex-direction: column;
     min-width: 0;
@@ -530,7 +543,7 @@ onMounted(async () => {
     background: var(--fv-color-bg-secondary);
     color: var(--fv-color-text-primary);
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       background: color-mix(
@@ -553,11 +566,12 @@ onMounted(async () => {
   }
 
   &__header-username {
-    font-weight: 600;
+    font-weight: 500;
     font-size: 1.125rem;
   }
 
   &__header-status {
+
     font-size: 0.875rem;
     color: var(--fv-color-text-secondary);
   }
@@ -567,6 +581,8 @@ onMounted(async () => {
     min-width: 0;
     overflow-y: auto;
     overflow-x: hidden;
+
+    @include customScrollbar();
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
@@ -614,7 +630,7 @@ onMounted(async () => {
     border: 0;
     border-radius: 50%;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background var(--fv-motion-fast) var(--fv-ease);
   }
 
   &__attach {
@@ -692,7 +708,7 @@ onMounted(async () => {
   text-align: left;
   font: inherit;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background var(--fv-motion-fast) var(--fv-ease);
 
   &:hover {
     background: var(--fv-color-bg-secondary);
@@ -724,7 +740,7 @@ onMounted(async () => {
 
   &__username {
     min-width: 0;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--fv-color-text-primary);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -755,7 +771,7 @@ onMounted(async () => {
     color: var(--fv-color-text-secondary);
 
     &--unread {
-      font-weight: 600;
+      font-weight: 500;
       color: var(--fv-color-text-primary);
     }
   }
@@ -772,7 +788,7 @@ onMounted(async () => {
     background: var(--fv-color-brand);
     color: #fff;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
   }
 }
 
@@ -786,7 +802,7 @@ onMounted(async () => {
   height: 48px;
   border-radius: 50%;
   color: #fff;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 1.1rem;
 
   &--sm {

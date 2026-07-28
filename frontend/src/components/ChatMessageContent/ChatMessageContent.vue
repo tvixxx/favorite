@@ -135,7 +135,6 @@ function parseDetailLink(
     align-self: flex-start;
     background: var(--fv-color-bg-primary);
     color: var(--fv-color-text-primary);
-    border: 1px solid color-mix(in srgb, var(--fv-color-border) 60%, transparent);
     border-radius: 16px 16px 16px 4px;
     box-shadow: var(--fv-shadow-low);
   }
@@ -144,7 +143,7 @@ function parseDetailLink(
     color: inherit;
     text-decoration: underline;
     text-underline-offset: 2px;
-    font-weight: 600;
+    font-weight: 500;
   }
 }
 </style>

@@ -3,7 +3,9 @@ import { onMounted, reactive, ref, computed } from "vue";
 import { useRouter } from "vue-router";
 
 import { message, type FormInstance } from "ant-design-vue";
+import WatchStatusSelect from "@/components/WatchStatusSelect/WatchStatusSelect.vue";
 import { useMoviesStore } from "@/stores/movies/moviesStore";
+import { WatchStatus } from "@/stores";
 import { useUserMoviesStore } from "@/stores";
 import { useActorsStore } from "@/stores/actors/actorsStore";
 import { useMainStore } from "@/state/state";
@@ -94,15 +96,39 @@ const countrySelectOptions: SelectProps["options"] = PRODUCTION_COUNTRIES.map(
   })
 );
 
-const genreFormOptions: SelectProps["options"] = GenreValues.map((g) => ({
+const GENRES_VISIBLE_LIMIT = 6;
+
+const genreOptions = GenreValues.map((g) => ({
   label: GenreLabels[g],
   value: g,
 }));
 
-const filterCountryOption = (input: string, option: { label?: string }) =>
-  (option?.label ?? "").toLowerCase().includes(input.toLowerCase());
+const showAllGenres = ref(false);
 
-const filterGenreFormOption = (input: string, option: { label?: string }) =>
+// Статус относится к записи пользователя, а не к самому фильму
+const watchStatus = ref<WatchStatus>(WatchStatus.NOT_STARTED);
+
+// Пока список не раскрыт, показываем первые шесть + выбранные (эталон)
+const visibleGenres = computed(() =>
+  showAllGenres.value
+    ? genreOptions
+    : genreOptions.filter(
+        (option, index) =>
+          index < GENRES_VISIBLE_LIMIT || formData.genres.includes(option.value),
+      ),
+);
+
+const hiddenGenresCount = computed(
+  () => genreOptions.length - visibleGenres.value.length,
+);
+
+const toggleGenre = (value: Genre): void => {
+  formData.genres = formData.genres.includes(value)
+    ? formData.genres.filter((g) => g !== value)
+    : [...formData.genres, value];
+};
+
+const filterCountryOption = (input: string, option: { label?: string }) =>
   (option?.label ?? "").toLowerCase().includes(input.toLowerCase());
 
 const cancel = (): void => {
@@ -143,6 +169,7 @@ const addNewMovie = async () => {
         isFavorite: formData.isFavorite,
         seeLater: formData.seeLater,
         personalRate: formData.personalRate || null,
+        watchStatus: watchStatus.value,
         currentSeason: formData.currentSeason ?? null,
         currentEpisode: formData.currentEpisode ?? null,
       });
@@ -256,6 +283,12 @@ const addNewMovie = async () => {
                   />
                 </a-form-item>
 
+                <a-form-item label="Статус">
+                  <WatchStatusSelect v-model="watchStatus" />
+                </a-form-item>
+              </div>
+
+              <div class="cm-row1">
                 <a-form-item
                   label="Страны"
                   name="countryCodes"
@@ -294,25 +327,57 @@ const addNewMovie = async () => {
                   },
                 ]"
               >
-                <a-select
-                  v-model:value="formData.genres"
-                  mode="multiple"
-                  :filter-option="filterGenreFormOption"
-                  :options="genreFormOptions"
-                  placeholder="Выберите жанры"
-                  size="large"
-                  show-search
-                />
+                <div class="cm-pills">
+                  <button
+                    v-for="option in visibleGenres"
+                    :key="option.value"
+                    type="button"
+                    class="cm-pill"
+                    :class="{
+                      'cm-pill--on': formData.genres.includes(option.value),
+                    }"
+                    @click="toggleGenre(option.value)"
+                  >
+                    {{ option.label }}
+                  </button>
+
+                  <button
+                    v-if="hiddenGenresCount"
+                    type="button"
+                    class="cm-pill cm-pill--more"
+                    @click="showAllGenres = true"
+                  >
+                    <BaseIcon name="ph:plus" :width="15" :height="15" />
+                    Ещё
+                  </button>
+                </div>
+              </a-form-item>
+
+              <a-form-item label="Тип">
+                <div class="cm-pills" role="group">
+                  <button
+                    type="button"
+                    class="cm-pill"
+                    :class="{ 'cm-pill--on': !formData.isSerial }"
+                    @click="formData.isSerial = false"
+                  >
+                    Фильм
+                  </button>
+                  <button
+                    type="button"
+                    class="cm-pill"
+                    :class="{ 'cm-pill--on': formData.isSerial }"
+                    @click="formData.isSerial = true"
+                  >
+                    Сериал
+                  </button>
+                </div>
               </a-form-item>
 
               <div class="cm-toggles">
                 <label class="cm-toggle">
                   <a-switch v-model:checked="formData.seeLater" />
                   <span>Смотреть позже</span>
-                </label>
-                <label class="cm-toggle">
-                  <a-switch v-model:checked="formData.isSerial" />
-                  <span>Сериал</span>
                 </label>
               </div>
 
@@ -451,8 +516,6 @@ const addNewMovie = async () => {
 
 .create-movie {
   @include pageShell(2rem);
-  // #app задаёт глобальный text-align:center — выравниваем содержимое влево
-  text-align: left;
 
   &__wrap {
     max-width: 1200px;
@@ -471,33 +534,41 @@ const addNewMovie = async () => {
 
   &__card {
     background: var(--fv-color-bg-primary);
-    border: 1px solid var(--fv-color-border);
+    // место под закреплённую кнопку на мобиле
+    @include mediaMax(767.98px) {
+      margin-bottom: 84px;
+    }
+
+    // 320–400px: карточке нужен более скромный паддинг, иначе полям тесно
+    @media (max-width: 400px) {
+      padding: 16px;
+    }
+
     border-radius: var(--fv-radius-lg);
     box-shadow: var(--fv-shadow-low);
-    padding: 2rem;
+    padding: 22px;
 
     @include mediaTablet {
-      padding: 2.5rem;
+      padding: 32px;
     }
   }
 
   &__eyebrow {
     margin: 0 0 6px;
     font-family: var(--fv-font-display);
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
+    font-size: var(--fv-text-p4-size);
+    font-weight: 700;
+    letter-spacing: var(--fv-ls-caps);
     text-transform: uppercase;
     color: var(--fv-color-text-tertiary);
   }
 
   &__title {
     margin: 0 0 1.75rem;
-    font-family: var(--fv-font-display);
-    font-size: clamp(1.4rem, 3vw, 1.65rem);
-    font-weight: 600;
-    line-height: 1.2;
-    letter-spacing: -0.01em;
+    font-family: var(--fv-font-ui);
+    font-size: var(--fv-text-h3-size);
+    line-height: var(--fv-text-h3-lh);
+    font-weight: 500;
     color: var(--fv-color-text-primary);
   }
 }
@@ -522,17 +593,70 @@ const addNewMovie = async () => {
 }
 
 /* два поля в ряд (Дата + Страны, сериал-поля) */
+.cm-row1 {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
 .cm-row2 {
   display: grid;
   grid-template-columns: 1fr;
   gap: 0 16px;
 
-  @include mediaMobileXL {
+  @media (min-width: 520px) {
     grid-template-columns: 1fr 1fr;
   }
 }
 
 /* инлайн-тумблеры */
+/* Пилюли выбора (эталон): активная — тёмная ink, «Ещё» — пунктирная */
+.cm-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cm-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+
+  @media (max-width: 400px) {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+  border: 1px solid var(--fv-color-border);
+  border-radius: 999px;
+  background: var(--fv-color-bg-primary);
+  color: var(--fv-color-text-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--fv-motion-fast) var(--fv-ease),
+    color var(--fv-motion-fast) var(--fv-ease);
+
+  &:hover:not(&--on) {
+    background: var(--fv-color-bg-secondary);
+  }
+
+  &--on {
+    background: var(--fv-color-text-primary);
+    border-color: transparent;
+    color: var(--fv-color-bg-primary);
+  }
+
+  &--more {
+    border-style: dashed;
+    background: transparent;
+    color: var(--fv-color-text-secondary);
+  }
+}
+
 .cm-toggles {
   display: flex;
   flex-wrap: wrap;
@@ -558,6 +682,10 @@ const addNewMovie = async () => {
   order: -1; // на мобиле превью сверху
   margin-bottom: 8px;
 
+  @media (max-width: 400px) {
+    gap: 12px;
+  }
+
   @include mediaDesktopXS {
     display: block;
     order: 0;
@@ -577,6 +705,10 @@ const addNewMovie = async () => {
   flex: none;
   aspect-ratio: 2 / 3;
   width: 96px; // компактный постер на мобиле (эталон)
+
+  @media (max-width: 400px) {
+    width: 84px;
+  }
   border-radius: var(--fv-radius-md);
   overflow: hidden;
   box-shadow: var(--fv-shadow-low);
@@ -646,7 +778,7 @@ const addNewMovie = async () => {
     background: var(--fv-color-accent);
     color: #fff;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 500;
     line-height: 1.4;
 
     @include mediaDesktopXS {
@@ -673,6 +805,10 @@ const addNewMovie = async () => {
 .cm-stars {
   font-size: 22px;
   color: var(--fv-color-warning, #fac031);
+
+  @media (max-width: 400px) {
+    font-size: 17px;
+  }
 
   @include mediaDesktopXS {
     font-size: 26px;
@@ -729,6 +865,27 @@ const addNewMovie = async () => {
     padding: 0 22px;
     border-radius: var(--fv-radius-sm);
     font-weight: 500;
+  }
+
+  // Эталон мобилки: кнопка сохранения закреплена снизу
+  @include mediaMax(767.98px) {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    margin-top: 0;
+    padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in srgb, var(--fv-color-bg-primary) 94%, transparent);
+    backdrop-filter: blur(10px);
+
+    &__cancel {
+      flex: 1;
+    }
+
+    &__submit {
+      flex: 2;
+    }
   }
 
   &__submit {

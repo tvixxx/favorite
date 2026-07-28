@@ -17,7 +17,7 @@ import { useMainStore } from "@/state/state";
 import { useUserListsStore } from "@/stores";
 import { DEFAULT_LIST_COLOR, LIST_COLOR_SWATCHES } from "@/constants/listColors";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
-import { movieCardMeta, movieCardTitle } from "@/utils";
+import { movieCardMeta, movieCardTitle, PLURAL, pluralize } from "@/utils";
 import type { UserListItem, UserListSummary } from "@/stores/userLists/types";
 
 const router = useRouter();
@@ -63,21 +63,8 @@ const setLabelFilter = (label: string): void => {
   activeLabelFilter.value = activeLabelFilter.value === label ? null : label;
 };
 
-const formatTitlesCount = (count: number): string => {
-  const abs = Math.abs(count);
-  const mod10 = abs % 10;
-  const mod100 = abs % 100;
-
-  if (mod10 === 1 && mod100 !== 11) {
-    return `${count} тайтл`;
-  }
-
-  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) {
-    return `${count} тайтла`;
-  }
-
-  return `${count} тайтлов`;
-};
+const formatTitlesCount = (count: number): string =>
+  pluralize(count, PLURAL.title);
 
 /* ---------------------------------------------------------- Загрузка */
 const loadLists = async (): Promise<void> => {
@@ -483,8 +470,8 @@ onMounted(() => {
             <BaseIcon
               name="ph:bookmarks-simple-fill"
               class="list-form__preview-icon"
-              :width="24"
-              :height="24"
+              :width="32"
+              :height="32"
             />
             <span class="list-form__preview-name">
               {{ formName.trim() || "Новый список" }}
@@ -682,7 +669,6 @@ onMounted(() => {
   @include pageContentContainer;
   align-items: stretch; // содержимое во всю ширину контейнера, не по центру
   gap: 1.25rem;
-  text-align: left; // перебиваем глобальный #app { text-align: center }
 
   &__labels-bar {
     display: flex;
@@ -704,9 +690,9 @@ onMounted(() => {
     font-weight: 500;
     cursor: pointer;
     transition:
-      background 0.15s ease,
-      color 0.15s ease,
-      border-color 0.15s ease;
+      background var(--fv-motion-fast) var(--fv-ease),
+      color var(--fv-motion-fast) var(--fv-ease),
+      border-color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       border-color: var(--fv-color-accent);
@@ -760,8 +746,8 @@ onMounted(() => {
   overflow: hidden;
   cursor: pointer;
   transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
+    transform var(--fv-motion-base) var(--fv-ease),
+    box-shadow var(--fv-motion-base) var(--fv-ease);
 
   &:hover {
     transform: translateY(-4px);
@@ -801,7 +787,7 @@ onMounted(() => {
     background: rgba(255, 255, 255, 0.92);
     color: rgba(0, 0, 0, 0.72);
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   &__body {
@@ -835,7 +821,7 @@ onMounted(() => {
     padding-top: 6px;
     color: var(--fv-color-accent);
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   /* Карточка «Создать список» — пунктирная */
@@ -887,7 +873,8 @@ onMounted(() => {
 .list-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  padding-bottom: 8px;
 
   &__preview {
     position: relative;
@@ -902,17 +889,17 @@ onMounted(() => {
 
   &__preview-icon {
     position: absolute;
-    top: 14px;
+    top: 12px;
     right: 14px;
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.35);
   }
 
   // Бледно-красная плашка-название — компактная (эталон)
   &__preview-name {
-    padding: 4px 10px;
+    padding: 3px 12px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.22);
-    font-size: 0.8rem;
+    font-size: 13px;
     font-weight: 500;
     line-height: 1.2;
     word-break: break-word;
@@ -921,13 +908,14 @@ onMounted(() => {
   &__field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
   }
 
+  // Эталон .lbl: 14/500 серым
   &__label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--fv-color-text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fv-color-text-secondary);
   }
 
   &__label-hint {
@@ -938,31 +926,30 @@ onMounted(() => {
   &__swatches {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
   }
 
   &__swatch {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 46px;
-    height: 46px;
+    box-sizing: border-box;
+    width: 40px;
+    height: 40px;
     border-radius: var(--fv-radius-sm);
-    border: 0;
+    border: 2px solid transparent;
     color: #fff;
     cursor: pointer;
     transition:
-      transform 0.15s ease,
-      box-shadow 0.15s ease;
+      transform var(--fv-motion-fast) var(--fv-ease),
+      box-shadow var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       transform: scale(1.06);
     }
 
     &--active {
-      box-shadow:
-        0 0 0 2px var(--fv-color-bg-primary),
-        0 0 0 4px var(--fv-color-text-primary);
+      border-color: var(--fv-color-text-primary);
     }
   }
 }
@@ -1004,7 +991,7 @@ onMounted(() => {
     backdrop-filter: blur(4px);
     color: #fff;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       background: rgba(255, 255, 255, 0.38);
@@ -1065,8 +1052,8 @@ onMounted(() => {
     font-weight: 500;
     cursor: pointer;
     transition:
-      background 0.15s ease,
-      opacity 0.15s ease;
+      background var(--fv-motion-fast) var(--fv-ease),
+      opacity var(--fv-motion-fast) var(--fv-ease);
 
     &:disabled {
       opacity: 0.6;

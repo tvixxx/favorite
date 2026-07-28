@@ -18,3 +18,123 @@
   position: relative;
   z-index: 3;
 }
+
+/* ============================================================
+   Поповер тура (класс fv-tour задаётся в createOnboardingDriver).
+   driver.js рисует свою вёрстку — приводим её к эталону:
+   340px, r18, shadow-high, заголовок mts-h4, счётчик слева,
+   кнопки 38px, крестик — круглая ghost 30px.
+   ============================================================ */
+.driver-popover.fv-tour {
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  padding: 22px;
+  border-radius: 18px;
+  background: var(--fv-color-bg-primary);
+  box-shadow: var(--fv-shadow-high);
+  color: var(--fv-color-text-primary);
+  font-family: var(--fv-font-ui);
+
+  .driver-popover-title {
+    margin-bottom: 8px;
+    padding-right: 34px;
+    font-family: var(--fv-font-ui);
+    font-size: var(--fv-text-h4-size);
+    line-height: var(--fv-text-h4-lh);
+    font-weight: 500;
+    color: var(--fv-color-text-primary);
+  }
+
+  .driver-popover-description {
+    margin-bottom: 20px;
+    font-size: var(--fv-text-p3-size);
+    line-height: var(--fv-text-p3-lh);
+    color: var(--fv-color-text-secondary);
+  }
+
+  .driver-popover-close-btn {
+    top: 18px;
+    right: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-secondary);
+    font-size: 16px;
+    opacity: 1;
+    transition: color var(--fv-motion-fast) var(--fv-ease);
+
+    &:hover {
+      color: var(--fv-color-text-primary);
+    }
+  }
+
+  .driver-popover-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 0;
+  }
+
+  // Счётчик шагов эталон держит слева, кнопки — справа
+  .driver-popover-progress-text {
+    order: -1;
+    font-size: var(--fv-text-caption-size);
+    line-height: var(--fv-text-caption-lh);
+    color: var(--fv-color-text-tertiary);
+  }
+
+  .driver-popover-navigation-btns {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .driver-popover-prev-btn,
+  .driver-popover-next-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: var(--fv-radius-control);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    text-shadow: none;
+    cursor: pointer;
+  }
+
+  .driver-popover-prev-btn {
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-primary);
+
+    &:hover {
+      background: var(--fv-color-bg-hover);
+    }
+  }
+
+  .driver-popover-next-btn {
+    background: var(--fv-color-brand);
+    color: #fff;
+
+    &:hover {
+      background: var(--fv-color-brand-hover);
+    }
+  }
+
+  .driver-popover-arrow {
+    display: none;
+  }
+}
+
+/* Подсветка шага: белая обводка 2px поверх маски (эталон) */
+.driver-active-element {
+  outline: 2px solid #fff;
+  outline-offset: 0;
+  border-radius: 14px;
+}

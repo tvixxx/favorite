@@ -71,7 +71,26 @@ export const themeConfigs = {
   },
 } as const;
 
-export const themeConfig = computed(() => themeConfigs[currentTheme.value]);
+/* Эталон различает радиусы: кнопки/чипы — 8px (--radius-control), поля — 12px.
+   Ant задаёт общий borderRadius на все контролы, поэтому кнопкам нужен точечный override. */
+const CONTROL_COMPONENTS = {
+  Button: { borderRadius: 8, borderRadiusLG: 8, borderRadiusSM: 8 },
+};
+
+/* Выпадашки ant рендерятся в body. Наши оверлеи (модалка, шит фильтров) стоят
+   на 9999, поэтому базовый z-index поповеров нужно поднять выше — иначе список
+   селекта прячется под затемнением. */
+const POPUP_TOKEN = { zIndexPopupBase: 10050 };
+
+export const themeConfig = computed(() => {
+  const config = themeConfigs[currentTheme.value];
+
+  return {
+    ...config,
+    token: { ...config.token, ...POPUP_TOKEN },
+    components: CONTROL_COMPONENTS,
+  };
+});
 
 export type Theme = (typeof themes)[number];
 

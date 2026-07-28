@@ -1,47 +1,58 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { Badge } from '@/stores/badges';
+import { computed } from "vue";
+
+import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import type { Badge } from "@/stores/badges";
 
 const props = defineProps<{
   badge: Badge;
 }>();
 
-const tierColor = computed(() => {
-  const colors = {
-    bronze: '#CD7F32',
-    silver: '#C0C0C0',
-    gold: '#FFD700',
-    platinum: '#E5E4E2',
-  };
+const progressPercent = computed(() => {
+  const { currentValue, requirement } = props.badge;
 
-  return colors[props.badge.tier];
+  if (!requirement) {
+    return 0;
+  }
+
+  return Math.min(100, Math.round((currentValue / requirement) * 100));
 });
+
+const hasProgress = computed(
+  () => !props.badge.isUnlocked && props.badge.progress !== undefined,
+);
 </script>
 
 <template>
-  <a-tooltip :title="badge.description" placement="top">
-    <div
-      class="badge-item"
-      :class="{ 'badge-item--locked': !badge.isUnlocked }"
-    >
-      <div class="badge-item__icon" :style="{ borderColor: tierColor }">
-        {{ badge.icon }}
-      </div>
+  <a-tooltip
+    :title="badge.description"
+    placement="top"
+    :mouse-enter-delay="0.4"
+    :mouse-leave-delay="0.1"
+  >
+    <div class="badge-item" :class="{ 'badge-item--locked': !badge.isUnlocked }">
+      <span class="badge-item__icon">
+        <BaseIcon
+          :name="badge.isUnlocked ? 'ph:film-slate-fill' : 'ph:lock-simple'"
+          :width="22"
+          :height="22"
+        />
+      </span>
+
       <div class="badge-item__info">
         <div class="badge-item__title">{{ badge.title }}</div>
         <div v-if="badge.description" class="badge-item__desc">
           {{ badge.description }}
+          <template v-if="hasProgress">
+            · {{ badge.currentValue }} из {{ badge.requirement }}
+          </template>
         </div>
-        <div v-if="!badge.isUnlocked && badge.progress !== undefined" class="badge-item__progress">
-          <a-progress
-            :percent="badge.progress"
-            :show-info="false"
-            size="small"
-            :stroke-color="tierColor"
-          />
-          <span class="badge-item__progress-text">
-            {{ badge.currentValue }} / {{ badge.requirement }}
-          </span>
+
+        <div v-if="hasProgress" class="badge-item__bar">
+          <span
+            class="badge-item__bar-fill"
+            :style="{ width: `${progressPercent}%` }"
+          ></span>
         </div>
       </div>
     </div>
@@ -52,59 +63,65 @@ const tierColor = computed(() => {
 .badge-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 12px;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--fv-radius-md);
   background: var(--fv-color-bg-secondary);
-  border: 1px solid var(--fv-color-border);
-  transition: all 0.2s;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
 
   &--locked {
-    opacity: 0.65;
+    .badge-item__icon {
+      background: var(--fv-color-bg-primary);
+      border: 1px solid var(--fv-color-border);
+      color: var(--fv-color-text-tertiary);
+    }
   }
 
+  // Открытая ачивка — иконка на тёплой подложке (эталон), а не эмодзи в рамке тира
   &__icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    border: 2px solid;
-    background: var(--fv-color-bg-primary);
+    flex-shrink: 0;
+    box-sizing: border-box;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: var(--fv-color-warning-soft);
+    color: #8c6d07;
   }
 
   &__info {
     flex: 1;
+    min-width: 0;
+    // Длинные названия ачивок переносим, а не растягиваем карточку
+    overflow-wrap: anywhere;
   }
 
   &__title {
-    font-weight: 600;
+    font-weight: 500;
     color: var(--fv-color-text-primary);
   }
 
   &__desc {
     margin-top: 2px;
-    font-size: 0.82rem;
+    font-size: 13.5px;
+    line-height: 1.45;
     color: var(--fv-color-text-secondary);
   }
 
-  &__progress {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    margin-top: 0.4rem;
+  &__bar {
+    margin-top: 8px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--fv-color-bg-primary);
+    overflow: hidden;
   }
 
-  &__progress-text {
-    font-size: 0.75rem;
-    color: var(--fv-color-text-secondary);
+  &__bar-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--fv-color-accent);
   }
 }
 </style>

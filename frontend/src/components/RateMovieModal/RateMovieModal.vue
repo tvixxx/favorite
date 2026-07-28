@@ -146,7 +146,9 @@ const save = async (): Promise<void> => {
     </template>
 
     <template #footer>
-      <a-button @click="open = false">Отмена</a-button>
+      <a-button class="rate-modal__cancel" @click="open = false">
+        Отмена
+      </a-button>
       <a-button
         type="primary"
         :disabled="!canSave"
@@ -163,6 +165,15 @@ const save = async (): Promise<void> => {
 <style lang="scss">
 /* Не scoped: содержимое BaseModal телепортируется в body */
 .rate-modal {
+  // Пропорции кнопок футера как в эталоне
+  .modal__footer .ant-btn {
+    flex: 2;
+  }
+
+  .modal__footer .rate-modal__cancel {
+    flex: 1;
+  }
+
   &__movie {
     display: flex;
     gap: 14px;
@@ -190,7 +201,7 @@ const save = async (): Promise<void> => {
   }
 
   &__movie-title {
-    font-weight: 600;
+    font-weight: 500;
     color: var(--fv-color-text-primary);
   }
 
@@ -203,6 +214,7 @@ const save = async (): Promise<void> => {
     display: block;
     margin-bottom: 8px;
     font-size: 14px;
+    font-weight: 500;
     color: var(--fv-color-text-secondary);
     text-align: left;
   }
@@ -219,22 +231,22 @@ const save = async (): Promise<void> => {
 
     .ant-rate {
       color: var(--fv-color-warning);
-      font-size: 22px;
+      font-size: 30px;
     }
   }
 
   &__score {
-    font-family: var(--fv-font-display);
-    font-size: 22px;
+    font-family: var(--fv-font-ui);
+    font-size: 24px;
     font-weight: 700;
-    color: var(--fv-color-accent);
+    color: var(--fv-color-text-primary);
   }
 
   &__score-max {
     font-family: var(--fv-font-ui);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 400;
-    color: var(--fv-color-text-tertiary);
+    color: var(--fv-color-text-secondary);
   }
 }
 </style>

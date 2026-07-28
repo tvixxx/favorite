@@ -125,7 +125,6 @@ onMounted(() => {
   font-family: var(--fv-font-ui);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
   color: var(--fv-color-text-primary);
   width: 100%;
   height: 100%;
@@ -139,22 +138,39 @@ onMounted(() => {
   min-height: 60vh;
 }
 
+/* Канва темы должна доходить до html: иначе при оверскролле (в том числе
+   инерционном на macOS) из-под контента проступает белый фон браузера */
+html,
+body {
+  background: var(--fv-color-bg-secondary);
+}
+
 body {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+/* Видимый фокус для клавиатуры (эталон: двойное кольцо — «вырез» фоном + синий контур).
+   Поля обслуживает forms.scss, компоненты со своим фокусом переопределяют правило сами. */
+:where(button, a, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--fv-color-bg-primary),
+    0 0 0 5px var(--fv-color-accent);
+}
+
 /* Место под нижний таб-бар на мобиле, чтобы контент не прятался */
 @media (max-width: 768px) {
   #app {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
   }
 
   /* Экраны со своей нижней панелью (детальная, обратная связь):
      таб-бар скрыт, значит место под него не нужно */
   #app:has(.detail-actionbar),
-  #app:has(.feedback-actionbar) {
+  #app:has(.feedback-actionbar),
+  #app:has(.cm-footer) {
     padding-bottom: 0;
   }
 }

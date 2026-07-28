@@ -61,7 +61,7 @@ onMounted(async () => {
   &__widget {
     background: var(--fv-color-bg-primary);
     border-radius: 24px;
-    box-shadow: var(--fv-shadow-low), 0 20px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--fv-shadow-low);
     border: 1px solid var(--fv-color-border);
     padding: 1.5rem;
 

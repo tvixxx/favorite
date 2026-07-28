@@ -40,7 +40,8 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   const isMovieLoading = ref(false);
   const isMovieError = ref<string | null>(null);
   const currentPage = ref(1);
-  const pageSize = ref(6);
+  // Порция догрузки: 20 = 4 полных ряда сетки на десктопе (5 карточек в ряд)
+  const pageSize = ref(20);
 
   // Movies stats
   const moviesStats = ref<MoviesStats | null>(null);
@@ -106,11 +107,14 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     return moviesList.value;
   });
 
-  const paginatedMovies = computed(() => {
-    const start = (currentPage.value - 1) * pageSize.value;
+  // Догрузка: показываем все порции до текущей включительно («Показать ещё»)
+  const visibleMovies = computed(() =>
+    currentMoviesList.value.slice(0, currentPage.value * pageSize.value),
+  );
 
-    return currentMoviesList.value.slice(start, start + pageSize.value);
-  });
+  const hasMoreMovies = computed(
+    () => visibleMovies.value.length < currentMoviesList.value.length,
+  );
 
   const totalPages = computed(() => {
     const list = currentMoviesList.value;
@@ -380,7 +384,8 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     pageSize,
     currentMoviesList,
     // Movies page info refs
-    paginatedMovies,
+    visibleMovies,
+    hasMoreMovies,
     totalPages,
 
     // Movie refs

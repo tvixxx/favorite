@@ -394,7 +394,7 @@ defineExpose({
         :value="modelValue"
         :disabled="disabled"
         :auto-size="{ minRows: 1, maxRows: 6 }"
-        placeholder="Введите сообщение… (# — фильм из вашей коллекции)"
+        placeholder="Напишите сообщение…"
         class="chat-message-input__textarea"
         @update:value="onUpdateValue"
         @keydown="onKeydown"
@@ -457,6 +457,8 @@ defineExpose({
 </template>
 
 <style scoped lang="scss">
+@use "@/styles/scrollbar" as *;
+
 .chat-message-input {
   position: relative;
   flex: 1;
@@ -485,16 +487,16 @@ defineExpose({
   &__textarea {
     width: 100%;
 
-    // Эталон: поле — серая «пилюля» без рамки/красного фокуса
+    // Эталон: серое поле без рамки; на десктопе r12, пилюля — только на мобиле
     :deep(.ant-input) {
       background: var(--fv-color-bg-secondary);
       border: none;
-      border-radius: 22px;
+      border-radius: var(--fv-radius-sm);
       padding: 10px 16px;
       font-size: 15px;
       resize: none;
       box-shadow: none;
-      transition: background 0.15s ease;
+      transition: background var(--fv-motion-fast) var(--fv-ease);
 
       &:hover,
       &:focus,
@@ -517,6 +519,8 @@ defineExpose({
     bottom: calc(100% + 6px);
     max-height: 240px;
     overflow-y: auto;
+
+    @include customScrollbar();
     z-index: 50;
     padding: 0.35rem;
     border-radius: 12px;
@@ -545,7 +549,7 @@ defineExpose({
     color: var(--fv-color-text-primary);
     font-size: 0.9rem;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background var(--fv-motion-fast) var(--fv-ease);
 
     &:hover,
     &--active {
@@ -578,7 +582,7 @@ defineExpose({
 
 .chat-mention-fade-enter-active,
 .chat-mention-fade-leave-active {
-  transition: opacity 0.15s ease;
+  transition: opacity var(--fv-motion-fast) var(--fv-ease);
 }
 
 .chat-mention-fade-enter-from,

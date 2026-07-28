@@ -16,10 +16,37 @@ import { useFetch, FETCH_METHOD } from '@/composable';
 import { isSuccessStatus } from '@/utils';
 import { friendlyRequestError } from '@/utils/friendlyError';
 import { avatarGradient, avatarLetter } from '@/composable/useAvatarGradient';
-import { Tabs, TabPane, Button, Input, message } from 'ant-design-vue';
+import { Button, Input, message } from 'ant-design-vue';
 
 const router = useRouter();
 const friendsStore = useFriendsStore();
+
+type FriendsTab = "friends" | "requests" | "subscribers" | "subscriptions";
+
+const activeTab = ref<FriendsTab>("friends");
+
+const tabs = computed<{ key: FriendsTab; label: string; count: number }[]>(() => [
+  {
+    key: "friends",
+    label: "Друзья",
+    count: friendsStore.stats?.friendsCount ?? 0,
+  },
+  {
+    key: "requests",
+    label: "Запросы",
+    count: friendsStore.pendingRequestsCount,
+  },
+  {
+    key: "subscribers",
+    label: "Подписчики",
+    count: friendsStore.stats?.subscribersCount ?? 0,
+  },
+  {
+    key: "subscriptions",
+    label: "Подписки",
+    count: friendsStore.stats?.subscriptionsCount ?? 0,
+  },
+]);
 const chatStore = useChatStore();
 const userStatusStore = useUserStatusStore();
 const mainStore = useMainStore();
@@ -234,11 +261,24 @@ onMounted(loadAll);
       </div>
     </div>
 
-    <Tabs v-else default-active-key="friends" class="friends-page__tabs">
-      <TabPane
-        key="friends"
-        :tab="`Друзья (${friendsStore.stats?.friendsCount ?? 0})`"
-      >
+    <template v-else>
+      <div class="friends-tabs" role="tablist">
+        <button
+          v-for="tab in tabs"
+          :key="tab.key"
+          type="button"
+          role="tab"
+          class="friends-tabs__btn"
+          :class="{ 'friends-tabs__btn--active': activeTab === tab.key }"
+          :aria-selected="activeTab === tab.key"
+          @click="activeTab = tab.key"
+        >
+          {{ tab.label }}
+          <span class="friends-tabs__count">{{ tab.count }}</span>
+        </button>
+      </div>
+
+      <div v-if="activeTab === 'friends'" class="friends-panel">
         <div v-if="filteredFriends.length > 0" class="user-grid">
           <div
             v-for="item in filteredFriends"
@@ -301,9 +341,9 @@ onMounted(loadAll);
             },
           ]"
         />
-      </TabPane>
+      </div>
 
-      <TabPane key="requests" :tab="`Запросы (${friendsStore.pendingRequestsCount})`">
+      <div v-else-if="activeTab === 'requests'" class="friends-panel">
         <div v-if="friendsStore.requests.length > 0" class="user-grid">
           <div
             v-for="item in friendsStore.requests"
@@ -342,12 +382,9 @@ onMounted(loadAll);
         </div>
 
         <StateBlock v-else v-bind="STATE_PRESETS.friendsRequestsEmpty" />
-      </TabPane>
+      </div>
 
-      <TabPane
-        key="subscribers"
-        :tab="`Подписчики (${friendsStore.stats?.subscribersCount ?? 0})`"
-      >
+      <div v-else-if="activeTab === 'subscribers'" class="friends-panel">
         <div v-if="friendsStore.subscribers.length > 0" class="user-grid">
           <div
             v-for="item in friendsStore.subscribers"
@@ -389,12 +426,9 @@ onMounted(loadAll);
           title="Нет подписчиков"
           description="Здесь появятся пользователи, которые на вас подписались."
         />
-      </TabPane>
+      </div>
 
-      <TabPane
-        key="subscriptions"
-        :tab="`Подписки (${friendsStore.stats?.subscriptionsCount ?? 0})`"
-      >
+      <div v-else class="friends-panel">
         <div v-if="friendsStore.subscriptions.length > 0" class="user-grid">
           <div
             v-for="item in friendsStore.subscriptions"
@@ -444,8 +478,8 @@ onMounted(loadAll);
           title="Нет подписок"
           description="Подпишитесь на других — их обновления появятся здесь."
         />
-      </TabPane>
-    </Tabs>
+      </div>
+    </template>
 
     <BaseModal v-model="isAddModalVisible">
       <template #title>Добавить пользователя</template>
@@ -469,6 +503,7 @@ onMounted(loadAll);
           />
         </div>
 
+        <span class="add-friend__label">Тип запроса</span>
         <BaseRadio
           :model-value="requestType"
           :options="[
@@ -489,7 +524,9 @@ onMounted(loadAll);
       </template>
 
       <template #footer>
-        <a-button @click="closeAddModal">Отмена</a-button>
+        <a-button class="add-friend__cancel" @click="closeAddModal">
+          Отмена
+        </a-button>
         <a-button
           v-if="submitError"
           type="primary"
@@ -514,12 +551,29 @@ onMounted(loadAll);
 </template>
 
 <style scoped lang="scss">
+@use "@/styles/scrollbar" as *;
+
+/* Модалка «Добавить пользователя»: лейбл группы и кнопки 1:2 (эталон) */
+.add-friend__label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fv-color-text-secondary);
+}
+
+:deep(.modal__footer) .ant-btn {
+  flex: 2;
+}
+
+:deep(.modal__footer) .add-friend__cancel {
+  flex: 1;
+}
+
 .friends-page {
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
-  // #app задаёт глобальный text-align:center — на странице выравниваем по левому краю
-  text-align: left;
 
   // Hero-карточка эталона: текст слева (flex:1), поиск + «Добавить» справа
   &__hero-card {
@@ -586,7 +640,6 @@ onMounted(loadAll);
       width: auto;
     }
 
-    // filled-вид (заливка/рамка/фокус) даёт глобальный forms.scss;
     // здесь только размеры и иконка-префикс
     :deep(.ant-input-affix-wrapper) {
       height: 44px;
@@ -622,12 +675,64 @@ onMounted(loadAll);
     border: 1px solid var(--fv-color-border);
   }
 
-  // Ошибка загрузки на уровне страницы — на той же поверхности, что и табы
-  &__state {
-    background: var(--fv-color-bg-primary);
-    border: 1px solid var(--fv-color-border);
-    border-radius: 16px;
+  // Скелетон табов держит ту же обёртку, что и раньше
+  &__panel-gap {
+    margin-top: 22px;
   }
+}
+
+/* Табы друзей: голый ряд с подчёркиванием активного (эталон), не карточка */
+.friends-tabs {
+  display: flex;
+  gap: 22px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--fv-color-border);
+  overflow-x: auto;
+
+  @include hideScrollbar();
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    height: 44px;
+    padding: 0 2px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    font: inherit;
+    font-size: 15px;
+    color: var(--fv-color-text-secondary);
+    cursor: pointer;
+    transition: color var(--fv-motion-fast) var(--fv-ease);
+
+    &:hover {
+      color: var(--fv-color-text-primary);
+    }
+
+    &--active {
+      color: var(--fv-color-text-primary);
+      font-weight: 500;
+      border-bottom-color: var(--fv-color-brand);
+    }
+  }
+
+  &__count {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+  }
+}
+
+// Ошибка загрузки на уровне страницы — на той же поверхности, что и карточки
+.friends-page__state {
+  background: var(--fv-color-bg-primary);
+  border: 1px solid var(--fv-color-border);
+  border-radius: 16px;
 }
 
 // Скелетон карточки пользователя (та же раскладка, что и .user-card)
@@ -651,9 +756,9 @@ onMounted(loadAll);
   align-items: center;
   gap: 14px;
   padding: 18px;
-  background: var(--fv-color-bg-secondary);
-  border: 1px solid var(--fv-color-border);
-  border-radius: var(--fv-radius-md);
+  background: var(--fv-color-bg-primary);
+  border-radius: var(--fv-radius-lg);
+  box-shadow: var(--fv-shadow-low);
 
   &__avatar {
     position: relative;
@@ -665,7 +770,7 @@ onMounted(loadAll);
     align-items: center;
     justify-content: center;
     color: #fff;
-    font-weight: 600;
+    font-weight: 500;
     font-size: 20px;
   }
 
@@ -722,12 +827,12 @@ onMounted(loadAll);
   padding: 0;
   border: none;
   border-radius: 50%;
-  background: var(--fv-color-bg-primary);
+  background: var(--fv-color-bg-secondary);
   color: var(--fv-color-text-secondary);
   cursor: pointer;
   transition:
-    background 0.15s ease,
-    color 0.15s ease;
+    background var(--fv-motion-fast) var(--fv-ease),
+    color var(--fv-motion-fast) var(--fv-ease);
 
   &:hover {
     background: color-mix(
@@ -767,7 +872,7 @@ onMounted(loadAll);
 
   &__label {
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--fv-color-text-secondary);
   }
 }

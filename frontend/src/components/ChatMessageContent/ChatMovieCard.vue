@@ -125,8 +125,8 @@ const rating = computed(() => {
   text-decoration: none;
   box-shadow: var(--fv-shadow-low);
   transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+    transform var(--fv-motion-fast) var(--fv-ease),
+    box-shadow var(--fv-motion-fast) var(--fv-ease);
 
   &:hover {
     transform: translateY(-1px);
@@ -162,7 +162,7 @@ const rating = computed(() => {
 
   &__label {
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: 0.03em;
     text-transform: uppercase;
     color: var(--fv-color-accent);
@@ -193,7 +193,7 @@ const rating = computed(() => {
     gap: 3px;
     margin-top: 2px;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--fv-color-accent);
   }
 

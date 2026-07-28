@@ -142,7 +142,7 @@ const confirmDelete = (): void => {
   border-radius: 16px;
   background: var(--fv-color-bg-secondary);
   border: 1.5px solid transparent;
-  transition: all 0.2s ease;
+  transition: all var(--fv-motion-slow) var(--fv-ease);
 
   // Свой отзыв выделен (эталон): синяя рамка + accent-soft подложка
   &--mine {
@@ -182,7 +182,7 @@ const confirmDelete = (): void => {
     background: var(--fv-color-bg-primary);
     color: var(--fv-color-accent);
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
     white-space: nowrap;
   }
 
@@ -224,7 +224,7 @@ const confirmDelete = (): void => {
     height: 100%;
     background: var(--fv-color-accent);
     border-radius: 999px;
-    transition: width 0.4s ease;
+    transition: width 0.4s var(--fv-ease);
   }
 
   // Кнопки есть только на своём отзыве — прячем их за hover незачем (эталон)
@@ -245,7 +245,7 @@ const confirmDelete = (): void => {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--fv-motion-slow) var(--fv-ease);
 
     &:hover {
       border-color: var(--fv-color-accent);
@@ -284,8 +284,8 @@ const confirmDelete = (): void => {
   }
 
   &__text {
-    font-size: 0.95rem;
-    line-height: 1.7;
+    font-size: var(--fv-text-p3-size);
+    line-height: var(--fv-text-p3-lh);
     color: var(--fv-color-text-primary);
     margin: 0;
     white-space: pre-line;

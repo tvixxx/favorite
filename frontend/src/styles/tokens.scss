@@ -1,9 +1,7 @@
 :root {
-  /* Layout */
-  --fv-layout-max-width: 1800px;
-  --fv-layout-gutter: 2rem;
-  --fv-layout-gutter-lg: 3rem;
-  --fv-layout-grid-max-width: 1400px;
+  /* Layout (эталон: .wrap — max-width 1200, боковой паддинг 28) */
+  --fv-layout-max-width: 1200px;
+  --fv-layout-gutter: 28px;
 
   /* ---- Spacing scale (эталон: база 4px, шаг кратен 4) ---- */
   --fv-space-0: 0px;
@@ -26,8 +24,9 @@
   --fv-gutter-tablet: 24px;
   --fv-gutter-desktop: 32px;
 
-  /* Radius */
-  --fv-radius-sm: 12px; /* контролы, поля, кнопки, чипы */
+  /* Radius (эталон: --radius-control 8 для кнопок/чипов, 12 — поля) */
+  --fv-radius-control: 8px; /* кнопки, чипы */
+  --fv-radius-sm: 12px; /* поля, мелкие плашки */
   --fv-radius-md: 16px; /* карточки */
   --fv-radius-lg: 24px; /* hero, шторки, модалки */
 
@@ -51,6 +50,12 @@
   --fv-text-p4-lh: 20px;
   --fv-text-caption-size: 12px;
   --fv-text-caption-lh: 16px;
+
+  /* ---- Motion (спека new-9) ---- */
+  --fv-motion-fast: 120ms;
+  --fv-motion-base: 160ms;
+  --fv-motion-slow: 200ms;
+  --fv-ease: cubic-bezier(0.2, 0.8, 0.25, 1);
 
   /* Веса */
   --fv-weight-regular: 400;

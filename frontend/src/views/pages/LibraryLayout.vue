@@ -8,6 +8,7 @@ import { LIBRARY_NAV_ITEMS } from "@/constants/libraryNav";
 import type { LibraryHeroMeta } from "@/router/libraryHeroMeta";
 import { useMainStore } from "@/state/state";
 import { useActorsStore, useUserMoviesStore } from "@/stores";
+import { PLURAL, pluralize } from "@/utils";
 
 const route = useRoute();
 const router = useRouter();
@@ -86,21 +87,6 @@ const collectionCount = computed(
   () => userMoviesStore.stats?.totalMovies ?? currentList.value.length,
 );
 
-const pluralTitles = (n: number): string => {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-
-  if (mod10 === 1 && mod100 !== 11) {
-    return "тайтл";
-  }
-
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
-    return "тайтла";
-  }
-
-  return "тайтлов";
-};
-
 const heroSubtitle = computed(() => {
   const meta = heroMeta.value;
   if (!meta) {
@@ -110,7 +96,7 @@ const heroSubtitle = computed(() => {
   if (isCollection.value) {
     const n = collectionCount.value;
 
-    return `${n} ${pluralTitles(n)} · ${meta.subtitle}`;
+    return `${pluralize(n, PLURAL.title)} · ${meta.subtitle}`;
   }
 
   return meta.subtitle;
@@ -231,6 +217,7 @@ function isLibraryNavActive(to: string): boolean {
 
 <style lang="scss" scoped>
 @use "@/styles/layout" as *;
+@use "@/styles/scrollbar" as *;
 @use "@/styles/media" as *;
 
 .library-app-layout {
@@ -261,7 +248,6 @@ function isLibraryNavActive(to: string): boolean {
   &__card {
     display: flex;
     align-items: center;
-    text-align: left; // перебиваем глобальный #app { text-align: center }
     gap: 24px;
     width: 100%;
     padding: 1.75rem 2rem;
@@ -364,7 +350,7 @@ function isLibraryNavActive(to: string): boolean {
     background: var(--fv-color-bg-secondary);
     border: 1.5px solid transparent;
     color: var(--fv-color-text-tertiary);
-    transition: border-color 0.15s ease;
+    transition: border-color var(--fv-motion-fast) var(--fv-ease);
 
     &:focus-within {
       border-color: var(--fv-color-accent);
@@ -402,7 +388,7 @@ function isLibraryNavActive(to: string): boolean {
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       background: color-mix(in srgb, var(--fv-color-brand), #000 10%);
@@ -431,11 +417,8 @@ function isLibraryNavActive(to: string): boolean {
   @include mediaMax(768px) {
     flex-wrap: nowrap;
     overflow-x: auto;
-    scrollbar-width: none;
 
-    &::-webkit-scrollbar {
-      display: none;
-    }
+    @include hideScrollbar();
   }
 
   &__chip {
@@ -452,9 +435,9 @@ function isLibraryNavActive(to: string): boolean {
     font-weight: 500;
     text-decoration: none;
     transition:
-      background 0.15s ease,
-      color 0.15s ease,
-      border-color 0.15s ease;
+      background var(--fv-motion-fast) var(--fv-ease),
+      color var(--fv-motion-fast) var(--fv-ease),
+      border-color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       background: color-mix(
@@ -486,7 +469,7 @@ function isLibraryNavActive(to: string): boolean {
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       background: color-mix(in srgb, var(--fv-color-brand), #000 10%);

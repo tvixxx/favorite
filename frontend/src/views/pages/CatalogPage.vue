@@ -45,6 +45,16 @@ const previewOpen = ref(false);
 const previewMovieId = ref<string | null>(null);
 
 const totalMovies = computed(() => moviesStore.currentMoviesList.length);
+
+// Догрузка вместо страниц (спека new-9): порция = pageSize
+const restCount = computed(
+  () => totalMovies.value - moviesStore.visibleMovies.length,
+);
+
+const showMore = (): void => {
+  moviesStore.setCurrentPage(moviesStore.currentPage + 1);
+};
+
 const hasMovies = computed(() => totalMovies.value !== 0);
 const showPaginator = computed(
   () =>
@@ -182,6 +192,7 @@ async function resetCatalogFilters(): Promise<void> {
       </div>
       <CatalogFiltersBar
         :locked-actor-ids="actorId ? [actorId] : undefined"
+        :result-count="totalMovies"
       />
 
       <StateBlock
@@ -201,9 +212,9 @@ async function resetCatalogFilters(): Promise<void> {
 
       <StateBlock v-else-if="!hasMovies" v-bind="catalogEmptyState" />
 
-      <div v-else class="catalog-page__grid">
+      <div v-else class="catalog-page__grid" data-tour="catalog-grid">
         <MovieCard
-          v-for="item in moviesStore.paginatedMovies"
+          v-for="item in moviesStore.visibleMovies"
           :key="item.id"
           :poster-src="getPosterSrc(item)"
           :title="movieCardTitle(item)"
@@ -217,18 +228,13 @@ async function resetCatalogFilters(): Promise<void> {
       </div>
 
       <div
-        v-if="showPaginator && totalMovies > moviesStore.pageSize"
-        class="catalog-page__pagination"
+        v-if="showPaginator && moviesStore.hasMoreMovies"
+        class="catalog-page__more"
       >
-        <a-pagination
-          v-model:current="moviesStore.currentPage"
-          :page-size="moviesStore.pageSize"
-          :page-size-options="['6', '12', '18', '24']"
-          :total="totalMovies"
-          show-size-changer
-          @change="moviesStore.setCurrentPage"
-          @showSizeChange="(_, size: number) => moviesStore.setPageSize(size)"
-        />
+        <a-button size="large" @click="showMore">
+          Показать ещё
+          <span class="catalog-page__more-count">{{ restCount }}</span>
+        </a-button>
       </div>
     </div>
 
@@ -270,11 +276,31 @@ async function resetCatalogFilters(): Promise<void> {
     @include cardsGrid;
   }
 
-  &__pagination {
+  // Догрузка: кнопка «Показать ещё» по центру под сеткой
+  &__more {
     display: flex;
     justify-content: center;
-    margin-top: 4rem;
-    padding: 2rem 0;
+    margin-top: 8px;
+    padding: 8px 0 32px;
+
+    .ant-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 46px;
+      padding: 0 22px;
+      border-radius: var(--fv-radius-control);
+      font-weight: 500;
+    }
+  }
+
+  &__more-count {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-secondary);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
   }
 
   &__empty-state {

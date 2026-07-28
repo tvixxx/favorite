@@ -36,7 +36,7 @@ const onConfirm = (): void => {
     <template #body>
       <div class="confirm-dialog__body">
         <span class="confirm-dialog__icon" aria-hidden="true">
-          <BaseIcon :name="props.icon" :width="30" :height="30" />
+          <BaseIcon :name="props.icon" :width="34" :height="34" />
         </span>
         <h3 class="confirm-dialog__title">{{ props.title }}</h3>
         <p v-if="props.description" class="confirm-dialog__desc">
@@ -84,11 +84,11 @@ const onConfirm = (): void => {
   &__icon {
     display: grid;
     place-items: center;
-    width: 64px;
-    height: 64px;
+    width: 72px;
+    height: 72px;
     margin-bottom: 16px;
     // Эталон delete-confirm: negative-soft заливка в скруглённом квадрате (r14)
-    border-radius: 14px;
+    border-radius: 50%;
     background: var(--fv-color-negative-soft);
     color: var(--fv-color-negative);
   }
@@ -137,8 +137,8 @@ const onConfirm = (): void => {
     font-weight: 500;
     cursor: pointer;
     transition:
-      background 0.15s ease,
-      opacity 0.15s ease;
+      background var(--fv-motion-fast) var(--fv-ease),
+      opacity var(--fv-motion-fast) var(--fv-ease);
 
     @include mediaTablet {
       width: auto;

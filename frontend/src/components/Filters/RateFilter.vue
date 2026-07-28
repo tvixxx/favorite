@@ -35,14 +35,18 @@ watch(
 
 <template>
   <div class="rate-filter">
-    <span class="rate-filter__label">Рейтинг</span>
+    <div class="rate-filter__head">
+      <span class="rate-filter__label">Рейтинг</span>
+      <span class="rate-filter__value">
+        {{ localRange[0] }} – {{ localRange[1] }}
+      </span>
+    </div>
     <a-slider
       v-model:value="localRange"
       range
       :min="0"
       :max="10"
       :step="1"
-      :marks="{ 0: '0', 5: '5', 10: '10' }"
       class="rate-filter__slider"
     />
   </div>
@@ -52,18 +56,44 @@ watch(
 .rate-filter {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   min-width: 200px;
 
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
   &__label {
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 500;
     color: var(--fv-color-text-secondary);
+  }
+
+  // Текущий диапазон — синяя пилюля справа от лейбла (эталон)
+  &__value {
+    padding: 1px 10px;
+    border-radius: 999px;
+    background: var(--fv-color-bg-active-soft);
+    color: var(--fv-color-link);
+    font-size: 13px;
+    font-weight: 500;
   }
 
   /* Слайдер рейтинга — функциональный синий (эталон UI-кит §08), а не красный primary */
   &__slider {
+    margin: 0 8px;
+
+    :deep(.ant-slider-rail) {
+      height: 6px;
+      border-radius: 999px;
+      background: var(--fv-color-bg-secondary);
+    }
+
     :deep(.ant-slider-track) {
+      height: 6px;
       background-color: var(--fv-color-accent) !important;
     }
 

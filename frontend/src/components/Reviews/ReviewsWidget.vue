@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useReviews } from "@/composable/useReviews";
+import { useEscapeKey } from "@/composable";
 import RowsSkeleton from "@/components/Skeleton/RowsSkeleton.vue";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import ReviewItem from "@/components/Reviews/ReviewItem.vue";
@@ -41,6 +42,8 @@ const cancelEdit = () => {
   editingReview.value = null;
   isEditing.value = false;
 };
+
+useEscapeKey(isEditing, cancelEdit);
 
 watch(
   () => movieId,
@@ -274,7 +277,7 @@ const handleDelete = async (reviewId: string) => {
 
   &__form-title {
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--fv-color-text-primary);
     margin: 0;
   }

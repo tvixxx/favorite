@@ -7,7 +7,7 @@ import { message } from "ant-design-vue";
 
 import { useMainStore } from "@/state/state";
 import { useUserListsStore, useUserMoviesStore } from "@/stores";
-import { formatDate, formatYear } from "@/utils";
+import { formatDate, formatYear, PLURAL, pluralize } from "@/utils";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { DEFAULT_LIST_COLOR, LIST_COLOR_SWATCHES } from "@/constants/listColors";
 import { GenreLabels } from "@/components/Genres/constants/genres.constants";
@@ -15,6 +15,7 @@ import { countriesLabelsRu } from "@/constants/countries/production-countries";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
 import { MOVIES_ENDPOINTS } from "@/constants";
 import { isSuccessStatus } from "@/utils";
+import { useEscapeKey } from "@/composable";
 import { FETCH_METHOD, useFetch } from "@/composable";
 
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
@@ -353,11 +354,11 @@ const seasonsEpisodesLabel = computed(() => {
   const parts: string[] = [];
 
   if (movie.value?.seasonCount) {
-    parts.push(`${movie.value.seasonCount} сезона`);
+    parts.push(pluralize(movie.value.seasonCount, PLURAL.season));
   }
 
   if (movie.value?.episodeCount) {
-    parts.push(`${movie.value.episodeCount} серий`);
+    parts.push(pluralize(movie.value.episodeCount, PLURAL.episode));
   }
 
   return parts.join(", ");
@@ -469,6 +470,9 @@ const startEditProgress = () => {
 const cancelEditProgress = () => {
   isEditingProgress.value = false;
 };
+
+// Esc отменяет правку — как закрытие модалки
+useEscapeKey(isEditingProgress, cancelEditProgress);
 
 const saveProgress = async () => {
   if (!currentUserMovie.value) {
@@ -698,21 +702,8 @@ const parseListLabels = (raw: string): string[] => {
   return Array.from(unique);
 };
 
-const formatTitlesCount = (count: number): string => {
-  const abs = Math.abs(count);
-  const mod10 = abs % 10;
-  const mod100 = abs % 100;
-
-  if (mod10 === 1 && mod100 !== 11) {
-    return `${count} тайтл`;
-  }
-
-  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) {
-    return `${count} тайтла`;
-  }
-
-  return `${count} тайтлов`;
-};
+const formatTitlesCount = (count: number): string =>
+  pluralize(count, PLURAL.title);
 
 const openListsModal = async () => {
   if (!userId.value) {
@@ -849,7 +840,7 @@ const addMovieToList = async (listId: string) => {
           :width="12"
           :height="12"
         />
-        <span class="detail-crumbs__current">
+        <span class="detail-crumbs__current" :title="movie?.title ?? 'Детали'">
           {{ movie?.title ?? "Детали" }}
         </span>
       </nav>
@@ -1035,7 +1026,7 @@ const addMovieToList = async (listId: string) => {
               </span>
               <span class="actor-card__info">
                 <span class="actor-card__name">{{ actor.name }}</span>
-                <span class="actor-card__role">Актёр</span>
+                <span class="actor-card__role">в главной роли</span>
               </span>
               <BaseIcon
                 class="actor-card__caret"
@@ -1082,37 +1073,6 @@ const addMovieToList = async (listId: string) => {
             <b class="detail-info__value">
               {{ formatDate(currentUserMovie.addedAt) }}
             </b>
-          </div>
-        </div>
-        <div v-if="similarMovies.length" class="detail-section">
-          <h2 class="detail-section__title">
-            <BaseIcon name="ph:squares-four" :width="22" :height="22" />
-            Похожее из вашей коллекции
-          </h2>
-          <div class="similar-grid">
-            <button
-              v-for="item in similarMovies"
-              :key="item.movieId"
-              type="button"
-              class="similar-card"
-              @click="openSimilar(item.movieId)"
-            >
-              <span class="similar-card__poster">
-                <img
-                  v-if="item.posterUrl"
-                  :src="item.posterUrl"
-                  :alt="item.title"
-                  loading="lazy"
-                />
-              </span>
-              <span class="similar-card__title">{{ item.title }}</span>
-              <span class="similar-card__meta">
-                <template v-if="item.publishDate">
-                  {{ formatYear(item.publishDate) }} ·
-                </template>
-                {{ item.isSerial ? "сериал" : "фильм" }}
-              </span>
-            </button>
           </div>
         </div>
         </div>
@@ -1307,6 +1267,42 @@ const addMovieToList = async (listId: string) => {
         </div>
         </div>
         <!-- /Отзывы -->
+
+        <!-- «Похожее» — последний блок страницы (эталон); на мобилке живёт в «Обзоре» -->
+        <div
+          v-if="similarMovies.length && showTab('overview')"
+          class="detail-section"
+        >
+          <h2 class="detail-section__title">
+            <BaseIcon name="ph:squares-four" :width="22" :height="22" />
+            Похожее из вашей коллекции
+          </h2>
+          <div class="similar-grid">
+            <button
+              v-for="item in similarMovies"
+              :key="item.movieId"
+              type="button"
+              class="similar-card"
+              @click="openSimilar(item.movieId)"
+            >
+              <span class="similar-card__poster">
+                <img
+                  v-if="item.posterUrl"
+                  :src="item.posterUrl"
+                  :alt="item.title"
+                  loading="lazy"
+                />
+              </span>
+              <span class="similar-card__title">{{ item.title }}</span>
+              <span class="similar-card__meta">
+                <template v-if="item.publishDate">
+                  {{ formatYear(item.publishDate) }} ·
+                </template>
+                {{ item.isSerial ? "сериал" : "фильм" }}
+              </span>
+            </button>
+          </div>
+        </div>
         </div>
         <!-- /detail-main -->
 
@@ -1473,7 +1469,13 @@ const addMovieToList = async (listId: string) => {
               </button>
             </div>
 
-            <p class="detail-panel__footnote">
+            <p
+              v-if="
+                currentUserMovie.addedAt ||
+                (movie.isSerial && seasonsEpisodesLabel)
+              "
+              class="detail-panel__footnote"
+            >
               <template v-if="currentUserMovie.addedAt">
                 Добавлено {{ formatDate(currentUserMovie.addedAt) }}
               </template>
@@ -1622,6 +1624,7 @@ const addMovieToList = async (listId: string) => {
 
 <style scoped lang="scss">
 @use "../../styles/media" as *;
+@use "@/styles/scrollbar" as *;
 @use "@/styles/layout" as *;
 
 .movie-detail {
@@ -1632,7 +1635,6 @@ const addMovieToList = async (listId: string) => {
     max-width: 1180px;
     margin: 0 auto;
     padding: 2rem 1rem 0;
-    // #app центрирует текст глобально — на детальной весь контент по левому краю
     // (StateBlock/скелетоны центрируются своими стилями и не задеты)
     text-align: left;
 
@@ -1651,8 +1653,6 @@ const addMovieToList = async (listId: string) => {
   margin-bottom: 16px;
   font-size: 14px;
   color: var(--fv-color-text-secondary);
-  // #app центрирует текст глобально — крошки выравниваем слева
-  text-align: left;
 
   &__link {
     padding: 0;
@@ -1680,8 +1680,13 @@ const addMovieToList = async (listId: string) => {
   }
 
   &__current {
+    // Спека: элемент крошек обрезается на 220px, полный текст — в title
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: var(--fv-color-text-primary);
-    font-weight: 600;
+    font-weight: 500;
     min-width: 0;
   }
 }
@@ -1717,21 +1722,8 @@ const addMovieToList = async (listId: string) => {
   // padding+отрицательный margin, чтобы тень панели не срезалась скроллом
   padding: 8px;
   margin: -8px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--fv-color-border) transparent;
 
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--fv-color-border);
-    border-radius: 999px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  @include customScrollbar();
 
   @media (max-width: 1080px) {
     position: static;
@@ -1793,7 +1785,7 @@ const addMovieToList = async (listId: string) => {
     // Эталон: mts-h4 (UI-шрифт), 20/24
     font-family: var(--fv-font-ui);
     font-size: 20px;
-    font-weight: 600;
+    font-weight: 500;
     line-height: 1.2;
     color: var(--fv-color-text-primary);
   }
@@ -1949,8 +1941,8 @@ const addMovieToList = async (listId: string) => {
     color: var(--fv-color-text-primary);
     cursor: pointer;
     transition:
-      background 0.15s ease,
-      color 0.15s ease;
+      background var(--fv-motion-fast) var(--fv-ease),
+      color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       background: color-mix(
@@ -2060,8 +2052,8 @@ const addMovieToList = async (listId: string) => {
     background: var(--fv-color-bg-secondary);
     overflow: hidden;
     transition:
-      transform 0.18s ease,
-      box-shadow 0.18s ease;
+      transform var(--fv-motion-base) var(--fv-ease),
+      box-shadow var(--fv-motion-base) var(--fv-ease);
 
     img {
       width: 100%;
@@ -2341,8 +2333,8 @@ const addMovieToList = async (listId: string) => {
     color: var(--fv-color-text-secondary);
     cursor: pointer;
     transition:
-      background 0.15s ease,
-      color 0.15s ease;
+      background var(--fv-motion-fast) var(--fv-ease),
+      color var(--fv-motion-fast) var(--fv-ease);
 
     &--on {
       background: var(--fv-color-bg-primary);
@@ -2487,7 +2479,7 @@ const addMovieToList = async (listId: string) => {
     font-size: 1.1rem;
     text-align: left;
     box-shadow: var(--fv-shadow-low);
-    transition: background 0.2s ease;
+    transition: background var(--fv-motion-slow) var(--fv-ease);
   }
 
   &__swatches {
@@ -2505,7 +2497,7 @@ const addMovieToList = async (listId: string) => {
     cursor: pointer;
     outline-offset: 2px;
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--fv-color-text-primary) 12%, transparent);
-    transition: transform 0.12s ease;
+    transition: transform var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       transform: scale(1.08);
@@ -2564,7 +2556,7 @@ const addMovieToList = async (listId: string) => {
     color: var(--fv-color-accent);
     border-radius: 999px;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 500;
     padding: 0.15rem 0.55rem;
     line-height: 1.3;
   }
@@ -2611,8 +2603,8 @@ const addMovieToList = async (listId: string) => {
   }
 
   &__text {
-    font-size: 1.05rem;
-    line-height: 1.8;
+    font-size: var(--fv-text-p3-size);
+    line-height: var(--fv-text-p3-lh);
     color: var(--fv-color-text-secondary);
     margin: 0;
     white-space: pre-line;
@@ -2651,8 +2643,8 @@ const addMovieToList = async (listId: string) => {
   text-align: left;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
+    border-color var(--fv-motion-fast) var(--fv-ease),
+    background var(--fv-motion-fast) var(--fv-ease);
 
   &:hover {
     border-color: var(--fv-color-accent);
@@ -2759,8 +2751,8 @@ const addMovieToList = async (listId: string) => {
     border-radius: 999px;
     background: var(--fv-color-accent);
     transition:
-      width 0.4s ease,
-      background 0.2s ease;
+      width 0.4s var(--fv-ease),
+      background var(--fv-motion-slow) var(--fv-ease);
 
     // Зеленеет только у просмотренных (цвет идёт от статуса, не от 100%)
     &_done {
@@ -2786,7 +2778,7 @@ const addMovieToList = async (listId: string) => {
 
   &__status-value {
     color: var(--fv-color-text-primary);
-    font-weight: 600;
+    font-weight: 500;
   }
 
   &__status-hint {
@@ -2867,14 +2859,14 @@ const addMovieToList = async (listId: string) => {
     border: none;
     border-radius: 7px;
     background: transparent;
+    color: var(--fv-color-text-secondary);
     font: inherit;
     font-size: 14px;
     font-weight: 500;
-    color: var(--fv-color-text-primary);
     cursor: pointer;
     transition:
-      background 0.15s ease,
-      color 0.15s ease;
+      background var(--fv-motion-fast) var(--fv-ease),
+      color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover:not(:disabled) {
       background: var(--fv-color-bg-secondary);
@@ -2904,7 +2896,7 @@ const addMovieToList = async (listId: string) => {
 
   &__edit-label {
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--fv-color-text-secondary);
   }
 

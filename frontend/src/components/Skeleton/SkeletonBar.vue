@@ -35,7 +35,7 @@ const {
   display: block;
   position: relative;
   overflow: hidden;
-  background: rgba(188, 195, 208, 0.32);
+  background: var(--fv-skeleton-base);
 }
 
 .skel::after {
@@ -46,7 +46,7 @@ const {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.6),
+    var(--fv-skeleton-sweep),
     transparent
   );
   animation: skel-sh 1.45s ease-in-out infinite;

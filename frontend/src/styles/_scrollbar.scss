@@ -1,0 +1,29 @@
+/* Скроллбары. Firefox понимает только scrollbar-width/color, WebKit — только
+   псевдоэлементы, поэтому задаём оба набора. */
+
+@mixin customScrollbar($size: 6px) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--fv-color-border) transparent;
+
+  &::-webkit-scrollbar {
+    width: $size;
+    height: $size;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--fv-color-border);
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@mixin hideScrollbar() {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

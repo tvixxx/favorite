@@ -78,7 +78,7 @@ const emit = defineEmits<{ "update:modelValue": [RadioValue] }>();
     height: 20px;
     border-radius: 50%;
     border: 2px solid var(--fv-color-border);
-    transition: border-color 0.15s ease;
+    transition: border-color var(--fv-motion-fast) var(--fv-ease);
   }
 
   &__item--active &__dot {
@@ -111,8 +111,8 @@ const emit = defineEmits<{ "update:modelValue": [RadioValue] }>();
     border-radius: 14px;
     background: var(--fv-color-bg-primary);
     transition:
-      border-color 0.15s ease,
-      background 0.15s ease;
+      border-color var(--fv-motion-fast) var(--fv-ease),
+      background var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
       border-color: color-mix(

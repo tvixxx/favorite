@@ -38,6 +38,25 @@
   // Эталон low: двухслойная мягкая нейтральная тень (tight ambient + softer cast)
   --fv-shadow-low: 0 0 6px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.08);
 
+  /* Состояния (эталон: --background-hover / --background-active-soft / --text-primary-link).
+     active-soft — НЕПРОЗРАЧНАЯ подложка «выбрано»: на светлой теме формула даёт
+     ровно эталонный #c7e1ff, на остальных — тот же тон от их акцента. */
+  --fv-color-bg-hover: rgba(188, 195, 208, 0.25);
+  --fv-color-bg-active-soft: color-mix(
+    in srgb,
+    var(--fv-color-accent) 22%,
+    var(--fv-color-bg-primary)
+  );
+  --fv-color-link: #0070e5;
+
+  /* Инвертированная поверхность — тултипы и тосты (спека new-9) */
+  --fv-color-bg-inverted: var(--fv-palette-ink);
+  --fv-color-text-inverted: var(--fv-palette-white);
+
+  /* Скелетоны: на тёмных темах светлая база выпадает из канвы */
+  --fv-skeleton-base: rgba(188, 195, 208, 0.32);
+  --fv-skeleton-sweep: rgba(255, 255, 255, 0.6);
+
   /* мягкие «soft»-подложки — адаптируются к теме через семантику */
   --fv-color-accent-soft: color-mix(in srgb, var(--fv-color-accent) 12%, transparent);
   --fv-color-positive-soft: color-mix(in srgb, var(--fv-color-positive) 16%, transparent);
@@ -58,7 +77,20 @@
   --fv-color-border: #374151;
   --fv-color-brand: #ff3355; // бренд-красный ярче для тёмного фона
   --fv-color-accent: #4aa8ff; // функциональный синий ярче на тёмном
+  --fv-color-bg-hover: rgba(242, 243, 247, 0.2);
+  --fv-color-link: #45b6fc;
   --fv-shadow-low: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+/* Тёмные канвы: светлая база шиммера ярче фона и «выпадает» из карточки,
+   а инвертированная поверхность становится светлой */
+:root[data-theme="dark"],
+:root[data-theme="synthwave"],
+:root[data-theme="cyberpunk"] {
+  --fv-skeleton-base: rgba(255, 255, 255, 0.08);
+  --fv-skeleton-sweep: rgba(255, 255, 255, 0.16);
+  --fv-color-bg-inverted: #f2f3f7;
+  --fv-color-text-inverted: #14171a;
 }
 
 :root[data-theme="emerald"] {

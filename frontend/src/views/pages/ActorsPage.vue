@@ -222,8 +222,8 @@ const gradientFor = (id: string): string => {
   border: 1px solid color-mix(in srgb, var(--fv-color-border) 55%, transparent);
   box-shadow: var(--fv-shadow-card);
   transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
+    transform var(--fv-motion-base) var(--fv-ease),
+    box-shadow var(--fv-motion-base) var(--fv-ease);
 
   &:hover {
     transform: translateY(-4px);

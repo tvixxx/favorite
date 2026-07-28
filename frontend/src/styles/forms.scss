@@ -1,3 +1,5 @@
+@use "./scrollbar" as *;
+
 /**
  * Единый вид полей ввода — эталон MTS Granat `.fld`:
  *   покой  — серая заливка (bg-secondary) + рамка 1.5px transparent + radius 12;
@@ -19,17 +21,19 @@ textarea.ant-input {
   border-radius: var(--fv-radius-sm) !important;
   box-shadow: none !important;
   transition:
-    background-color 0.16s ease,
-    border-color 0.16s ease !important;
+    background-color var(--fv-motion-base) var(--fv-ease),
+    border-color var(--fv-motion-base) var(--fv-ease) !important;
 }
 
-/* внутренний input внутри обёрток — прозрачный, без своей рамки */
+/* внутренний input внутри обёрток — прозрачный, без своей рамки и БЕЗ радиуса:
+   у него высота ~24px, и радиус 12px превращает clip-контур в пилюлю, срезая каретку */
 .ant-input-affix-wrapper > .ant-input,
 .ant-input-affix-wrapper > input.ant-input,
 .ant-input-number .ant-input-number-input,
 .ant-picker .ant-picker-input > input {
   background-color: transparent !important;
   border: none !important;
+  border-radius: 0 !important;
   box-shadow: none !important;
 }
 
@@ -59,6 +63,14 @@ textarea.ant-input {
 .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
   background-color: var(--fv-color-bg-primary) !important;
   border-color: var(--fv-color-accent) !important;
+  box-shadow: none !important;
+}
+
+/* AutoComplete кладёт наше поле внутрь селекта: рамку и фон рисует только
+   внутренняя обёртка, иначе вокруг неё встаёт вторая рамка от ant */
+.ant-select-customize-input .ant-select-selector {
+  background-color: transparent !important;
+  border-color: transparent !important;
   box-shadow: none !important;
 }
 
@@ -135,4 +147,18 @@ textarea.ant-input {
 
 .ant-switch:not(.ant-switch-small).ant-switch-checked .ant-switch-handle {
   inset-inline-start: calc(100% - 20px - 3px) !important;
+}
+
+/* ── скроллбары в выпадашках ant ───────────────────────────────
+   rc-virtual-list рисует свой ползунок-накладку; убираем её и отдаём
+   прокрутку нативной с нашим тонким видом — как в чате и модалках. */
+.rc-virtual-list-scrollbar {
+  display: none !important;
+}
+
+.ant-select-dropdown .rc-virtual-list-holder,
+.ant-dropdown-menu,
+.ant-picker-dropdown .ant-picker-content,
+.ant-picker-dropdown .ant-picker-panel-container {
+  @include customScrollbar();
 }
