@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import { useUserListsStore } from "@/stores/userLists/userListsStore";
 import { computed, ref } from "vue";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { getDefaultLoaderDelayTime } from "@/constants";
@@ -120,6 +121,10 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   };
 
   const setFilters = (newFilters: UserMoviesFilters) => {
+    if (JSON.stringify(filters.value) !== JSON.stringify(newFilters)) {
+      isLoaded.value = false;
+    }
+
     filters.value = newFilters;
   };
 
@@ -391,6 +396,18 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     }
   };
 
+  const rateUserMovie = async (userId: string, movieId: string, personalRate: number, reviewText: string): Promise<UserMovie> => {
+    const response = await useFetch<UserMovieApiResponse>(`/users/${userId}/movies/${movieId}/rating`, {
+      method: FETCH_METHOD.patch, data: { personalRate, reviewText },
+    });
+    if (!isSuccessStatus(response.status)) throw new Error("Не удалось сохранить оценку");
+    const updated = mapUserMovieFromApi(response.data);
+    userMovies.value = userMovies.value.map((item) => item.movieId === movieId ? updated : item);
+    searchResults.value = searchResults.value.map((item) => item.movieId === movieId ? updated : item);
+
+    return updated;
+  };
+
   const fetchUserMovieById = async (
     userId: string,
     movieId: string,
@@ -447,6 +464,9 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       searchResults.value = searchResults.value.filter(
         (um) => um.movieId !== movieId,
       );
+      useUserListsStore().resetSession();
+      analytics.value = null;
+      await fetchUserMoviesStats(userId).catch(() => undefined);
     } else {
       throw new Error("Не удалось удалить фильм");
     }
@@ -471,7 +491,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     isCurrentLoading.value = false;
     isCurrentError.value = null;
     currentPage.value = 1;
-    pageSize.value = 6;
+    pageSize.value = 20;
     stats.value = null;
     isStatsLoading.value = false;
     isStatsError.value = null;
@@ -525,6 +545,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     fetchUserMoviesAnalytics,
     addUserMovie,
     updateUserMovie,
+    rateUserMovie,
     removeUserMovie,
     fetchUserMovieById,
     removeFromSearchResults,

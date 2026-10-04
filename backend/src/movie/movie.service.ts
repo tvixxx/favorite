@@ -5,6 +5,10 @@ import {
 } from '@nestjs/common';
 import { CreateMovieRequest } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  assertCatalogOwner,
+  type CatalogUser,
+} from '../common/utils/catalog-owner';
 import type {
   Actor,
   Genre,
@@ -15,6 +19,7 @@ import type {
 import { MoviesStatsResponse } from './dto/movies-stats.dto';
 import { WatchStatus } from '../generated/prisma/enums';
 import { normalizeMovieTitle } from '../common/utils';
+import { UserMovieService } from '../user-movie/user-movie.service';
 
 interface MovieFilters {
   genres?: Genre[];
@@ -38,7 +43,10 @@ export type MovieWithAverageRating = Movie & {
 
 @Injectable()
 class MovieService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly userMovieService: UserMovieService,
+  ) {}
 
   private async findDuplicateMovieIdByNormalizedTitle(
     title: string,
@@ -110,6 +118,7 @@ class MovieService {
 
   public async create(
     dto: CreateMovieRequest,
+    user: CatalogUser,
   ): Promise<MovieWithAverageRating> {
     const {
       actorIds,
@@ -141,12 +150,14 @@ class MovieService {
         },
       });
 
-      if (!actors?.length) {
+      if (actors.length !== actorIds.length) {
         throw new NotFoundException('Один или несколько актеров не найдены');
       }
 
-      return tx.movie.create({
+      const movie = await tx.movie.create({
         data: {
+          createdBy:
+            user.role === 'ADMIN' ? undefined : { connect: { id: user.id } },
           title,
           titleNormalized: normalizeMovieTitle(title),
           publishDate,
@@ -177,9 +188,17 @@ class MovieService {
           },
         },
       });
+      if (dto.collection) {
+        await this.userMovieService.create(
+          user.id,
+          { ...dto.collection, movieId: movie.id },
+          tx,
+        );
+      }
+      return movie;
     });
 
-    return (await this.withAverageRatings([created]))[0];
+    return { ...created, averageRating: null };
   }
 
   public async findById(id: string): Promise<MovieWithAverageRating> {
@@ -301,7 +320,13 @@ class MovieService {
       }))
       .sort((a, b) => b.matches - a.matches)
       .slice(0, limit)
-      .map(({ matches: _matches, ...item }) => item);
+      .map((row) => ({
+        movieId: row.movieId,
+        title: row.title,
+        isSerial: row.isSerial,
+        publishDate: row.publishDate,
+        posterUrl: row.posterUrl,
+      }));
 
     if (ranked.length || !sourceGenresList.length) {
       return ranked;
@@ -376,7 +401,11 @@ class MovieService {
     });
   }
 
-  public async update(id: string, dto: CreateMovieRequest): Promise<boolean> {
+  public async update(
+    id: string,
+    dto: CreateMovieRequest,
+    user: CatalogUser,
+  ): Promise<boolean> {
     const {
       actorIds,
       imageUrl,
@@ -396,6 +425,8 @@ class MovieService {
       if (!movie) {
         throw new NotFoundException('Фильм не был найден!');
       }
+
+      assertCatalogOwner(movie.createdById, user);
 
       const actors = await tx.actor.findMany({
         where: {
@@ -445,6 +476,7 @@ class MovieService {
   public async patch(
     id: string,
     dto: Partial<CreateMovieRequest>,
+    user: CatalogUser,
   ): Promise<boolean> {
     return this.prismaService.$transaction(async (tx) => {
       const movie = await tx.movie.findUnique({ where: { id } });
@@ -452,6 +484,8 @@ class MovieService {
       if (!movie) {
         throw new NotFoundException('Фильм не был найден!');
       }
+
+      assertCatalogOwner(movie.createdById, user);
 
       const {
         actorIds,
@@ -535,15 +569,27 @@ class MovieService {
     });
   }
 
-  public async delete(id: string): Promise<string> {
+  public async delete(id: string, user: CatalogUser): Promise<string> {
     try {
-      await this.prismaService.movie.delete({
-        where: { id },
+      await this.prismaService.$transaction(async (tx) => {
+        const movie = await tx.movie.findUnique({ where: { id } });
+        if (!movie)
+          throw new NotFoundException(`Фильм с айди: ${id} не найден`);
+        assertCatalogOwner(movie.createdById, user);
+        await tx.movie.delete({ where: { id } });
+        if (movie.posterId) {
+          await tx.moviePoster.deleteMany({ where: { id: movie.posterId } });
+        }
       });
 
       return id;
-    } catch (error) {
-      if (error?.code === 'P2025') {
+    } catch (error: unknown) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2025'
+      ) {
         throw new NotFoundException(`Фильм с айди: ${id} не найден`);
       }
 

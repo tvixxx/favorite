@@ -16,6 +16,10 @@ import { CreateFriendshipDto } from './dto';
 import { AuthProtected } from '../common/decorators';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+interface AuthenticatedRequest {
+  user: { id: string };
+}
+
 @ApiTags('Friendship')
 @Controller('users/:userId/friends')
 export class FriendshipController {
@@ -28,7 +32,7 @@ export class FriendshipController {
   async sendRequest(
     @Param('userId') userId: string,
     @Body() dto: CreateFriendshipDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     if (req.user.id !== userId) {
       throw new BadRequestException('Unauthorized');
@@ -43,7 +47,7 @@ export class FriendshipController {
   async acceptRequest(
     @Param('userId') userId: string,
     @Param('friendshipId') friendshipId: string,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     if (req.user.id !== userId) {
       throw new BadRequestException('Unauthorized');
@@ -58,7 +62,7 @@ export class FriendshipController {
   async rejectRequest(
     @Param('userId') userId: string,
     @Param('friendshipId') friendshipId: string,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     if (req.user.id !== userId) {
       throw new BadRequestException('Unauthorized');
@@ -74,19 +78,22 @@ export class FriendshipController {
   async removeFriendship(
     @Param('userId') userId: string,
     @Param('friendshipId') friendshipId: string,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     if (req.user.id !== userId) {
       throw new BadRequestException('Unauthorized');
     }
-    return this.friendshipService.removeFriendship(friendshipId, userId);
+    return this.friendshipService.removeFriendship(userId, friendshipId);
   }
 
   @Get()
   @AuthProtected()
   @ApiOperation({ summary: 'Get user friends' })
   @ApiResponse({ status: 200, description: 'List of friends' })
-  async getFriends(@Param('userId') userId: string, @Request() req: any) {
+  async getFriends(
+    @Param('userId') userId: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
     if (req.user.id !== userId) {
       throw new BadRequestException('Unauthorized');
     }
@@ -97,7 +104,10 @@ export class FriendshipController {
   @AuthProtected()
   @ApiOperation({ summary: 'Get user subscribers' })
   @ApiResponse({ status: 200, description: 'List of subscribers' })
-  async getSubscribers(@Param('userId') userId: string, @Request() req: any) {
+  async getSubscribers(
+    @Param('userId') userId: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
     if (req.user.id !== userId) {
       throw new BadRequestException('Unauthorized');
     }
@@ -108,7 +118,10 @@ export class FriendshipController {
   @AuthProtected()
   @ApiOperation({ summary: 'Get user subscriptions' })
   @ApiResponse({ status: 200, description: 'List of subscriptions' })
-  async getSubscriptions(@Param('userId') userId: string, @Request() req: any) {
+  async getSubscriptions(
+    @Param('userId') userId: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
     if (req.user.id !== userId) {
       throw new BadRequestException('Unauthorized');
     }
@@ -119,7 +132,10 @@ export class FriendshipController {
   @AuthProtected()
   @ApiOperation({ summary: 'Get incoming friend requests' })
   @ApiResponse({ status: 200, description: 'List of incoming requests' })
-  async getRequests(@Param('userId') userId: string, @Request() req: any) {
+  async getRequests(
+    @Param('userId') userId: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
     if (req.user.id !== userId) {
       throw new BadRequestException('Unauthorized');
     }
@@ -130,7 +146,10 @@ export class FriendshipController {
   @AuthProtected()
   @ApiOperation({ summary: 'Get friendship statistics' })
   @ApiResponse({ status: 200, description: 'Friendship stats' })
-  async getStats(@Param('userId') userId: string, @Request() req: any) {
+  async getStats(
+    @Param('userId') userId: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
     if (req.user.id !== userId) {
       throw new BadRequestException('Unauthorized');
     }

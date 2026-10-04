@@ -31,6 +31,7 @@ import ReviewsWidget from "@/components/Reviews/ReviewsWidget.vue";
 import { useReviews } from "@/composable/useReviews";
 import WatchStatusSelect from "@/components/WatchStatusSelect/WatchStatusSelect.vue";
 import RateMovieModal from "@/components/RateMovieModal/RateMovieModal.vue";
+import CatalogMoviePreviewModal from "@/components/Catalog/CatalogMoviePreviewModal.vue";
 import type { UserListDetail, UserListSummary } from "@/stores/userLists/types";
 
 const mainStore = useMainStore();
@@ -147,13 +148,8 @@ const openSimilar = (movieId: string): void => {
 const isRateModalVisible = ref(false);
 
 // Модалка сохранила оценку — обновляем панель без перезагрузки
-const onRateSaved = (rate: number): void => {
-  if (currentUserMovie.value) {
-    currentUserMovie.value = {
-      ...currentUserMovie.value,
-      personalRate: rate,
-    };
-  }
+const onRateSaved = (updated: UserMovie): void => {
+  currentUserMovie.value = updated;
 };
 
 // Реактивный id: с блоком «Похожее» можно уйти на другой фильм, оставаясь
@@ -169,6 +165,8 @@ const isLoading = ref(false);
 const showSkeleton = useMinLoading(() => isLoading.value);
 const isError = ref<string | null>(null);
 const currentUserMovie = ref<UserMovie | null>(null);
+const catalogPreviewId = ref<string | null>(null);
+const catalogPreviewOpen = ref(false);
 const isListsModalVisible = ref(false);
 const newListName = ref("");
 const newListLabelsInput = ref("");
@@ -205,8 +203,11 @@ const loadDetail = async (): Promise<void> => {
 
     if (loaded) {
       currentUserMovie.value = loaded;
+      catalogPreviewId.value = null;
+      catalogPreviewOpen.value = false;
     } else if (!cached) {
-      isError.value = "Фильм не найден в вашей коллекции";
+      catalogPreviewId.value = movieId;
+      catalogPreviewOpen.value = true;
     }
   } catch {
     if (!cached) {
@@ -226,6 +227,20 @@ onBeforeUnmount(() => {
   currentUserMovie.value = null;
 });
 
+watch(catalogPreviewOpen, (open) => {
+  const id = catalogPreviewId.value;
+  if (open || !id || id !== currentMovieId.value) return;
+  catalogPreviewId.value = null;
+  const own = userMoviesStore.userMovies.find((item) => item.movieId === id);
+  if (own) {
+    currentUserMovie.value = own;
+    void loadDetail();
+  } else {
+    const actorId = route.query.libActor;
+    void router.replace(typeof actorId === "string" ? `/library/actors/${actorId}` : "/library/catalog");
+  }
+});
+
 const isEditingProgress = ref<boolean>(false);
 const editSeason = ref<number | undefined>(undefined);
 const editEpisode = ref<number | undefined>(undefined);
@@ -238,6 +253,8 @@ watch(currentMovieId, (next, prev) => {
   }
 
   currentUserMovie.value = null;
+  catalogPreviewId.value = null;
+  catalogPreviewOpen.value = false;
   similarMovies.value = [];
   activeTab.value = "overview";
   isEditingProgress.value = false;
@@ -1368,7 +1385,7 @@ const addMovieToList = async (listId: string) => {
                   </span>
                 </div>
                 <div class="detail-panel__rate">
-                  <span class="detail-panel__rate-label">Средняя</span>
+                  <span class="detail-panel__rate-label">По отзывам</span>
                   <span class="detail-panel__rate-value">
                     <b
                       class="detail-panel__rate-num"
@@ -1510,6 +1527,12 @@ const addMovieToList = async (listId: string) => {
       </template>
     </div>
   </div>
+
+  <CatalogMoviePreviewModal
+    v-if="catalogPreviewId"
+    v-model="catalogPreviewOpen"
+    :movie-id="catalogPreviewId"
+  />
 
   <RateMovieModal
     v-if="currentMovieId && movie"

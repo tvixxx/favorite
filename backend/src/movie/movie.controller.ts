@@ -203,8 +203,8 @@ export class MovieController {
   })
   @AuthCatalogWrite()
   @Post()
-  public create(@Body() dto: CreateMovieRequest) {
-    return this.movieService.create(dto);
+  public create(@Body() dto: CreateMovieRequest, @Authorized() user: User) {
+    return this.movieService.create(dto, user);
   }
 
   @ApiOperation({
@@ -220,8 +220,12 @@ export class MovieController {
   })
   @AuthCatalogWrite()
   @Put(':id')
-  public update(@Param('id') id: string, @Body() dto: CreateMovieRequest) {
-    return this.movieService.update(id, dto);
+  public update(
+    @Param('id') id: string,
+    @Body() dto: CreateMovieRequest,
+    @Authorized() user: User,
+  ) {
+    return this.movieService.update(id, dto, user);
   }
 
   @ApiOperation({
@@ -237,8 +241,12 @@ export class MovieController {
   })
   @AuthCatalogWrite()
   @Patch(':id')
-  public patch(@Param('id') id: string, @Body() dto: PatchMovieDto) {
-    return this.movieService.patch(id, dto);
+  public patch(
+    @Param('id') id: string,
+    @Body() dto: PatchMovieDto,
+    @Authorized() user: User,
+  ) {
+    return this.movieService.patch(id, dto, user);
   }
 
   @ApiOperation({
@@ -254,7 +262,7 @@ export class MovieController {
   })
   @AuthCatalogWrite()
   @Delete(':id')
-  public delete(@Param('id') id: string) {
-    return this.movieService.delete(id);
+  public delete(@Param('id') id: string, @Authorized() user: User) {
+    return this.movieService.delete(id, user);
   }
 }

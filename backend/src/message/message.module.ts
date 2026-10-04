@@ -6,6 +6,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { UserStatusModule } from '../user-status/user-status.module';
 import { FriendshipModule } from '../friendship/friendship.module';
 import { NotificationModule } from '../notification/notification.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { NotificationModule } from '../notification/notification.module';
     UserStatusModule,
     forwardRef(() => FriendshipModule),
     NotificationModule,
+    AuthModule,
   ],
   controllers: [MessageController],
   providers: [MessageService, MessageGateway],

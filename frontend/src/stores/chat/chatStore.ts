@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { io, Socket } from "socket.io-client";
-import { useFetch, FETCH_METHOD } from "@/composable";
+import { useFetch, FETCH_METHOD, useAuthToken } from "@/composable";
 import { isSuccessStatus } from "@/utils";
 import { useUserStatusStore } from "../userStatus/userStatusStore";
 import { useNotificationsStore } from "../notifications/notificationsStore";
@@ -48,8 +48,22 @@ export const useChatStore = defineStore("chat", () => {
   const isError = ref<string | null>(null);
   const isMessagesError = ref(false);
   const isMessagesLoading = ref(false);
+  let sessionRevision = 0;
 
   const userStatusStore = useUserStatusStore();
+  const accessToken = useAuthToken();
+
+  watch(accessToken, (next, previous) => {
+    if (!next) {
+      disconnect();
+
+      return;
+    }
+
+    if (next && next !== previous && socket.value) {
+      socket.value.disconnect().connect();
+    }
+  });
 
   const markAsRead = (otherUserId: string) => {
     const me = currentUserId.value;
@@ -114,6 +128,7 @@ export const useChatStore = defineStore("chat", () => {
   };
 
   const connect = (userId: string) => {
+    if (!accessToken.value || !userId.trim()) return;
     // Любой существующий сокет (в т.ч. переподключающийся) не пересоздаём —
     // иначе старый осиротеет с автопереподключением и слушателями
     if (socket.value) {
@@ -130,8 +145,7 @@ export const useChatStore = defineStore("chat", () => {
       "http://localhost:3005";
 
     socket.value = io(`${backendUrl}/chat`, {
-      auth: { userId },
-      query: { userId },
+      auth: (callback) => callback({ token: accessToken.value }),
     });
 
     socket.value.on("connect", () => {
@@ -142,9 +156,18 @@ export const useChatStore = defineStore("chat", () => {
       }
     });
 
-    socket.value.on("disconnect", () => {
+    socket.value.on("disconnect", (reason) => {
       isConnected.value = false;
       console.log("WebSocket disconnected");
+      if (reason === "io server disconnect" && currentUserId.value) {
+        const connection = socket.value;
+        const requestRevision = sessionRevision;
+        void useFetch("/auth/@me").then(() => {
+          if (requestRevision === sessionRevision && socket.value === connection) connection?.connect();
+        }).catch(() => {
+          if (requestRevision === sessionRevision) isError.value = "Сессия чата истекла. Войдите снова.";
+        });
+      }
     });
 
     socket.value.on("message:received", async (message: Message) => {
@@ -160,7 +183,8 @@ export const useChatStore = defineStore("chat", () => {
         messages.value.set(peerId, []);
       }
 
-      messages.value.get(peerId)?.push(message);
+      const thread = messages.value.get(peerId)!;
+      if (!thread.some((item) => item.id === message.id)) thread.push(message);
 
       // Патчим беседу локально; полный refetch — только для нового собеседника
       const patched = patchConversationFromMessage(message, me);
@@ -212,6 +236,7 @@ export const useChatStore = defineStore("chat", () => {
   };
 
   const disconnect = () => {
+    sessionRevision++;
     if (socket.value) {
       socket.value.removeAllListeners();
       socket.value.disconnect();
@@ -225,9 +250,15 @@ export const useChatStore = defineStore("chat", () => {
     conversations.value = [];
     messages.value = new Map();
     currentChatUserId.value = null;
+    currentUserId.value = null;
+    isLoading.value = false;
+    isMessagesLoading.value = false;
+    isMessagesError.value = false;
+    isError.value = null;
   };
 
   const fetchConversations = async (userId: string) => {
+    const requestRevision = sessionRevision;
     isLoading.value = true;
     isError.value = null;
 
@@ -236,6 +267,7 @@ export const useChatStore = defineStore("chat", () => {
         `/users/${userId}/messages/conversations`,
         { method: FETCH_METHOD.get },
       );
+      if (requestRevision !== sessionRevision) return;
 
       if (isSuccessStatus(response.status)) {
         conversations.value = response.data;
@@ -243,10 +275,11 @@ export const useChatStore = defineStore("chat", () => {
         isError.value = "Failed to load conversations";
       }
     } catch (error) {
+      if (requestRevision !== sessionRevision) return;
       isError.value =
         error instanceof Error ? error.message : "Failed to load conversations";
     } finally {
-      isLoading.value = false;
+      if (requestRevision === sessionRevision) isLoading.value = false;
     }
   };
 
@@ -255,6 +288,7 @@ export const useChatStore = defineStore("chat", () => {
     otherUserId: string,
     limit = 50,
   ) => {
+    const requestRevision = sessionRevision;
     isMessagesError.value = false;
     isMessagesLoading.value = true;
 
@@ -263,6 +297,7 @@ export const useChatStore = defineStore("chat", () => {
         `/users/${userId}/messages/${otherUserId}?limit=${limit}`,
         { method: FETCH_METHOD.get },
       );
+      if (requestRevision !== sessionRevision) return;
 
       if (isSuccessStatus(response.status)) {
         messages.value.set(otherUserId, response.data);
@@ -272,14 +307,15 @@ export const useChatStore = defineStore("chat", () => {
 
       isMessagesError.value = true;
     } catch (error) {
+      if (requestRevision !== sessionRevision) return;
       console.error("Failed to load messages:", error);
       isMessagesError.value = true;
     } finally {
-      isMessagesLoading.value = false;
+      if (requestRevision === sessionRevision) isMessagesLoading.value = false;
     }
   };
 
-  const sendMessage = (receiverId: string, content: string) => {
+  const sendMessage = async (receiverId: string, content: string): Promise<Message> => {
     if (!socket.value?.connected) {
       throw new Error("WebSocket not connected");
     }
@@ -288,22 +324,25 @@ export const useChatStore = defineStore("chat", () => {
       throw new Error("User not authenticated");
     }
 
-    const optimisticMessage: Message = {
-      id: `temp-${Date.now()}`,
-      senderId: currentUserId.value,
-      receiverId,
-      content,
-      isRead: false,
-      createdAt: new Date().toISOString(),
-    };
+    const connection = socket.value;
+    const me = currentUserId.value;
+    const saved = await new Promise<Message>((resolve, reject) => {
+      connection.timeout(10000).emit("message:send", { receiverId, content }, (error: Error | null, result: Message | undefined) => {
+        if (error || !result?.id) reject(new Error("Не удалось подтвердить отправку. Проверьте соединение и историю чата."));
+        else resolve(result);
+      });
+    });
+    if (socket.value !== connection || currentUserId.value !== me) throw new Error("Сессия чата завершена");
 
     if (!messages.value.has(receiverId)) {
       messages.value.set(receiverId, []);
     }
 
-    messages.value.get(receiverId)?.push(optimisticMessage);
+    const thread = messages.value.get(receiverId)!;
+    if (!thread.some((item) => item.id === saved.id)) thread.push(saved);
+    if (!patchConversationFromMessage(saved, me)) void fetchConversations(me);
 
-    socket.value.emit("message:send", { receiverId, content });
+    return saved;
   };
 
   const openChat = async (userId: string, otherUserId: string) => {

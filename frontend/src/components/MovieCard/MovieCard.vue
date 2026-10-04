@@ -115,6 +115,7 @@ const emit = defineEmits<{
 
 <style lang="scss" scoped>
 .movie-card {
+  min-width: 0;
   cursor: pointer;
 
   &__poster-wrap {

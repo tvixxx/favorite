@@ -15,6 +15,17 @@ export enum FriendshipType {
   SUBSCRIPTION = 'SUBSCRIPTION',
 }
 
+export interface FriendUser {
+  id: string;
+  fullName: string;
+  email: string;
+  username?: string;
+}
+
+export interface FriendEntry { friendshipId: string; friend: FriendUser; createdAt: string }
+export interface SubscriberEntry { friendshipId: string; subscriber: FriendUser; createdAt: string }
+export interface SubscriptionEntry { friendshipId: string; subscribedTo: FriendUser; createdAt: string }
+
 export interface Friendship {
   id: string;
   requesterId: string;
@@ -23,16 +34,8 @@ export interface Friendship {
   type: FriendshipType;
   createdAt: string;
   updatedAt: string;
-  requester: {
-    id: string;
-    username: string;
-    email: string;
-  };
-  addressee: {
-    id: string;
-    username: string;
-    email: string;
-  };
+  requester: FriendUser;
+  addressee: FriendUser;
 }
 
 export interface FriendshipStats {
@@ -47,9 +50,9 @@ export interface RemoveFriendshipResponse {
 }
 
 export const useFriendsStore = defineStore('friends', () => {
-  const friends = ref<Friendship[]>([]);
-  const subscribers = ref<Friendship[]>([]);
-  const subscriptions = ref<Friendship[]>([]);
+  const friends = ref<FriendEntry[]>([]);
+  const subscribers = ref<SubscriberEntry[]>([]);
+  const subscriptions = ref<SubscriptionEntry[]>([]);
   const requests = ref<Friendship[]>([]);
   const stats = ref<FriendshipStats | null>(null);
   const isLoading = ref(false);
@@ -60,7 +63,7 @@ export const useFriendsStore = defineStore('friends', () => {
     isError.value = null;
 
     try {
-      const response = await useFetch<Friendship[]>(
+      const response = await useFetch<FriendEntry[]>(
         `/users/${userId}/friends`,
         { method: FETCH_METHOD.get }
       );
@@ -80,7 +83,7 @@ export const useFriendsStore = defineStore('friends', () => {
 
   const fetchSubscribers = async (userId: string) => {
     try {
-      const response = await useFetch<Friendship[]>(
+      const response = await useFetch<SubscriberEntry[]>(
         `/users/${userId}/friends/subscribers`,
         { method: FETCH_METHOD.get }
       );
@@ -95,7 +98,7 @@ export const useFriendsStore = defineStore('friends', () => {
 
   const fetchSubscriptions = async (userId: string) => {
     try {
-      const response = await useFetch<Friendship[]>(
+      const response = await useFetch<SubscriptionEntry[]>(
         `/users/${userId}/friends/subscriptions`,
         { method: FETCH_METHOD.get }
       );

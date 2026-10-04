@@ -41,7 +41,7 @@ export const useBadgesStore = defineStore('badges', () => {
         isError.value = 'Failed to load badges';
       }
     } catch (error) {
-      isError.value = error.message || 'Failed to load badges';
+      isError.value = error instanceof Error ? error.message : 'Failed to load badges';
     } finally {
       isLoading.value = false;
     }

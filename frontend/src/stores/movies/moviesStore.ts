@@ -12,6 +12,7 @@ import type {
   MoviesStats,
   MovieApiResponse,
   MoviesFilters,
+  CreateMoviePayload,
 } from "@/stores/movies/types";
 import { MOVIE_STORE_NAME } from "@/stores/movies/constants";
 import {
@@ -133,7 +134,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     );
   });
 
-  const createMovie = async (movieData: Partial<Movie>): Promise<Movie> => {
+  const createMovie = async (movieData: CreateMoviePayload): Promise<Movie> => {
     const response = await useFetch<MovieApiResponse>(MOVIES_ENDPOINTS, {
       method: FETCH_METHOD.post,
       data: movieData,

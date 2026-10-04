@@ -17,7 +17,7 @@ import {
   GenreValues,
 } from "@/components/Genres/constants/genres.constants";
 import { PRODUCTION_COUNTRIES } from "@/constants/countries/production-countries";
-import { Movie } from "@/stores";
+import type { CreateMoviePayload } from "@/stores/movies/types";
 import type { SelectProps } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
@@ -114,12 +114,12 @@ const visibleGenres = computed(() =>
     ? genreOptions
     : genreOptions.filter(
         (option, index) =>
-          index < GENRES_VISIBLE_LIMIT || formData.genres.includes(option.value),
-      ),
+          index < GENRES_VISIBLE_LIMIT || formData.genres.includes(option.value)
+      )
 );
 
 const hiddenGenresCount = computed(
-  () => genreOptions.length - visibleGenres.value.length,
+  () => genreOptions.length - visibleGenres.value.length
 );
 
 const toggleGenre = (value: Genre): void => {
@@ -147,7 +147,7 @@ const addNewMovie = async () => {
   const { title } = formData;
 
   try {
-    const moviePayload: Partial<Movie> = {
+    const moviePayload: CreateMoviePayload = {
       title: formData.title,
       description: formData.description,
       countryCodes: formData.countryCodes,
@@ -158,26 +158,43 @@ const addNewMovie = async () => {
       actorIds: formData.actorIds,
       imageUrl: formData.imageUrl,
       isSerial: formData.isSerial,
-      seasonCount: formData.seasonCount ?? undefined,
-      episodeCount: formData.episodeCount ?? undefined,
+      seasonCount: formData.isSerial ? formData.seasonCount : undefined,
+      episodeCount: formData.isSerial ? formData.episodeCount : undefined,
+      collection: {
+        isFavorite: formData.isFavorite,
+        seeLater: formData.seeLater,
+        personalRate: formData.personalRate || null,
+        watchStatus: watchStatus.value,
+        currentSeason: formData.isSerial
+          ? formData.currentSeason ?? null
+          : null,
+        currentEpisode: formData.isSerial
+          ? formData.currentEpisode ?? null
+          : null,
+      },
     };
 
     const createdMovie = await moviesStore.createMovie(moviePayload);
 
     if (createdMovie && userId.value) {
-      await userMoviesStore.addUserMovie(userId.value, createdMovie.id, {
-        isFavorite: formData.isFavorite,
-        seeLater: formData.seeLater,
-        personalRate: formData.personalRate || null,
-        watchStatus: watchStatus.value,
-        currentSeason: formData.currentSeason ?? null,
-        currentEpisode: formData.currentEpisode ?? null,
-      });
+      userMoviesStore.isLoaded = false;
+      await userMoviesStore
+        .fetchUserMovies(userId.value)
+        .catch(() => undefined);
     }
 
     formRef?.value?.resetFields();
     formData.actorIds = [];
     formData.countryCodes = ["US"];
+    formData.personalRate = 0;
+    formData.isFavorite = false;
+    formData.seeLater = false;
+    formData.isSerial = false;
+    formData.seasonCount = undefined;
+    formData.episodeCount = undefined;
+    formData.currentSeason = undefined;
+    formData.currentEpisode = undefined;
+    watchStatus.value = WatchStatus.NOT_STARTED;
     message.success(`${title} добавлен`);
   } catch (error: unknown) {
     if (isApiConflictError(error)) {
@@ -219,7 +236,13 @@ const addNewMovie = async () => {
               <a-form-item
                 label="Название фильма/сериала"
                 name="title"
-                :rules="[{ required: true, message: 'Введите название фильма' }]"
+                :rules="[
+                  {
+                    required: true,
+                    whitespace: true,
+                    message: 'Введите название фильма',
+                  },
+                ]"
               >
                 <a-input
                   v-model:value="formData.title"
@@ -231,7 +254,9 @@ const addNewMovie = async () => {
               <a-form-item
                 label="Ссылка на постер"
                 name="imageUrl"
-                :rules="[{ required: true, message: 'Введите ссылку на постер' }]"
+                :rules="[
+                  { required: true, message: 'Введите ссылку на постер' },
+                ]"
               >
                 <a-input
                   v-model:value="formData.imageUrl"
@@ -406,7 +431,10 @@ const addNewMovie = async () => {
               </div>
 
               <div
-                v-if="formData.isSerial && (formData.seasonCount || formData.episodeCount)"
+                v-if="
+                  formData.isSerial &&
+                  (formData.seasonCount || formData.episodeCount)
+                "
                 class="cm-row2"
               >
                 <a-form-item
@@ -442,11 +470,21 @@ const addNewMovie = async () => {
                 </a-form-item>
               </div>
 
-              <a-form-item label="Описание" name="description">
+              <a-form-item
+                label="Описание"
+                name="description"
+                :rules="[
+                  {
+                    required: true,
+                    whitespace: true,
+                    message: 'Введите описание фильма',
+                  },
+                ]"
+              >
                 <a-textarea
                   v-model:value="formData.description"
                   :rows="4"
-                  placeholder="Расскажите о своих впечатлениях от фильма…"
+                  placeholder="Кратко или детальное описание фильма"
                   :maxlength="500"
                   :show-count="true"
                 />
@@ -636,8 +674,7 @@ const addNewMovie = async () => {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition:
-    background var(--fv-motion-fast) var(--fv-ease),
+  transition: background var(--fv-motion-fast) var(--fv-ease),
     color var(--fv-motion-fast) var(--fv-ease);
 
   &:hover:not(&--on) {
@@ -935,7 +972,13 @@ const addNewMovie = async () => {
   align-items: center;
 }
 
+:deep(.ant-input-number-input-wrap) {
+  flex: 1;
+  min-width: 0;
+}
+
 :deep(.ant-input-number-input) {
+  width: 100%;
   height: 42px;
 }
 

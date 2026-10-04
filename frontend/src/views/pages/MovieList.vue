@@ -21,6 +21,7 @@ import MovieCard from "@/components/MovieCard/MovieCard.vue";
 import CollectionFiltersBar from "@/components/MoviesFiltersPanel/CollectionFiltersBar.vue";
 import { FETCH_METHOD, useFetch, useEscapeKey } from "@/composable";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
+import ConfirmDialog from "@/components/ConfirmDialog/ConfirmDialog.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -46,7 +47,6 @@ const quickAddFabRoot = ref<HTMLElement | null>(null);
 let quickAddDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const userId = computed(() => mainStore.userData?.id || "");
-const hasMovies = computed(() => userMoviesStore.currentList.length !== 0);
 const totalMovies = computed(() => userMoviesStore.currentList.length);
 
 // Догрузка вместо страниц (спека new-9): порция = pageSize
@@ -64,7 +64,7 @@ const userMovieIds = computed(() => {
 const showSkeleton = useMinLoading(() => userMoviesStore.isLoading);
 
 const shouldFetchMovies = computed(
-  () => !hasMovies.value && mainStore.isLoggedIn && userId.value
+  () => !userMoviesStore.isLoaded && mainStore.isLoggedIn && userId.value
 );
 const showPaginator = computed(
   () =>
@@ -157,12 +157,27 @@ const watchProgressPercent = (item: UserMovie): number => {
     : 0;
 };
 
-const removeMovie = async (item: UserMovie) => {
+const removal = ref<UserMovie | null>(null);
+const isRemoving = ref(false);
+const removalOpen = computed({
+  get: () => removal.value !== null,
+  set: (open: boolean) => { if (!open && !isRemoving.value) removal.value = null; },
+});
+
+const removeMovie = (item: UserMovie): void => { removal.value = item; };
+
+const confirmRemoval = async (): Promise<void> => {
+  const item = removal.value;
+  if (!item || isRemoving.value) return;
+  isRemoving.value = true;
   try {
     await userMoviesStore.removeUserMovie(userId.value, item.movieId);
+    removal.value = null;
     message.success(`${item.movie.title} удален`);
   } catch {
     message.error(`Не удалось удалить: ${item.movie.title}`);
+  } finally {
+    isRemoving.value = false;
   }
 };
 
@@ -556,6 +571,14 @@ watch(
         </a-button>
       </div>
     </div>
+
+    <ConfirmDialog
+      v-model="removalOpen"
+      :title="`Удалить «${removal?.movie.title ?? ''}» из коллекции?`"
+      description="Личная оценка и прогресс просмотра будут удалены. Тайтл также исчезнет из всех ваших списков."
+      :loading="isRemoving"
+      @confirm="confirmRemoval"
+    />
 
     <div ref="quickAddFabRoot" class="quick-add-fab" data-tour="tour-quick-add">
       <Transition name="quick-add-fab-panel">

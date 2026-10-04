@@ -6,10 +6,19 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { FriendshipStatus, NotificationType } from '../generated/prisma/enums';
+import {
+  FriendshipStatus,
+  FriendshipType,
+  NotificationType,
+} from '../generated/prisma/enums';
 import { CreateFriendshipDto, FriendshipTypeDto } from './dto';
 import { NotificationService } from '../notification/notification.service';
 import { MessageGateway } from '../message/message.gateway';
+
+const friendshipPeople = {
+  requester: { select: { id: true, fullName: true, email: true } },
+  addressee: { select: { id: true, fullName: true, email: true } },
+} as const;
 
 @Injectable()
 export class FriendshipService {
@@ -33,34 +42,48 @@ export class FriendshipService {
       throw new NotFoundException('User not found');
     }
 
+    const directions = [
+      { requesterId, addresseeId: dto.addresseeId },
+      { requesterId: dto.addresseeId, addresseeId: requesterId },
+    ];
+    const blocked = await this.prismaService.friendship.findFirst({
+      where: { OR: directions, status: FriendshipStatus.BLOCKED },
+    });
+    if (blocked) throw new ConflictException('Relationship is blocked');
+
     const existing = await this.prismaService.friendship.findFirst({
       where: {
-        OR: [
-          { requesterId, addresseeId: dto.addresseeId },
-          { requesterId: dto.addresseeId, addresseeId: requesterId },
-        ],
+        type: dto.type,
+        OR:
+          dto.type === FriendshipTypeDto.FRIEND_REQUEST
+            ? directions
+            : [directions[0]],
       },
     });
 
-    if (existing) {
+    if (existing && existing.status !== FriendshipStatus.REJECTED) {
       throw new ConflictException('Friendship already exists');
     }
 
-    const friendship = await this.prismaService.friendship.create({
-      data: {
-        requesterId,
-        addresseeId: dto.addresseeId,
-        type: dto.type,
-        status:
-          dto.type === FriendshipTypeDto.SUBSCRIPTION
-            ? FriendshipStatus.ACCEPTED
-            : FriendshipStatus.PENDING,
-      },
-      include: {
-        requester: true,
-        addressee: true,
-      },
-    });
+    const data = {
+      requesterId,
+      addresseeId: dto.addresseeId,
+      type: dto.type,
+      status:
+        dto.type === FriendshipTypeDto.SUBSCRIPTION
+          ? FriendshipStatus.ACCEPTED
+          : FriendshipStatus.PENDING,
+    };
+    const friendship = existing
+      ? await this.prismaService.friendship.update({
+          where: { id: existing.id },
+          data,
+          include: friendshipPeople,
+        })
+      : await this.prismaService.friendship.create({
+          data,
+          include: friendshipPeople,
+        });
 
     if (
       dto.type === FriendshipTypeDto.FRIEND_REQUEST &&
@@ -98,17 +121,17 @@ export class FriendshipService {
       throw new ConflictException('You can only accept requests sent to you');
     }
 
-    if (friendship.status !== 'PENDING') {
+    if (
+      friendship.status !== 'PENDING' ||
+      friendship.type !== FriendshipType.FRIEND_REQUEST
+    ) {
       throw new ConflictException('Request is not pending');
     }
 
     const updated = await this.prismaService.friendship.update({
       where: { id: friendshipId },
       data: { status: 'ACCEPTED' },
-      include: {
-        requester: true,
-        addressee: true,
-      },
+      include: friendshipPeople,
     });
 
     const row = await this.notificationService.create(
@@ -140,6 +163,13 @@ export class FriendshipService {
 
     if (friendship.addresseeId !== userId) {
       throw new ConflictException('You can only reject requests sent to you');
+    }
+
+    if (
+      friendship.status !== FriendshipStatus.PENDING ||
+      friendship.type !== FriendshipType.FRIEND_REQUEST
+    ) {
+      throw new ConflictException('Request is not pending');
     }
 
     return this.prismaService.friendship.update({
