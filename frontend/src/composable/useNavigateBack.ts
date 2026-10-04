@@ -2,10 +2,10 @@ import { useRouter } from "vue-router";
 import type { RouteLocationRaw } from "vue-router";
 
 /**
- * Грамотный «назад» без лишних записей в истории.
- * @see https://habr.com/ru/articles/1023578/
+ * Возврат внутри истории Vue Router с безопасным переходом при прямой ссылке.
  *
- * - Режим history: сначала {@link router.back}, если стека почти нет — переход на fallback (push).
+ * - Режим history: {@link router.back}, если предыдущий маршрут принадлежит приложению.
+ *   При прямой ссылке заменяем текущую запись на fallback.
  * - replace / push: явный переход без попытки history (удобно для «вверх» по разделу).
  */
 export interface NavigateBackPayload {
@@ -50,13 +50,12 @@ export function useNavigateBack() {
       return;
     }
 
-    const state = window.history.state as { position?: number } | undefined;
+    const state = window.history.state as { back?: unknown } | null;
     const canGoBackInApp =
-      (typeof state?.position === "number" && state.position > 1) ||
-      (typeof window.history.length === "number" && window.history.length > 1);
+      typeof state?.back === "string" && state.back.startsWith("/") && !state.back.startsWith("//");
 
     if (fallback && !canGoBackInApp) {
-      await router.push(fallback);
+      await router.replace(fallback);
 
       return;
     }

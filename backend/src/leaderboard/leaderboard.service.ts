@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { WatchStatus } from '../generated/prisma/enums';
 import { TtlCache } from '../common/utils/ttl-cache';
 import {
   BadgeService,
@@ -76,30 +77,6 @@ function pickSortValue(row: UserAggRow, sortBy: LeaderboardSortBy): number {
     default:
       return row.filmsCount + row.serialsCompleted;
   }
-}
-
-/** Сериал считается досмотренным, если позиция не ниже последнего сезона и последней серии. */
-function isSerialWatchCompleted(
-  isSerial: boolean,
-  seasonCount: number | null | undefined,
-  episodeCount: number | null | undefined,
-  currentSeason: number | null | undefined,
-  currentEpisode: number | null | undefined,
-): boolean {
-  if (!isSerial) {
-    return false;
-  }
-  const seasonsComplete = !!(
-    seasonCount &&
-    currentSeason &&
-    currentSeason >= seasonCount
-  );
-  const episodesComplete = !!(
-    episodeCount &&
-    currentEpisode &&
-    currentEpisode >= episodeCount
-  );
-  return seasonsComplete && episodesComplete;
 }
 
 function compareRows(
@@ -241,8 +218,7 @@ export class LeaderboardService {
     const rows = await this.prismaService.userMovie.findMany({
       select: {
         userId: true,
-        currentSeason: true,
-        currentEpisode: true,
+        watchStatus: true,
         user: {
           select: {
             id: true,
@@ -285,15 +261,7 @@ export class LeaderboardService {
 
       agg.serialsTotal += 1;
 
-      if (
-        isSerialWatchCompleted(
-          um.movie.isSerial,
-          um.movie.seasonCount,
-          um.movie.episodeCount,
-          um.currentSeason,
-          um.currentEpisode,
-        )
-      ) {
+      if (um.watchStatus === WatchStatus.COMPLETED) {
         agg.serialsCompleted += 1;
       }
     }

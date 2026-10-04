@@ -1,7 +1,7 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 
 import { AuthService } from '../auth.service';
 import type { JwtPayload } from '../types';
@@ -21,6 +21,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   public async validate(payload: JwtPayload) {
+    if (
+      payload.type !== 'access' ||
+      typeof payload.id !== 'string' ||
+      !payload.id
+    ) {
+      throw new UnauthorizedException('Недействительный access-token');
+    }
     return await this.authService.validate(payload.id);
   }
 }

@@ -1,11 +1,12 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, shallowRef, computed, watch } from "vue";
 import { io, Socket } from "socket.io-client";
-import { useFetch, FETCH_METHOD } from "@/composable";
+import { useFetch, FETCH_METHOD, useAuthToken } from "@/composable";
 import { isSuccessStatus } from "@/utils";
 import { useUserStatusStore } from "../userStatus/userStatusStore";
 import { useNotificationsStore } from "../notifications/notificationsStore";
 import type { NotificationDto } from "../notifications/types";
+import { createRequestGuard } from "@/utils/requestGuard";
 
 export interface Message {
   id: string;
@@ -38,7 +39,7 @@ export interface Conversation {
 }
 
 export const useChatStore = defineStore("chat", () => {
-  const socket = ref<Socket | null>(null);
+  const socket = shallowRef<Socket | null>(null);
   const conversations = ref<Conversation[]>([]);
   const messages = ref<Map<string, Message[]>>(new Map());
   const currentChatUserId = ref<string | null>(null);
@@ -48,8 +49,24 @@ export const useChatStore = defineStore("chat", () => {
   const isError = ref<string | null>(null);
   const isMessagesError = ref(false);
   const isMessagesLoading = ref(false);
+  let sessionRevision = 0;
+  const conversationRequests = createRequestGuard();
+  const messageRequests = createRequestGuard();
 
   const userStatusStore = useUserStatusStore();
+  const accessToken = useAuthToken();
+
+  watch(accessToken, (next, previous) => {
+    if (!next) {
+      disconnect();
+
+      return;
+    }
+
+    if (next && next !== previous && socket.value) {
+      socket.value.disconnect().connect();
+    }
+  });
 
   const markAsRead = (otherUserId: string) => {
     const me = currentUserId.value;
@@ -114,6 +131,7 @@ export const useChatStore = defineStore("chat", () => {
   };
 
   const connect = (userId: string) => {
+    if (!accessToken.value || !userId.trim()) return;
     // Любой существующий сокет (в т.ч. переподключающийся) не пересоздаём —
     // иначе старый осиротеет с автопереподключением и слушателями
     if (socket.value) {
@@ -130,21 +148,27 @@ export const useChatStore = defineStore("chat", () => {
       "http://localhost:3005";
 
     socket.value = io(`${backendUrl}/chat`, {
-      auth: { userId },
-      query: { userId },
+      auth: (callback) => callback({ token: accessToken.value }),
     });
 
     socket.value.on("connect", () => {
       isConnected.value = true;
-      console.log("WebSocket connected");
       if (currentChatUserId.value) {
         markAsRead(currentChatUserId.value);
       }
     });
 
-    socket.value.on("disconnect", () => {
+    socket.value.on("disconnect", (reason) => {
       isConnected.value = false;
-      console.log("WebSocket disconnected");
+      if (reason === "io server disconnect" && currentUserId.value) {
+        const connection = socket.value;
+        const requestRevision = sessionRevision;
+        void useFetch("/auth/@me").then(() => {
+          if (requestRevision === sessionRevision && socket.value === connection) connection?.connect();
+        }).catch(() => {
+          if (requestRevision === sessionRevision) isError.value = "Сессия чата истекла. Войдите снова.";
+        });
+      }
     });
 
     socket.value.on("message:received", async (message: Message) => {
@@ -160,7 +184,9 @@ export const useChatStore = defineStore("chat", () => {
         messages.value.set(peerId, []);
       }
 
-      messages.value.get(peerId)?.push(message);
+      const thread = messages.value.get(peerId)!;
+      if (thread.some((item) => item.id === message.id)) return;
+      thread.push(message);
 
       // Патчим беседу локально; полный refetch — только для нового собеседника
       const patched = patchConversationFromMessage(message, me);
@@ -212,22 +238,33 @@ export const useChatStore = defineStore("chat", () => {
   };
 
   const disconnect = () => {
+    sessionRevision++;
+    conversationRequests.invalidate();
+    messageRequests.invalidate();
     if (socket.value) {
       socket.value.removeAllListeners();
       socket.value.disconnect();
       socket.value = null;
       isConnected.value = false;
       currentUserId.value = null;
-      userStatusStore.clearStatuses();
     }
 
     // Чистим чат-состояние, чтобы не текло между сессиями (logout)
     conversations.value = [];
     messages.value = new Map();
     currentChatUserId.value = null;
+    currentUserId.value = null;
+    isLoading.value = false;
+    isMessagesLoading.value = false;
+    isMessagesError.value = false;
+    isError.value = null;
+    isConnected.value = false;
+    userStatusStore.clearStatuses();
   };
 
   const fetchConversations = async (userId: string) => {
+    const requestRevision = sessionRevision;
+    const isCurrent = conversationRequests.begin();
     isLoading.value = true;
     isError.value = null;
 
@@ -236,17 +273,18 @@ export const useChatStore = defineStore("chat", () => {
         `/users/${userId}/messages/conversations`,
         { method: FETCH_METHOD.get },
       );
+      if (requestRevision !== sessionRevision || !isCurrent()) return;
 
       if (isSuccessStatus(response.status)) {
         conversations.value = response.data;
       } else {
-        isError.value = "Failed to load conversations";
+        isError.value = "Не удалось загрузить диалоги";
       }
-    } catch (error) {
-      isError.value =
-        error instanceof Error ? error.message : "Failed to load conversations";
+    } catch {
+      if (requestRevision !== sessionRevision || !isCurrent()) return;
+      isError.value = "Не удалось загрузить диалоги";
     } finally {
-      isLoading.value = false;
+      if (requestRevision === sessionRevision && isCurrent()) isLoading.value = false;
     }
   };
 
@@ -255,6 +293,8 @@ export const useChatStore = defineStore("chat", () => {
     otherUserId: string,
     limit = 50,
   ) => {
+    const requestRevision = sessionRevision;
+    const isCurrent = messageRequests.begin();
     isMessagesError.value = false;
     isMessagesLoading.value = true;
 
@@ -263,23 +303,32 @@ export const useChatStore = defineStore("chat", () => {
         `/users/${userId}/messages/${otherUserId}?limit=${limit}`,
         { method: FETCH_METHOD.get },
       );
+      if (requestRevision !== sessionRevision || !isCurrent()) return;
 
       if (isSuccessStatus(response.status)) {
-        messages.value.set(otherUserId, response.data);
+        const combined = new Map<string, Message>();
+        for (const message of response.data) combined.set(message.id, message);
+        for (const message of messages.value.get(otherUserId) ?? []) {
+          const saved = combined.get(message.id);
+          combined.set(message.id, { ...message, ...saved, isRead: message.isRead || saved?.isRead || false });
+        }
 
-        return response.data;
+        const history = [...combined.values()].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
+        messages.value.set(otherUserId, history);
+
+        return history;
       }
 
       isMessagesError.value = true;
-    } catch (error) {
-      console.error("Failed to load messages:", error);
+    } catch {
+      if (requestRevision !== sessionRevision || !isCurrent()) return;
       isMessagesError.value = true;
     } finally {
-      isMessagesLoading.value = false;
+      if (requestRevision === sessionRevision && isCurrent()) isMessagesLoading.value = false;
     }
   };
 
-  const sendMessage = (receiverId: string, content: string) => {
+  const sendMessage = async (receiverId: string, content: string): Promise<Message> => {
     if (!socket.value?.connected) {
       throw new Error("WebSocket not connected");
     }
@@ -288,31 +337,37 @@ export const useChatStore = defineStore("chat", () => {
       throw new Error("User not authenticated");
     }
 
-    const optimisticMessage: Message = {
-      id: `temp-${Date.now()}`,
-      senderId: currentUserId.value,
-      receiverId,
-      content,
-      isRead: false,
-      createdAt: new Date().toISOString(),
-    };
+    const connection = socket.value;
+    const me = currentUserId.value;
+    const saved = await new Promise<Message>((resolve, reject) => {
+      connection.timeout(10000).emit("message:send", { receiverId, content }, (error: Error | null, result: Message | undefined) => {
+        if (error || !result?.id) reject(new Error("Не удалось подтвердить отправку. Проверьте соединение и историю чата."));
+        else resolve(result);
+      });
+    });
+    if (socket.value !== connection || currentUserId.value !== me) throw new Error("Сессия чата завершена");
 
     if (!messages.value.has(receiverId)) {
       messages.value.set(receiverId, []);
     }
 
-    messages.value.get(receiverId)?.push(optimisticMessage);
+    const thread = messages.value.get(receiverId)!;
+    if (!thread.some((item) => item.id === saved.id)) thread.push(saved);
+    if (!patchConversationFromMessage(saved, me)) void fetchConversations(me);
 
-    socket.value.emit("message:send", { receiverId, content });
+    return saved;
   };
 
   const openChat = async (userId: string, otherUserId: string) => {
+    const requestRevision = sessionRevision;
     currentChatUserId.value = otherUserId;
     await fetchMessages(userId, otherUserId);
-    markAsRead(otherUserId);
+    if (requestRevision === sessionRevision && currentChatUserId.value === otherUserId && !isMessagesError.value) markAsRead(otherUserId);
   };
 
   const closeChat = () => {
+    messageRequests.invalidate();
+    isMessagesLoading.value = false;
     currentChatUserId.value = null;
   };
 

@@ -35,7 +35,7 @@ const imgError = ref(false);
 const displayTitle = computed(() => movie.value?.title || props.title);
 
 const posterSrc = computed(
-  () => movie.value?.imageUrl || movie.value?.poster?.url || "",
+  () => movie.value?.imageUrl || "",
 );
 const showPoster = computed(() => !!posterSrc.value && !imgError.value);
 

@@ -61,6 +61,10 @@ export interface Movie {
   };
 }
 
+export type CreateMoviePayload = Partial<Movie> & {
+  collection?: Partial<Pick<UserMovie, 'isFavorite' | 'seeLater' | 'personalRate' | 'watchStatus' | 'currentSeason' | 'currentEpisode'>>;
+};
+
 // API ответ для UserMovie (персональные данные пользователя)
 export interface UserMovieApiResponse {
   id: string;

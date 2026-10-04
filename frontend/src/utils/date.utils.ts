@@ -1,9 +1,17 @@
+function parseDate(date: Date | string | null): Date | null {
+  if (!date) return null;
+  const parsed = new Date(date);
+
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 export const formatDate = (date: Date | string | null) => {
-  if (!date) {
+  const parsed = parseDate(date);
+  if (!parsed) {
     return "не указано";
   }
 
-  return new Date(date).toLocaleDateString(undefined, {
+  return parsed.toLocaleDateString("ru-RU", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -11,21 +19,23 @@ export const formatDate = (date: Date | string | null) => {
 };
 
 export const formatYear = (date: Date | string | null) => {
-  if (!date) {
+  const parsed = parseDate(date);
+  if (!parsed) {
     return "не указано";
   }
 
-  return new Date(date).toLocaleDateString(undefined, {
+  return parsed.toLocaleDateString("ru-RU", {
     year: "numeric",
   });
 };
 
 export const formatDateTime = (date: Date | string | null) => {
-  if (!date) {
+  const parsed = parseDate(date);
+  if (!parsed) {
     return "не указано";
   }
 
-  return new Date(date).toLocaleString(undefined, {
+  return parsed.toLocaleString("ru-RU", {
     year: "numeric",
     month: "long",
     day: "numeric",

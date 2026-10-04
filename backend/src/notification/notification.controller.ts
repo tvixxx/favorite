@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   ForbiddenException,
   Get,
@@ -16,6 +17,23 @@ import {
 import { AuthProtected, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
 import { NotificationService } from './notification.service';
+import { NotificationType } from '../generated/prisma/enums';
+
+function notificationTypes(
+  raw?: string | string[],
+): NotificationType[] | undefined {
+  if (raw === undefined) return undefined;
+  const values = Array.isArray(raw) ? raw : [raw];
+  if (
+    values.some(
+      (value) =>
+        !Object.values(NotificationType).includes(value as NotificationType),
+    )
+  ) {
+    throw new BadRequestException('Неизвестный тип уведомления');
+  }
+  return values as NotificationType[];
+}
 
 @ApiTags('Notifications')
 @Controller('users/:userId/notifications')
@@ -37,6 +55,7 @@ export class NotificationController {
     @Param('userId') userId: string,
     @Authorized() user: User,
     @Query('limit') limitRaw?: string,
+    @Query('types') types?: string | string[],
   ) {
     this.ensureSelf(userId, user);
 
@@ -45,6 +64,7 @@ export class NotificationController {
     return this.notificationService.findManyForUser(
       userId,
       Number.isFinite(limit) ? limit : 30,
+      notificationTypes(types),
     );
   }
 
@@ -56,10 +76,14 @@ export class NotificationController {
   public unreadCount(
     @Param('userId') userId: string,
     @Authorized() user: User,
+    @Query('types') types?: string | string[],
   ) {
     this.ensureSelf(userId, user);
 
-    return this.notificationService.unreadCount(userId);
+    return this.notificationService.unreadCount(
+      userId,
+      notificationTypes(types),
+    );
   }
 
   @ApiOperation({ summary: 'Отметить уведомление прочитанным' })
@@ -85,9 +109,13 @@ export class NotificationController {
   public markAllRead(
     @Param('userId') userId: string,
     @Authorized() user: User,
+    @Query('types') types?: string | string[],
   ) {
     this.ensureSelf(userId, user);
 
-    return this.notificationService.markAllRead(userId);
+    return this.notificationService.markAllRead(
+      userId,
+      notificationTypes(types),
+    );
   }
 }

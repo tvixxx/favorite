@@ -35,7 +35,6 @@ const loadCollectionStats = (): void => {
 };
 
 onMounted(() => {
-  void actorsStore.prefetchActorsTotal().catch(() => {});
   loadCollectionStats();
 });
 
@@ -439,7 +438,7 @@ function isLibraryNavActive(to: string): boolean {
       color var(--fv-motion-fast) var(--fv-ease),
       border-color var(--fv-motion-fast) var(--fv-ease);
 
-    &:hover {
+    &:hover:not(.library-subnav__chip--active) {
       background: color-mix(
         in srgb,
         var(--fv-color-text-primary) 6%,

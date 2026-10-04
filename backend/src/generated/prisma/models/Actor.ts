@@ -27,6 +27,7 @@ export type AggregateActor = {
 export type ActorMinAggregateOutputType = {
   id: string | null
   name: string | null
+  createdById: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -34,6 +35,7 @@ export type ActorMinAggregateOutputType = {
 export type ActorMaxAggregateOutputType = {
   id: string | null
   name: string | null
+  createdById: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -41,6 +43,7 @@ export type ActorMaxAggregateOutputType = {
 export type ActorCountAggregateOutputType = {
   id: number
   name: number
+  createdById: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -50,6 +53,7 @@ export type ActorCountAggregateOutputType = {
 export type ActorMinAggregateInputType = {
   id?: true
   name?: true
+  createdById?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -57,6 +61,7 @@ export type ActorMinAggregateInputType = {
 export type ActorMaxAggregateInputType = {
   id?: true
   name?: true
+  createdById?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -64,6 +69,7 @@ export type ActorMaxAggregateInputType = {
 export type ActorCountAggregateInputType = {
   id?: true
   name?: true
+  createdById?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -144,6 +150,7 @@ export type ActorGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type ActorGroupByOutputType = {
   id: string
   name: string
+  createdById: string | null
   createdAt: Date
   updatedAt: Date
   _count: ActorCountAggregateOutputType | null
@@ -172,16 +179,20 @@ export type ActorWhereInput = {
   NOT?: Prisma.ActorWhereInput | Prisma.ActorWhereInput[]
   id?: Prisma.StringFilter<"Actor"> | string
   name?: Prisma.StringFilter<"Actor"> | string
+  createdById?: Prisma.StringNullableFilter<"Actor"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Actor"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Actor"> | Date | string
+  createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   movies?: Prisma.MovieListRelationFilter
 }
 
 export type ActorOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  createdById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  createdBy?: Prisma.UserOrderByWithRelationInput
   movies?: Prisma.MovieOrderByRelationAggregateInput
 }
 
@@ -191,14 +202,17 @@ export type ActorWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ActorWhereInput[]
   NOT?: Prisma.ActorWhereInput | Prisma.ActorWhereInput[]
   name?: Prisma.StringFilter<"Actor"> | string
+  createdById?: Prisma.StringNullableFilter<"Actor"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Actor"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Actor"> | Date | string
+  createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   movies?: Prisma.MovieListRelationFilter
 }, "id">
 
 export type ActorOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  createdById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ActorCountOrderByAggregateInput
@@ -212,6 +226,7 @@ export type ActorScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ActorScalarWhereWithAggregatesInput | Prisma.ActorScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Actor"> | string
   name?: Prisma.StringWithAggregatesFilter<"Actor"> | string
+  createdById?: Prisma.StringNullableWithAggregatesFilter<"Actor"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Actor"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Actor"> | Date | string
 }
@@ -221,12 +236,14 @@ export type ActorCreateInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  createdBy?: Prisma.UserCreateNestedOneWithoutCreatedActorsInput
   movies?: Prisma.MovieCreateNestedManyWithoutActorsInput
 }
 
 export type ActorUncheckedCreateInput = {
   id?: string
   name: string
+  createdById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   movies?: Prisma.MovieUncheckedCreateNestedManyWithoutActorsInput
@@ -237,12 +254,14 @@ export type ActorUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdBy?: Prisma.UserUpdateOneWithoutCreatedActorsNestedInput
   movies?: Prisma.MovieUpdateManyWithoutActorsNestedInput
 }
 
 export type ActorUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   movies?: Prisma.MovieUncheckedUpdateManyWithoutActorsNestedInput
@@ -251,6 +270,7 @@ export type ActorUncheckedUpdateInput = {
 export type ActorCreateManyInput = {
   id?: string
   name: string
+  createdById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -265,6 +285,7 @@ export type ActorUpdateManyMutationInput = {
 export type ActorUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -282,6 +303,7 @@ export type ActorOrderByRelationAggregateInput = {
 export type ActorCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  createdById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -289,6 +311,7 @@ export type ActorCountOrderByAggregateInput = {
 export type ActorMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  createdById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -296,8 +319,51 @@ export type ActorMaxOrderByAggregateInput = {
 export type ActorMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  createdById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type ActorCreateNestedManyWithoutCreatedByInput = {
+  create?: Prisma.XOR<Prisma.ActorCreateWithoutCreatedByInput, Prisma.ActorUncheckedCreateWithoutCreatedByInput> | Prisma.ActorCreateWithoutCreatedByInput[] | Prisma.ActorUncheckedCreateWithoutCreatedByInput[]
+  connectOrCreate?: Prisma.ActorCreateOrConnectWithoutCreatedByInput | Prisma.ActorCreateOrConnectWithoutCreatedByInput[]
+  createMany?: Prisma.ActorCreateManyCreatedByInputEnvelope
+  connect?: Prisma.ActorWhereUniqueInput | Prisma.ActorWhereUniqueInput[]
+}
+
+export type ActorUncheckedCreateNestedManyWithoutCreatedByInput = {
+  create?: Prisma.XOR<Prisma.ActorCreateWithoutCreatedByInput, Prisma.ActorUncheckedCreateWithoutCreatedByInput> | Prisma.ActorCreateWithoutCreatedByInput[] | Prisma.ActorUncheckedCreateWithoutCreatedByInput[]
+  connectOrCreate?: Prisma.ActorCreateOrConnectWithoutCreatedByInput | Prisma.ActorCreateOrConnectWithoutCreatedByInput[]
+  createMany?: Prisma.ActorCreateManyCreatedByInputEnvelope
+  connect?: Prisma.ActorWhereUniqueInput | Prisma.ActorWhereUniqueInput[]
+}
+
+export type ActorUpdateManyWithoutCreatedByNestedInput = {
+  create?: Prisma.XOR<Prisma.ActorCreateWithoutCreatedByInput, Prisma.ActorUncheckedCreateWithoutCreatedByInput> | Prisma.ActorCreateWithoutCreatedByInput[] | Prisma.ActorUncheckedCreateWithoutCreatedByInput[]
+  connectOrCreate?: Prisma.ActorCreateOrConnectWithoutCreatedByInput | Prisma.ActorCreateOrConnectWithoutCreatedByInput[]
+  upsert?: Prisma.ActorUpsertWithWhereUniqueWithoutCreatedByInput | Prisma.ActorUpsertWithWhereUniqueWithoutCreatedByInput[]
+  createMany?: Prisma.ActorCreateManyCreatedByInputEnvelope
+  set?: Prisma.ActorWhereUniqueInput | Prisma.ActorWhereUniqueInput[]
+  disconnect?: Prisma.ActorWhereUniqueInput | Prisma.ActorWhereUniqueInput[]
+  delete?: Prisma.ActorWhereUniqueInput | Prisma.ActorWhereUniqueInput[]
+  connect?: Prisma.ActorWhereUniqueInput | Prisma.ActorWhereUniqueInput[]
+  update?: Prisma.ActorUpdateWithWhereUniqueWithoutCreatedByInput | Prisma.ActorUpdateWithWhereUniqueWithoutCreatedByInput[]
+  updateMany?: Prisma.ActorUpdateManyWithWhereWithoutCreatedByInput | Prisma.ActorUpdateManyWithWhereWithoutCreatedByInput[]
+  deleteMany?: Prisma.ActorScalarWhereInput | Prisma.ActorScalarWhereInput[]
+}
+
+export type ActorUncheckedUpdateManyWithoutCreatedByNestedInput = {
+  create?: Prisma.XOR<Prisma.ActorCreateWithoutCreatedByInput, Prisma.ActorUncheckedCreateWithoutCreatedByInput> | Prisma.ActorCreateWithoutCreatedByInput[] | Prisma.ActorUncheckedCreateWithoutCreatedByInput[]
+  connectOrCreate?: Prisma.ActorCreateOrConnectWithoutCreatedByInput | Prisma.ActorCreateOrConnectWithoutCreatedByInput[]
+  upsert?: Prisma.ActorUpsertWithWhereUniqueWithoutCreatedByInput | Prisma.ActorUpsertWithWhereUniqueWithoutCreatedByInput[]
+  createMany?: Prisma.ActorCreateManyCreatedByInputEnvelope
+  set?: Prisma.ActorWhereUniqueInput | Prisma.ActorWhereUniqueInput[]
+  disconnect?: Prisma.ActorWhereUniqueInput | Prisma.ActorWhereUniqueInput[]
+  delete?: Prisma.ActorWhereUniqueInput | Prisma.ActorWhereUniqueInput[]
+  connect?: Prisma.ActorWhereUniqueInput | Prisma.ActorWhereUniqueInput[]
+  update?: Prisma.ActorUpdateWithWhereUniqueWithoutCreatedByInput | Prisma.ActorUpdateWithWhereUniqueWithoutCreatedByInput[]
+  updateMany?: Prisma.ActorUpdateManyWithWhereWithoutCreatedByInput | Prisma.ActorUpdateManyWithWhereWithoutCreatedByInput[]
+  deleteMany?: Prisma.ActorScalarWhereInput | Prisma.ActorScalarWhereInput[]
 }
 
 export type ActorCreateNestedManyWithoutMoviesInput = {
@@ -338,16 +404,71 @@ export type ActorUncheckedUpdateManyWithoutMoviesNestedInput = {
   deleteMany?: Prisma.ActorScalarWhereInput | Prisma.ActorScalarWhereInput[]
 }
 
+export type ActorCreateWithoutCreatedByInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  movies?: Prisma.MovieCreateNestedManyWithoutActorsInput
+}
+
+export type ActorUncheckedCreateWithoutCreatedByInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  movies?: Prisma.MovieUncheckedCreateNestedManyWithoutActorsInput
+}
+
+export type ActorCreateOrConnectWithoutCreatedByInput = {
+  where: Prisma.ActorWhereUniqueInput
+  create: Prisma.XOR<Prisma.ActorCreateWithoutCreatedByInput, Prisma.ActorUncheckedCreateWithoutCreatedByInput>
+}
+
+export type ActorCreateManyCreatedByInputEnvelope = {
+  data: Prisma.ActorCreateManyCreatedByInput | Prisma.ActorCreateManyCreatedByInput[]
+  skipDuplicates?: boolean
+}
+
+export type ActorUpsertWithWhereUniqueWithoutCreatedByInput = {
+  where: Prisma.ActorWhereUniqueInput
+  update: Prisma.XOR<Prisma.ActorUpdateWithoutCreatedByInput, Prisma.ActorUncheckedUpdateWithoutCreatedByInput>
+  create: Prisma.XOR<Prisma.ActorCreateWithoutCreatedByInput, Prisma.ActorUncheckedCreateWithoutCreatedByInput>
+}
+
+export type ActorUpdateWithWhereUniqueWithoutCreatedByInput = {
+  where: Prisma.ActorWhereUniqueInput
+  data: Prisma.XOR<Prisma.ActorUpdateWithoutCreatedByInput, Prisma.ActorUncheckedUpdateWithoutCreatedByInput>
+}
+
+export type ActorUpdateManyWithWhereWithoutCreatedByInput = {
+  where: Prisma.ActorScalarWhereInput
+  data: Prisma.XOR<Prisma.ActorUpdateManyMutationInput, Prisma.ActorUncheckedUpdateManyWithoutCreatedByInput>
+}
+
+export type ActorScalarWhereInput = {
+  AND?: Prisma.ActorScalarWhereInput | Prisma.ActorScalarWhereInput[]
+  OR?: Prisma.ActorScalarWhereInput[]
+  NOT?: Prisma.ActorScalarWhereInput | Prisma.ActorScalarWhereInput[]
+  id?: Prisma.StringFilter<"Actor"> | string
+  name?: Prisma.StringFilter<"Actor"> | string
+  createdById?: Prisma.StringNullableFilter<"Actor"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"Actor"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Actor"> | Date | string
+}
+
 export type ActorCreateWithoutMoviesInput = {
   id?: string
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  createdBy?: Prisma.UserCreateNestedOneWithoutCreatedActorsInput
 }
 
 export type ActorUncheckedCreateWithoutMoviesInput = {
   id?: string
   name: string
+  createdById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -373,14 +494,34 @@ export type ActorUpdateManyWithWhereWithoutMoviesInput = {
   data: Prisma.XOR<Prisma.ActorUpdateManyMutationInput, Prisma.ActorUncheckedUpdateManyWithoutMoviesInput>
 }
 
-export type ActorScalarWhereInput = {
-  AND?: Prisma.ActorScalarWhereInput | Prisma.ActorScalarWhereInput[]
-  OR?: Prisma.ActorScalarWhereInput[]
-  NOT?: Prisma.ActorScalarWhereInput | Prisma.ActorScalarWhereInput[]
-  id?: Prisma.StringFilter<"Actor"> | string
-  name?: Prisma.StringFilter<"Actor"> | string
-  createdAt?: Prisma.DateTimeFilter<"Actor"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"Actor"> | Date | string
+export type ActorCreateManyCreatedByInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ActorUpdateWithoutCreatedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  movies?: Prisma.MovieUpdateManyWithoutActorsNestedInput
+}
+
+export type ActorUncheckedUpdateWithoutCreatedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  movies?: Prisma.MovieUncheckedUpdateManyWithoutActorsNestedInput
+}
+
+export type ActorUncheckedUpdateManyWithoutCreatedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ActorUpdateWithoutMoviesInput = {
@@ -388,11 +529,13 @@ export type ActorUpdateWithoutMoviesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdBy?: Prisma.UserUpdateOneWithoutCreatedActorsNestedInput
 }
 
 export type ActorUncheckedUpdateWithoutMoviesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -400,6 +543,7 @@ export type ActorUncheckedUpdateWithoutMoviesInput = {
 export type ActorUncheckedUpdateManyWithoutMoviesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -438,8 +582,10 @@ export type ActorCountOutputTypeCountMoviesArgs<ExtArgs extends runtime.Types.Ex
 export type ActorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  createdById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  createdBy?: boolean | Prisma.Actor$createdByArgs<ExtArgs>
   movies?: boolean | Prisma.Actor$moviesArgs<ExtArgs>
   _count?: boolean | Prisma.ActorCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["actor"]>
@@ -447,40 +593,52 @@ export type ActorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type ActorSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  createdById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  createdBy?: boolean | Prisma.Actor$createdByArgs<ExtArgs>
 }, ExtArgs["result"]["actor"]>
 
 export type ActorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  createdById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  createdBy?: boolean | Prisma.Actor$createdByArgs<ExtArgs>
 }, ExtArgs["result"]["actor"]>
 
 export type ActorSelectScalar = {
   id?: boolean
   name?: boolean
+  createdById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ActorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "createdAt" | "updatedAt", ExtArgs["result"]["actor"]>
+export type ActorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "createdById" | "createdAt" | "updatedAt", ExtArgs["result"]["actor"]>
 export type ActorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  createdBy?: boolean | Prisma.Actor$createdByArgs<ExtArgs>
   movies?: boolean | Prisma.Actor$moviesArgs<ExtArgs>
   _count?: boolean | Prisma.ActorCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type ActorIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type ActorIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type ActorIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  createdBy?: boolean | Prisma.Actor$createdByArgs<ExtArgs>
+}
+export type ActorIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  createdBy?: boolean | Prisma.Actor$createdByArgs<ExtArgs>
+}
 
 export type $ActorPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Actor"
   objects: {
+    createdBy: Prisma.$UserPayload<ExtArgs> | null
     movies: Prisma.$MoviePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
+    createdById: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["actor"]>
@@ -877,6 +1035,7 @@ readonly fields: ActorFieldRefs;
  */
 export interface Prisma__ActorClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  createdBy<T extends Prisma.Actor$createdByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Actor$createdByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   movies<T extends Prisma.Actor$moviesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Actor$moviesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MoviePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -909,6 +1068,7 @@ export interface Prisma__ActorClient<T, Null = never, ExtArgs extends runtime.Ty
 export interface ActorFieldRefs {
   readonly id: Prisma.FieldRef<"Actor", 'String'>
   readonly name: Prisma.FieldRef<"Actor", 'String'>
+  readonly createdById: Prisma.FieldRef<"Actor", 'String'>
   readonly createdAt: Prisma.FieldRef<"Actor", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Actor", 'DateTime'>
 }
@@ -1160,6 +1320,10 @@ export type ActorCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extension
    */
   data: Prisma.ActorCreateManyInput | Prisma.ActorCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ActorIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1230,6 +1394,10 @@ export type ActorUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extension
    * Limit how many Actors to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ActorIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1296,6 +1464,25 @@ export type ActorDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Limit how many Actors to delete.
    */
   limit?: number
+}
+
+/**
+ * Actor.createdBy
+ */
+export type Actor$createdByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
 }
 
 /**

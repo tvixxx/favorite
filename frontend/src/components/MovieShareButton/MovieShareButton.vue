@@ -38,9 +38,12 @@ async function copyLink(e?: Event) {
       ta.style.position = "absolute";
       ta.style.left = "-9999px";
       document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
+      try {
+        ta.select();
+        if (!document.execCommand("copy")) throw new Error("Копирование недоступно");
+      } finally {
+        ta.remove();
+      }
     }
 
     message.success("Ссылка скопирована в буфер");

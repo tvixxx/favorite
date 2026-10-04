@@ -41,7 +41,7 @@ export const Genre = {
   WAR: 'WAR',
   WESTERN: 'WESTERN',
   DOCUMENTARY: 'DOCUMENTARY',
-  Sci_fi: 'Sci-fi'
+  Sci_fi: 'Sci_fi'
 } as const
 
 export type Genre = (typeof Genre)[keyof typeof Genre]

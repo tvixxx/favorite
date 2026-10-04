@@ -3,7 +3,7 @@ import { ref, computed, onMounted, nextTick, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useChatStore, useUserStatusStore } from "@/stores";
 import { useMainStore } from "@/state/state";
-import { Badge } from "ant-design-vue";
+import { Badge, message } from "ant-design-vue";
 import ChatMessageInput from "@/components/ChatMessageInput/ChatMessageInput.vue";
 import ChatMessageContent from "@/components/ChatMessageContent/ChatMessageContent.vue";
 import SocialHubTabs from "@/components/SocialHubTabs/SocialHubTabs.vue";
@@ -25,6 +25,7 @@ const showConversationsSkeleton = useMinLoading(() => chatStore.isLoading);
 
 const userId = computed(() => mainStore.userData?.id || "");
 const messageInput = ref("");
+const isSending = ref(false);
 
 const reloadConversations = (): void => {
   if (userId.value) {
@@ -79,20 +80,28 @@ const attachMovie = () => {
   messageInput.value = `${current}${needsSpace ? " " : ""}#`;
 };
 
-const sendMessage = (wireFromEnter?: string) => {
+const sendMessage = async (wireFromEnter?: string) => {
   const content = (
     wireFromEnter ??
     chatInputRef.value?.composeWire?.() ??
     messageInput.value
   ).trim();
 
-  if (!content || !chatStore.currentChatUserId) {
+  if (!content || !chatStore.currentChatUserId || isSending.value) {
     return;
   }
 
-  chatStore.sendMessage(chatStore.currentChatUserId, content);
-  messageInput.value = "";
-  scrollToBottom();
+  const draft = messageInput.value;
+  isSending.value = true;
+  try {
+    await chatStore.sendMessage(chatStore.currentChatUserId, content);
+    if (messageInput.value === draft) messageInput.value = "";
+    scrollToBottom();
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : "Не удалось отправить сообщение");
+  } finally {
+    isSending.value = false;
+  }
 };
 
 const goToFriends = () => {
@@ -407,7 +416,7 @@ onMounted(async () => {
           <button
             type="button"
             class="chat-page__send"
-            :disabled="!messageInput.trim()"
+            :disabled="!messageInput.trim() || isSending"
             aria-label="Отправить"
             @click="sendMessage()"
           >

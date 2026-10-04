@@ -2,6 +2,7 @@ generator client {
   provider     = "prisma-client"
   output       = "../src/generated/prisma"
   moduleFormat = "cjs"
+  importFileExtension = "js"
 }
 
 datasource db {
@@ -35,6 +36,8 @@ model User {
   status               UserStatus?    @relation("user_status")
   notifications        Notification[] @relation("user_notifications")
   feedbacks            Feedback[]     @relation("user_feedbacks")
+  createdMovies        Movie[]        @relation("created_movies")
+  createdActors        Actor[]        @relation("created_actors")
 
   @@map("users")
 }
@@ -51,6 +54,7 @@ model Movie {
   seasonCount     Int?      @map("season_count")
   episodeCount    Int?      @map("episode_count")
   posterId        String?   @unique @map("poster_id")
+  createdById     String?   @map("created_by_id")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
@@ -59,9 +63,10 @@ model Movie {
   actors     Actor[]        @relation("movie_actors")
   userMovies UserMovie[]    @relation("movie_users")
   listItems  UserListItem[] @relation("movie_list_items")
+  createdBy  User?         @relation("created_movies", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([publishDate, title])
-  @@index([titleNormalized])
+  @@unique([titleNormalized])
   @@map("movies")
 }
 
@@ -95,6 +100,8 @@ model Review {
 model Actor {
   id        String   @id @default(uuid())
   name      String
+  createdById String? @map("created_by_id")
+  createdBy User? @relation("created_actors", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   movies    Movie[]  @relation("movie_actors")
@@ -207,7 +214,7 @@ model Friendship {
   requester User @relation("friendship_requester", fields: [requesterId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   addressee User @relation("friendship_addressee", fields: [addresseeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([requesterId, addresseeId])
+  @@unique([requesterId, addresseeId, type])
   @@index([requesterId])
   @@index([addresseeId])
   @@index([status])

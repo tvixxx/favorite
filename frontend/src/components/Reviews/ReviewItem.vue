@@ -9,8 +9,9 @@ const props = withDefaults(
     review: Review;
     isEditing?: boolean;
     canEdit?: boolean;
+    busy?: boolean;
   }>(),
-  { canEdit: false },
+  { canEdit: false, busy: false },
 );
 
 const emit = defineEmits<{
@@ -106,6 +107,9 @@ const confirmDelete = (): void => {
 
       <div v-if="props.canEdit" class="review-item__actions">
         <button
+          type="button"
+          aria-label="Редактировать отзыв"
+          :disabled="busy"
           class="review-item__action-btn"
           :class="{ 'review-item__action-btn--active': isEditing }"
           @click="emit('edit', review)"
@@ -113,6 +117,9 @@ const confirmDelete = (): void => {
           <BaseIcon name="ph:pencil-simple" :width="16" :height="16" />
         </button>
         <button
+          type="button"
+          aria-label="Удалить отзыв"
+          :disabled="busy"
           class="review-item__action-btn review-item__action-btn--danger"
           @click="isDeleteOpen = true"
         >

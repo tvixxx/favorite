@@ -4,6 +4,7 @@ import { message } from "ant-design-vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { useUserMoviesStore } from "@/stores";
+import type { UserMovie } from "@/stores";
 import { useMainStore } from "@/state/state";
 import { useReviews } from "@/composable/useReviews";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
@@ -27,7 +28,7 @@ const props = defineProps<{
   personalRate?: number | null;
 }>();
 
-const emit = defineEmits<{ saved: [rate: number] }>();
+const emit = defineEmits<{ saved: [movie: UserMovie] }>();
 
 const MIN_REVIEW_TEXT_LENGTH = 10;
 
@@ -35,7 +36,6 @@ const mainStore = useMainStore();
 const userMoviesStore = useUserMoviesStore();
 const reviewsStore = useReviews();
 const { reviews } = reviewsStore;
-const { createReview, updateReview } = reviewsStore;
 
 const userId = computed(() => mainStore.userData?.id || "");
 
@@ -53,7 +53,7 @@ watch(open, (isOpen) => {
     return;
   }
 
-  rate.value = props.personalRate ?? myReview.value?.rate ?? 0;
+  rate.value = props.personalRate ?? 0;
   text.value = myReview.value?.text ?? "";
 });
 
@@ -78,29 +78,9 @@ const save = async (): Promise<void> => {
   isSaving.value = true;
 
   try {
-    await userMoviesStore.updateUserMovie(userId.value, props.movieId, {
-      personalRate: rate.value,
-    });
-
-    if (myReview.value) {
-      // Отзыв уже есть — держим его оценку в синхроне со звёздами
-      const nextText = trimmed || myReview.value.text;
-
-      if (nextText !== myReview.value.text || myReview.value.rate !== rate.value) {
-        await updateReview(myReview.value.id, {
-          text: nextText,
-          rate: rate.value,
-        });
-      }
-    } else if (trimmed) {
-      await createReview({
-        text: trimmed,
-        rate: rate.value,
-        movieId: props.movieId,
-      });
-    }
-
-    emit("saved", rate.value);
+    const updated = await userMoviesStore.rateUserMovie(userId.value, props.movieId, rate.value, trimmed);
+    emit("saved", updated);
+    void reviewsStore.fetchReviews(props.movieId, 100).catch(() => undefined);
     message.success("Оценка сохранена");
     open.value = false;
   } catch {

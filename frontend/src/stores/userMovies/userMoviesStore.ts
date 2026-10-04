@@ -1,8 +1,12 @@
 import { defineStore } from "pinia";
+import { useUserListsStore } from "@/stores/userLists/userListsStore";
 import { computed, ref } from "vue";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { getDefaultLoaderDelayTime } from "@/constants";
 import { isSuccessStatus } from "@/utils";
+import { isAxiosError } from "axios";
+import { createRequestGuard } from "@/utils/requestGuard";
+import { buildUserSearchParams } from "./build-user-search-params";
 import type {
   UserMovie,
   UserMovieApiResponse,
@@ -30,10 +34,11 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   // Filters
   const filters = ref<UserMoviesFilters>({});
 
-  // Current movie
-  const currentUserMovie = ref<UserMovie | null>(null);
-  const isCurrentLoading = ref(false);
-  const isCurrentError = ref<string | null>(null);
+  const queryRequests = createRequestGuard();
+  const detailRequests = createRequestGuard();
+  const statsRequests = createRequestGuard();
+  const analyticsRequests = createRequestGuard();
+  let sessionRevision = 0;
 
   // Pagination
   const currentPage = ref(1);
@@ -120,10 +125,18 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   };
 
   const setFilters = (newFilters: UserMoviesFilters) => {
+    if (JSON.stringify(filters.value) !== JSON.stringify(newFilters)) {
+      queryRequests.invalidate();
+      isLoaded.value = false;
+    }
+
     filters.value = newFilters;
   };
 
   const clearSearch = () => {
+    queryRequests.invalidate();
+    setLoading(false);
+    setError(null);
     searchQuery.value = "";
     searchResults.value = [];
     isSearching.value = false;
@@ -135,38 +148,15 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       return;
     }
 
+    const isCurrent = queryRequests.begin();
+    isSearching.value = false;
     setLoading(true);
     setError(null);
 
     const start = Date.now();
 
     try {
-      const params = new URLSearchParams();
-
-      for (const g of filters.value.genres ?? []) {
-        params.append("genres", g);
-      }
-
-      for (const c of filters.value.countryCodes ?? []) {
-        params.append("countryCode", c);
-      }
-
-      if (filters.value.personalRateMin !== undefined)
-        params.append("personalRateMin", String(filters.value.personalRateMin));
-      if (filters.value.personalRateMax !== undefined)
-        params.append("personalRateMax", String(filters.value.personalRateMax));
-      if (filters.value.publishDateFrom)
-        params.append("publishDateFrom", filters.value.publishDateFrom);
-      if (filters.value.publishDateTo)
-        params.append("publishDateTo", filters.value.publishDateTo);
-      if (filters.value.isFavorite !== undefined)
-        params.append("isFavorite", String(filters.value.isFavorite));
-      if (filters.value.seeLater !== undefined)
-        params.append("seeLater", String(filters.value.seeLater));
-      if (filters.value.watchStatus)
-        params.append("watchStatus", filters.value.watchStatus);
-      if (filters.value.isSerial !== undefined)
-        params.append("isSerial", String(filters.value.isSerial));
+      const params = buildUserSearchParams(filters.value);
 
       const queryString = params.toString();
       const endpoint = `/users/${userId}/movies${
@@ -179,6 +169,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
           method: FETCH_METHOD.get,
         },
       );
+      if (!isCurrent()) return;
 
       if (status !== 200) {
         throw new Error("Ошибка загрузки фильмов");
@@ -186,11 +177,12 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
       setUserMovies(mapUserMoviesFromApi(data));
     } catch (err) {
+      if (!isCurrent()) return;
       setError("Ошибка загрузки фильмов");
       throw err;
     } finally {
       setTimeout(() => {
-        setLoading(false);
+        if (isCurrent()) setLoading(false);
       }, getDefaultLoaderDelayTime(start));
     }
   };
@@ -208,6 +200,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     }
 
     searchQuery.value = q;
+    const isCurrent = queryRequests.begin();
     isSearching.value = true;
     setLoading(true);
     setError(null);
@@ -215,32 +208,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     const start = Date.now();
 
     try {
-      const params = new URLSearchParams({ q });
-
-      for (const g of filters.value.genres ?? []) {
-        params.append("genres", g);
-      }
-
-      for (const c of filters.value.countryCodes ?? []) {
-        params.append("countryCode", c);
-      }
-
-      if (filters.value.personalRateMin !== undefined)
-        params.append("personalRateMin", String(filters.value.personalRateMin));
-      if (filters.value.personalRateMax !== undefined)
-        params.append("personalRateMax", String(filters.value.personalRateMax));
-      if (filters.value.publishDateFrom)
-        params.append("publishDateFrom", filters.value.publishDateFrom);
-      if (filters.value.publishDateTo)
-        params.append("publishDateTo", filters.value.publishDateTo);
-      if (filters.value.isFavorite !== undefined)
-        params.append("isFavorite", String(filters.value.isFavorite));
-      if (filters.value.seeLater !== undefined)
-        params.append("seeLater", String(filters.value.seeLater));
-      if (filters.value.watchStatus)
-        params.append("watchStatus", filters.value.watchStatus);
-      if (filters.value.isSerial !== undefined)
-        params.append("isSerial", String(filters.value.isSerial));
+      const params = buildUserSearchParams(filters.value, q);
 
       const endpoint = `/users/${userId}/movies/search?${params.toString()}`;
 
@@ -250,6 +218,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
           method: FETCH_METHOD.get,
         },
       );
+      if (!isCurrent()) return;
 
       if (status !== 200) {
         throw new Error("Ошибка поиска");
@@ -257,12 +226,15 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
       searchResults.value = mapUserMoviesFromApi(data);
     } catch (err) {
+      if (!isCurrent()) return;
       setError("Ошибка поиска");
       throw err;
     } finally {
       setTimeout(() => {
-        setLoading(false);
-        isSearching.value = false;
+        if (isCurrent()) {
+          setLoading(false);
+          isSearching.value = false;
+        }
       }, getDefaultLoaderDelayTime(start));
     }
   };
@@ -272,6 +244,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       return;
     }
 
+    const isCurrent = statsRequests.begin();
     isStatsLoading.value = true;
     isStatsError.value = null;
 
@@ -281,6 +254,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       const { data, status } = await useFetch<UserMoviesStats>(
         `/users/${userId}/movies/stats`,
       );
+      if (!isCurrent()) return;
 
       if (status !== 200) {
         throw new Error("Ошибка загрузки статистики");
@@ -288,11 +262,12 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
       stats.value = data;
     } catch (err) {
+      if (!isCurrent()) return;
       isStatsError.value = "Ошибка загрузки статистики";
       throw err;
     } finally {
       setTimeout(() => {
-        isStatsLoading.value = false;
+        if (isCurrent()) isStatsLoading.value = false;
       }, getDefaultLoaderDelayTime(start));
     }
   };
@@ -302,6 +277,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       return;
     }
 
+    const isCurrent = analyticsRequests.begin();
     isAnalyticsLoading.value = true;
     isAnalyticsError.value = null;
 
@@ -311,6 +287,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       const { data, status } = await useFetch<UserMoviesAnalytics>(
         `/users/${userId}/movies/analytics`,
       );
+      if (!isCurrent()) return;
 
       if (status !== 200) {
         throw new Error("Ошибка загрузки аналитики");
@@ -318,11 +295,12 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
       analytics.value = data;
     } catch (err) {
+      if (!isCurrent()) return;
       isAnalyticsError.value = "Ошибка загрузки аналитики";
       throw err;
     } finally {
       setTimeout(() => {
-        isAnalyticsLoading.value = false;
+        if (isCurrent()) isAnalyticsLoading.value = false;
       }, getDefaultLoaderDelayTime(start));
     }
   };
@@ -336,20 +314,22 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       throw new Error("Не указан пользователь");
     }
 
+    const requestRevision = sessionRevision;
     const response = await useFetch<UserMovieApiResponse>(
       `/users/${userId}/movies`,
       {
         method: FETCH_METHOD.post,
         data: {
-          movieId,
           ...data,
+          movieId,
         },
       },
     );
+    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
 
     if (response?.data && isSuccessStatus(response.status)) {
       const userMovie = mapUserMovieFromApi(response.data);
-      userMovies.value.push(userMovie);
+      userMovies.value = [...userMovies.value.filter((item) => item.movieId !== movieId), userMovie];
 
       return userMovie;
     } else {
@@ -366,6 +346,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       throw new Error("Не указан пользователь");
     }
 
+    const requestRevision = sessionRevision;
     const response = await useFetch<UserMovieApiResponse>(
       `/users/${userId}/movies/${movieId}`,
       {
@@ -373,6 +354,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
         data,
       },
     );
+    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
 
     if (isSuccessStatus(response.status)) {
       const updatedUserMovie = mapUserMovieFromApi(response.data);
@@ -391,6 +373,20 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     }
   };
 
+  const rateUserMovie = async (userId: string, movieId: string, personalRate: number, reviewText: string): Promise<UserMovie> => {
+    const requestRevision = sessionRevision;
+    const response = await useFetch<UserMovieApiResponse>(`/users/${userId}/movies/${movieId}/rating`, {
+      method: FETCH_METHOD.patch, data: { personalRate, reviewText },
+    });
+    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
+    if (!isSuccessStatus(response.status)) throw new Error("Не удалось сохранить оценку");
+    const updated = mapUserMovieFromApi(response.data);
+    userMovies.value = userMovies.value.map((item) => item.movieId === movieId ? updated : item);
+    searchResults.value = searchResults.value.map((item) => item.movieId === movieId ? updated : item);
+
+    return updated;
+  };
+
   const fetchUserMovieById = async (
     userId: string,
     movieId: string,
@@ -399,8 +395,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       return null;
     }
 
-    isCurrentLoading.value = true;
-    isCurrentError.value = null;
+    const isCurrent = detailRequests.begin();
 
     try {
       const { data, status } = await useFetch<UserMovieApiResponse>(
@@ -409,36 +404,61 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
           method: FETCH_METHOD.get,
         },
       );
+      if (!isCurrent()) return null;
 
-      if (status !== 200 || !data) {
+      if (status === 404) {
+        forgetMissingMovie(movieId);
+
         return null;
       }
 
+      if (status !== 200 || !data) throw new Error("Ошибка загрузки фильма");
+
       const mapped = mapUserMovieFromApi(data);
 
-      if (!userMovies.value.some((um) => um.movieId === mapped.movieId)) {
+      if (userMovies.value.some((um) => um.movieId === mapped.movieId)) {
+        userMovies.value = userMovies.value.map((item) => item.movieId === mapped.movieId ? mapped : item);
+      } else {
         userMovies.value.push(mapped);
       }
 
       return mapped;
-    } catch {
-      return null;
-    } finally {
-      isCurrentLoading.value = false;
+    } catch (error) {
+      if (!isCurrent()) return null;
+      if (isAxiosError(error) && error.response?.status === 404) {
+        forgetMissingMovie(movieId);
+
+        return null;
+      }
+
+      throw error;
     }
   };
+
+  function forgetMissingMovie(movieId: string): void {
+    queryRequests.invalidate();
+    userMovies.value = userMovies.value.filter((item) => item.movieId !== movieId);
+    searchResults.value = searchResults.value.filter((item) => item.movieId !== movieId);
+    isLoaded.value = false;
+    setLoading(false);
+    isSearching.value = false;
+    stats.value = null;
+    analytics.value = null;
+  }
 
   const removeUserMovie = async (userId: string, movieId: string) => {
     if (!userId?.trim()) {
       throw new Error("Не указан пользователь");
     }
 
+    const requestRevision = sessionRevision;
     const response = await useFetch<string>(
       `/users/${userId}/movies/${movieId}`,
       {
         method: FETCH_METHOD.delete,
       },
     );
+    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
 
     if (isSuccessStatus(response.status)) {
       userMovies.value = userMovies.value.filter(
@@ -447,6 +467,9 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       searchResults.value = searchResults.value.filter(
         (um) => um.movieId !== movieId,
       );
+      useUserListsStore().resetSession();
+      analytics.value = null;
+      await fetchUserMoviesStats(userId).catch(() => undefined);
     } else {
       throw new Error("Не удалось удалить фильм");
     }
@@ -459,6 +482,11 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   };
 
   const resetSession = () => {
+    sessionRevision++;
+    queryRequests.invalidate();
+    detailRequests.invalidate();
+    statsRequests.invalidate();
+    analyticsRequests.invalidate();
     userMovies.value = [];
     isLoaded.value = false;
     isLoading.value = false;
@@ -467,11 +495,8 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     searchQuery.value = "";
     isSearching.value = false;
     filters.value = {};
-    currentUserMovie.value = null;
-    isCurrentLoading.value = false;
-    isCurrentError.value = null;
     currentPage.value = 1;
-    pageSize.value = 6;
+    pageSize.value = 20;
     stats.value = null;
     isStatsLoading.value = false;
     isStatsError.value = null;
@@ -490,9 +515,6 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     searchQuery,
     isSearching,
     filters,
-    currentUserMovie,
-    isCurrentLoading,
-    isCurrentError,
     currentPage,
     pageSize,
     stats,
@@ -525,6 +547,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     fetchUserMoviesAnalytics,
     addUserMovie,
     updateUserMovie,
+    rateUserMovie,
     removeUserMovie,
     fetchUserMovieById,
     removeFromSearchResults,

@@ -2,8 +2,11 @@ import { createApp } from "vue";
 import { registerSW } from "virtual:pwa-register";
 import App from "./App.vue";
 import router from "./router";
-import Antd from "ant-design-vue";
-import { message } from "ant-design-vue";
+import {
+  AutoComplete, Avatar, Button, DatePicker, Drawer, Dropdown, Form, Input,
+  InputNumber, Pagination, Rate, Segmented, Select, Slider, Switch, Tooltip,
+  message,
+} from "ant-design-vue";
 import "./styles/theme-variables.scss";
 import "./styles/tokens.scss";
 import "./styles/fonts.scss";
@@ -21,7 +24,13 @@ registerSW({ immediate: true });
 const app = createApp(App);
 const pinia = createPinia();
 
-app.use(Antd);
+for (const component of [
+  AutoComplete, Avatar, Button, DatePicker, Drawer, Dropdown, Form, Input,
+  InputNumber, Pagination, Rate, Segmented, Select, Slider, Switch, Tooltip,
+]) {
+  app.use(component);
+}
+
 app.use(pinia);
 app.use(router);
 

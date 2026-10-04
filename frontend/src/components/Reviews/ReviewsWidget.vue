@@ -26,6 +26,8 @@ const MIN_REVIEW_TEXT_LENGTH = 10;
 
 const editingReview = ref<Review | null>(null);
 const isEditing = ref(false);
+const isSaving = ref(false);
+const deletingIds = ref(new Set<string>());
 
 type ReviewFormExpose = { resetForm: () => void };
 const reviewFormRef = ref<ReviewFormExpose | null>(null);
@@ -34,11 +36,13 @@ const canEditReview = (review: Review) =>
   !!currentUserId.value && review.userId === currentUserId.value;
 
 const startEdit = (review: Review) => {
+  if (isSaving.value) return;
   editingReview.value = review;
   isEditing.value = true;
 };
 
 const cancelEdit = () => {
+  if (isSaving.value) return;
   editingReview.value = null;
   isEditing.value = false;
 };
@@ -52,7 +56,8 @@ watch(
       return;
     }
 
-    cancelEdit();
+    editingReview.value = null;
+    isEditing.value = false;
     try {
       await fetchReviews(id);
     } catch {
@@ -63,6 +68,8 @@ watch(
 );
 
 const handleSubmit = async (text: string, rate: number) => {
+  if (isSaving.value || !currentUserId.value) return;
+  text = text.trim();
   if (!text || text.length < MIN_REVIEW_TEXT_LENGTH) {
     message.error(
       `Минимальная длина отзыва — ${MIN_REVIEW_TEXT_LENGTH} символов`
@@ -71,22 +78,31 @@ const handleSubmit = async (text: string, rate: number) => {
     return;
   }
 
+  isSaving.value = true;
+  const submittedMovieId = movieId;
   try {
     if (isEditing.value && editingReview.value) {
       await updateReview(editingReview.value.id, { text, rate });
+      if (movieId !== submittedMovieId) return;
       message.success("Отзыв обновлён");
-      cancelEdit();
+      editingReview.value = null;
+      isEditing.value = false;
     } else {
       await createReview({ text, rate, movieId });
+      if (movieId !== submittedMovieId) return;
       message.success("Отзыв добавлен");
       reviewFormRef.value?.resetForm();
     }
   } catch (error) {
     showErrorRequest(error);
+  } finally {
+    isSaving.value = false;
   }
 };
 
 const handleDelete = async (reviewId: string) => {
+  if (deletingIds.value.has(reviewId) || isSaving.value) return;
+  deletingIds.value.add(reviewId);
   try {
     await deleteReview(reviewId);
     message.success("Отзыв удалён");
@@ -96,6 +112,8 @@ const handleDelete = async (reviewId: string) => {
     }
   } catch (error) {
     showErrorRequest(error);
+  } finally {
+    deletingIds.value.delete(reviewId);
   }
 };
 </script>
@@ -129,7 +147,7 @@ const handleDelete = async (reviewId: string) => {
           label: 'Повторить',
           icon: 'ph:arrow-clockwise',
           kind: 'primary',
-          onClick: () => void fetchReviews(movieId),
+          onClick: () => void fetchReviews(movieId).catch(() => {}),
         },
       ]"
     />
@@ -149,6 +167,7 @@ const handleDelete = async (reviewId: string) => {
           :review="review"
           :can-edit="canEditReview(review)"
           :is-editing="editingReview?.id === review.id"
+          :busy="isSaving || deletingIds.has(review.id)"
           @edit="startEdit(review)"
           @delete="handleDelete(review.id)"
         />
@@ -173,6 +192,7 @@ const handleDelete = async (reviewId: string) => {
           v-if="isEditing"
           type="text"
           class="reviews-widget__cancel-edit"
+          :disabled="isSaving"
           @click="cancelEdit"
         >
           <BaseIcon name="ph:x" :width="16" :height="16" />
@@ -184,6 +204,7 @@ const handleDelete = async (reviewId: string) => {
         ref="reviewFormRef"
         :key="editingReview?.id ?? 'new'"
         :is-editing="isEditing"
+        :is-saving="isSaving"
         :initial-text="editingReview?.text ?? ''"
         :initial-rate="editingReview?.rate ?? 0"
         @submit="handleSubmit"

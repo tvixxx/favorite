@@ -24,6 +24,8 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { UserListModule } from './user-list/user-list.module';
 import { NotificationModule } from './notification/notification.module';
 import { FeedbackModule } from './feedback/feedback.module';
+import { APP_FILTER } from '@nestjs/core';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 @Module({
   imports: [
@@ -54,7 +56,10 @@ import { FeedbackModule } from './feedback/feedback.module';
     FeedbackModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_FILTER, useClass: AllExceptionsFilter },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

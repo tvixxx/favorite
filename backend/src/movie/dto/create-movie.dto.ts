@@ -11,10 +11,15 @@ import {
   ArrayMinSize,
   Max,
   Min,
+  Matches,
+  ValidateNested,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
+import { UpdateUserMovieDto } from '../../user-movie/dto/update-user-movie.dto';
 import { Genre as PrismaGenre } from '../../generated/prisma/enums';
 import { PRODUCTION_COUNTRY_CODES } from '../../constants/production-countries';
+import { normalizeGenre } from '../../common/utils/normalize-genre';
 
 export class CreateMovieRequest {
   @ApiProperty({
@@ -24,6 +29,7 @@ export class CreateMovieRequest {
   })
   @IsNotEmpty()
   @IsString()
+  @Matches(/\S/, { message: 'Введите название фильма' })
   title: string;
 
   @ApiProperty({
@@ -53,6 +59,7 @@ export class CreateMovieRequest {
   })
   @IsString()
   @IsNotEmpty()
+  @Matches(/\S/, { message: 'Введите описание фильма' })
   description: string;
 
   @ApiProperty({
@@ -78,6 +85,9 @@ export class CreateMovieRequest {
   })
   @IsArray()
   @ArrayMinSize(1, { message: 'Укажите хотя бы один жанр' })
+  @Transform(({ value }: { value: unknown }) =>
+    Array.isArray(value) ? value.map(normalizeGenre) : value,
+  )
   @IsEnum(PrismaGenre, { each: true, message: 'Неверный жанр' })
   genres: PrismaGenre[];
 
@@ -120,4 +130,10 @@ export class CreateMovieRequest {
   @IsArray()
   @IsUUID('4', { each: true })
   actorIds: string[];
+
+  @ApiPropertyOptional({ type: UpdateUserMovieDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UpdateUserMovieDto)
+  collection?: UpdateUserMovieDto;
 }

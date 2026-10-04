@@ -88,13 +88,26 @@ export class AuthService {
   }
 
   public async refresh(req: Request, res: Response) {
-    const refreshToken = req.cookies[this.refreshTokenKey];
+    const refreshToken: unknown = req.cookies[this.refreshTokenKey];
 
-    if (!refreshToken) {
+    if (typeof refreshToken !== 'string' || !refreshToken) {
       throw new UnauthorizedException('Не действительный refresh-token');
     }
 
-    const payload: JwtPayload = await this.jwtService.verifyAsync(refreshToken);
+    let payload: JwtPayload;
+    try {
+      payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken);
+    } catch {
+      throw new UnauthorizedException('Недействительный refresh-token');
+    }
+
+    if (
+      payload.type !== 'refresh' ||
+      typeof payload.id !== 'string' ||
+      !payload.id
+    ) {
+      throw new UnauthorizedException('Недействительный refresh-token');
+    }
 
     if (payload) {
       const user = await this.prismaService.user.findUnique({
@@ -112,10 +125,10 @@ export class AuthService {
     }
   }
 
-  public async logout(res: Response) {
+  public logout(res: Response): Promise<boolean> {
     this.setCookie(res, this.refreshTokenKey, new Date(0));
 
-    return true;
+    return Promise.resolve(true);
   }
 
   public async validate(id: string) {
@@ -139,11 +152,29 @@ export class AuthService {
     return user;
   }
 
+  public async verifyAccessToken(token: string) {
+    let payload: JwtPayload;
+    try {
+      payload = await this.jwtService.verifyAsync<JwtPayload>(token);
+    } catch {
+      throw new UnauthorizedException('Недействительный access-token');
+    }
+
+    if (
+      payload.type !== 'access' ||
+      typeof payload.id !== 'string' ||
+      !payload.id
+    ) {
+      throw new UnauthorizedException('Недействительный access-token');
+    }
+
+    return this.validate(payload.id);
+  }
+
   private auth(res: Response, id: string) {
     const { accessToken, refreshToken } = this.generateTokens(id);
-    const expiresTimeMs = new Date(
-      Date.now() + 1000 * 60 * 60 * 24 * parseInt(this.JWT_REFRESH_TOKEN_TTL),
-    );
+    const { exp } = this.jwtService.decode<{ exp: number }>(refreshToken);
+    const expiresTimeMs = new Date(exp * 1000);
 
     this.setCookie(res, refreshToken, expiresTimeMs);
 
@@ -166,11 +197,11 @@ export class AuthService {
   } {
     const payload: JwtPayload = { id };
 
-    const accessToken = this.jwtService.sign(payload, {
+    const accessToken = this.jwtService.sign({ ...payload, type: 'access' }, {
       expiresIn: this.JWT_ACCESS_TOKEN_TTL,
     } as JwtSignOptions);
 
-    const refreshToken = this.jwtService.sign(payload, {
+    const refreshToken = this.jwtService.sign({ ...payload, type: 'refresh' }, {
       expiresIn: this.JWT_REFRESH_TOKEN_TTL,
     } as JwtSignOptions);
 

@@ -5,15 +5,15 @@ export function buildMovieDetailAbsoluteUrl(
   movieId: string,
   movieTitle?: string,
 ): string {
-  const { fullPath } = router.resolve({
+  const { href } = router.resolve({
     name: "detail",
     params: { id: movieId },
     query: movieTitle?.trim() ? { shareTitle: movieTitle.trim() } : undefined,
   });
 
   if (typeof window === "undefined") {
-    return fullPath;
+    return href;
   }
 
-  return `${window.location.origin}${fullPath}`;
+  return new URL(href, window.location.origin).href;
 }

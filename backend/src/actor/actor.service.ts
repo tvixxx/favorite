@@ -3,6 +3,10 @@ import { CreateActorDto } from './dto/create-actor.dto';
 import type { ActorsListResponseDto } from './dto/actors-list-response.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import type { Actor, Prisma } from '../generated/prisma/client';
+import {
+  assertCatalogOwner,
+  type CatalogUser,
+} from '../common/utils/catalog-owner';
 
 @Injectable()
 export class ActorService {
@@ -55,7 +59,10 @@ export class ActorService {
   public async patch(
     id: string,
     dto: Partial<CreateActorDto>,
+    user: CatalogUser,
   ): Promise<boolean> {
+    const actor = await this.findById(id);
+    assertCatalogOwner(actor.createdById, user);
     await this.prismaService.actor.update({
       where: { id },
       data: {
@@ -66,9 +73,14 @@ export class ActorService {
     return true;
   }
 
-  public async create(createActorDto: CreateActorDto): Promise<Actor> {
+  public async create(
+    createActorDto: CreateActorDto,
+    user: CatalogUser,
+  ): Promise<Actor> {
     const { name } = createActorDto;
 
-    return this.prismaService.actor.create({ data: { name } });
+    return this.prismaService.actor.create({
+      data: { name, createdById: user.role === 'ADMIN' ? null : user.id },
+    });
   }
 }

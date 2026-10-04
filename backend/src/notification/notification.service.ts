@@ -22,7 +22,7 @@ export class NotificationService {
       id: row.id,
       userId: row.userId,
       type: row.type,
-      payload: row.payload as Prisma.JsonValue,
+      payload: row.payload,
       readAt: row.readAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
     };
@@ -42,9 +42,13 @@ export class NotificationService {
     });
   }
 
-  async findManyForUser(userId: string, limit = 30): Promise<NotificationDto[]> {
+  async findManyForUser(
+    userId: string,
+    limit = 30,
+    types?: NotificationType[],
+  ): Promise<NotificationDto[]> {
     const rows = await this.prismaService.notification.findMany({
-      where: { userId },
+      where: { userId, ...(types ? { type: { in: types } } : {}) },
       orderBy: { createdAt: 'desc' },
       take: Math.min(Math.max(limit, 1), 50),
     });
@@ -52,9 +56,16 @@ export class NotificationService {
     return rows.map((r) => this.toDto(r));
   }
 
-  async unreadCount(userId: string): Promise<number> {
+  async unreadCount(
+    userId: string,
+    types?: NotificationType[],
+  ): Promise<number> {
     return this.prismaService.notification.count({
-      where: { userId, readAt: null },
+      where: {
+        userId,
+        readAt: null,
+        ...(types ? { type: { in: types } } : {}),
+      },
     });
   }
 
@@ -78,9 +89,13 @@ export class NotificationService {
     return this.toDto(updated);
   }
 
-  async markAllRead(userId: string): Promise<void> {
+  async markAllRead(userId: string, types?: NotificationType[]): Promise<void> {
     await this.prismaService.notification.updateMany({
-      where: { userId, readAt: null },
+      where: {
+        userId,
+        readAt: null,
+        ...(types ? { type: { in: types } } : {}),
+      },
       data: { readAt: new Date() },
     });
   }

@@ -12,8 +12,10 @@ import type {
   MoviesStats,
   MovieApiResponse,
   MoviesFilters,
+  CreateMoviePayload,
 } from "@/stores/movies/types";
 import { MOVIE_STORE_NAME } from "@/stores/movies/constants";
+import { createRequestGuard } from "@/utils/requestGuard";
 import {
   buildSearchParams,
   mapMovieFromApi,
@@ -47,14 +49,12 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   const moviesStats = ref<MoviesStats | null>(null);
   const isMoviesStatsLoading = ref<boolean>(false);
   const isMoviesStatsError = ref<string | null>(null);
+  const queryRequests = createRequestGuard();
+  const detailRequests = createRequestGuard();
+  const statsRequests = createRequestGuard();
 
   const setCurrentPage = (page: number) => {
     currentPage.value = page;
-  };
-
-  const setPageSize = (size: number) => {
-    pageSize.value = size;
-    currentPage.value = 1;
   };
 
   const setLoadingMovies = (value: boolean) => {
@@ -72,7 +72,6 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
   const setMoviesStats = (stats: MoviesStats): void => {
     moviesStats.value = stats;
-    setMoviesStatsLoading(true);
   };
 
   const setMoviesStatsLoading = (isLoading: boolean): void => {
@@ -92,10 +91,18 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   };
 
   const setCurrentMovie = (item: Movie | null): void => {
+    if (!item) {
+      detailRequests.invalidate();
+      setLoadingMovie(false);
+      setErrorMovie(null);
+    }
+
     currentMovie.value = item;
   };
 
   const setFilters = (newFilters: MoviesFilters) => {
+    queryRequests.invalidate();
+    isMoviesLoaded.value = false;
     filters.value = newFilters;
   };
 
@@ -116,12 +123,6 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     () => visibleMovies.value.length < currentMoviesList.value.length,
   );
 
-  const totalPages = computed(() => {
-    const list = currentMoviesList.value;
-
-    return Math.ceil(list.length / pageSize.value);
-  });
-
   const hasActiveFilters = computed(() => {
     return (
       !!searchQuery.value ||
@@ -133,7 +134,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     );
   });
 
-  const createMovie = async (movieData: Partial<Movie>): Promise<Movie> => {
+  const createMovie = async (movieData: CreateMoviePayload): Promise<Movie> => {
     const response = await useFetch<MovieApiResponse>(MOVIES_ENDPOINTS, {
       method: FETCH_METHOD.post,
       data: movieData,
@@ -141,7 +142,8 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
     if (response?.data && isSuccessStatus(response.status)) {
       const movie = mapMovieFromApi(response.data);
-      moviesList.value.push(movie);
+      moviesList.value = [movie, ...moviesList.value.filter((item) => item.id !== movie.id)];
+      moviesStats.value = null;
 
       return movie;
     } else {
@@ -149,125 +151,21 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     }
   };
 
-  const updateMovie = async (movieData: Movie): Promise<void> => {
-    const requestData: Partial<Movie> = { ...movieData };
-
-    const response = await useFetch<boolean>(
-      `${MOVIES_ENDPOINTS}/${movieData.id}`,
-      {
-        method: FETCH_METHOD.patch,
-        data: requestData,
-      },
-    );
-
-    if (isSuccessStatus(response.status)) {
-      const movies = moviesList.value.map((movie: Movie) =>
-        movie.id === movieData.id ? { ...movie, ...requestData } : movie,
-      );
-      setMovies(movies);
-
-      searchResults.value = searchResults.value.map((movie: Movie) =>
-        movie.id === movieData.id ? { ...movie, ...requestData } : movie,
-      );
-    } else {
-      throw new Error("Не удалось обновить фильм");
-    }
-  };
-
-  const patchMovie = async (
-    movieId: string,
-    data: Partial<Movie>,
-  ): Promise<void> => {
-    const response = await useFetch<boolean>(`${MOVIES_ENDPOINTS}/${movieId}`, {
-      method: FETCH_METHOD.patch,
-      data,
-    });
-
-    if (isSuccessStatus(response.status)) {
-      const updatedMovie = { ...data };
-
-      moviesList.value = moviesList.value.map((movie: Movie) =>
-        movie.id === movieId ? { ...movie, ...updatedMovie } : movie,
-      );
-
-      searchResults.value = searchResults.value.map((movie: Movie) =>
-        movie.id === movieId ? { ...movie, ...updatedMovie } : movie,
-      );
-    } else {
-      throw new Error("Не удалось обновить фильм");
-    }
-  };
-
-  const removeMovie = async (movieId: string): Promise<void> => {
-    const response = await useFetch<string>(`${MOVIES_ENDPOINTS}/${movieId}`, {
-      method: FETCH_METHOD.delete,
-    });
-
-    if (isSuccessStatus(response.status)) {
-      moviesList.value = moviesList.value.filter(
-        (movie) => movie.id !== movieId,
-      );
-
-      searchResults.value = searchResults.value.filter(
-        (movie) => movie.id !== movieId,
-      );
-    } else {
-      throw new Error("Не удалось удалить фильм");
-    }
-  };
-
-  const findMovie = async (query: string) => {
-    searchQuery.value = query;
-    isSearching.value = true;
-    setLoadingMovies(true);
-    setErrorMovies(null);
-
-    const start = Date.now();
-
-    try {
-      const params = buildSearchParams(filters.value, query);
-      const queryString = params.toString();
-      let endpoint = MOVIES_ENDPOINTS;
-
-      if (queryString) {
-        endpoint = `${MOVIES_ENDPOINTS}/search?${queryString}`;
-      }
-
-      const { data, status } = await useFetch<MovieApiResponse[]>(endpoint, {
-        method: FETCH_METHOD.get,
-      });
-
-      if (status !== 200) {
-        throw new Error(ERROR_FETCH_MOVIES_TEXT);
-      }
-
-      if (query.trim()) {
-        searchResults.value = mapMoviesFromApi(data);
-      } else {
-        setMovies(mapMoviesFromApi(data));
-      }
-    } catch (err) {
-      setErrorMovies(ERROR_FETCH_MOVIES_TEXT);
-      throw err;
-    } finally {
-      setTimeout(() => {
-        setLoadingMovies(false);
-        isSearching.value = false;
-      }, getDefaultLoaderDelayTime(start));
-    }
-  };
-
   const clearSearch = () => {
+    queryRequests.invalidate();
+    setLoadingMovies(false);
+    setErrorMovies(null);
     searchQuery.value = "";
     searchResults.value = [];
     isSearching.value = false;
   };
 
   const fetchMovies = async (query = "") => {
-    if (!query && searchQuery.value) {
-      clearSearch();
-    }
-
+    const isCurrent = queryRequests.begin();
+    query = query.trim();
+    searchQuery.value = query;
+    isSearching.value = !!query;
+    currentPage.value = 1;
     setLoadingMovies(true);
     setErrorMovies(null);
 
@@ -291,23 +189,32 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
       const { data, status } = await useFetch<MovieApiResponse[]>(endpoint, {
         method: FETCH_METHOD.get,
       });
+      if (!isCurrent()) return;
 
       if (status !== 200) {
         throw new Error(ERROR_FETCH_MOVIES_TEXT);
       }
 
-      setMovies(mapMoviesFromApi(data));
+      if (query) searchResults.value = mapMoviesFromApi(data);
+      else setMovies(mapMoviesFromApi(data));
     } catch (err) {
+      if (!isCurrent()) return;
       setErrorMovies(ERROR_FETCH_MOVIES_TEXT);
       throw err;
     } finally {
       setTimeout(() => {
-        setLoadingMovies(false);
+        if (isCurrent()) {
+          setLoadingMovies(false);
+          isSearching.value = false;
+        }
       }, getDefaultLoaderDelayTime(start));
     }
   };
 
+  const findMovie = (query: string) => fetchMovies(query);
+
   const fetchMoviesStats = async () => {
+    const isCurrent = statsRequests.begin();
     setMoviesStatsLoading(true);
     setMoviesStatsError(null);
 
@@ -317,6 +224,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
       const { data, status } = await useFetch<MoviesStats>(
         `${MOVIES_ENDPOINTS}/stats`,
       );
+      if (!isCurrent()) return;
 
       if (status !== 200) {
         throw new Error(ERROR_FETCH_MOVIES_STATS_TEXT);
@@ -324,25 +232,23 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
       setMoviesStats(data);
     } catch (err) {
+      if (!isCurrent()) return;
       setMoviesStatsError(ERROR_FETCH_MOVIES_STATS_TEXT);
       throw err;
     } finally {
       setTimeout(() => {
-        setMoviesStatsLoading(false);
+        if (isCurrent()) setMoviesStatsLoading(false);
       }, getDefaultLoaderDelayTime(start));
     }
-  };
-
-  const getMovieById = (movieId: string | null) => {
-    return (
-      moviesList.value.find((movie: Movie) => movie.id === movieId) ?? null
-    );
   };
 
   const getMovieDetail = async (movieId: string | null) => {
     if (!movieId) {
       return;
     }
+
+    const isCurrent = detailRequests.begin();
+    if (currentMovie.value?.id !== movieId) currentMovie.value = null;
 
     setLoadingMovie(true);
     setErrorMovie(null);
@@ -356,6 +262,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
           method: FETCH_METHOD.get,
         },
       );
+      if (!isCurrent()) return;
 
       if (status !== 200) {
         throw new Error("Ошибка загрузки фильма");
@@ -363,11 +270,12 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
       setCurrentMovie(mapMovieFromApi(data));
     } catch (error) {
+      if (!isCurrent()) return;
       setErrorMovie("Ошибка загрузки фильма");
       throw error;
     } finally {
       setTimeout(() => {
-        setLoadingMovie(false);
+        if (isCurrent()) setLoadingMovie(false);
       }, getDefaultLoaderDelayTime(start));
     }
   };
@@ -386,7 +294,6 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     // Movies page info refs
     visibleMovies,
     hasMoreMovies,
-    totalPages,
 
     // Movie refs
     currentMovie,
@@ -398,16 +305,8 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     isMoviesStatsLoading,
     isMoviesStatsError,
 
-    setMovies,
     setCurrentMovie,
-    setLoadingMovies,
-    setErrorMovies,
-    setLoadingMovie,
-    setErrorMovie,
     setCurrentPage,
-    setPageSize,
-
-    getMovieById,
     getMovieDetail,
 
     // Movies
@@ -415,14 +314,9 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
     // Movies stats
     fetchMoviesStats,
-    setMoviesStatsLoading,
-    setMoviesStatsError,
 
     // Movie handlers
     createMovie,
-    updateMovie,
-    patchMovie,
-    removeMovie,
 
     // Search
     findMovie,

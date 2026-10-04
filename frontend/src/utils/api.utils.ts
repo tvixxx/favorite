@@ -1,11 +1,7 @@
-import {
-  ERROR_SERVER_STATUS,
-  ERROR_STATUSES,
-  SUCCESS_STATUSES,
-} from "@/constants";
+import { ERROR_SERVER_STATUS } from "@/constants";
 
 export const isSuccessStatus = (status = ERROR_SERVER_STATUS): boolean =>
-  SUCCESS_STATUSES.some((successStatus) => successStatus === status);
+  status >= 200 && status < 300;
 
 export const isErrorStatus = (status = ERROR_SERVER_STATUS): boolean =>
-  ERROR_STATUSES.some((errorStatus) => errorStatus === status);
+  status >= 400 && status < 600;

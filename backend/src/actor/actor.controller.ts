@@ -15,7 +15,8 @@ import {
 } from '@nestjs/swagger';
 import { ActorService } from './actor.service';
 import { CreateActorDto } from './dto/create-actor.dto';
-import { AuthCatalogWrite } from '../common/decorators';
+import { AuthCatalogWrite, Authorized } from '../common/decorators';
+import type { User } from '../generated/prisma/client';
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 20;
@@ -32,8 +33,8 @@ export class ActorController {
     description: 'Любой залогиненный пользователь; лимит запросов',
   })
   @ApiOkResponse({ description: 'Создано' })
-  public create(@Body() dto: CreateActorDto) {
-    return this.actorService.create(dto);
+  public create(@Body() dto: CreateActorDto, @Authorized() user: User) {
+    return this.actorService.create(dto, user);
   }
 
   @Get()
@@ -67,10 +68,15 @@ export class ActorController {
   @Patch(':id')
   @ApiOperation({
     summary: 'Обновить актёра',
-    description: 'Любой залогиненный пользователь; лимит запросов',
+    description:
+      'Автор записи или администратор. Общие записи меняет только администратор.',
   })
   @ApiNotFoundResponse()
-  public patch(@Param('id') id: string, @Body() dto: Partial<CreateActorDto>) {
-    return this.actorService.patch(id, dto);
+  public patch(
+    @Param('id') id: string,
+    @Body() dto: Partial<CreateActorDto>,
+    @Authorized() user: User,
+  ) {
+    return this.actorService.patch(id, dto, user);
   }
 }

@@ -278,6 +278,8 @@ onBeforeUnmount(() => {
       </div>
 
       <CollectionFiltersBar
+        :filters="userMoviesStore.filters"
+        :search-query="userMoviesStore.searchQuery"
         :show-status="false"
         search-placeholder="Поиск по избранному"
         :search-handler="handleSearch"

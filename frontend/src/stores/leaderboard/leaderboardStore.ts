@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { isSuccessStatus } from "@/utils";
+import { createRequestGuard } from "@/utils/requestGuard";
 
 export type LeaderboardSortBy =
   | "totalScore"
@@ -50,6 +51,7 @@ export const useLeaderboardStore = defineStore("leaderboard", () => {
   const sortOrder = ref<LeaderboardSortOrder>("desc");
   const isLoading = ref(false);
   const isError = ref<string | null>(null);
+  const requests = createRequestGuard();
 
   const currentPage = computed(
     () => Math.floor(offset.value / PAGE_SIZE) + 1
@@ -66,6 +68,7 @@ export const useLeaderboardStore = defineStore("leaderboard", () => {
   };
 
   const fetchTopUsers = async () => {
+    const isCurrent = requests.begin();
     isLoading.value = true;
     isError.value = null;
 
@@ -74,6 +77,7 @@ export const useLeaderboardStore = defineStore("leaderboard", () => {
         `/leaderboard/top-users?${buildQuery()}`,
         { method: FETCH_METHOD.get }
       );
+      if (!isCurrent()) return;
 
       if (!isSuccessStatus(status)) {
         throw new Error("Ошибка загрузки рейтинга");
@@ -84,10 +88,11 @@ export const useLeaderboardStore = defineStore("leaderboard", () => {
       limit.value = data.limit ?? PAGE_SIZE;
       offset.value = data.offset ?? offset.value;
     } catch {
+      if (!isCurrent()) return;
       isError.value = "Не удалось загрузить рейтинг";
       items.value = [];
     } finally {
-      isLoading.value = false;
+      if (isCurrent()) isLoading.value = false;
     }
   };
 

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { onMounted, reactive, ref, computed } from "vue";
-import { useRouter } from "vue-router";
+import { onBeforeUnmount, onMounted, reactive, ref, computed } from "vue";
+import { useNavigateBack } from "@/composable/useNavigateBack";
 
 import { message, type FormInstance } from "ant-design-vue";
 import WatchStatusSelect from "@/components/WatchStatusSelect/WatchStatusSelect.vue";
@@ -17,20 +17,26 @@ import {
   GenreValues,
 } from "@/components/Genres/constants/genres.constants";
 import { PRODUCTION_COUNTRIES } from "@/constants/countries/production-countries";
-import { Movie } from "@/stores";
+import type { CreateMoviePayload } from "@/stores/movies/types";
 import type { SelectProps } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
 
-const router = useRouter();
+const { navigateBack } = useNavigateBack();
 const moviesStore = useMoviesStore();
 const userMoviesStore = useUserMoviesStore();
 const actorsStore = useActorsStore();
 const mainStore = useMainStore();
 
 const userId = computed(() => mainStore.userData?.id || "");
+const isActorResolving = ref(false);
+const isSubmitting = ref(false);
+let actorSelectionRevision = 0;
+onBeforeUnmount(() => { actorSelectionRevision += 1; });
 
 const handleActorSelection = async (selectedValues: string[]) => {
+  const revision = ++actorSelectionRevision;
+  isActorResolving.value = true;
   const processedValues: string[] = [];
 
   for (const value of selectedValues) {
@@ -40,8 +46,10 @@ const handleActorSelection = async (selectedValues: string[]) => {
     if (!uuidRegex.test(value)) {
       try {
         const newActor = await actorsStore.addActorByName(value);
+        if (revision !== actorSelectionRevision) return;
         processedValues.push(newActor.id);
       } catch {
+        if (revision !== actorSelectionRevision) return;
         message.error(`Не удалось добавить актера: ${value}`);
       }
     } else {
@@ -49,7 +57,10 @@ const handleActorSelection = async (selectedValues: string[]) => {
     }
   }
 
-  formData.actorIds = processedValues;
+  if (revision === actorSelectionRevision) {
+    formData.actorIds = [...new Set(processedValues)];
+    isActorResolving.value = false;
+  }
 };
 
 interface CreateMovieForm {
@@ -114,12 +125,12 @@ const visibleGenres = computed(() =>
     ? genreOptions
     : genreOptions.filter(
         (option, index) =>
-          index < GENRES_VISIBLE_LIMIT || formData.genres.includes(option.value),
-      ),
+          index < GENRES_VISIBLE_LIMIT || formData.genres.includes(option.value)
+      )
 );
 
 const hiddenGenresCount = computed(
-  () => genreOptions.length - visibleGenres.value.length,
+  () => genreOptions.length - visibleGenres.value.length
 );
 
 const toggleGenre = (value: Genre): void => {
@@ -132,24 +143,26 @@ const filterCountryOption = (input: string, option: { label?: string }) =>
   (option?.label ?? "").toLowerCase().includes(input.toLowerCase());
 
 const cancel = (): void => {
-  router.back();
+  void navigateBack({ fallback: { name: "library-collection" } });
 };
 
 onMounted(async () => {
   try {
-    await actorsStore.fetchActors();
+    await actorsStore.fetchActorsForPickers();
   } catch {
     message.error("Не удалось загрузить актеров");
   }
 });
 
 const addNewMovie = async () => {
+  if (isSubmitting.value || isActorResolving.value) return;
+  isSubmitting.value = true;
   const { title } = formData;
 
   try {
-    const moviePayload: Partial<Movie> = {
-      title: formData.title,
-      description: formData.description,
+    const moviePayload: CreateMoviePayload = {
+      title: formData.title.trim(),
+      description: formData.description.trim(),
       countryCodes: formData.countryCodes,
       genres: formData.genres,
       publishDate: formData.publishDate
@@ -158,26 +171,43 @@ const addNewMovie = async () => {
       actorIds: formData.actorIds,
       imageUrl: formData.imageUrl,
       isSerial: formData.isSerial,
-      seasonCount: formData.seasonCount ?? undefined,
-      episodeCount: formData.episodeCount ?? undefined,
+      seasonCount: formData.isSerial ? formData.seasonCount : undefined,
+      episodeCount: formData.isSerial ? formData.episodeCount : undefined,
+      collection: {
+        isFavorite: formData.isFavorite,
+        seeLater: formData.seeLater,
+        personalRate: formData.personalRate || null,
+        watchStatus: watchStatus.value,
+        currentSeason: formData.isSerial
+          ? formData.currentSeason ?? null
+          : null,
+        currentEpisode: formData.isSerial
+          ? formData.currentEpisode ?? null
+          : null,
+      },
     };
 
     const createdMovie = await moviesStore.createMovie(moviePayload);
 
     if (createdMovie && userId.value) {
-      await userMoviesStore.addUserMovie(userId.value, createdMovie.id, {
-        isFavorite: formData.isFavorite,
-        seeLater: formData.seeLater,
-        personalRate: formData.personalRate || null,
-        watchStatus: watchStatus.value,
-        currentSeason: formData.currentSeason ?? null,
-        currentEpisode: formData.currentEpisode ?? null,
-      });
+      userMoviesStore.isLoaded = false;
+      await userMoviesStore
+        .fetchUserMovies(userId.value)
+        .catch(() => undefined);
     }
 
     formRef?.value?.resetFields();
     formData.actorIds = [];
     formData.countryCodes = ["US"];
+    formData.personalRate = 0;
+    formData.isFavorite = false;
+    formData.seeLater = false;
+    formData.isSerial = false;
+    formData.seasonCount = undefined;
+    formData.episodeCount = undefined;
+    formData.currentSeason = undefined;
+    formData.currentEpisode = undefined;
+    watchStatus.value = WatchStatus.NOT_STARTED;
     message.success(`${title} добавлен`);
   } catch (error: unknown) {
     if (isApiConflictError(error)) {
@@ -189,6 +219,8 @@ const addNewMovie = async () => {
     }
 
     showErrorRequest(error);
+  } finally {
+    isSubmitting.value = false;
   }
 };
 </script>
@@ -208,6 +240,7 @@ const addNewMovie = async () => {
         <a-form
           ref="formRef"
           :model="formData"
+          :disabled="isSubmitting"
           name="create-movie-form"
           layout="vertical"
           class="cm-form"
@@ -219,7 +252,13 @@ const addNewMovie = async () => {
               <a-form-item
                 label="Название фильма/сериала"
                 name="title"
-                :rules="[{ required: true, message: 'Введите название фильма' }]"
+                :rules="[
+                  {
+                    required: true,
+                    whitespace: true,
+                    message: 'Введите название фильма',
+                  },
+                ]"
               >
                 <a-input
                   v-model:value="formData.title"
@@ -231,7 +270,9 @@ const addNewMovie = async () => {
               <a-form-item
                 label="Ссылка на постер"
                 name="imageUrl"
-                :rules="[{ required: true, message: 'Введите ссылку на постер' }]"
+                :rules="[
+                  { required: true, message: 'Введите ссылку на постер' },
+                ]"
               >
                 <a-input
                   v-model:value="formData.imageUrl"
@@ -257,12 +298,12 @@ const addNewMovie = async () => {
                     mode="tags"
                     placeholder="Выберите или введите актёров"
                     size="large"
-                    :loading="actorsStore.isActorsLoading"
-                    :disabled="actorsStore.isActorsLoading"
+                    :loading="actorsStore.isPickerLoading || isActorResolving"
+                    :disabled="actorsStore.isPickerLoading || isSubmitting"
                     @change="handleActorSelection"
                   >
                     <a-select-option
-                      v-for="actor in actorsStore.getAllActors"
+                      v-for="actor in actorsStore.pickerActors"
                       :key="actor.id"
                       :value="actor.id"
                     >
@@ -406,7 +447,10 @@ const addNewMovie = async () => {
               </div>
 
               <div
-                v-if="formData.isSerial && (formData.seasonCount || formData.episodeCount)"
+                v-if="
+                  formData.isSerial &&
+                  (formData.seasonCount || formData.episodeCount)
+                "
                 class="cm-row2"
               >
                 <a-form-item
@@ -442,11 +486,21 @@ const addNewMovie = async () => {
                 </a-form-item>
               </div>
 
-              <a-form-item label="Описание" name="description">
+              <a-form-item
+                label="Описание"
+                name="description"
+                :rules="[
+                  {
+                    required: true,
+                    whitespace: true,
+                    message: 'Введите описание фильма',
+                  },
+                ]"
+              >
                 <a-textarea
                   v-model:value="formData.description"
                   :rows="4"
-                  placeholder="Расскажите о своих впечатлениях от фильма…"
+                  placeholder="Кратко или детальное описание фильма"
                   :maxlength="500"
                   :show-count="true"
                 />
@@ -499,6 +553,8 @@ const addNewMovie = async () => {
               html-type="submit"
               size="large"
               class="cm-footer__submit"
+              :loading="isSubmitting"
+              :disabled="isActorResolving"
             >
               <BaseIcon name="ph:plus" :width="18" :height="18" />
               Добавить
@@ -636,8 +692,7 @@ const addNewMovie = async () => {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition:
-    background var(--fv-motion-fast) var(--fv-ease),
+  transition: background var(--fv-motion-fast) var(--fv-ease),
     color var(--fv-motion-fast) var(--fv-ease);
 
   &:hover:not(&--on) {
@@ -935,7 +990,13 @@ const addNewMovie = async () => {
   align-items: center;
 }
 
+:deep(.ant-input-number-input-wrap) {
+  flex: 1;
+  min-width: 0;
+}
+
 :deep(.ant-input-number-input) {
+  width: 100%;
   height: 42px;
 }
 

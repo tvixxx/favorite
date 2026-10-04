@@ -1,4 +1,5 @@
 import { ref } from "vue";
+import { defineStore, storeToRefs } from "pinia";
 import type { Review } from "@/stores";
 import { MOVIES_ENDPOINTS, REVIEWS_ENDPOINT } from "@/constants";
 import { FETCH_METHOD, useFetch } from "@/composable/useFetch";
@@ -8,16 +9,19 @@ interface UpdateReviewPayload {
   text: string;
   rate: number;
 }
+interface CreateReviewPayload extends UpdateReviewPayload {
+  movieId: string;
+}
 
-const reviews = ref<Review[]>([]);
-const isLoading = ref<boolean>(false);
-const isLoaded = ref<boolean>(false);
-const isError = ref<boolean>(false);
-const totalReviews = ref(0);
-const loadedMovieId = ref<string | null>(null);
-let fetchGeneration = 0;
-
-export function useReviews() {
+export const useReviewsStore = defineStore("movieReviews", () => {
+  const reviews = ref<Review[]>([]);
+  const isLoading = ref(false);
+  const isLoaded = ref(false);
+  const isError = ref(false);
+  const totalReviews = ref(0);
+  const loadedMovieId = ref<string | null>(null);
+  let fetchGeneration = 0;
+  let sessionRevision = 0;
   const setReviews = (newReviews: Review[]) => {
     reviews.value = newReviews;
     totalReviews.value = newReviews.length;
@@ -81,16 +85,18 @@ export function useReviews() {
     }
   };
 
-  const createReview = async (payload: Partial<Review>): Promise<void> => {
+  const createReview = async (payload: CreateReviewPayload): Promise<void> => {
+    const requestRevision = sessionRevision;
     const requestedMovieId = payload.movieId;
     try {
       const { data, status } = await useFetch<Review>(`${REVIEWS_ENDPOINT}`, {
         method: FETCH_METHOD.post,
         data: payload,
       });
+      if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
 
       if (!isSuccessStatus(status) || !data) {
-        return;
+        throw new Error("Не удалось создать отзыв");
       }
 
       const reviewMovieId = data.movieId ?? requestedMovieId;
@@ -121,6 +127,8 @@ export function useReviews() {
     reviewId: string,
     payload: UpdateReviewPayload
   ): Promise<void> => {
+    const requestedMovieId = loadedMovieId.value;
+    const requestRevision = sessionRevision;
     try {
       const { data, status } = await useFetch<Review>(
         `${REVIEWS_ENDPOINT}/${reviewId}`,
@@ -129,8 +137,10 @@ export function useReviews() {
           data: payload,
         }
       );
+      if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
 
-      if (isSuccessStatus(status) && data) {
+      if (!isSuccessStatus(status) || !data) throw new Error("Не удалось обновить отзыв");
+      if (loadedMovieId.value === requestedMovieId) {
         reviews.value = reviews.value.map((review) => {
           return review.id === reviewId ? data : review;
         });
@@ -141,23 +151,38 @@ export function useReviews() {
   };
 
   const deleteReview = async (reviewId: string) => {
+    const requestedMovieId = loadedMovieId.value;
+    const requestRevision = sessionRevision;
     try {
-      const { data, status } = await useFetch<string>(
+      const { status } = await useFetch<string>(
         `${REVIEWS_ENDPOINT}/${reviewId}`,
         {
           method: FETCH_METHOD.delete,
         }
       );
+      if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
 
-      if (isSuccessStatus(status) && data) {
+      if (!isSuccessStatus(status)) throw new Error("Не удалось удалить отзыв");
+      if (loadedMovieId.value === requestedMovieId) {
         reviews.value = reviews.value.filter(
           (review) => review.id !== reviewId
         );
-        totalReviews.value -= 1;
+        totalReviews.value = reviews.value.length;
       }
     } catch {
       throw new Error("Не удалось удалить отзыв");
     }
+  };
+
+  const resetSession = () => {
+    sessionRevision++;
+    fetchGeneration++;
+    reviews.value = [];
+    totalReviews.value = 0;
+    loadedMovieId.value = null;
+    isLoading.value = false;
+    isLoaded.value = false;
+    isError.value = false;
   };
 
   return {
@@ -166,13 +191,26 @@ export function useReviews() {
     isLoaded,
     isError,
     totalReviews,
-
-    setIsLoading,
-    setIsError,
+    loadedMovieId,
 
     fetchReviews,
     createReview,
     updateReview,
     deleteReview,
+    resetSession,
+  };
+});
+
+/** Сохраняет интерфейс refs для компонентов, которые деструктурируют хук. */
+export function useReviews() {
+  const store = useReviewsStore();
+
+  return {
+    ...storeToRefs(store),
+    fetchReviews: store.fetchReviews,
+    createReview: store.createReview,
+    updateReview: store.updateReview,
+    deleteReview: store.deleteReview,
+    resetSession: store.resetSession,
   };
 }

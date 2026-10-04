@@ -19,6 +19,7 @@ import { MessageModule } from '../../message/message.module';
 import { BadgeModule } from '../../badge/badge.module';
 import { UserListModule } from '../../user-list/user-list.module';
 import { NotificationModule } from '../../notification/notification.module';
+import { FeedbackModule } from '../../feedback/feedback.module';
 
 const getSwaggerDocumentConfig = (): Omit<OpenAPIObject, 'paths'> => {
   const { title, description, version, contact } = SWAGGER_CONFIG_DATA;
@@ -52,6 +53,7 @@ const SWAGGER_DOCUMENT_INCLUDE_MODULES = [
   BadgeModule,
   UserListModule,
   NotificationModule,
+  FeedbackModule,
 ];
 
 const getSwaggerDocument = (app: INestApplication): OpenAPIObject => {

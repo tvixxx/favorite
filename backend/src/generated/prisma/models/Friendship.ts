@@ -216,7 +216,7 @@ export type FriendshipOrderByWithRelationInput = {
 
 export type FriendshipWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  requesterId_addresseeId?: Prisma.FriendshipRequesterIdAddresseeIdCompoundUniqueInput
+  requesterId_addresseeId_type?: Prisma.FriendshipRequesterIdAddresseeIdTypeCompoundUniqueInput
   AND?: Prisma.FriendshipWhereInput | Prisma.FriendshipWhereInput[]
   OR?: Prisma.FriendshipWhereInput[]
   NOT?: Prisma.FriendshipWhereInput | Prisma.FriendshipWhereInput[]
@@ -228,7 +228,7 @@ export type FriendshipWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Friendship"> | Date | string
   requester?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   addressee?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "requesterId_addresseeId">
+}, "id" | "requesterId_addresseeId_type">
 
 export type FriendshipOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -334,9 +334,10 @@ export type FriendshipOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type FriendshipRequesterIdAddresseeIdCompoundUniqueInput = {
+export type FriendshipRequesterIdAddresseeIdTypeCompoundUniqueInput = {
   requesterId: string
   addresseeId: string
+  type: $Enums.FriendshipType
 }
 
 export type FriendshipCountOrderByAggregateInput = {

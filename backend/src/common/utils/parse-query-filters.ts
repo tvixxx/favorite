@@ -1,5 +1,6 @@
 import { PRODUCTION_COUNTRY_CODES } from '../../constants/production-countries';
 import { Genre } from '../../generated/prisma/enums';
+import { normalizeGenre } from './normalize-genre';
 
 /** Повторяющиеся query-параметры или CSV: `a,b` → `['a','b'] */
 export function parseCsvOrRepeated(
@@ -29,7 +30,9 @@ export function parseGenreFilters(
   if (!raw) {
     return undefined;
   }
-  const genres = raw.filter((g): g is Genre => GENRE_SET.has(g));
+  const genres = raw
+    .map(normalizeGenre)
+    .filter((g): g is Genre => typeof g === 'string' && GENRE_SET.has(g));
   return genres.length ? genres : undefined;
 }
 

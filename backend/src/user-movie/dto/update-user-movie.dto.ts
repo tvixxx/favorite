@@ -8,17 +8,18 @@ import {
   IsOptional,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import { WatchStatus } from '../../generated/prisma/enums';
 
 export class UpdateUserMovieDto {
   @ApiProperty({ required: false })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean()
   isFavorite?: boolean;
 
   @ApiProperty({ required: false })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean()
   seeLater?: boolean;
 
@@ -30,7 +31,7 @@ export class UpdateUserMovieDto {
   personalRate?: number;
 
   @ApiProperty({ required: false, enum: WatchStatus })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsEnum(WatchStatus)
   watchStatus?: WatchStatus;
 

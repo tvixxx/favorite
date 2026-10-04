@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import NavigationLinks from "@/components/NavigationLinks/NavigationLinks.vue";
 import MobileTabBar from "@/components/MobileTabBar/MobileTabBar.vue";
@@ -38,12 +38,8 @@ const hideMobileTabBar = computed(() =>
 const onboardingOpen = ref(false);
 
 watch(
-  () => ({
-    authLoaded: store.user.isAuthLoaded,
-    loggedIn: store.isLoggedIn,
-    userId: store.userData?.id,
-  }),
-  ({ authLoaded, loggedIn, userId }) => {
+  [() => store.user.isAuthLoaded, () => store.isLoggedIn, () => store.userData?.id],
+  ([authLoaded, loggedIn, userId]) => {
     if (!authLoaded || !loggedIn || !userId) {
       onboardingOpen.value = false;
 
@@ -58,12 +54,8 @@ watch(
 );
 
 watch(
-  () => ({
-    authLoaded: store.user.isAuthLoaded,
-    loggedIn: store.isLoggedIn,
-    userId: store.userData?.id,
-  }),
-  async ({ authLoaded, loggedIn, userId }) => {
+  [() => store.user.isAuthLoaded, () => store.isLoggedIn, () => store.userData?.id],
+  async ([authLoaded, loggedIn, userId]) => {
     if (!authLoaded) {
       return;
     }
@@ -90,12 +82,8 @@ watch(
   { immediate: true },
 );
 
-onMounted(() => {
-  useTheme();
-  useHotThemeKeys();
-  // Сессию проверяет router-guard до первого рендера — второй вызов
-  // fetchUser здесь создавал гонку и «моргание» состояния авторизации
-});
+useTheme();
+useHotThemeKeys();
 </script>
 
 <template>

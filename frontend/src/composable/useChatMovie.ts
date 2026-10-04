@@ -4,10 +4,20 @@ import { MOVIES_ENDPOINTS } from "@/constants";
 import { mapMovieFromApi } from "@/stores/movies/utils/map-movie";
 import type { Movie } from "@/stores/movies/types";
 import type { MovieApiResponse } from "@/stores/movies/types/movies.types";
+import { isAxiosError } from "axios";
 
 // Кэш фильмов, расшаренных в чате: один запрос на уникальный id за сессию.
 const cache = new Map<string, Movie | null>();
 const inflight = new Map<string, Promise<Movie | null>>();
+const CACHE_LIMIT = 200;
+
+function remember(id: string, movie: Movie | null): void {
+  cache.set(id, movie);
+  if (cache.size > CACHE_LIMIT) {
+    const oldest = cache.keys().next().value;
+    if (oldest) cache.delete(oldest);
+  }
+}
 
 async function loadMovie(id: string): Promise<Movie | null> {
   if (cache.has(id)) {
@@ -27,11 +37,11 @@ async function loadMovie(id: string): Promise<Movie | null> {
       );
 
       const movie = status === 200 ? mapMovieFromApi(data) : null;
-      cache.set(id, movie);
+      if (status === 200 || status === 404) remember(id, movie);
 
       return movie;
-    } catch {
-      cache.set(id, null);
+    } catch (error) {
+      if (isAxiosError(error) && error.response?.status === 404) remember(id, null);
 
       return null;
     } finally {
@@ -52,7 +62,9 @@ export function useChatMovie(
 
   watch(
     id,
-    async (current) => {
+    async (current, _previous, onCleanup) => {
+      let active = true;
+      onCleanup(() => { active = false; });
       if (!current) {
         movie.value = null;
 
@@ -65,7 +77,9 @@ export function useChatMovie(
         return;
       }
 
-      movie.value = await loadMovie(current);
+      movie.value = null;
+      const loaded = await loadMovie(current);
+      if (active) movie.value = loaded;
     },
     { immediate: true },
   );

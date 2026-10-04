@@ -11,7 +11,11 @@ import {
   Query,
 } from '@nestjs/common';
 import { UserMovieService } from './user-movie.service';
-import { CreateUserMovieBodyDto, UpdateUserMovieDto } from './dto';
+import {
+  CreateUserMovieBodyDto,
+  UpdateUserMovieDto,
+  RateUserMovieDto,
+} from './dto';
 import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
@@ -263,6 +267,19 @@ export class UserMovieController {
   ) {
     this.ensureSelf(userId, user);
     return this.userMovieService.update(userId, movieId, dto);
+  }
+
+  @AuthProtected()
+  @Patch(':movieId/rating')
+  @ApiOperation({ summary: 'Атомарно сохранить личную оценку и отзыв' })
+  public rate(
+    @Param('userId') userId: string,
+    @Param('movieId') movieId: string,
+    @Body() dto: RateUserMovieDto,
+    @Authorized() user: User,
+  ) {
+    this.ensureSelf(userId, user);
+    return this.userMovieService.rate(userId, movieId, dto);
   }
 
   @ApiOperation({

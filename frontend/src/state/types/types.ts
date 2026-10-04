@@ -2,7 +2,6 @@ export interface UserData {
   email: string;
   fullName: string;
   id: string;
-  accessToken: string;
 }
 
 export interface UserInfo {

@@ -1,11 +1,19 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { isSuccessStatus } from "@/utils";
-import { isNotificationTypeEnabled } from "@/composable/useNotificationPrefs";
+import { isNotificationTypeEnabled, useNotificationPrefs } from "@/composable/useNotificationPrefs";
 import type { NotificationDto } from "./types";
 
 export const useNotificationsStore = defineStore("notifications", () => {
+  const prefs = useNotificationPrefs();
+  const types = computed(() => [
+    ...(prefs.newMessages.value ? ["CHAT_MESSAGE"] : []),
+    ...(prefs.friendRequests.value ? ["FRIEND_REQUEST", "FRIEND_ACCEPTED"] : []),
+  ]);
+  const typeQuery = computed(() => types.value.map((type) => `types=${type}`).join("&"));
+  let activeUserId: string | null = null;
+  let revision = 0;
   const items = ref<NotificationDto[]>([]);
   const unreadCount = ref(0);
   const isLoading = ref(false);
@@ -16,17 +24,24 @@ export const useNotificationsStore = defineStore("notifications", () => {
   };
 
   const fetchUnreadCount = async (userId: string) => {
+    const requestRevision = revision;
     if (!userId?.trim()) {
+      return;
+    }
+
+    if (!types.value.length) {
+      unreadCount.value = 0;
+
       return;
     }
 
     try {
       const response = await useFetch<number>(
-        `/users/${userId}/notifications/unread-count`,
+        `/users/${userId}/notifications/unread-count?${typeQuery.value}`,
         { method: FETCH_METHOD.get },
       );
 
-      if (isSuccessStatus(response.status)) {
+      if (requestRevision === revision && isSuccessStatus(response.status)) {
         unreadCount.value =
           typeof response.data === "number" ? response.data : 0;
       }
@@ -36,7 +51,14 @@ export const useNotificationsStore = defineStore("notifications", () => {
   };
 
   const fetchNotifications = async (userId: string, limit = 30) => {
+    const requestRevision = revision;
     if (!userId?.trim()) {
+      return [];
+    }
+
+    if (!types.value.length) {
+      items.value = [];
+
       return [];
     }
 
@@ -45,31 +67,42 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
     try {
       const response = await useFetch<NotificationDto[]>(
-        `/users/${userId}/notifications?limit=${limit}`,
+        `/users/${userId}/notifications?limit=${limit}&${typeQuery.value}`,
         { method: FETCH_METHOD.get },
       );
+      if (requestRevision !== revision) return [];
 
       if (!isSuccessStatus(response.status)) {
         throw new Error("Не удалось загрузить уведомления");
       }
 
-      items.value = response.data;
+      items.value = response.data.filter((item) => isNotificationTypeEnabled(item.type));
 
-      return response.data;
+      return items.value;
     } catch (error: unknown) {
+      if (requestRevision !== revision) return [];
       const text =
         error instanceof Error ? error.message : "Ошибка загрузки уведомлений";
       setError(text);
       throw error;
     } finally {
-      isLoading.value = false;
+      if (requestRevision === revision) isLoading.value = false;
     }
   };
 
   const hydrate = async (userId: string) => {
+    if (activeUserId !== userId) revision++;
+    activeUserId = userId;
+    const requestRevision = revision;
     await fetchUnreadCount(userId);
+    if (requestRevision !== revision) return;
     await fetchNotifications(userId);
   };
+
+  watch(typeQuery, () => {
+    revision++;
+    if (activeUserId) void hydrate(activeUserId).catch(() => undefined);
+  });
 
   const applyIncoming = (dto: NotificationDto) => {
     // Клиентский гейт: если тип уведомления выключен в настройках — не показываем
@@ -91,6 +124,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
   };
 
   const markRead = async (userId: string, notificationId: string) => {
+    const requestRevision = revision;
     if (!userId?.trim() || !notificationId?.trim()) {
       return null;
     }
@@ -100,6 +134,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
         `/users/${userId}/notifications/${notificationId}/read`,
         { method: FETCH_METHOD.patch },
       );
+      if (requestRevision !== revision) return null;
 
       if (!isSuccessStatus(response.status)) {
         throw new Error("Не удалось отметить прочитанным");
@@ -119,6 +154,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
       return updated;
     } catch (error: unknown) {
+      if (requestRevision !== revision) return null;
       const text =
         error instanceof Error ? error.message : "Ошибка обновления";
       setError(text);
@@ -127,15 +163,19 @@ export const useNotificationsStore = defineStore("notifications", () => {
   };
 
   const markAllRead = async (userId: string) => {
+    const requestRevision = revision;
     if (!userId?.trim()) {
       return;
     }
 
+    if (!types.value.length) return;
+
     try {
       const response = await useFetch<void>(
-        `/users/${userId}/notifications/read-all`,
+        `/users/${userId}/notifications/read-all?${typeQuery.value}`,
         { method: FETCH_METHOD.post },
       );
+      if (requestRevision !== revision) return;
 
       if (!isSuccessStatus(response.status)) {
         throw new Error("Не удалось отметить все прочитанными");
@@ -149,6 +189,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
       }));
       unreadCount.value = 0;
     } catch (error: unknown) {
+      if (requestRevision !== revision) return;
       const text =
         error instanceof Error ? error.message : "Ошибка обновления";
       setError(text);
@@ -157,6 +198,8 @@ export const useNotificationsStore = defineStore("notifications", () => {
   };
 
   const resetSession = () => {
+    revision++;
+    activeUserId = null;
     items.value = [];
     unreadCount.value = 0;
     isLoading.value = false;

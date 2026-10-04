@@ -5,7 +5,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserMovieBodyDto, UpdateUserMovieDto } from './dto';
+import {
+  CreateUserMovieBodyDto,
+  UpdateUserMovieDto,
+  RateUserMovieDto,
+} from './dto';
 import type { UserMovie, Prisma } from '../generated/prisma/client';
 import { Genre, WatchStatus } from '../generated/prisma/enums';
 
@@ -77,7 +81,21 @@ export class UserMovieService {
       | 'startedAt'
     >,
   ): UpdateUserMovieDto {
-    const result: UpdateUserMovieDto = { ...dto };
+    const allowed = new Set([
+      'isFavorite',
+      'seeLater',
+      'personalRate',
+      'watchStatus',
+      'currentSeason',
+      'currentEpisode',
+      'lastWatchedAt',
+      'startedAt',
+      'completedAt',
+      'droppedAt',
+    ]);
+    const result = Object.fromEntries(
+      Object.entries(dto).filter(([key]) => allowed.has(key)),
+    ) as UpdateUserMovieDto;
     const now = new Date();
 
     const seasonCap = movie.seasonCount ?? null;
@@ -88,26 +106,45 @@ export class UserMovieService {
     const isSerial = movie.isSerial;
 
     if (!isSerial) {
-      if (result.currentSeason !== undefined || result.currentEpisode !== undefined) {
+      if (
+        result.currentSeason !== undefined ||
+        result.currentEpisode !== undefined
+      ) {
         result.currentSeason = null as unknown as number;
         result.currentEpisode = null as unknown as number;
       }
 
-      if (result.watchStatus === WatchStatus.COMPLETED && result.completedAt === undefined) {
-        result.completedAt = now;
+      if (
+        result.watchStatus === WatchStatus.COMPLETED &&
+        result.completedAt === undefined
+      ) {
+        result.completedAt = current?.completedAt ?? now;
       }
+
+      if (
+        result.watchStatus !== undefined &&
+        result.watchStatus !== WatchStatus.COMPLETED
+      ) {
+        result.completedAt = null as unknown as Date;
+      }
+      if (result.watchStatus === WatchStatus.NOT_STARTED) {
+        result.currentSeason = null as unknown as number;
+        result.currentEpisode = null as unknown as number;
+        result.lastWatchedAt = null as unknown as Date;
+      }
+      this.applyStatusDates(result, current, now);
 
       return result;
     }
 
-    if (result.currentSeason !== undefined) {
+    if (result.currentSeason !== undefined && result.currentSeason !== null) {
       const seasonValue = Math.max(result.currentSeason, 0);
       result.currentSeason = hasSeason
         ? this.clampToRange(seasonValue, 0, seasonCap)
         : seasonValue;
     }
 
-    if (result.currentEpisode !== undefined) {
+    if (result.currentEpisode !== undefined && result.currentEpisode !== null) {
       const episodeValue = Math.max(result.currentEpisode, 0);
       result.currentEpisode = hasEpisode
         ? this.clampToRange(episodeValue, 0, episodeCap)
@@ -115,23 +152,34 @@ export class UserMovieService {
     }
 
     const effectiveSeason =
-      result.currentSeason ?? current?.currentSeason ?? null;
+      result.currentSeason !== undefined
+        ? result.currentSeason
+        : (current?.currentSeason ?? null);
     const effectiveEpisode =
-      result.currentEpisode ?? current?.currentEpisode ?? null;
-    const hasAnyProgress = (effectiveSeason ?? 0) > 0 || (effectiveEpisode ?? 0) > 0;
+      result.currentEpisode !== undefined
+        ? result.currentEpisode
+        : (current?.currentEpisode ?? null);
+    const hasAnyProgress =
+      (effectiveSeason ?? 0) > 0 || (effectiveEpisode ?? 0) > 0;
     const hasExplicitWatchStatus = result.watchStatus !== undefined;
+    const hasProgressUpdate =
+      result.currentSeason !== undefined || result.currentEpisode !== undefined;
 
     const reachedSeasonEnd = hasSeason && (effectiveSeason ?? 0) >= seasonCap;
-    const reachedEpisodeEnd = hasEpisode && (effectiveEpisode ?? 0) >= episodeCap;
+    const reachedEpisodeEnd =
+      hasEpisode && (effectiveEpisode ?? 0) >= episodeCap;
     const canBeCompleted = hasSeason || hasEpisode;
     const reachedEnd = canBeCompleted
-      ? (hasSeason ? reachedSeasonEnd : true) && (hasEpisode ? reachedEpisodeEnd : true)
+      ? (hasSeason ? reachedSeasonEnd : true) &&
+        (hasEpisode ? reachedEpisodeEnd : true)
       : false;
 
     if (result.watchStatus === WatchStatus.NOT_STARTED) {
       result.currentSeason = null as unknown as number;
       result.currentEpisode = null as unknown as number;
       result.completedAt = null as unknown as Date;
+      result.lastWatchedAt = null as unknown as Date;
+      this.applyStatusDates(result, current, now);
 
       return result;
     }
@@ -139,16 +187,16 @@ export class UserMovieService {
     if (result.watchStatus === WatchStatus.COMPLETED) {
       result.watchStatus = WatchStatus.COMPLETED;
 
-      if (hasSeason && result.currentSeason === undefined) {
+      if (hasSeason) {
         result.currentSeason = seasonCap;
       }
 
-      if (hasEpisode && result.currentEpisode === undefined) {
+      if (hasEpisode) {
         result.currentEpisode = episodeCap;
       }
 
       if (result.completedAt === undefined) {
-        result.completedAt = now;
+        result.completedAt = current?.completedAt ?? now;
       }
     } else if (result.watchStatus === WatchStatus.WATCHING) {
       result.watchStatus = WatchStatus.WATCHING;
@@ -156,7 +204,7 @@ export class UserMovieService {
     } else if (result.watchStatus === WatchStatus.DROPPED) {
       result.watchStatus = WatchStatus.DROPPED;
       result.completedAt = null as unknown as Date;
-    } else if (!hasExplicitWatchStatus && reachedEnd) {
+    } else if (!hasExplicitWatchStatus && hasProgressUpdate && reachedEnd) {
       result.watchStatus = WatchStatus.COMPLETED;
 
       if (hasSeason && result.currentSeason === undefined) {
@@ -170,13 +218,14 @@ export class UserMovieService {
       if (result.completedAt === undefined) {
         result.completedAt = now;
       }
-    } else if (!hasExplicitWatchStatus && hasAnyProgress) {
+    } else if (!hasExplicitWatchStatus && hasProgressUpdate && hasAnyProgress) {
       result.watchStatus = WatchStatus.WATCHING;
       result.completedAt = null as unknown as Date;
     }
 
     if (
-      (result.currentSeason !== undefined || result.currentEpisode !== undefined) &&
+      (result.currentSeason !== undefined ||
+        result.currentEpisode !== undefined) &&
       result.lastWatchedAt === undefined
     ) {
       result.lastWatchedAt = now;
@@ -465,15 +514,18 @@ export class UserMovieService {
   public async create(
     userId: string,
     dto: CreateUserMovieBodyDto,
+    prisma: Prisma.TransactionClient = this.prismaService,
   ): Promise<UserMovie> {
     const { movieId, ...data } = dto;
 
-    const existingUserMovie = await this.findByUserAndMovie(userId, movieId);
+    const existingUserMovie = await prisma.userMovie.findUnique({
+      where: { userId_movieId: { userId, movieId } },
+    });
     if (existingUserMovie) {
       throw new ConflictException('User already has this movie');
     }
 
-    const movie = await this.prismaService.movie.findUnique({
+    const movie = await prisma.movie.findUnique({
       where: { id: movieId },
       select: {
         isSerial: true,
@@ -487,11 +539,15 @@ export class UserMovieService {
     }
 
     if ((data.currentSeason ?? 0) > 0 && !movie.isSerial) {
-      throw new BadRequestException('Season progress is available only for serials');
+      throw new BadRequestException(
+        'Season progress is available only for serials',
+      );
     }
 
     if ((data.currentEpisode ?? 0) > 0 && !movie.isSerial) {
-      throw new BadRequestException('Episode progress is available only for serials');
+      throw new BadRequestException(
+        'Episode progress is available only for serials',
+      );
     }
 
     const normalizedData = this.normalizeProgressPayload(
@@ -499,7 +555,7 @@ export class UserMovieService {
       data as UpdateUserMovieDto,
     );
 
-    return this.prismaService.userMovie.create({
+    return prisma.userMovie.create({
       data: {
         userId,
         movieId,
@@ -568,20 +624,73 @@ export class UserMovieService {
     });
   }
 
+  public async rate(
+    userId: string,
+    movieId: string,
+    dto: RateUserMovieDto,
+  ): Promise<UserMovie & { movie: { averageRating: number | null } }> {
+    const text = dto.reviewText?.trim();
+    if (text && text.length < 10) {
+      throw new BadRequestException('Минимальная длина отзыва — 10 символов');
+    }
+    return this.prismaService.$transaction(async (tx) => {
+      const where = { userId_movieId: { userId, movieId } };
+      const current = await tx.userMovie.findUnique({ where });
+      if (!current) throw new NotFoundException('Фильм не найден в коллекции');
+      const ownReview = await tx.review.findFirst({
+        where: { userId, movieId },
+        orderBy: { createdAt: 'desc' },
+      });
+      const updated = await tx.userMovie.update({
+        where,
+        data: { personalRate: dto.personalRate },
+        include: { movie: { include: { poster: true, actors: true } } },
+      });
+      if (ownReview) {
+        await tx.review.update({
+          where: { id: ownReview.id },
+          data: { rate: dto.personalRate, text: text || ownReview.text },
+        });
+      } else if (text) {
+        await tx.review.create({
+          data: { userId, movieId, rate: dto.personalRate, text },
+        });
+      }
+      const avg = await tx.review.aggregate({
+        where: { movieId },
+        _avg: { rate: true },
+      });
+      return {
+        ...updated,
+        movie: { ...updated.movie, averageRating: avg._avg.rate },
+      };
+    });
+  }
+
   public async delete(userId: string, movieId: string): Promise<string> {
     try {
-      await this.prismaService.userMovie.delete({
-        where: {
-          userId_movieId: {
-            userId,
-            movieId,
+      await this.prismaService.$transaction(async (tx) => {
+        await tx.userMovie.delete({
+          where: {
+            userId_movieId: {
+              userId,
+              movieId,
+            },
           },
-        },
+        });
+        await tx.userListItem.deleteMany({
+          where: { movieId, list: { userId } },
+        });
       });
 
       return movieId;
-    } catch (error) {
-      if (error?.code === 'P2025') {
+    } catch (error: unknown) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2025'
+      ) {
         throw new NotFoundException('UserMovie not found');
       }
 

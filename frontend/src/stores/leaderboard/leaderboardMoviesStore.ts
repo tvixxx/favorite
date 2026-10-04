@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import dayjs, { type Dayjs } from "dayjs";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { isSuccessStatus } from "@/utils";
+import { createRequestGuard } from "@/utils/requestGuard";
 import type { Genre } from "@/components/Genres/constants/genres.constants";
 
 export type LeaderboardMovieSortBy =
@@ -48,6 +49,7 @@ export const useLeaderboardMoviesStore = defineStore(
     const personalRateRange = ref<[number, number]>([0, 10]);
     const isLoading = ref(false);
     const isError = ref<string | null>(null);
+    const requests = createRequestGuard();
 
     const currentPage = computed(
       () => Math.floor(offset.value / PAGE_SIZE) + 1,
@@ -91,6 +93,7 @@ export const useLeaderboardMoviesStore = defineStore(
     };
 
     const fetchTopMovies = async () => {
+      const isCurrent = requests.begin();
       isLoading.value = true;
       isError.value = null;
 
@@ -99,6 +102,7 @@ export const useLeaderboardMoviesStore = defineStore(
           `/leaderboard/top-movies?${buildQuery()}`,
           { method: FETCH_METHOD.get },
         );
+        if (!isCurrent()) return;
 
         if (!isSuccessStatus(status)) {
           throw new Error("Ошибка загрузки топа фильмов");
@@ -108,10 +112,11 @@ export const useLeaderboardMoviesStore = defineStore(
         total.value = data.total ?? 0;
         offset.value = data.offset ?? offset.value;
       } catch {
+        if (!isCurrent()) return;
         isError.value = "Не удалось загрузить топ фильмов";
         items.value = [];
       } finally {
-        isLoading.value = false;
+        if (isCurrent()) isLoading.value = false;
       }
     };
 

@@ -122,7 +122,7 @@ export class MessageService {
   }
 
   async getMessages(userId: string, otherUserId: string, limit = 50) {
-    return this.prismaService.message.findMany({
+    const messages = await this.prismaService.message.findMany({
       where: {
         OR: [
           { senderId: userId, receiverId: otherUserId },
@@ -130,7 +130,7 @@ export class MessageService {
         ],
       },
       orderBy: {
-        createdAt: 'asc',
+        createdAt: 'desc',
       },
       take: limit,
       include: {
@@ -150,6 +150,7 @@ export class MessageService {
         },
       },
     });
+    return messages.reverse();
   }
 
   async markConversationAsRead(userId: string, otherUserId: string) {
