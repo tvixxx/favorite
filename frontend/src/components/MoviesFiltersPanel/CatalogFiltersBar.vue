@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import dayjs, { type Dayjs } from "dayjs";
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
@@ -26,10 +26,23 @@ const props = defineProps<{
 
 const moviesStore = useMoviesStore();
 
-const searchValue = ref("");
-const selectedGenres = ref<Genre[]>([]);
-const selectedCountries = ref<string[]>([]);
-const publishDateRange = ref<[Dayjs, Dayjs] | null>(null);
+const searchValue = ref(moviesStore.searchQuery);
+const selectedGenres = computed<Genre[]>({
+  get: () => moviesStore.filters.genres ?? [],
+  set: (genres) => updateFilters({ genres: genres.length ? genres : undefined }),
+});
+const selectedCountries = computed<string[]>({
+  get: () => moviesStore.filters.countryCodes ?? [],
+  set: (countryCodes) => updateFilters({ countryCodes: countryCodes.length ? countryCodes : undefined }),
+});
+const publishDateRange = computed<[Dayjs, Dayjs] | null>({
+  get: (): [Dayjs, Dayjs] | null => moviesStore.filters.publishDateFrom && moviesStore.filters.publishDateTo
+    ? [dayjs(moviesStore.filters.publishDateFrom), dayjs(moviesStore.filters.publishDateTo)] : null,
+  set: (range) => updateFilters({
+    publishDateFrom: range?.[0] ? range[0].startOf("month").toISOString() : undefined,
+    publishDateTo: range?.[1] ? range[1].endOf("month").toISOString() : undefined,
+  }),
+});
 const isDrawerOpen = ref(false);
 
 const advancedCount = computed(() => {
@@ -80,62 +93,42 @@ const removeTag = (key: string): void => {
   }
 };
 
-const buildFilters = (): MoviesFilters => {
-  const filters: MoviesFilters = {
-    genres: selectedGenres.value.length ? selectedGenres.value : undefined,
-    countryCodes: selectedCountries.value.length
-      ? selectedCountries.value
-      : undefined,
-    publishDateFrom: publishDateRange.value?.[0]
-      ? dayjs(publishDateRange.value[0]).startOf("month").toISOString()
-      : undefined,
-    publishDateTo: publishDateRange.value?.[1]
-      ? dayjs(publishDateRange.value[1]).endOf("month").toISOString()
-      : undefined,
-  };
-
-  return props.lockedActorIds?.length
-    ? { ...filters, actorIds: props.lockedActorIds }
-    : filters;
-};
-
 const runFetch = (): void => {
-  const q = moviesStore.searchQuery.trim();
-
-  if (q) {
-    void moviesStore.findMovie(q);
-  } else {
-    void moviesStore.fetchMovies();
-  }
+  void moviesStore.fetchMovies(moviesStore.searchQuery).catch(() => {
+    // Ошибка уже отражена в состоянии каталога с кнопкой повторной загрузки.
+  });
 };
 
-const applyFilters = (): void => {
-  moviesStore.setFilters(buildFilters());
+function updateFilters(patch: MoviesFilters): void {
+  moviesStore.setFilters({
+    ...moviesStore.filters,
+    ...patch,
+    ...(props.lockedActorIds?.length ? { actorIds: props.lockedActorIds } : {}),
+  });
   moviesStore.setCurrentPage(1);
   runFetch();
-};
+}
 
 const resetAdvanced = (): void => {
-  selectedGenres.value = [];
-  selectedCountries.value = [];
-  publishDateRange.value = null;
+  updateFilters({ genres: undefined, countryCodes: undefined, publishDateFrom: undefined, publishDateTo: undefined });
 };
 
-watch([selectedGenres, selectedCountries, publishDateRange], applyFilters, {
-  deep: true,
-});
-
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
+onBeforeUnmount(() => clearTimeout(searchTimer));
+watch(() => moviesStore.searchQuery, (query) => {
+  clearTimeout(searchTimer);
+  searchValue.value = query;
+});
 
 const triggerSearch = (): void => {
   const q = searchValue.value.trim();
   moviesStore.setCurrentPage(1);
 
   if (q) {
-    void moviesStore.findMovie(q);
+    void moviesStore.findMovie(q).catch(() => {});
   } else {
     moviesStore.clearSearch();
-    void moviesStore.fetchMovies();
+    runFetch();
   }
 };
 
@@ -163,6 +156,7 @@ const onSearchEnter = (): void => {
         <input
           v-model="searchValue"
           type="text"
+          aria-label="Поиск в каталоге"
           placeholder="Название, ключевое слово, жанр, год…"
           @input="onSearchInput"
           @keydown.enter="onSearchEnter"

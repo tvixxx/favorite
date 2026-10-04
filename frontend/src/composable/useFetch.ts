@@ -2,7 +2,6 @@ import type { MaybeRefOrGetter } from "@vueuse/core";
 import { toValue } from "vue";
 import api from "@/services/api";
 import type { AppEndpoints } from "@/constants/api/endpoints";
-import { useAuthToken } from "@/composable/useAuthToken";
 
 export enum FETCH_METHOD {
   get = "GET",
@@ -20,14 +19,12 @@ export interface FetchOptions {
 export type UseFetchResult<T> = {
   data: T;
   status: number;
-  token?: string | null;
 };
 
 export async function useFetch<T = unknown>(
   url: MaybeRefOrGetter<AppEndpoints>,
   options: FetchOptions = {}
 ): Promise<UseFetchResult<T>> {
-  const token = useAuthToken().value;
   const urlValue = toValue(url);
 
   let response;
@@ -53,6 +50,5 @@ export async function useFetch<T = unknown>(
   return {
     data: response.data,
     status: response.status,
-    token: token ?? (response.data as { accessToken?: string })?.accessToken,
   };
 }

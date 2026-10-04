@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
+import { useNavigateBack } from "@/composable/useNavigateBack";
 import { message } from "ant-design-vue";
 import { useMediaQuery } from "@vueuse/core";
 
@@ -49,6 +50,7 @@ const DONE_ITEMS: Array<{ text: string; done: boolean }> = [
   { text: "Импорт коллекции — в работе", done: false },
 ];
 
+const { navigateBack } = useNavigateBack();
 const router = useRouter();
 const mainStore = useMainStore();
 
@@ -76,7 +78,7 @@ const canSend = computed(
 );
 
 const goBack = (): void => {
-  router.back();
+  void navigateBack({ fallback: { name: "library-collection" } });
 };
 
 const resetForm = (): void => {

@@ -144,7 +144,7 @@ const addMovieToCurrentList = (): void => {
 };
 
 const removeMovieFromList = async (movieId: string): Promise<void> => {
-  if (!userId.value || !detailListId.value) {
+  if (!userId.value || !detailListId.value || isItemRemoving.value) {
     return;
   }
 
@@ -156,7 +156,6 @@ const removeMovieFromList = async (movieId: string): Promise<void> => {
       detailListId.value,
       movieId,
     );
-    await userListsStore.fetchLists(userId.value);
     message.success("Тайтл удалён из списка");
   } catch {
     message.error(userListsStore.isError || "Не удалось удалить тайтл из списка");
@@ -172,7 +171,7 @@ const deleteListById = async (
   listId: string,
   listName: string,
 ): Promise<void> => {
-  if (!userId.value) {
+  if (!userId.value || isListDeleting.value) {
     return;
   }
 
@@ -290,7 +289,7 @@ watch(isFormOpen, (open) => {
 const submitForm = async (): Promise<void> => {
   const name = formName.value.trim();
 
-  if (!userId.value || !name) {
+  if (!userId.value || !name || isFormSubmitting.value) {
     return;
   }
 
@@ -312,7 +311,6 @@ const submitForm = async (): Promise<void> => {
       message.success(`Список «${created.name}» создан`);
     }
 
-    await userListsStore.fetchLists(userId.value);
     closeForm();
   } catch {
     message.error(userListsStore.isError || "Не удалось сохранить список");
@@ -616,6 +614,7 @@ onMounted(() => {
                 :title="movieCardTitle(item.movie)"
                 :meta="movieCardMeta(item.movie)"
                 deletable
+                :busy="isItemRemoving"
                 @open="openMovieDetail(item.movieId)"
                 @delete="removeMovieFromList(item.movieId)"
                 @poster-error="handleImageError(item.movieId)"

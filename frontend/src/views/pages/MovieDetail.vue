@@ -16,6 +16,8 @@ import { getApiResponseMessage, isApiConflictError } from "@/services/api";
 import { MOVIES_ENDPOINTS } from "@/constants";
 import { isSuccessStatus } from "@/utils";
 import { useEscapeKey } from "@/composable";
+import { useNavigateBack } from "@/composable/useNavigateBack";
+import { createRequestGuard } from "@/utils/requestGuard";
 import { FETCH_METHOD, useFetch } from "@/composable";
 
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
@@ -39,6 +41,7 @@ const userMoviesStore = useUserMoviesStore();
 const userListsStore = useUserListsStore();
 const router = useRouter();
 const route = useRoute();
+const { navigateBack } = useNavigateBack();
 
 const detailBackFallback = computed((): RouteLocationRaw => {
   const raw = route.query.libActor;
@@ -126,18 +129,20 @@ interface SimilarMovie {
 }
 
 const similarMovies = ref<SimilarMovie[]>([]);
+const similarRequests = createRequestGuard();
 
 const loadSimilar = async (movieId: string): Promise<void> => {
+  const isCurrent = similarRequests.begin();
   try {
     const { data, status } = await useFetch<SimilarMovie[]>(
       `${MOVIES_ENDPOINTS}/${movieId}/similar?limit=4`,
       { method: FETCH_METHOD.get },
     );
 
-    similarMovies.value = isSuccessStatus(status) ? (data ?? []) : [];
+    if (isCurrent()) similarMovies.value = isSuccessStatus(status) ? (data ?? []) : [];
   } catch {
     // Блок необязательный — молча оставляем пустым
-    similarMovies.value = [];
+    if (isCurrent()) similarMovies.value = [];
   }
 };
 
@@ -173,6 +178,7 @@ const newListLabelsInput = ref("");
 const newListColor = ref<string>(DEFAULT_LIST_COLOR);
 const isListActionLoading = ref(false);
 const listIdsWithCurrentMovie = ref<Set<string>>(new Set());
+const detailRequests = createRequestGuard();
 
 const loadDetail = async (): Promise<void> => {
   const movieId = currentMovieId.value;
@@ -180,6 +186,8 @@ const loadDetail = async (): Promise<void> => {
   if (!mainStore.isLoggedIn || !userId.value || !movieId) {
     return;
   }
+
+  const isCurrent = detailRequests.begin();
 
   isError.value = null;
 
@@ -200,22 +208,25 @@ const loadDetail = async (): Promise<void> => {
       userId.value,
       movieId
     );
+    if (!isCurrent()) return;
 
     if (loaded) {
       currentUserMovie.value = loaded;
       catalogPreviewId.value = null;
       catalogPreviewOpen.value = false;
-    } else if (!cached) {
+    } else {
+      currentUserMovie.value = null;
       catalogPreviewId.value = movieId;
       catalogPreviewOpen.value = true;
     }
   } catch {
+    if (!isCurrent()) return;
     if (!cached) {
       message.error("Не удалось загрузить фильм");
       isError.value = "Не удалось загрузить фильм";
     }
   } finally {
-    isLoading.value = false;
+    if (isCurrent()) isLoading.value = false;
   }
 
   void loadSimilar(movieId);
@@ -224,6 +235,8 @@ const loadDetail = async (): Promise<void> => {
 onMounted(loadDetail);
 
 onBeforeUnmount(() => {
+  detailRequests.invalidate();
+  similarRequests.invalidate();
   currentUserMovie.value = null;
 });
 
@@ -256,6 +269,7 @@ watch(currentMovieId, (next, prev) => {
   catalogPreviewId.value = null;
   catalogPreviewOpen.value = false;
   similarMovies.value = [];
+  similarRequests.invalidate();
   activeTab.value = "overview";
   isEditingProgress.value = false;
   void loadDetail();
@@ -870,13 +884,13 @@ const addMovieToList = async (listId: string) => {
             label: 'Повторить',
             icon: 'ph:arrow-clockwise',
             kind: 'primary',
-            onClick: () => router.go(0),
+            onClick: loadDetail,
           },
           {
             label: 'Назад',
             icon: 'ph:arrow-left',
             kind: 'ghost',
-            onClick: () => router.back(),
+            onClick: () => navigateBack({ fallback: detailBackFallback }),
           },
         ]"
       />

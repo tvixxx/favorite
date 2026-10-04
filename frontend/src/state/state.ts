@@ -22,6 +22,10 @@ import { DEFAULT_MAIN_STATE, MAIN_STORE_NAME } from "@/state/constants";
 import { useUserMoviesStore } from "@/stores/userMovies/userMoviesStore";
 import { useUserListsStore } from "@/stores/userLists/userListsStore";
 import { useNotificationsStore } from "@/stores/notifications/notificationsStore";
+import { useFriendsStore } from "@/stores/friends/friendsStore";
+import { useBadgesStore } from "@/stores/badges/badgesStore";
+import { useChatStore } from "@/stores/chat/chatStore";
+import { useReviewsStore } from "@/composable/useReviews";
 
 export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
   const userDataRaw = useStorage<UserData | null>(
@@ -41,6 +45,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
 
   // Состояние копируем: DEFAULT_MAIN_STATE — общая константа, её нельзя мутировать
   const state = ref<State>(structuredClone(DEFAULT_MAIN_STATE));
+  const sessionRevision = ref(0);
 
   /** Разделяемый запрос проверки сессии — чтобы не гонять `/auth/@me` дважды */
   let authRequest: Promise<void> | null = null;
@@ -56,6 +61,8 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     }
 
     const id = user.value.data?.id;
+    if (!id) throw new Error("Войдите в аккаунт");
+    const requestRevision = sessionRevision.value;
 
     const userProfileData = await useFetch<UserProfileResponse>(
       `${USERS_ENDPOINTS}/${id}`,
@@ -66,15 +73,14 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
         },
       },
     );
+    if (requestRevision !== sessionRevision.value) throw new Error("Сессия изменилась");
 
     if (userProfileData?.data && isSuccessStatus(userProfileData.status)) {
-      const { token } = userProfileData;
       const { email, fullName, id: userId } = userProfileData.data;
       const userObj: UserData = {
         email,
         fullName,
         id: userId || user.value.data?.id || "",
-        accessToken: token ?? "",
       };
 
       userDataRaw.value = userObj;
@@ -93,6 +99,8 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     password: string;
     name: string;
   }): Promise<void> {
+    clearAuthState();
+    const requestRevision = sessionRevision.value;
     const response = await useFetch<AuthResponse>(REGISTER_USER_ENDPOINT, {
       method: FETCH_METHOD.post,
       data: {
@@ -101,10 +109,11 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
         password,
       },
     });
+    if (requestRevision !== sessionRevision.value) throw new Error("Сессия изменилась");
 
     if (response?.data && isSuccessStatus(response.status)) {
       const { accessToken: newToken } = response.data;
-      await fetchUserProfile(newToken);
+      await fetchUserProfile(newToken, requestRevision);
     } else {
       throw new Error("Не удалось зарегистрироваться");
     }
@@ -117,6 +126,8 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     email: string;
     password: string;
   }): Promise<void> {
+    clearAuthState();
+    const requestRevision = sessionRevision.value;
     const response = await useFetch<AuthResponse>(AUTH_USER_ENDPOINT, {
       method: FETCH_METHOD.post,
       data: {
@@ -124,10 +135,11 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
         password,
       },
     });
+    if (requestRevision !== sessionRevision.value) throw new Error("Сессия изменилась");
 
     if (response?.data && isSuccessStatus(response.status)) {
       const { accessToken: newToken } = response.data;
-      await fetchUserProfile(newToken);
+      await fetchUserProfile(newToken, requestRevision);
     } else {
       throw new Error("Не удалось войти");
     }
@@ -150,27 +162,29 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
       return authRequest;
     }
 
-    authRequest = requestCurrentUser().finally(() => {
-      authRequest = null;
+    const request = requestCurrentUser().finally(() => {
+      if (authRequest === request) authRequest = null;
     });
+    authRequest = request;
 
     return authRequest;
   }
 
   async function requestCurrentUser(): Promise<void> {
+    const requestRevision = sessionRevision.value;
     state.value.isFetchingUser = true;
 
     try {
       const { data, status } = await useFetch<UserProfileResponse>(
         AUTH_ME_ENDPOINT,
       );
+      if (requestRevision !== sessionRevision.value) return;
 
       if (isSuccessStatus(status)) {
         const userObj: UserData = {
           email: data.email,
           fullName: data.fullName || data.fullname || data.name || "",
           id: data.id,
-          accessToken: accessToken.value || "",
         };
         userDataRaw.value = userObj;
         state.value.user.data = userObj;
@@ -181,34 +195,37 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
         state.value.user.loggedIn = false;
       }
     } catch {
+      if (requestRevision !== sessionRevision.value) return;
       userDataRaw.value = null;
       state.value.user.data = null;
       state.value.user.loggedIn = false;
       throw new Error("Не удалось получить данные пользователя");
     } finally {
-      state.value.user.isAuthLoaded = true;
-      state.value.isFetchingUser = false;
+      if (requestRevision === sessionRevision.value) {
+        state.value.user.isAuthLoaded = true;
+        state.value.isFetchingUser = false;
+      }
     }
   }
 
-  async function fetchUserProfile(newToken: string): Promise<void> {
-    if (!newToken) {
-      return;
-    }
-
+  async function fetchUserProfile(newToken: string, requestRevision: number): Promise<void> {
+    if (!newToken) throw new Error("Не удалось получить токен");
     accessToken.value = newToken;
-
-    const fetchedUser = await useFetch<UserProfileResponse>(AUTH_ME_ENDPOINT);
-
-    if (fetchedUser?.data && isSuccessStatus(fetchedUser.status)) {
-      setUserProfile(fetchedUser.data, newToken);
-    } else {
-      accessToken.value = null;
-      throw new Error("Не удалось получить профиль");
+    state.value.isFetchingUser = true;
+    try {
+      const fetchedUser = await useFetch<UserProfileResponse>(AUTH_ME_ENDPOINT);
+      if (requestRevision !== sessionRevision.value) throw new Error("Сессия изменилась");
+      if (!fetchedUser.data || !isSuccessStatus(fetchedUser.status)) throw new Error("Не удалось получить профиль");
+      setUserProfile(fetchedUser.data);
+    } catch (error) {
+      if (requestRevision === sessionRevision.value) clearAuthState();
+      throw error;
+    } finally {
+      if (requestRevision === sessionRevision.value) state.value.isFetchingUser = false;
     }
   }
 
-  function setUserProfile(userProfile: UserProfileResponse, newToken: string) {
+  function setUserProfile(userProfile: UserProfileResponse) {
     if (!userProfile) {
       return;
     }
@@ -218,22 +235,30 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
       email,
       fullName,
       id,
-      accessToken: newToken,
     };
 
     userDataRaw.value = userObj;
     state.value.user.data = userObj;
     state.value.user.loggedIn = true;
+    state.value.user.isAuthLoaded = true;
   }
 
   function clearAuthState(): void {
+    sessionRevision.value++;
+    authRequest = null;
     userDataRaw.value = null;
     accessToken.value = null;
     state.value.user.data = null;
     state.value.user.loggedIn = false;
+    state.value.user.isAuthLoaded = true;
+    state.value.isFetchingUser = false;
     useUserMoviesStore().resetSession();
     useUserListsStore().resetSession();
     useNotificationsStore().resetSession();
+    useFriendsStore().resetSession();
+    useBadgesStore().resetSession();
+    useChatStore().disconnect();
+    useReviewsStore().resetSession();
   }
 
   async function logOut(): Promise<void> {
@@ -249,18 +274,11 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     }
   }
 
-  function applyAccessToken(newToken: string): void {
+  function applyAccessToken(newToken: string, expectedRevision = sessionRevision.value): boolean {
+    if (expectedRevision !== sessionRevision.value) return false;
     accessToken.value = newToken;
 
-    if (userDataRaw.value) {
-      const next: UserData = {
-        ...userDataRaw.value,
-        accessToken: newToken,
-      };
-      userDataRaw.value = next;
-      state.value.user.data = next;
-      state.value.user.loggedIn = true;
-    }
+    return true;
   }
 
   if (typeof window !== "undefined") {
@@ -280,6 +298,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     userData,
     userDataRaw,
     accessToken,
+    sessionRevision,
 
     updateDisplayName,
     register,

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { onMounted, reactive, ref, computed } from "vue";
-import { useRouter } from "vue-router";
+import { onBeforeUnmount, onMounted, reactive, ref, computed } from "vue";
+import { useNavigateBack } from "@/composable/useNavigateBack";
 
 import { message, type FormInstance } from "ant-design-vue";
 import WatchStatusSelect from "@/components/WatchStatusSelect/WatchStatusSelect.vue";
@@ -22,15 +22,21 @@ import type { SelectProps } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
 
-const router = useRouter();
+const { navigateBack } = useNavigateBack();
 const moviesStore = useMoviesStore();
 const userMoviesStore = useUserMoviesStore();
 const actorsStore = useActorsStore();
 const mainStore = useMainStore();
 
 const userId = computed(() => mainStore.userData?.id || "");
+const isActorResolving = ref(false);
+const isSubmitting = ref(false);
+let actorSelectionRevision = 0;
+onBeforeUnmount(() => { actorSelectionRevision += 1; });
 
 const handleActorSelection = async (selectedValues: string[]) => {
+  const revision = ++actorSelectionRevision;
+  isActorResolving.value = true;
   const processedValues: string[] = [];
 
   for (const value of selectedValues) {
@@ -40,8 +46,10 @@ const handleActorSelection = async (selectedValues: string[]) => {
     if (!uuidRegex.test(value)) {
       try {
         const newActor = await actorsStore.addActorByName(value);
+        if (revision !== actorSelectionRevision) return;
         processedValues.push(newActor.id);
       } catch {
+        if (revision !== actorSelectionRevision) return;
         message.error(`Не удалось добавить актера: ${value}`);
       }
     } else {
@@ -49,7 +57,10 @@ const handleActorSelection = async (selectedValues: string[]) => {
     }
   }
 
-  formData.actorIds = processedValues;
+  if (revision === actorSelectionRevision) {
+    formData.actorIds = [...new Set(processedValues)];
+    isActorResolving.value = false;
+  }
 };
 
 interface CreateMovieForm {
@@ -132,24 +143,26 @@ const filterCountryOption = (input: string, option: { label?: string }) =>
   (option?.label ?? "").toLowerCase().includes(input.toLowerCase());
 
 const cancel = (): void => {
-  router.back();
+  void navigateBack({ fallback: { name: "library-collection" } });
 };
 
 onMounted(async () => {
   try {
-    await actorsStore.fetchActors();
+    await actorsStore.fetchActorsForPickers();
   } catch {
     message.error("Не удалось загрузить актеров");
   }
 });
 
 const addNewMovie = async () => {
+  if (isSubmitting.value || isActorResolving.value) return;
+  isSubmitting.value = true;
   const { title } = formData;
 
   try {
     const moviePayload: CreateMoviePayload = {
-      title: formData.title,
-      description: formData.description,
+      title: formData.title.trim(),
+      description: formData.description.trim(),
       countryCodes: formData.countryCodes,
       genres: formData.genres,
       publishDate: formData.publishDate
@@ -206,6 +219,8 @@ const addNewMovie = async () => {
     }
 
     showErrorRequest(error);
+  } finally {
+    isSubmitting.value = false;
   }
 };
 </script>
@@ -225,6 +240,7 @@ const addNewMovie = async () => {
         <a-form
           ref="formRef"
           :model="formData"
+          :disabled="isSubmitting"
           name="create-movie-form"
           layout="vertical"
           class="cm-form"
@@ -282,12 +298,12 @@ const addNewMovie = async () => {
                     mode="tags"
                     placeholder="Выберите или введите актёров"
                     size="large"
-                    :loading="actorsStore.isActorsLoading"
-                    :disabled="actorsStore.isActorsLoading"
+                    :loading="actorsStore.isPickerLoading || isActorResolving"
+                    :disabled="actorsStore.isPickerLoading || isSubmitting"
                     @change="handleActorSelection"
                   >
                     <a-select-option
-                      v-for="actor in actorsStore.getAllActors"
+                      v-for="actor in actorsStore.pickerActors"
                       :key="actor.id"
                       :value="actor.id"
                     >
@@ -537,6 +553,8 @@ const addNewMovie = async () => {
               html-type="submit"
               size="large"
               class="cm-footer__submit"
+              :loading="isSubmitting"
+              :disabled="isActorResolving"
             >
               <BaseIcon name="ph:plus" :width="18" :height="18" />
               Добавить

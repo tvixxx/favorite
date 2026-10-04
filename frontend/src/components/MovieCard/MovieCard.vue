@@ -17,6 +17,7 @@ interface Props {
   /** Показывать кнопку удаления (hover на десктопе, всегда на тач) */
   deletable?: boolean;
   posterAlt?: string;
+  busy?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -27,6 +28,7 @@ const props = withDefaults(defineProps<Props>(), {
   addable: false,
   deletable: false,
   posterAlt: "",
+  busy: false,
 });
 
 const showRate = computed<boolean>(() => {
@@ -45,7 +47,14 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <article class="movie-card" @click="emit('open')">
+  <article
+    class="movie-card"
+    tabindex="0"
+    :aria-label="title"
+    @click="emit('open')"
+    @keydown.enter.self.prevent="emit('open')"
+    @keydown.space.self.prevent="emit('open')"
+  >
     <div class="movie-card__poster-wrap">
       <img
         :src="posterSrc"
@@ -63,6 +72,7 @@ const emit = defineEmits<{
           type="button"
           class="movie-card__action movie-card__action--delete"
           aria-label="Удалить"
+          :disabled="busy"
           @click.stop="emit('delete')"
         >
           <BaseIcon name="ph:trash" :width="18" :height="18" />
@@ -73,6 +83,7 @@ const emit = defineEmits<{
           type="button"
           class="movie-card__action movie-card__action--add"
           aria-label="Добавить в коллекцию"
+          :disabled="busy"
           @click.stop="emit('add')"
         >
           <BaseIcon name="ph:plus" :width="20" :height="20" />
@@ -83,7 +94,9 @@ const emit = defineEmits<{
           type="button"
           class="movie-card__action movie-card__action--fav"
           :class="{ 'movie-card__action--fav-on': favorite }"
-          aria-label="В избранное"
+          :aria-label="favorite ? 'Убрать из избранного' : 'Добавить в избранное'"
+          :aria-pressed="favorite"
+          :disabled="busy"
           @click.stop="emit('toggle-favorite')"
         >
           <BaseIcon
@@ -117,6 +130,12 @@ const emit = defineEmits<{
 .movie-card {
   min-width: 0;
   cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--fv-color-accent);
+    outline-offset: 4px;
+    border-radius: var(--fv-radius-md);
+  }
 
   &__poster-wrap {
     position: relative;
@@ -222,7 +241,8 @@ const emit = defineEmits<{
       transition: opacity var(--fv-motion-fast) var(--fv-ease);
     }
 
-    &:hover &__action--delete {
+    &:hover &__action--delete,
+    &:focus-within &__action--delete {
       opacity: 1;
       pointer-events: auto;
     }

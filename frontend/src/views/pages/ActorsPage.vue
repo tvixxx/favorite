@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, watch } from "vue";
 import { message } from "ant-design-vue";
-import { useDebounceFn } from "@vueuse/core";
 import { RouterLink } from "vue-router";
 
 import PosterGridSkeleton from "@/components/Skeleton/PosterGridSkeleton.vue";
@@ -27,14 +26,18 @@ const runLoad = async (): Promise<void> => {
 };
 
 // Поиск живёт в шапке (LibraryLayout) и пишет в actorsStore.actorsSearchQ — реагируем здесь
-const debouncedReload = useDebounceFn(async () => {
-  actorsStore.actorsPageCurrent = 1;
-  await runLoad();
-}, 350);
+let searchTimer: ReturnType<typeof setTimeout> | undefined;
+onBeforeUnmount(() => clearTimeout(searchTimer));
 
 watch(
   () => actorsStore.actorsSearchQ,
-  () => void debouncedReload(),
+  () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      actorsStore.actorsPageCurrent = 1;
+      void runLoad();
+    }, 350);
+  },
 );
 
 onMounted(async () => {

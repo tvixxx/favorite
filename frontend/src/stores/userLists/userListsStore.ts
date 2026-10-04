@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { isSuccessStatus } from "@/utils";
+import { createRequestGuard } from "@/utils/requestGuard";
 import type {
   CreateUserListPayload,
   UpdateUserListPayload,
@@ -12,8 +13,13 @@ import type {
 export const useUserListsStore = defineStore("userLists", () => {
   const lists = ref<UserListSummary[]>([]);
   const currentList = ref<UserListDetail | null>(null);
-  const isLoading = ref(false);
+  const isListLoading = ref(false);
+  const isDetailLoading = ref(false);
+  const isLoading = computed(() => isListLoading.value || isDetailLoading.value);
   const isError = ref<string | null>(null);
+  const listRequests = createRequestGuard();
+  const detailRequests = createRequestGuard();
+  let sessionRevision = 0;
 
   const sortedLists = computed(() =>
     [...lists.value].sort((a, b) => {
@@ -30,13 +36,15 @@ export const useUserListsStore = defineStore("userLists", () => {
       return [];
     }
 
-    isLoading.value = true;
+    const isCurrent = listRequests.begin();
+    isListLoading.value = true;
     setError(null);
 
     try {
       const response = await useFetch<UserListSummary[]>(`/users/${userId}/lists`, {
         method: FETCH_METHOD.get,
       });
+      if (!isCurrent()) return [];
 
       if (!isSuccessStatus(response.status)) {
         throw new Error("Не удалось загрузить списки");
@@ -46,11 +54,12 @@ export const useUserListsStore = defineStore("userLists", () => {
 
       return response.data;
     } catch (error: unknown) {
+      if (!isCurrent()) return [];
       const text = error instanceof Error ? error.message : "Ошибка загрузки списков";
       setError(text);
       throw error;
     } finally {
-      isLoading.value = false;
+      if (isCurrent()) isListLoading.value = false;
     }
   };
 
@@ -59,7 +68,9 @@ export const useUserListsStore = defineStore("userLists", () => {
       return null;
     }
 
-    isLoading.value = true;
+    const isCurrent = detailRequests.begin();
+    if (currentList.value?.id !== listId) currentList.value = null;
+    isDetailLoading.value = true;
     setError(null);
 
     try {
@@ -69,6 +80,7 @@ export const useUserListsStore = defineStore("userLists", () => {
           method: FETCH_METHOD.get,
         }
       );
+      if (!isCurrent()) return null;
 
       if (!isSuccessStatus(response.status)) {
         throw new Error("Не удалось загрузить список");
@@ -78,19 +90,22 @@ export const useUserListsStore = defineStore("userLists", () => {
 
       return response.data;
     } catch (error: unknown) {
+      if (!isCurrent()) return null;
       const text = error instanceof Error ? error.message : "Ошибка загрузки списка";
       setError(text);
       throw error;
     } finally {
-      isLoading.value = false;
+      if (isCurrent()) isDetailLoading.value = false;
     }
   };
 
   const createList = async (userId: string, payload: CreateUserListPayload) => {
+    const requestRevision = sessionRevision;
     const response = await useFetch<UserListSummary>(`/users/${userId}/lists`, {
       method: FETCH_METHOD.post,
       data: payload,
     });
+    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
 
     if (!isSuccessStatus(response.status)) {
       throw new Error("Не удалось создать список");
@@ -113,10 +128,12 @@ export const useUserListsStore = defineStore("userLists", () => {
     listId: string,
     payload: UpdateUserListPayload
   ) => {
+    const requestRevision = sessionRevision;
     const response = await useFetch<UserListSummary>(`/users/${userId}/lists/${listId}`, {
       method: FETCH_METHOD.patch,
       data: payload,
     });
+    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
 
     if (!isSuccessStatus(response.status)) {
       throw new Error("Не удалось обновить список");
@@ -140,9 +157,11 @@ export const useUserListsStore = defineStore("userLists", () => {
   };
 
   const deleteList = async (userId: string, listId: string) => {
+    const requestRevision = sessionRevision;
     const response = await useFetch<boolean>(`/users/${userId}/lists/${listId}`, {
       method: FETCH_METHOD.delete,
     });
+    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
 
     if (!isSuccessStatus(response.status)) {
       throw new Error("Не удалось удалить список");
@@ -158,10 +177,12 @@ export const useUserListsStore = defineStore("userLists", () => {
   };
 
   const addMovieToList = async (userId: string, listId: string, movieId: string) => {
+    const requestRevision = sessionRevision;
     const response = await useFetch(`/users/${userId}/lists/${listId}/movies`, {
       method: FETCH_METHOD.post,
       data: { movieId },
     });
+    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
 
     if (!isSuccessStatus(response.status)) {
       throw new Error("Не удалось добавить тайтл в список");
@@ -189,12 +210,14 @@ export const useUserListsStore = defineStore("userLists", () => {
     listId: string,
     movieId: string
   ) => {
+    const requestRevision = sessionRevision;
     const response = await useFetch<boolean>(
       `/users/${userId}/lists/${listId}/movies/${movieId}`,
       {
         method: FETCH_METHOD.delete,
       }
     );
+    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
 
     if (!isSuccessStatus(response.status)) {
       throw new Error("Не удалось удалить фильм из списка");
@@ -207,13 +230,21 @@ export const useUserListsStore = defineStore("userLists", () => {
       };
     }
 
+    lists.value = lists.value.map((list) => list.id === listId ? {
+      ...list, _count: { ...list._count, items: Math.max(0, list._count.items - 1) },
+    } : list);
+
     return true;
   };
 
   const resetSession = () => {
+    sessionRevision++;
+    listRequests.invalidate();
+    detailRequests.invalidate();
     lists.value = [];
     currentList.value = null;
-    isLoading.value = false;
+    isListLoading.value = false;
+    isDetailLoading.value = false;
     isError.value = null;
   };
 
@@ -222,6 +253,8 @@ export const useUserListsStore = defineStore("userLists", () => {
     sortedLists,
     currentList,
     isLoading,
+    isListLoading,
+    isDetailLoading,
     isError,
     fetchLists,
     fetchListById,

@@ -88,4 +88,30 @@ describe("Авторизация соединения чата", () => {
     expect(store.conversations).toEqual([]);
     expect(store.messages.size).toBe(0);
   });
+
+  it("не теряет сообщение сокета при поздней загрузке истории", async () => {
+    let finish!: (value: unknown) => void;
+    mocks.useFetch.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+    const store = useChatStore();
+    store.connect("user-id");
+    const pending = store.fetchMessages("user-id", "peer-id");
+    const incoming = { id: "incoming", senderId: "peer-id", receiverId: "user-id", content: "Новое", isRead: false, createdAt: "2026-10-04T12:00:00Z" };
+    const handler = mocks.io.mock.results[0].value.on.mock.calls.find(([event]: [string]) => event === "message:received")[1];
+    await handler(incoming);
+    finish({ status: 200, data: [{ ...incoming, id: "old", createdAt: "2026-10-03T12:00:00Z" }] });
+    await pending;
+    expect(store.messages.get("peer-id")?.map((item) => item.id)).toEqual(["old", "incoming"]);
+  });
+
+  it("повтор доставки не увеличивает число непрочитанных", async () => {
+    const store = useChatStore();
+    store.connect("user-id");
+    const incoming = { id: "incoming", senderId: "peer-id", receiverId: "user-id", content: "Новое", isRead: false, createdAt: "2026-10-04T12:00:00Z" };
+    store.conversations = [{ otherUser: { id: "peer-id", email: "fixture@example.com" }, lastMessage: incoming, unreadCount: 0 }];
+    const handler = mocks.io.mock.results[0].value.on.mock.calls.find(([event]: [string]) => event === "message:received")[1];
+    await handler(incoming);
+    await handler(incoming);
+    expect(store.totalUnreadCount).toBe(1);
+    expect(store.messages.get("peer-id")).toHaveLength(1);
+  });
 });

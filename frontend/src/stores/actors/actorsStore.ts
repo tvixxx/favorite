@@ -4,6 +4,7 @@ import { API_BASE_URL } from "@/constants/api/endpoints";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { isSuccessStatus } from "@/utils";
 import { ACTORS_ENDPOINT } from "@/constants";
+import { createRequestGuard } from "@/utils/requestGuard";
 
 export interface Actor {
   id: string;
@@ -18,6 +19,7 @@ export interface ActorsListResponse {
 }
 
 const PICKER_LIMIT = 500;
+const API_PAGE_LIMIT = 100;
 
 export const ACTORS_STORE_NAME = "actorsStore";
 
@@ -34,13 +36,16 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
 
   const detailActor = ref<Actor | null>(null);
 
-  const isActorsLoading = ref(false);
+  const isPageLoading = ref(false);
+  const isPickerLoading = ref(false);
+  const isActorsLoading = computed(() => isPageLoading.value || isPickerLoading.value);
   const isActorsError = ref<string | null>(null);
   const isActorsLoaded = ref(false);
 
-  const setLoadingActors = (value: boolean) => {
-    isActorsLoading.value = value;
-  };
+  const pageRequests = createRequestGuard();
+  const detailRequests = createRequestGuard();
+  const pickerRequests = createRequestGuard();
+  let pickerRequest: Promise<void> | null = null;
 
   const setErrorActors = (errorText: string | null) => {
     isActorsError.value = errorText;
@@ -79,10 +84,12 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
       actorsPageCurrent.value = opts.page;
     }
 
-    const limit = actorsPageSize.value;
+    const isCurrent = pageRequests.begin();
+    const limit = Math.min(API_PAGE_LIMIT, Math.max(1, actorsPageSize.value));
+    actorsPageSize.value = limit;
     const offset = (actorsPageCurrent.value - 1) * limit;
 
-    setLoadingActors(true);
+    isPageLoading.value = true;
     setErrorActors(null);
 
     try {
@@ -94,6 +101,7 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
       const { data, status } = await useFetch<ActorsListResponse>(
         `${API_BASE_URL}/actors?${qs}`,
       );
+      if (!isCurrent()) return;
 
       if (status !== 200) {
         throw new Error("Ошибка загрузки актёров");
@@ -102,61 +110,61 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
       actorsPageItems.value = data.items;
       actorsPageTotal.value = data.total;
     } catch {
+      if (!isCurrent()) return;
       setErrorActors("Ошибка загрузки актёров");
       throw new Error("Ошибка загрузки актёров");
     } finally {
-      setLoadingActors(false);
-    }
-  };
-
-  /** Лёгкий запрос только для обновления total (например, бейдж в шапке медиатеки). */
-  const prefetchActorsTotal = async () => {
-    try {
-      const qs = buildListParams({ limit: 1, offset: 0 });
-      const { data, status } = await useFetch<ActorsListResponse>(
-        `${API_BASE_URL}/actors?${qs}`,
-      );
-      if (status === 200) {
-        actorsPageTotal.value = data.total;
-      }
-    } catch {
-      /* ignore */
+      if (isCurrent()) isPageLoading.value = false;
     }
   };
 
   /** Загрузка среза для выпадающих списков (до PICKER_LIMIT записей). */
-  const fetchActorsForPickers = async () => {
-    setLoadingActors(true);
+  const loadPickerActors = async () => {
+    const isCurrent = pickerRequests.begin();
+    isPickerLoading.value = true;
     setErrorActors(null);
 
     try {
-      const qs = buildListParams({ limit: PICKER_LIMIT, offset: 0 });
-      const { data, status } = await useFetch<ActorsListResponse>(
-        `${API_BASE_URL}/actors?${qs}`,
-      );
-
-      if (status !== 200) {
-        throw new Error("Ошибка загрузки актёров");
+      const items: Actor[] = [];
+      let total = PICKER_LIMIT;
+      while (items.length < Math.min(total, PICKER_LIMIT)) {
+        const qs = buildListParams({ limit: API_PAGE_LIMIT, offset: items.length });
+        const { data, status } = await useFetch<ActorsListResponse>(`${API_BASE_URL}/actors?${qs}`);
+        if (!isCurrent()) return;
+        if (status !== 200) throw new Error("Ошибка загрузки актёров");
+        total = data.total;
+        items.push(...data.items);
+        if (!data.items.length) break;
       }
 
-      pickerActors.value = data.items;
+      pickerActors.value = items.slice(0, PICKER_LIMIT);
       isActorsLoaded.value = true;
     } catch (err) {
+      if (!isCurrent()) return;
       setErrorActors("Ошибка загрузки актёров");
       throw err;
     } finally {
-      setLoadingActors(false);
+      if (isCurrent()) isPickerLoading.value = false;
     }
   };
 
-  /** Совместимость: старый вызов fetchActors → загрузка для селектов. */
-  const fetchActors = fetchActorsForPickers;
+  const fetchActorsForPickers = (): Promise<void> => {
+    if (pickerRequest) return pickerRequest;
+    const request = loadPickerActors().finally(() => {
+      if (pickerRequest === request) pickerRequest = null;
+    });
+    pickerRequest = request;
+
+    return request;
+  };
 
   const fetchActorById = async (id: string): Promise<Actor | null> => {
+    const isCurrent = detailRequests.begin();
     try {
       const { data, status } = await useFetch<Actor>(
         `${ACTORS_ENDPOINT}/${id}`,
       );
+      if (!isCurrent()) return null;
       if (status === 200 && data) {
         detailActor.value = data;
 
@@ -166,12 +174,13 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
       /* */
     }
 
-    detailActor.value = null;
+    if (isCurrent()) detailActor.value = null;
 
     return null;
   };
 
   const clearDetailActor = () => {
+    detailRequests.invalidate();
     detailActor.value = null;
   };
 
@@ -193,19 +202,26 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
     throw new Error("Не удалось создать актера");
   };
 
+  const pendingActorsByName = new Map<string, Promise<Actor>>();
   const addActorByName = async (name: string): Promise<Actor> => {
+    const normalized = name.trim();
+    if (!normalized) throw new Error("Введите имя актёра");
     const existingActor = pickerActors.value.find(
-      (actor) => actor.name.toLowerCase() === name.toLowerCase(),
+      (actor) => actor.name.trim().toLowerCase() === normalized.toLowerCase(),
     );
 
     if (existingActor) {
       return existingActor;
     }
 
-    return await createActor({ name });
-  };
+    const key = normalized.toLowerCase();
+    const existingRequest = pendingActorsByName.get(key);
+    if (existingRequest) return existingRequest;
+    const request = createActor({ name: normalized }).finally(() => pendingActorsByName.delete(key));
+    pendingActorsByName.set(key, request);
 
-  const getAllActors = computed(() => pickerActors.value);
+    return request;
+  };
 
   return {
     actorsPageItems,
@@ -218,17 +234,12 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
 
     isActorsLoaded,
     isActorsLoading,
+    isPageLoading,
+    isPickerLoading,
     isActorsError,
 
-    getAllActors,
-
-    setLoadingActors,
-    setErrorActors,
-
     fetchActorsPage,
-    prefetchActorsTotal,
     fetchActorsForPickers,
-    fetchActors,
     fetchActorById,
     clearDetailActor,
 

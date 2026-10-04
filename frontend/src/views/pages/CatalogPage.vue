@@ -159,7 +159,13 @@ onBeforeUnmount(() => {
   moviesStore.setCurrentPage(1);
 });
 
-const repeatFetch = () => moviesStore.fetchMovies();
+const repeatFetch = async (): Promise<void> => {
+  try {
+    await moviesStore.fetchMovies(moviesStore.searchQuery);
+  } catch {
+    message.error(ERROR_FETCH_MOVIES_TEXT);
+  }
+};
 
 async function resetCatalogFilters(): Promise<void> {
   moviesStore.clearSearch();

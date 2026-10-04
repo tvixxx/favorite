@@ -520,6 +520,8 @@ watch(
   <div class="movie-list">
     <div class="movie-list__content">
       <CollectionFiltersBar
+        :filters="userMoviesStore.filters"
+        :search-query="userMoviesStore.searchQuery"
         :search-handler="findMovie"
         :result-count="totalMovies"
         @update:filters="handleFiltersUpdate"

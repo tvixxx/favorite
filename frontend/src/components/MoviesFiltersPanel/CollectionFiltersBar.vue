@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import dayjs, { type Dayjs } from "dayjs";
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
@@ -21,6 +21,8 @@ import { PRODUCTION_COUNTRIES } from "@/constants/countries/production-countries
 const props = withDefaults(
   defineProps<{
     searchHandler: (value: string) => Promise<void>;
+    filters?: UserMoviesFilters;
+    searchQuery?: string;
     /** Показывать статус-пилюли (коллекция — да; избранное — нет) */
     showStatus?: boolean;
     searchPlaceholder?: string;
@@ -30,6 +32,8 @@ const props = withDefaults(
   {
     showStatus: true,
     searchPlaceholder: "Поиск по коллекции",
+    filters: () => ({}),
+    searchQuery: "",
   },
 );
 
@@ -49,12 +53,30 @@ const STATUSES: { key: StatusKey; label: string }[] = [
 
 const DEFAULT_RATE: [number, number] = [0, 10];
 
-const searchValue = ref("");
-const activeStatus = ref<StatusKey>("all");
-const selectedGenres = ref<Genre[]>([]);
-const selectedCountries = ref<string[]>([]);
-const publishDateRange = ref<[Dayjs, Dayjs] | null>(null);
-const rateRange = ref<[number, number]>([...DEFAULT_RATE]);
+const searchValue = ref(props.searchQuery);
+const activeStatus = computed<StatusKey>(() => props.filters.seeLater
+  ? "later" : props.filters.watchStatus === WatchStatus.WATCHING
+    ? "watching" : props.filters.watchStatus === WatchStatus.COMPLETED ? "watched" : "all");
+const selectedGenres = computed<Genre[]>({
+  get: () => props.filters.genres ?? [],
+  set: (genres) => updateFilters({ genres: genres.length ? genres : undefined }),
+});
+const selectedCountries = computed<string[]>({
+  get: () => props.filters.countryCodes ?? [],
+  set: (countryCodes) => updateFilters({ countryCodes: countryCodes.length ? countryCodes : undefined }),
+});
+const publishDateRange = computed<[Dayjs, Dayjs] | null>({
+  get: (): [Dayjs, Dayjs] | null => props.filters.publishDateFrom && props.filters.publishDateTo
+    ? [dayjs(props.filters.publishDateFrom), dayjs(props.filters.publishDateTo)] : null,
+  set: (range) => updateFilters({
+    publishDateFrom: range?.[0] ? range[0].startOf("month").toISOString() : undefined,
+    publishDateTo: range?.[1] ? range[1].endOf("month").toISOString() : undefined,
+  }),
+});
+const rateRange = computed<[number, number]>({
+  get: (): [number, number] => [props.filters.personalRateMin ?? 0, props.filters.personalRateMax ?? 10],
+  set: ([min, max]) => updateFilters({ personalRateMin: min > 0 ? min : undefined, personalRateMax: max < 10 ? max : undefined }),
+});
 const isDrawerOpen = ref(false);
 
 const rateActive = computed(
@@ -169,70 +191,42 @@ const removeTag = (key: string): void => {
   }
 };
 
-const buildFilters = (): UserMoviesFilters => {
-  const [rateMin, rateMax] = rateRange.value;
-
-  return {
-    genres: selectedGenres.value.length ? selectedGenres.value : undefined,
-    countryCodes: selectedCountries.value.length
-      ? selectedCountries.value
-      : undefined,
-    publishDateFrom: publishDateRange.value?.[0]
-      ? dayjs(publishDateRange.value[0]).startOf("month").toISOString()
-      : undefined,
-    publishDateTo: publishDateRange.value?.[1]
-      ? dayjs(publishDateRange.value[1]).endOf("month").toISOString()
-      : undefined,
-    personalRateMin: rateMin > 0 ? rateMin : undefined,
-    personalRateMax: rateMax < 10 ? rateMax : undefined,
-    watchStatus:
-      activeStatus.value === "watching"
-        ? WatchStatus.WATCHING
-        : activeStatus.value === "watched"
-          ? WatchStatus.COMPLETED
-          : undefined,
-    seeLater: activeStatus.value === "later" ? true : undefined,
-  };
-};
-
-const emitFilters = (): void => {
-  emit("update:filters", buildFilters());
-};
+function updateFilters(patch: UserMoviesFilters): void {
+  emit("update:filters", { ...props.filters, ...patch });
+}
 
 const setStatus = (key: StatusKey): void => {
   if (activeStatus.value === key) {
     return;
   }
 
-  activeStatus.value = key;
-  emitFilters();
+  updateFilters({
+    watchStatus: key === "watching" ? WatchStatus.WATCHING : key === "watched" ? WatchStatus.COMPLETED : undefined,
+    seeLater: key === "later" ? true : undefined,
+  });
 };
 
 const resetAdvanced = (): void => {
-  selectedGenres.value = [];
-  selectedCountries.value = [];
-  publishDateRange.value = null;
-  rateRange.value = [...DEFAULT_RATE];
+  updateFilters({ genres: undefined, countryCodes: undefined, publishDateFrom: undefined, publishDateTo: undefined, personalRateMin: undefined, personalRateMax: undefined });
 };
 
-watch(
-  [selectedGenres, selectedCountries, publishDateRange, rateRange],
-  emitFilters,
-  { deep: true },
-);
-
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
+onBeforeUnmount(() => clearTimeout(searchTimer));
+watch(() => props.searchQuery, (query) => {
+  clearTimeout(searchTimer);
+  searchValue.value = query;
+});
 
 const onSearchInput = (): void => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {
-    void props.searchHandler(searchValue.value.trim());
+    void props.searchHandler(searchValue.value.trim()).catch(() => {});
   }, 350);
 };
 
 const onSearchEnter = (): void => {
   clearTimeout(searchTimer);
-  void props.searchHandler(searchValue.value.trim());
+  void props.searchHandler(searchValue.value.trim()).catch(() => {});
 };
 </script>
 
@@ -250,6 +244,7 @@ const onSearchEnter = (): void => {
           v-model="searchValue"
           type="text"
           :placeholder="searchPlaceholder"
+          :aria-label="searchPlaceholder"
           @input="onSearchInput"
           @keydown.enter="onSearchEnter"
         />
@@ -265,6 +260,7 @@ const onSearchEnter = (): void => {
             'collection-filters__status--active': activeStatus === s.key,
           }"
           @click="setStatus(s.key)"
+          :aria-pressed="activeStatus === s.key"
         >
           {{ s.label }}
         </button>

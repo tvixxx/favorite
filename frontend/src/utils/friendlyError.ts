@@ -4,6 +4,8 @@
  * переопределить текст под конкретный сценарий (`byStatus`) и общий `fallback`.
  */
 
+import { isAxiosError } from "axios";
+
 const STATUS_TEXT: Record<number, string> = {
   400: "Проверьте введённые данные и попробуйте снова.",
   401: "Нужно войти в аккаунт заново.",
@@ -12,7 +14,7 @@ const STATUS_TEXT: Record<number, string> = {
   409: "Это действие уже выполнено.",
   422: "Проверьте введённые данные и попробуйте снова.",
   429: "Слишком много запросов подряд — подождите немного.",
-  500: "Ошибка на сервере. Мы уже разбираемся — попробуйте позже.",
+  500: "На сервере произошла ошибка. Попробуйте позже.",
   502: "Сервер сейчас недоступен. Попробуйте позже.",
   503: "Сервис временно недоступен. Попробуйте позже.",
   504: "Сервер долго не отвечает. Попробуйте позже.",
@@ -24,13 +26,26 @@ const DEFAULT_TEXT = "Что-то пошло не так. Попробуйте �
 interface FriendlyErrorLike {
   response?: { status?: number };
   status?: number;
+  cause?: unknown;
+}
+
+function errorChain(error: unknown): FriendlyErrorLike[] {
+  const chain: FriendlyErrorLike[] = [];
+  const seen = new Set<object>();
+  while (error && typeof error === "object" && !seen.has(error)) {
+    seen.add(error);
+    const current = error as FriendlyErrorLike;
+    chain.push(current);
+    error = current.cause;
+  }
+
+  return chain;
 }
 
 export function getRequestStatus(error: unknown): number | undefined {
-  if (error && typeof error === "object") {
-    const e = error as FriendlyErrorLike;
-
-    return e.response?.status ?? e.status;
+  for (const current of errorChain(error)) {
+    const status = current.response?.status ?? current.status;
+    if (typeof status === "number") return status;
   }
 
   return undefined;
@@ -49,9 +64,10 @@ export function friendlyRequestError(
 ): string {
   const status = getRequestStatus(error);
 
-  // Нет статуса — ответа от сервера не было (обрыв сети / offline)
   if (status == null) {
-    return NETWORK_TEXT;
+    const networkFailure = errorChain(error).some((current) => isAxiosError(current) && !current.response && current.code !== "ERR_CANCELED");
+
+    return networkFailure ? NETWORK_TEXT : options.fallback ?? DEFAULT_TEXT;
   }
 
   return (

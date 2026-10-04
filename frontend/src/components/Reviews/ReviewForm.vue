@@ -8,11 +8,13 @@ const props = withDefaults(
     initialText?: string;
     initialRate?: number;
     isEditing?: boolean;
+    isSaving?: boolean;
   }>(),
   {
     initialText: "",
     initialRate: 0,
     isEditing: false,
+    isSaving: false,
   }
 );
 
@@ -37,6 +39,7 @@ watch(
 );
 
 const handleSubmit = () => {
+  if (props.isSaving) return;
   emit("submit", reviewForm.text, reviewForm.rate);
 };
 
@@ -51,6 +54,7 @@ defineExpose({
 });
 
 const handleCancel = () => {
+  if (props.isSaving) return;
   resetForm();
   emit("cancel");
 };
@@ -60,6 +64,7 @@ const handleCancel = () => {
   <a-form
     ref="reviewFormRef"
     :model="reviewForm"
+    :disabled="isSaving"
     name="review-form"
     layout="vertical"
     class="review-form"
@@ -92,6 +97,7 @@ const handleCancel = () => {
         html-type="submit"
         size="large"
         class="review-form__submit"
+        :loading="isSaving"
       >
         <BaseIcon
           :name="isEditing ? 'ph:check' : 'ph:plus'"

@@ -83,7 +83,7 @@ const CONTROL_COMPONENTS = {
 const POPUP_TOKEN = { zIndexPopupBase: 10050 };
 
 export const themeConfig = computed(() => {
-  const config = themeConfigs[currentTheme.value];
+  const config = themeConfigs[currentTheme.value] ?? themeConfigs.light;
 
   return {
     ...config,
@@ -110,7 +110,13 @@ function getInitialTheme(): Theme {
 
 // useStorage применит дефолт только при отсутствии ключа: системная тема
 // подхватится лишь на первом заходе, дальше уважается выбор пользователя.
-export const currentTheme = useStorage<Theme>("app-theme", getInitialTheme());
+const initialTheme = getInitialTheme();
+export const currentTheme = useStorage<Theme>("app-theme", initialTheme, undefined, {
+  serializer: {
+    read: (value) => (themes as readonly string[]).includes(value) ? value as Theme : initialTheme,
+    write: (value) => value,
+  },
+});
 
 export const setTheme = (theme: Theme) => {
   currentTheme.value = theme;
