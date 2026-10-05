@@ -16,13 +16,27 @@ import { NotificationService } from '../notification/notification.service';
 import type { NotificationDto } from '../notification/notification.service';
 import { NotificationType } from '../generated/prisma/enums';
 import { AuthService } from '../auth/auth.service';
+import { isAllowedOrigin } from '../common/utils/cors-policy';
 
 type ChatSocket = Omit<Socket, 'data'> & {
   data: { userId?: string; accessToken?: string };
 };
 
 @WebSocketGateway({
-  cors: { origin: '*' },
+  cors: {
+    origin: (
+      origin: string | undefined,
+      callback: (error: Error | null, allowed: boolean) => void,
+    ) =>
+      callback(
+        null,
+        isAllowedOrigin(
+          origin,
+          process.env.CORS_ORIGINS ?? process.env.FRONTEND_ORIGIN,
+        ),
+      ),
+    credentials: true,
+  },
   namespace: '/chat',
 })
 export class MessageGateway
@@ -44,34 +58,54 @@ export class MessageGateway
 
   emitToUser(userId: string, dto: NotificationDto): Promise<void> {
     this.server.to(`user:${userId}`).emit('notification:new', dto);
+
     return Promise.resolve();
   }
 
   async handleConnection(client: ChatSocket) {
     try {
-      const token: unknown = client.handshake.auth?.token;
-      if (typeof token !== 'string' || !token) {
+      if (
+        !isAllowedOrigin(
+          client.handshake.headers?.origin,
+          process.env.CORS_ORIGINS ?? process.env.FRONTEND_ORIGIN,
+        )
+      ) {
         client.disconnect();
+
         return;
       }
+
+      const token: unknown = client.handshake.auth?.token;
+
+      if (typeof token !== 'string' || !token) {
+        client.disconnect();
+
+        return;
+      }
+
       const user = await this.authService.verifyAccessToken(token);
       const userId = user.id;
+
       client.data.userId = userId;
       client.data.accessToken = token;
       await client.join(`user:${userId}`);
       const sockets = this.connections.get(userId) ?? new Set<string>();
       const wasOnline = sockets.size > 0;
+
       sockets.add(client.id);
       this.connections.set(userId, sockets);
       await this.userStatusService.setOnline(userId, client.id);
 
-      if (wasOnline) return;
+      if (wasOnline) {
+        return;
+      }
 
       // Уведомить друзей что пользователь онлайн (один запрос вместо N+1)
       const friends = await this.friendshipService.getFriends(userId);
       const onlineFriends = await this.userStatusService.getOnlineFriends(
         friends.map((f) => f.friend.id),
       );
+
       for (const status of onlineFriends) {
         this.server.to(`user:${status.userId}`).emit('user:online', { userId });
       }
@@ -86,11 +120,21 @@ export class MessageGateway
   async handleDisconnect(client: ChatSocket) {
     try {
       const userId = client.data.userId;
-      if (!userId) return;
+
+      if (!userId) {
+        return;
+      }
 
       const sockets = this.connections.get(userId);
-      if (!sockets?.delete(client.id)) return;
-      if (sockets.size > 0) return;
+
+      if (!sockets?.delete(client.id)) {
+        return;
+      }
+
+      if (sockets.size > 0) {
+        return;
+      }
+
       this.connections.delete(userId);
 
       await this.userStatusService.setOffline(userId);
@@ -100,6 +144,7 @@ export class MessageGateway
       const onlineFriends = await this.userStatusService.getOnlineFriends(
         friends.map((f) => f.friend.id),
       );
+
       for (const status of onlineFriends) {
         this.server
           .to(`user:${status.userId}`)
@@ -119,9 +164,11 @@ export class MessageGateway
   ) {
     try {
       const senderId = await this.getAuthorizedUserId(client);
+
       if (!senderId) {
         return { error: 'Unauthorized' };
       }
+
       if (
         !data ||
         typeof data.receiverId !== 'string' ||
@@ -168,6 +215,7 @@ export class MessageGateway
       return message;
     } catch (error) {
       console.error('Send message error:', error);
+
       return { error: 'Failed to send message' };
     }
   }
@@ -179,9 +227,11 @@ export class MessageGateway
   ) {
     try {
       const userId = await this.getAuthorizedUserId(client);
+
       if (!userId) {
         return { error: 'Unauthorized' };
       }
+
       if (
         !data ||
         typeof data.otherUserId !== 'string' ||
@@ -202,6 +252,7 @@ export class MessageGateway
       return { success: true };
     } catch (error) {
       console.error('Mark as read error:', error);
+
       return { error: 'Failed to mark as read' };
     }
   }
@@ -210,12 +261,18 @@ export class MessageGateway
     client: ChatSocket,
   ): Promise<string | null> {
     const token: unknown = client.data.accessToken;
-    if (typeof token !== 'string') return null;
+
+    if (typeof token !== 'string') {
+      return null;
+    }
+
     try {
       const user = await this.authService.verifyAccessToken(token);
+
       return user.id === client.data.userId ? user.id : null;
     } catch {
       client.disconnect();
+
       return null;
     }
   }

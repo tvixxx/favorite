@@ -16,6 +16,48 @@ enum UserRole {
   @@map("enum_user_role")
 }
 
+enum MediaPurpose {
+  MOVIE_POSTER
+  USER_AVATAR
+  ACTOR_PHOTO
+
+  @@map("enum_media_purpose")
+}
+
+enum MediaStatus {
+  PROCESSING
+  READY
+  FAILED
+  DELETING
+
+  @@map("enum_media_status")
+}
+
+model MediaAsset {
+  id           String       @id @default(uuid())
+  ownerId      String?      @map("owner_id")
+  purpose      MediaPurpose
+  status       MediaStatus  @default(PROCESSING)
+  mainKey      String       @default("") @map("main_key")
+  thumbnailKey String       @default("") @map("thumbnail_key")
+  mimeType     String       @default("image/webp") @map("mime_type")
+  byteSize     Int          @map("byte_size")
+  width        Int          @default(0)
+  height       Int          @default(0)
+  claimedAt    DateTime?    @map("claimed_at")
+  expiresAt    DateTime?    @map("expires_at")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  owner        User?        @relation("media_owner", fields: [ownerId], references: [id], onDelete: SetNull)
+  poster       MoviePoster? @relation("poster_media")
+  avatar       User?        @relation("avatar_media")
+  actorPhoto   Actor?       @relation("actor_media")
+
+  @@index([ownerId, createdAt])
+  @@index([status, expiresAt])
+  @@map("media_assets")
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -23,6 +65,11 @@ model User {
   fullName  String
   role      UserRole @default(USER) @map("role")
   tags      Genre?
+  avatarUrl String? @map("avatar_url")
+  avatarThumbnailUrl String? @map("avatar_thumbnail_url")
+  avatarAssetId String? @unique @map("avatar_asset_id")
+  avatarAsset MediaAsset? @relation("avatar_media", fields: [avatarAssetId], references: [id], onDelete: SetNull)
+  uploadedMedia MediaAsset[] @relation("media_owner")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -73,6 +120,9 @@ model Movie {
 model MoviePoster {
   id        String   @id @default(uuid())
   url       String   @default("")
+  thumbnailUrl String? @map("thumbnail_url")
+  assetId String? @unique @map("asset_id")
+  asset MediaAsset? @relation("poster_media", fields: [assetId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   movie     Movie?   @relation("movie_poster")
@@ -100,6 +150,10 @@ model Review {
 model Actor {
   id        String   @id @default(uuid())
   name      String
+  imageUrl String? @map("image_url")
+  imageThumbnailUrl String? @map("image_thumbnail_url")
+  imageAssetId String? @unique @map("image_asset_id")
+  imageAsset MediaAsset? @relation("actor_media", fields: [imageAssetId], references: [id], onDelete: SetNull)
   createdById String? @map("created_by_id")
   createdBy User? @relation("created_actors", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now()) @map("created_at")

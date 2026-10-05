@@ -14,7 +14,11 @@ describe('Права на актёров', () => {
         ),
       },
     };
-    const service = new ActorService(prisma as unknown as PrismaService);
+    const service = new ActorService(
+      prisma as unknown as PrismaService,
+      {} as never,
+    );
+
     await expect(
       service.patch(
         'actor-id',

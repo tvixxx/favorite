@@ -31,6 +31,9 @@ export type UserMinAggregateOutputType = {
   fullName: string | null
   role: $Enums.UserRole | null
   tags: $Enums.Genre | null
+  avatarUrl: string | null
+  avatarThumbnailUrl: string | null
+  avatarAssetId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -42,6 +45,9 @@ export type UserMaxAggregateOutputType = {
   fullName: string | null
   role: $Enums.UserRole | null
   tags: $Enums.Genre | null
+  avatarUrl: string | null
+  avatarThumbnailUrl: string | null
+  avatarAssetId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -53,6 +59,9 @@ export type UserCountAggregateOutputType = {
   fullName: number
   role: number
   tags: number
+  avatarUrl: number
+  avatarThumbnailUrl: number
+  avatarAssetId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -66,6 +75,9 @@ export type UserMinAggregateInputType = {
   fullName?: true
   role?: true
   tags?: true
+  avatarUrl?: true
+  avatarThumbnailUrl?: true
+  avatarAssetId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -77,6 +89,9 @@ export type UserMaxAggregateInputType = {
   fullName?: true
   role?: true
   tags?: true
+  avatarUrl?: true
+  avatarThumbnailUrl?: true
+  avatarAssetId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -88,6 +103,9 @@ export type UserCountAggregateInputType = {
   fullName?: true
   role?: true
   tags?: true
+  avatarUrl?: true
+  avatarThumbnailUrl?: true
+  avatarAssetId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -172,6 +190,9 @@ export type UserGroupByOutputType = {
   fullName: string
   role: $Enums.UserRole
   tags: $Enums.Genre | null
+  avatarUrl: string | null
+  avatarThumbnailUrl: string | null
+  avatarAssetId: string | null
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -204,8 +225,13 @@ export type UserWhereInput = {
   fullName?: Prisma.StringFilter<"User"> | string
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   tags?: Prisma.EnumGenreNullableFilter<"User"> | $Enums.Genre | null
+  avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  avatarThumbnailUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  avatarAssetId?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  avatarAsset?: Prisma.XOR<Prisma.MediaAssetNullableScalarRelationFilter, Prisma.MediaAssetWhereInput> | null
+  uploadedMedia?: Prisma.MediaAssetListRelationFilter
   userMovies?: Prisma.UserMovieListRelationFilter
   lists?: Prisma.UserListListRelationFilter
   reviews?: Prisma.ReviewListRelationFilter
@@ -227,8 +253,13 @@ export type UserOrderByWithRelationInput = {
   fullName?: Prisma.SortOrder
   role?: Prisma.SortOrder
   tags?: Prisma.SortOrderInput | Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  avatarThumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  avatarAssetId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  avatarAsset?: Prisma.MediaAssetOrderByWithRelationInput
+  uploadedMedia?: Prisma.MediaAssetOrderByRelationAggregateInput
   userMovies?: Prisma.UserMovieOrderByRelationAggregateInput
   lists?: Prisma.UserListOrderByRelationAggregateInput
   reviews?: Prisma.ReviewOrderByRelationAggregateInput
@@ -246,6 +277,7 @@ export type UserOrderByWithRelationInput = {
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   email?: string
+  avatarAssetId?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
@@ -253,8 +285,12 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   fullName?: Prisma.StringFilter<"User"> | string
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   tags?: Prisma.EnumGenreNullableFilter<"User"> | $Enums.Genre | null
+  avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  avatarThumbnailUrl?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  avatarAsset?: Prisma.XOR<Prisma.MediaAssetNullableScalarRelationFilter, Prisma.MediaAssetWhereInput> | null
+  uploadedMedia?: Prisma.MediaAssetListRelationFilter
   userMovies?: Prisma.UserMovieListRelationFilter
   lists?: Prisma.UserListListRelationFilter
   reviews?: Prisma.ReviewListRelationFilter
@@ -267,7 +303,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   feedbacks?: Prisma.FeedbackListRelationFilter
   createdMovies?: Prisma.MovieListRelationFilter
   createdActors?: Prisma.ActorListRelationFilter
-}, "id" | "email">
+}, "id" | "email" | "avatarAssetId">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -276,6 +312,9 @@ export type UserOrderByWithAggregationInput = {
   fullName?: Prisma.SortOrder
   role?: Prisma.SortOrder
   tags?: Prisma.SortOrderInput | Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  avatarThumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  avatarAssetId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -293,6 +332,9 @@ export type UserScalarWhereWithAggregatesInput = {
   fullName?: Prisma.StringWithAggregatesFilter<"User"> | string
   role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
   tags?: Prisma.EnumGenreNullableWithAggregatesFilter<"User"> | $Enums.Genre | null
+  avatarUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  avatarThumbnailUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  avatarAssetId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -304,8 +346,12 @@ export type UserCreateInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
@@ -327,8 +373,12 @@ export type UserUncheckedCreateInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
@@ -350,8 +400,12 @@ export type UserUpdateInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
@@ -373,8 +427,12 @@ export type UserUncheckedUpdateInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
@@ -396,6 +454,9 @@ export type UserCreateManyInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -407,6 +468,8 @@ export type UserUpdateManyMutationInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -418,8 +481,16 @@ export type UserUncheckedUpdateManyInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
 }
 
 export type UserCountOrderByAggregateInput = {
@@ -429,6 +500,9 @@ export type UserCountOrderByAggregateInput = {
   fullName?: Prisma.SortOrder
   role?: Prisma.SortOrder
   tags?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
+  avatarThumbnailUrl?: Prisma.SortOrder
+  avatarAssetId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -440,6 +514,9 @@ export type UserMaxOrderByAggregateInput = {
   fullName?: Prisma.SortOrder
   role?: Prisma.SortOrder
   tags?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
+  avatarThumbnailUrl?: Prisma.SortOrder
+  avatarAssetId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -451,13 +528,11 @@ export type UserMinOrderByAggregateInput = {
   fullName?: Prisma.SortOrder
   role?: Prisma.SortOrder
   tags?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
+  avatarThumbnailUrl?: Prisma.SortOrder
+  avatarAssetId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-}
-
-export type UserNullableScalarRelationFilter = {
-  is?: Prisma.UserWhereInput | null
-  isNot?: Prisma.UserWhereInput | null
 }
 
 export type UserScalarRelationFilter = {
@@ -465,8 +540,52 @@ export type UserScalarRelationFilter = {
   isNot?: Prisma.UserWhereInput
 }
 
-export type StringFieldUpdateOperationsInput = {
-  set?: string
+export type UserCreateNestedOneWithoutUploadedMediaInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUploadedMediaInput, Prisma.UserUncheckedCreateWithoutUploadedMediaInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUploadedMediaInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutAvatarAssetInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAvatarAssetInput, Prisma.UserUncheckedCreateWithoutAvatarAssetInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAvatarAssetInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUncheckedCreateNestedOneWithoutAvatarAssetInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAvatarAssetInput, Prisma.UserUncheckedCreateWithoutAvatarAssetInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAvatarAssetInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutUploadedMediaNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUploadedMediaInput, Prisma.UserUncheckedCreateWithoutUploadedMediaInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUploadedMediaInput
+  upsert?: Prisma.UserUpsertWithoutUploadedMediaInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutUploadedMediaInput, Prisma.UserUpdateWithoutUploadedMediaInput>, Prisma.UserUncheckedUpdateWithoutUploadedMediaInput>
+}
+
+export type UserUpdateOneWithoutAvatarAssetNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAvatarAssetInput, Prisma.UserUncheckedCreateWithoutAvatarAssetInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAvatarAssetInput
+  upsert?: Prisma.UserUpsertWithoutAvatarAssetInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAvatarAssetInput, Prisma.UserUpdateWithoutAvatarAssetInput>, Prisma.UserUncheckedUpdateWithoutAvatarAssetInput>
+}
+
+export type UserUncheckedUpdateOneWithoutAvatarAssetNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAvatarAssetInput, Prisma.UserUncheckedCreateWithoutAvatarAssetInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAvatarAssetInput
+  upsert?: Prisma.UserUpsertWithoutAvatarAssetInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAvatarAssetInput, Prisma.UserUpdateWithoutAvatarAssetInput>, Prisma.UserUncheckedUpdateWithoutAvatarAssetInput>
 }
 
 export type EnumUserRoleFieldUpdateOperationsInput = {
@@ -475,10 +594,6 @@ export type EnumUserRoleFieldUpdateOperationsInput = {
 
 export type NullableEnumGenreFieldUpdateOperationsInput = {
   set?: $Enums.Genre | null
-}
-
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
 }
 
 export type UserCreateNestedOneWithoutCreatedMoviesInput = {
@@ -655,6 +770,246 @@ export type UserUpdateOneWithoutFeedbacksNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFeedbacksInput, Prisma.UserUpdateWithoutFeedbacksInput>, Prisma.UserUncheckedUpdateWithoutFeedbacksInput>
 }
 
+export type UserCreateWithoutUploadedMediaInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  role?: $Enums.UserRole
+  tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
+  createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
+  createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+}
+
+export type UserUncheckedCreateWithoutUploadedMediaInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  role?: $Enums.UserRole
+  tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
+  createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
+  createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+}
+
+export type UserCreateOrConnectWithoutUploadedMediaInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutUploadedMediaInput, Prisma.UserUncheckedCreateWithoutUploadedMediaInput>
+}
+
+export type UserCreateWithoutAvatarAssetInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  role?: $Enums.UserRole
+  tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
+  userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
+  createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
+  createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+}
+
+export type UserUncheckedCreateWithoutAvatarAssetInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  role?: $Enums.UserRole
+  tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
+  userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
+  createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
+  createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+}
+
+export type UserCreateOrConnectWithoutAvatarAssetInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutAvatarAssetInput, Prisma.UserUncheckedCreateWithoutAvatarAssetInput>
+}
+
+export type UserUpsertWithoutUploadedMediaInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutUploadedMediaInput, Prisma.UserUncheckedUpdateWithoutUploadedMediaInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutUploadedMediaInput, Prisma.UserUncheckedCreateWithoutUploadedMediaInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutUploadedMediaInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutUploadedMediaInput, Prisma.UserUncheckedUpdateWithoutUploadedMediaInput>
+}
+
+export type UserUpdateWithoutUploadedMediaInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
+  createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
+  createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+}
+
+export type UserUncheckedUpdateWithoutUploadedMediaInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
+  createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+}
+
+export type UserUpsertWithoutAvatarAssetInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutAvatarAssetInput, Prisma.UserUncheckedUpdateWithoutAvatarAssetInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutAvatarAssetInput, Prisma.UserUncheckedCreateWithoutAvatarAssetInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutAvatarAssetInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutAvatarAssetInput, Prisma.UserUncheckedUpdateWithoutAvatarAssetInput>
+}
+
+export type UserUpdateWithoutAvatarAssetInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
+  userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
+  createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
+  createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+}
+
+export type UserUncheckedUpdateWithoutAvatarAssetInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
+  userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
+  createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+}
+
 export type UserCreateWithoutCreatedMoviesInput = {
   id?: string
   email: string
@@ -662,8 +1017,12 @@ export type UserCreateWithoutCreatedMoviesInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
@@ -684,8 +1043,12 @@ export type UserUncheckedCreateWithoutCreatedMoviesInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
@@ -722,8 +1085,12 @@ export type UserUpdateWithoutCreatedMoviesInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
@@ -744,8 +1111,12 @@ export type UserUncheckedUpdateWithoutCreatedMoviesInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
@@ -766,8 +1137,12 @@ export type UserCreateWithoutReviewsInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
@@ -788,8 +1163,12 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
@@ -826,8 +1205,12 @@ export type UserUpdateWithoutReviewsInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
@@ -848,8 +1231,12 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
@@ -870,8 +1257,12 @@ export type UserCreateWithoutCreatedActorsInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
@@ -892,8 +1283,12 @@ export type UserUncheckedCreateWithoutCreatedActorsInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
@@ -930,8 +1325,12 @@ export type UserUpdateWithoutCreatedActorsInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
@@ -952,8 +1351,12 @@ export type UserUncheckedUpdateWithoutCreatedActorsInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
@@ -974,8 +1377,12 @@ export type UserCreateWithoutUserMoviesInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
   lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
@@ -996,8 +1403,12 @@ export type UserUncheckedCreateWithoutUserMoviesInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
   lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
@@ -1034,8 +1445,12 @@ export type UserUpdateWithoutUserMoviesInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
   lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
@@ -1056,8 +1471,12 @@ export type UserUncheckedUpdateWithoutUserMoviesInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
   lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
@@ -1078,8 +1497,12 @@ export type UserCreateWithoutListsInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
@@ -1100,8 +1523,12 @@ export type UserUncheckedCreateWithoutListsInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
@@ -1138,8 +1565,12 @@ export type UserUpdateWithoutListsInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
@@ -1160,8 +1591,12 @@ export type UserUncheckedUpdateWithoutListsInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
@@ -1182,8 +1617,12 @@ export type UserCreateWithoutFriendshipsRequestedInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
@@ -1204,8 +1643,12 @@ export type UserUncheckedCreateWithoutFriendshipsRequestedInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
@@ -1231,8 +1674,12 @@ export type UserCreateWithoutFriendshipsReceivedInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
@@ -1253,8 +1700,12 @@ export type UserUncheckedCreateWithoutFriendshipsReceivedInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
@@ -1291,8 +1742,12 @@ export type UserUpdateWithoutFriendshipsRequestedInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
@@ -1313,8 +1768,12 @@ export type UserUncheckedUpdateWithoutFriendshipsRequestedInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
@@ -1346,8 +1805,12 @@ export type UserUpdateWithoutFriendshipsReceivedInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
@@ -1368,8 +1831,12 @@ export type UserUncheckedUpdateWithoutFriendshipsReceivedInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
@@ -1390,8 +1857,12 @@ export type UserCreateWithoutSentMessagesInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
@@ -1412,8 +1883,12 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
@@ -1439,8 +1914,12 @@ export type UserCreateWithoutReceivedMessagesInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
@@ -1461,8 +1940,12 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
@@ -1499,8 +1982,12 @@ export type UserUpdateWithoutSentMessagesInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
@@ -1521,8 +2008,12 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
@@ -1554,8 +2045,12 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
@@ -1576,8 +2071,12 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
@@ -1598,8 +2097,12 @@ export type UserCreateWithoutStatusInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
@@ -1620,8 +2123,12 @@ export type UserUncheckedCreateWithoutStatusInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
@@ -1658,8 +2165,12 @@ export type UserUpdateWithoutStatusInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
@@ -1680,8 +2191,12 @@ export type UserUncheckedUpdateWithoutStatusInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
@@ -1702,8 +2217,12 @@ export type UserCreateWithoutNotificationsInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
@@ -1724,8 +2243,12 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
@@ -1762,8 +2285,12 @@ export type UserUpdateWithoutNotificationsInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
@@ -1784,8 +2311,12 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
@@ -1806,8 +2337,12 @@ export type UserCreateWithoutFeedbacksInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
@@ -1828,8 +2363,12 @@ export type UserUncheckedCreateWithoutFeedbacksInput = {
   fullName: string
   role?: $Enums.UserRole
   tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
@@ -1866,8 +2405,12 @@ export type UserUpdateWithoutFeedbacksInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
@@ -1888,8 +2431,12 @@ export type UserUncheckedUpdateWithoutFeedbacksInput = {
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
@@ -1909,6 +2456,7 @@ export type UserUncheckedUpdateWithoutFeedbacksInput = {
  */
 
 export type UserCountOutputType = {
+  uploadedMedia: number
   userMovies: number
   lists: number
   reviews: number
@@ -1923,6 +2471,7 @@ export type UserCountOutputType = {
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  uploadedMedia?: boolean | UserCountOutputTypeCountUploadedMediaArgs
   userMovies?: boolean | UserCountOutputTypeCountUserMoviesArgs
   lists?: boolean | UserCountOutputTypeCountListsArgs
   reviews?: boolean | UserCountOutputTypeCountReviewsArgs
@@ -1944,6 +2493,13 @@ export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
    * Select specific fields to fetch from the UserCountOutputType
    */
   select?: Prisma.UserCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountUploadedMediaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.MediaAssetWhereInput
 }
 
 /**
@@ -2031,8 +2587,13 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   fullName?: boolean
   role?: boolean
   tags?: boolean
+  avatarUrl?: boolean
+  avatarThumbnailUrl?: boolean
+  avatarAssetId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  avatarAsset?: boolean | Prisma.User$avatarAssetArgs<ExtArgs>
+  uploadedMedia?: boolean | Prisma.User$uploadedMediaArgs<ExtArgs>
   userMovies?: boolean | Prisma.User$userMoviesArgs<ExtArgs>
   lists?: boolean | Prisma.User$listsArgs<ExtArgs>
   reviews?: boolean | Prisma.User$reviewsArgs<ExtArgs>
@@ -2055,8 +2616,12 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   fullName?: boolean
   role?: boolean
   tags?: boolean
+  avatarUrl?: boolean
+  avatarThumbnailUrl?: boolean
+  avatarAssetId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  avatarAsset?: boolean | Prisma.User$avatarAssetArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -2066,8 +2631,12 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   fullName?: boolean
   role?: boolean
   tags?: boolean
+  avatarUrl?: boolean
+  avatarThumbnailUrl?: boolean
+  avatarAssetId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  avatarAsset?: boolean | Prisma.User$avatarAssetArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -2077,12 +2646,17 @@ export type UserSelectScalar = {
   fullName?: boolean
   role?: boolean
   tags?: boolean
+  avatarUrl?: boolean
+  avatarThumbnailUrl?: boolean
+  avatarAssetId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "fullName" | "role" | "tags" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "fullName" | "role" | "tags" | "avatarUrl" | "avatarThumbnailUrl" | "avatarAssetId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  avatarAsset?: boolean | Prisma.User$avatarAssetArgs<ExtArgs>
+  uploadedMedia?: boolean | Prisma.User$uploadedMediaArgs<ExtArgs>
   userMovies?: boolean | Prisma.User$userMoviesArgs<ExtArgs>
   lists?: boolean | Prisma.User$listsArgs<ExtArgs>
   reviews?: boolean | Prisma.User$reviewsArgs<ExtArgs>
@@ -2097,12 +2671,18 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   createdActors?: boolean | Prisma.User$createdActorsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  avatarAsset?: boolean | Prisma.User$avatarAssetArgs<ExtArgs>
+}
+export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  avatarAsset?: boolean | Prisma.User$avatarAssetArgs<ExtArgs>
+}
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
   objects: {
+    avatarAsset: Prisma.$MediaAssetPayload<ExtArgs> | null
+    uploadedMedia: Prisma.$MediaAssetPayload<ExtArgs>[]
     userMovies: Prisma.$UserMoviePayload<ExtArgs>[]
     lists: Prisma.$UserListPayload<ExtArgs>[]
     reviews: Prisma.$ReviewPayload<ExtArgs>[]
@@ -2123,6 +2703,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     fullName: string
     role: $Enums.UserRole
     tags: $Enums.Genre | null
+    avatarUrl: string | null
+    avatarThumbnailUrl: string | null
+    avatarAssetId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -2519,6 +3102,8 @@ readonly fields: UserFieldRefs;
  */
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  avatarAsset<T extends Prisma.User$avatarAssetArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$avatarAssetArgs<ExtArgs>>): Prisma.Prisma__MediaAssetClient<runtime.Types.Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  uploadedMedia<T extends Prisma.User$uploadedMediaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$uploadedMediaArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userMovies<T extends Prisma.User$userMoviesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$userMoviesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserMoviePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   lists<T extends Prisma.User$listsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$listsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserListPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reviews<T extends Prisma.User$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2566,6 +3151,9 @@ export interface UserFieldRefs {
   readonly fullName: Prisma.FieldRef<"User", 'String'>
   readonly role: Prisma.FieldRef<"User", 'UserRole'>
   readonly tags: Prisma.FieldRef<"User", 'Genre'>
+  readonly avatarUrl: Prisma.FieldRef<"User", 'String'>
+  readonly avatarThumbnailUrl: Prisma.FieldRef<"User", 'String'>
+  readonly avatarAssetId: Prisma.FieldRef<"User", 'String'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }
@@ -2817,6 +3405,10 @@ export type UserCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    */
   data: Prisma.UserCreateManyInput | Prisma.UserCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -2887,6 +3479,10 @@ export type UserUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * Limit how many Users to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -2953,6 +3549,49 @@ export type UserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Limit how many Users to delete.
    */
   limit?: number
+}
+
+/**
+ * User.avatarAsset
+ */
+export type User$avatarAssetArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MediaAsset
+   */
+  select?: Prisma.MediaAssetSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MediaAsset
+   */
+  omit?: Prisma.MediaAssetOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MediaAssetInclude<ExtArgs> | null
+  where?: Prisma.MediaAssetWhereInput
+}
+
+/**
+ * User.uploadedMedia
+ */
+export type User$uploadedMediaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MediaAsset
+   */
+  select?: Prisma.MediaAssetSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MediaAsset
+   */
+  omit?: Prisma.MediaAssetOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MediaAssetInclude<ExtArgs> | null
+  where?: Prisma.MediaAssetWhereInput
+  orderBy?: Prisma.MediaAssetOrderByWithRelationInput | Prisma.MediaAssetOrderByWithRelationInput[]
+  cursor?: Prisma.MediaAssetWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.MediaAssetScalarFieldEnum | Prisma.MediaAssetScalarFieldEnum[]
 }
 
 /**

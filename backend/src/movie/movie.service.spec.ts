@@ -12,6 +12,7 @@ describe('Права на общие и пользовательские фил�
   let service: MovieService;
   let posterExists: boolean;
   let posterFailure: boolean;
+
   beforeEach(() => {
     movie = {
       id: 'movie-id',
@@ -30,7 +31,9 @@ describe('Права на общие и пользовательские фил�
         ),
         delete: jest.fn(() => {
           const old = movie;
+
           movie = null!;
+
           return Promise.resolve(old);
         }),
         create: jest.fn(({ data }: { data: Prisma.MovieCreateInput }) => {
@@ -39,6 +42,7 @@ describe('Права на общие и пользовательские фил�
             ...data,
             createdById: data.createdBy?.connect?.id ?? null,
           };
+
           return Promise.resolve(movie);
         }),
       },
@@ -46,8 +50,12 @@ describe('Права на общие и пользовательские фил�
       review: { groupBy: jest.fn().mockResolvedValue([]) },
       moviePoster: {
         deleteMany: jest.fn(() => {
-          if (posterFailure) throw new Error('Ошибка удаления постера');
+          if (posterFailure) {
+            throw new Error('Ошибка удаления постера');
+          }
+
           posterExists = false;
+
           return Promise.resolve({ count: 1 });
         }),
       },
@@ -58,6 +66,7 @@ describe('Права на общие и пользовательские фил�
         work: (client: typeof tx) => Promise<T>,
       ): Promise<T> => {
         const before = structuredClone({ movie, posterExists });
+
         try {
           return await work(tx);
         } catch (error) {
@@ -68,7 +77,11 @@ describe('Права на общие и пользовательские фил�
       },
     };
     const client = prisma as unknown as PrismaService;
-    service = new MovieService(client, new UserMovieService(client));
+
+    service = new MovieService(client, new UserMovieService(client), {
+      select: jest.fn(),
+      release: jest.fn(),
+    } as never);
   });
 
   it('не позволяет обычному пользователю менять общий фильм', async () => {
@@ -131,6 +144,7 @@ describe('Права на общие и пользовательские фил�
       },
       { id: 'user-id', role: 'USER' },
     );
+
     expect(result.createdById).toBe('user-id');
   });
 

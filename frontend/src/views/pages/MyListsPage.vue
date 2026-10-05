@@ -15,7 +15,10 @@ import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import { useMainStore } from "@/state/state";
 import { useUserListsStore } from "@/stores";
-import { DEFAULT_LIST_COLOR, LIST_COLOR_SWATCHES } from "@/constants/listColors";
+import {
+  DEFAULT_LIST_COLOR,
+  LIST_COLOR_SWATCHES,
+} from "@/constants/listColors";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { movieCardMeta, movieCardTitle, PLURAL, pluralize } from "@/utils";
 import type { UserListItem, UserListSummary } from "@/stores/userLists/types";
@@ -34,7 +37,7 @@ const activeLabelFilter = ref<string | null>(null);
 
 // min-display скелетона карточек списков
 const showSkeleton = useMinLoading(
-  () => userListsStore.isLoading && !hasLists.value,
+  () => userListsStore.isLoading && !hasLists.value
 );
 
 const allLabels = computed(() => {
@@ -97,7 +100,7 @@ const displayedList = computed(() => {
 });
 
 const currentListItems = computed<UserListItem[]>(
-  () => displayedList.value?.items ?? [],
+  () => displayedList.value?.items ?? []
 );
 
 const getPosterSrc = (item: UserListItem): string => {
@@ -105,7 +108,11 @@ const getPosterSrc = (item: UserListItem): string => {
     return FALLBACK_IMAGE_URL;
   }
 
-  return item.movie.poster?.url || FALLBACK_IMAGE_URL;
+  return (
+    item.movie.poster?.thumbnailUrl ||
+    item.movie.poster?.url ||
+    FALLBACK_IMAGE_URL
+  );
 };
 
 const handleImageError = (movieId: string): void => {
@@ -154,11 +161,13 @@ const removeMovieFromList = async (movieId: string): Promise<void> => {
     await userListsStore.removeMovieFromList(
       userId.value,
       detailListId.value,
-      movieId,
+      movieId
     );
     message.success("Тайтл удалён из списка");
   } catch {
-    message.error(userListsStore.isError || "Не удалось удалить тайтл из списка");
+    message.error(
+      userListsStore.isError || "Не удалось удалить тайтл из списка"
+    );
   } finally {
     isItemRemoving.value = false;
   }
@@ -169,7 +178,7 @@ const isListDeleting = ref(false);
 
 const deleteListById = async (
   listId: string,
-  listName: string,
+  listName: string
 ): Promise<void> => {
   if (!userId.value || isListDeleting.value) {
     return;
@@ -228,10 +237,10 @@ const isFormSubmitting = ref(false);
 
 const isEditing = computed(() => editingListId.value !== null);
 const formTitle = computed(() =>
-  isEditing.value ? "Редактировать список" : "Новый список",
+  isEditing.value ? "Редактировать список" : "Новый список"
 );
 const formSubmitText = computed(() =>
-  isEditing.value ? "Сохранить" : "Создать список",
+  isEditing.value ? "Сохранить" : "Создать список"
 );
 
 const parseListLabels = (raw: string): string[] => {
@@ -281,6 +290,7 @@ const closeForm = (): void => {
 watch(isFormOpen, (open) => {
   if (!open && route.query.create) {
     const nextQuery = { ...route.query };
+
     delete nextQuery.create;
     void router.replace({ query: nextQuery });
   }
@@ -304,10 +314,15 @@ const submitForm = async (): Promise<void> => {
 
   try {
     if (editingListId.value) {
-      await userListsStore.updateList(userId.value, editingListId.value, payload);
+      await userListsStore.updateList(
+        userId.value,
+        editingListId.value,
+        payload
+      );
       message.success("Список обновлён");
     } else {
       const created = await userListsStore.createList(userId.value, payload);
+
       message.success(`Список «${created.name}» создан`);
     }
 
@@ -326,7 +341,7 @@ watch(
       openCreateForm();
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 onMounted(() => {
@@ -455,7 +470,8 @@ onMounted(() => {
         v-if="hasLists && activeLabelFilter && !filteredLists.length"
         class="my-lists-page__hint"
       >
-        По выбранной метке списков нет — сбросьте фильтр или выберите другую метку.
+        По выбранной метке списков нет — сбросьте фильтр или выберите другую
+        метку.
       </div>
     </template>
 
@@ -488,7 +504,8 @@ onMounted(() => {
 
           <label class="list-form__field">
             <span class="list-form__label">
-              Описание <span class="list-form__label-hint">— необязательно</span>
+              Описание
+              <span class="list-form__label-hint">— необязательно</span>
             </span>
             <a-textarea
               v-model:value="formDescription"
@@ -737,8 +754,7 @@ onMounted(() => {
   align-items: stretch;
   text-align: left;
   padding: 0;
-  border: 1px solid
-    color-mix(in srgb, var(--fv-color-border) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fv-color-border) 55%, transparent);
   border-radius: var(--fv-radius-lg);
   background: var(--fv-color-bg-primary);
   box-shadow: var(--fv-shadow-card);
@@ -831,7 +847,11 @@ onMounted(() => {
     min-height: 220px;
     padding: 24px;
     text-align: center;
-    background: color-mix(in srgb, var(--fv-color-bg-secondary) 55%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--fv-color-bg-secondary) 55%,
+      transparent
+    );
     border: 1.5px dashed
       color-mix(in srgb, var(--fv-color-border) 85%, transparent);
     box-shadow: none;

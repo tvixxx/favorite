@@ -8,6 +8,8 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  IsUrl,
+  MaxLength,
   ArrayMinSize,
   Max,
   Min,
@@ -49,8 +51,22 @@ export class CreateMovieRequest {
     nullable: true,
   })
   @IsOptional()
-  @IsString()
+  @MaxLength(2048)
+  @IsUrl({
+    protocols: ['http', 'https'],
+    require_protocol: true,
+    require_tld: false,
+  })
   imageUrl?: string;
+
+  @ApiPropertyOptional({
+    description: 'ID загруженного постера',
+    format: 'uuid',
+    nullable: true,
+  })
+  @IsOptional()
+  @IsUUID('4')
+  posterAssetId?: string | null;
 
   @ApiProperty({
     description: 'Описание фильма',

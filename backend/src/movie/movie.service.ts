@@ -20,6 +20,7 @@ import { MoviesStatsResponse } from './dto/movies-stats.dto';
 import { WatchStatus } from '../generated/prisma/enums';
 import { normalizeMovieTitle } from '../common/utils';
 import { UserMovieService } from '../user-movie/user-movie.service';
+import { MediaService } from '../media/media.service';
 
 interface MovieFilters {
   genres?: Genre[];
@@ -46,6 +47,7 @@ class MovieService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly userMovieService: UserMovieService,
+    private readonly media: MediaService,
   ) {}
 
   private async findDuplicateMovieIdByNormalizedTitle(
@@ -75,6 +77,7 @@ class MovieService {
     if (!movies.length) {
       return [];
     }
+
     const ids = movies.map((m) => m.id);
     const grouped = await this.prismaService.review.groupBy({
       by: ['movieId'],
@@ -82,6 +85,7 @@ class MovieService {
       _avg: { rate: true },
     });
     const map = new Map(grouped.map((g) => [g.movieId, g._avg.rate]));
+
     return movies.map((m) => ({
       ...m,
       averageRating: map.get(m.id) ?? null,
@@ -102,6 +106,8 @@ class MovieService {
         poster: {
           select: {
             url: true,
+            thumbnailUrl: true,
+            assetId: true,
           },
         },
         _count: {
@@ -135,6 +141,7 @@ class MovieService {
 
     const duplicateOnCreate =
       await this.findDuplicateMovieIdByNormalizedTitle(title);
+
     if (duplicateOnCreate) {
       throw new ConflictException(
         'Фильм с таким названием уже есть в общем каталоге. Измените название или добавьте существующую позицию из каталога.',
@@ -142,6 +149,15 @@ class MovieService {
     }
 
     const created = await this.prismaService.$transaction(async (tx) => {
+      const poster =
+        imageUrl || dto.posterAssetId
+          ? await this.media.select(
+              tx,
+              { assetId: dto.posterAssetId, url: imageUrl },
+              user.id,
+              'MOVIE_POSTER',
+            )
+          : null;
       const actors = await tx.actor.findMany({
         where: {
           id: {
@@ -167,7 +183,15 @@ class MovieService {
           isSerial,
           seasonCount,
           episodeCount,
-          poster: imageUrl ? { create: { url: imageUrl } } : undefined,
+          poster: poster?.url
+            ? {
+                create: {
+                  url: poster.url,
+                  thumbnailUrl: poster.thumbnailUrl,
+                  assetId: poster.assetId,
+                },
+              }
+            : undefined,
           actors: {
             connect: actors.map((actor) => ({
               id: actor.id,
@@ -178,6 +202,8 @@ class MovieService {
           poster: {
             select: {
               url: true,
+              thumbnailUrl: true,
+              assetId: true,
             },
           },
           _count: {
@@ -188,6 +214,7 @@ class MovieService {
           },
         },
       });
+
       if (dto.collection) {
         await this.userMovieService.create(
           user.id,
@@ -195,6 +222,7 @@ class MovieService {
           tx,
         );
       }
+
       return movie;
     });
 
@@ -238,6 +266,7 @@ class MovieService {
     take: string = '10',
   ): Promise<Actor[]> {
     const takeLimit = parseInt(take) ?? 10;
+
     return this.prismaService.actor.findMany({
       where: {
         movies: {
@@ -408,7 +437,6 @@ class MovieService {
   ): Promise<boolean> {
     const {
       actorIds,
-      imageUrl,
       title,
       publishDate,
       description,
@@ -420,13 +448,18 @@ class MovieService {
     } = dto;
 
     return this.prismaService.$transaction(async (tx) => {
-      const movie = await tx.movie.findUnique({ where: { id } });
+      const movie = await tx.movie.findUnique({
+        where: { id },
+        include: { poster: true },
+      });
 
       if (!movie) {
         throw new NotFoundException('Фильм не был найден!');
       }
 
       assertCatalogOwner(movie.createdById, user);
+
+      const posterChange = await this.posterChange(tx, movie, dto, user.id);
 
       const actors = await tx.actor.findMany({
         where: {
@@ -444,6 +477,7 @@ class MovieService {
         title,
         id,
       );
+
       if (duplicateId) {
         throw new ConflictException(
           'Фильм с таким названием уже есть в общем каталоге.',
@@ -462,12 +496,16 @@ class MovieService {
           isSerial,
           seasonCount,
           episodeCount,
-          poster: imageUrl ? { create: { url: imageUrl } } : undefined,
+          poster: posterChange?.relation,
           actors: {
             connect: actors.map((actor) => ({ id: actor.id })),
           },
         },
       });
+
+      if (posterChange) {
+        await this.finishPosterChange(tx, posterChange);
+      }
 
       return true;
     });
@@ -479,7 +517,10 @@ class MovieService {
     user: CatalogUser,
   ): Promise<boolean> {
     return this.prismaService.$transaction(async (tx) => {
-      const movie = await tx.movie.findUnique({ where: { id } });
+      const movie = await tx.movie.findUnique({
+        where: { id },
+        include: { poster: true },
+      });
 
       if (!movie) {
         throw new NotFoundException('Фильм не был найден!');
@@ -489,7 +530,6 @@ class MovieService {
 
       const {
         actorIds,
-        imageUrl,
         title,
         publishDate,
         description,
@@ -507,11 +547,13 @@ class MovieService {
           title,
           id,
         );
+
         if (duplicateId) {
           throw new ConflictException(
             'Фильм с таким названием уже есть в общем каталоге.',
           );
         }
+
         updateData.title = title;
         updateData.titleNormalized = normalizeMovieTitle(title);
       }
@@ -558,28 +600,95 @@ class MovieService {
         };
       }
 
-      if (imageUrl !== undefined) {
-        updateData.poster = imageUrl
-          ? { create: { url: imageUrl } }
-          : { disconnect: true };
+      const posterChange = await this.posterChange(tx, movie, dto, user.id);
+
+      if (posterChange) {
+        updateData.poster = posterChange.relation;
       }
 
       await tx.movie.update({ where: { id }, data: updateData });
+      if (posterChange) {
+        await this.finishPosterChange(tx, posterChange);
+      }
+
       return true;
     });
+  }
+
+  private async posterChange(
+    tx: Prisma.TransactionClient,
+    movie: Movie & { poster?: { assetId: string | null } | null },
+    dto: Partial<CreateMovieRequest>,
+    ownerId: string,
+  ): Promise<{
+    relation: Prisma.MoviePosterUpdateOneWithoutMovieNestedInput;
+    obsoleteAssetId?: string | null;
+    removedPosterId?: string | null;
+  } | null> {
+    if (dto.imageUrl === undefined && dto.posterAssetId === undefined) {
+      return null;
+    }
+
+    const selected = await this.media.select(
+      tx,
+      { assetId: dto.posterAssetId, url: dto.imageUrl },
+      ownerId,
+      'MOVIE_POSTER',
+      movie.poster?.assetId,
+    );
+    const data = {
+      url: selected.url ?? '',
+      thumbnailUrl: selected.thumbnailUrl,
+      assetId: selected.assetId,
+    };
+
+    return {
+      relation: selected.url
+        ? { upsert: { create: data, update: data } }
+        : { disconnect: true },
+      obsoleteAssetId:
+        movie.poster?.assetId !== selected.assetId
+          ? movie.poster?.assetId
+          : null,
+      removedPosterId: selected.url ? null : movie.posterId,
+    };
+  }
+
+  private async finishPosterChange(
+    tx: Prisma.TransactionClient,
+    change: {
+      obsoleteAssetId?: string | null;
+      removedPosterId?: string | null;
+    },
+  ): Promise<void> {
+    if (change.removedPosterId) {
+      await tx.moviePoster.deleteMany({
+        where: { id: change.removedPosterId },
+      });
+    }
+
+    await this.media.release(tx, change.obsoleteAssetId);
   }
 
   public async delete(id: string, user: CatalogUser): Promise<string> {
     try {
       await this.prismaService.$transaction(async (tx) => {
-        const movie = await tx.movie.findUnique({ where: { id } });
-        if (!movie)
+        const movie = await tx.movie.findUnique({
+          where: { id },
+          include: { poster: true },
+        });
+
+        if (!movie) {
           throw new NotFoundException(`Фильм с айди: ${id} не найден`);
+        }
+
         assertCatalogOwner(movie.createdById, user);
         await tx.movie.delete({ where: { id } });
         if (movie.posterId) {
           await tx.moviePoster.deleteMany({ where: { id: movie.posterId } });
         }
+
+        await this.media.release(tx, movie.poster?.assetId);
       });
 
       return id;
@@ -692,12 +801,15 @@ class MovieService {
 
     if (filters.publishDateFrom || filters.publishDateTo) {
       const publishDate: Prisma.DateTimeNullableFilter = {};
+
       if (filters.publishDateFrom) {
         publishDate.gte = new Date(filters.publishDateFrom);
       }
+
       if (filters.publishDateTo) {
         publishDate.lte = new Date(filters.publishDateTo);
       }
+
       and.push({ publishDate });
     }
 

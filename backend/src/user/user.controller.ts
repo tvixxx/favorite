@@ -19,7 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserDto, PatchUserDto } from './dto/update-user.dto';
 import { AdminOnly, AuthProtected, Authorized } from '../common/decorators';
 import { UserRole } from '../generated/prisma/enums';
 import type { User } from '../generated/prisma/client';
@@ -69,8 +69,12 @@ export class UserController {
   @Put(':id')
   @ApiOperation({ summary: 'Полное обновление (только ADMIN)' })
   @ApiForbiddenResponse()
-  public update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    return this.userService.update(id, dto);
+  public update(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+    @Authorized() user: User,
+  ) {
+    return this.userService.update(id, dto, user.id);
   }
 
   @AuthProtected()
@@ -82,7 +86,7 @@ export class UserController {
   @ApiForbiddenResponse()
   public patchUpdate(
     @Param('id') id: string,
-    @Body() dto: Partial<UpdateUserDto>,
+    @Body() dto: PatchUserDto,
     @Authorized() user: User,
   ) {
     if (user.id !== id && user.role !== UserRole.ADMIN) {
@@ -92,14 +96,17 @@ export class UserController {
     const isAdmin = user.role === UserRole.ADMIN;
 
     if (isAdmin) {
-      return this.userService.patch(id, dto, { allowTags: true });
+      return this.userService.patch(id, dto, {
+        allowTags: true,
+        actorId: user.id,
+      });
     }
 
     if (dto.tags !== undefined) {
       throw new ForbiddenException('Менять теги может только администратор');
     }
 
-    return this.userService.patch(id, { fullName: dto.fullName } as never);
+    return this.userService.patch(id, dto, { actorId: user.id });
   }
 
   @AdminOnly()

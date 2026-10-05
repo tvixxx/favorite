@@ -3,6 +3,8 @@ import { hash } from 'argon2';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { MediaService } from '../media/media.service';
+import type { Prisma } from '../generated/prisma/client';
 
 const publicUserSelect = {
   id: true,
@@ -12,11 +14,17 @@ const publicUserSelect = {
   tags: true,
   createdAt: true,
   updatedAt: true,
+  avatarUrl: true,
+  avatarThumbnailUrl: true,
+  avatarAssetId: true,
 } as const;
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly media: MediaService,
+  ) {}
 
   public async findAll() {
     return this.prismaService.user.findMany({
@@ -73,45 +81,71 @@ export class UserService {
     });
   }
 
-  public async update(id: string, dto: UpdateUserDto) {
-    await this.findById(id);
-
-    const { fullName, tags } = dto;
-
-    return this.prismaService.user.update({
-      where: { id },
-      data: {
-        fullName,
-        tags: tags as never,
-      },
-      select: publicUserSelect,
-    });
+  public async update(id: string, dto: UpdateUserDto, actorId = id) {
+    return this.patch(id, dto, { allowTags: true, actorId });
   }
 
   public async patch(
     id: string,
     dto: Partial<UpdateUserDto>,
-    options?: { allowTags?: boolean },
+    options?: { allowTags?: boolean; actorId?: string },
   ) {
-    await this.findById(id);
+    return this.prismaService.$transaction(async (tx) => {
+      const current = await tx.user.findUnique({
+        where: { id },
+        select: publicUserSelect,
+      });
 
-    const data: Partial<UpdateUserDto> = { ...dto };
+      if (!current) {
+        throw new NotFoundException('Пользователь не найден');
+      }
 
-    if (!options?.allowTags) {
-      delete (data as { tags?: unknown }).tags;
-    }
+      const data: Prisma.UserUpdateInput = { fullName: dto.fullName };
 
-    return this.prismaService.user.update({
-      where: { id },
-      data: data as never,
-      select: publicUserSelect,
+      if (options?.allowTags && dto.tags !== undefined) {
+        data.tags = dto.tags as never;
+      }
+
+      if (dto.avatarAssetId !== undefined || dto.avatarUrl !== undefined) {
+        const selected = await this.media.select(
+          tx,
+          { assetId: dto.avatarAssetId, url: dto.avatarUrl },
+          options?.actorId ?? id,
+          'USER_AVATAR',
+          current.avatarAssetId,
+        );
+
+        data.avatarUrl = selected.url;
+        data.avatarThumbnailUrl = selected.thumbnailUrl;
+        data.avatarAsset = selected.assetId
+          ? { connect: { id: selected.assetId } }
+          : { disconnect: true };
+        const updated = await tx.user.update({
+          where: { id },
+          data,
+          select: publicUserSelect,
+        });
+
+        if (current.avatarAssetId !== selected.assetId) {
+          await this.media.release(tx, current.avatarAssetId);
+        }
+
+        return updated;
+      }
+
+      return tx.user.update({ where: { id }, data, select: publicUserSelect });
     });
   }
 
   public async delete(id: string) {
     try {
-      await this.prismaService.user.delete({
-        where: { id },
+      await this.prismaService.$transaction(async (tx) => {
+        const deleted = await tx.user.delete({
+          where: { id },
+          select: { avatarAssetId: true },
+        });
+
+        await this.media.release(tx, deleted.avatarAssetId);
       });
 
       return id;

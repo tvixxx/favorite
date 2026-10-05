@@ -14,7 +14,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ActorService } from './actor.service';
-import { CreateActorDto } from './dto/create-actor.dto';
+import { CreateActorDto, PatchActorDto } from './dto/create-actor.dto';
 import { AuthCatalogWrite, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
 
@@ -74,7 +74,7 @@ export class ActorController {
   @ApiNotFoundResponse()
   public patch(
     @Param('id') id: string,
-    @Body() dto: Partial<CreateActorDto>,
+    @Body() dto: PatchActorDto,
     @Authorized() user: User,
   ) {
     return this.actorService.patch(id, dto, user);

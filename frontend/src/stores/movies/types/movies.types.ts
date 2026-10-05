@@ -3,6 +3,8 @@ import type { Actor } from "@/stores";
 
 export interface MoviePoster {
   url: string;
+  thumbnailUrl?: string | null;
+  assetId?: string | null;
 }
 
 // Enum для статуса просмотра
@@ -16,6 +18,7 @@ export enum WatchStatus {
 // API ответ для Movie (общие данные фильма)
 export interface MovieApiResponse {
   id: string;
+  createdById?: string | null;
   title: string;
   description: string;
   countryCodes: string[];
@@ -41,6 +44,7 @@ export interface MovieApiResponse {
 // FE модель Movie (общие данные)
 export interface Movie {
   id: string;
+  createdById?: string | null;
   title: string;
   description: string;
   countryCodes: string[];
@@ -50,6 +54,8 @@ export interface Movie {
   seasonCount?: number;
   episodeCount?: number;
   imageUrl: string;
+  imageThumbnailUrl?: string;
+  posterAssetId?: string | null;
   createdAt: string;
   actorIds?: string[];
   actors?: Actor[];
@@ -62,7 +68,17 @@ export interface Movie {
 }
 
 export type CreateMoviePayload = Partial<Movie> & {
-  collection?: Partial<Pick<UserMovie, 'isFavorite' | 'seeLater' | 'personalRate' | 'watchStatus' | 'currentSeason' | 'currentEpisode'>>;
+  collection?: Partial<
+    Pick<
+      UserMovie,
+      | "isFavorite"
+      | "seeLater"
+      | "personalRate"
+      | "watchStatus"
+      | "currentSeason"
+      | "currentEpisode"
+    >
+  >;
 };
 
 // API ответ для UserMovie (персональные данные пользователя)

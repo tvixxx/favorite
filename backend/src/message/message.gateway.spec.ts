@@ -33,8 +33,10 @@ describe('Доступ к чату и несколько вкладок', () => 
     disconnected = [];
     auth = {
       verifyAccessToken: jest.fn((token: string) => {
-        if (token !== 'valid-access')
+        if (token !== 'valid-access') {
           return Promise.reject(new Error('Invalid token'));
+        }
+
         return Promise.resolve({ id: 'user-id' });
       }),
     };
@@ -48,6 +50,7 @@ describe('Доступ к чату и несколько вкладок', () => 
             create: jest.fn(
               (senderId: string, _receiver: string, content: string) => {
                 created.push({ senderId, content });
+
                 return Promise.resolve({
                   id: 'message-id',
                   sender: { fullName: 'Тест' },
@@ -81,11 +84,13 @@ describe('Доступ к чату и несколько вкладок', () => 
         },
       ],
     }).compile();
+
     gateway = module.get(MessageGateway);
     const broadcast = (room: string) => ({
       emit: (event: string) => emitted.push({ room, event }),
       except: () => broadcast(room),
     });
+
     gateway.server = { to: broadcast } as unknown as Server;
     jest.spyOn(console, 'log').mockImplementation(() => undefined);
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -95,13 +100,24 @@ describe('Доступ к чату и несколько вкладок', () => 
 
   it('не подключает пользователя по одному userId без токена', async () => {
     const client = socket('socket-1');
+
     await gateway.handleConnection(client);
     expect(disconnected).toEqual(['socket-1']);
     expect(online.size).toBe(0);
   });
 
+  it('не подключает сокет с постороннего origin даже с токеном', async () => {
+    const client = socket('socket-1', 'valid-access');
+
+    client.handshake.headers = { origin: 'https://other.example.test' };
+    await gateway.handleConnection(client);
+    expect(disconnected).toEqual(['socket-1']);
+    expect(auth.verifyAccessToken).not.toHaveBeenCalled();
+  });
+
   it('берёт отправителя из проверенного токена вместо заявленного userId', async () => {
     const client = socket('socket-1', 'valid-access', 'someone-else');
+
     await gateway.handleConnection(client);
     await gateway.handleMessage(
       { receiverId: 'peer-id', content: 'Привет' },
@@ -112,6 +128,7 @@ describe('Доступ к чату и несколько вкладок', () => 
 
   it('не отправляет сообщения через неподтверждённое соединение', async () => {
     const client = socket('socket-1', 'bad-token');
+
     await gateway.handleConnection(client);
     await gateway.handleMessage(
       { receiverId: 'peer-id', content: 'Привет' },
@@ -123,6 +140,7 @@ describe('Доступ к чату и несколько вкладок', () => 
   it('оставляет пользователя онлайн после закрытия одной из двух вкладок', async () => {
     const first = socket('socket-1', 'valid-access');
     const second = socket('socket-2', 'valid-access');
+
     await gateway.handleConnection(first);
     await gateway.handleConnection(second);
     await gateway.handleDisconnect(first);
@@ -140,6 +158,7 @@ describe('Доступ к чату и несколько вкладок', () => 
 
   it('не сохраняет пустое сообщение', async () => {
     const client = socket('socket-1', 'valid-access');
+
     await gateway.handleConnection(client);
     await gateway.handleMessage(
       { receiverId: 'peer-id', content: '   ' },

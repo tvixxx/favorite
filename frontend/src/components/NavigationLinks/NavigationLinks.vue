@@ -25,7 +25,7 @@ const chatStore = useChatStore();
 // Непрочитанные сообщения для бейджа «Общение»
 const socialUnread = computed<number>(() => chatStore.totalUnreadCount);
 const socialBadge = computed<string>(() =>
-  socialUnread.value > 99 ? "99+" : String(socialUnread.value),
+  socialUnread.value > 99 ? "99+" : String(socialUnread.value)
 );
 
 const isLoggedIn = computed<boolean>(() => store.isLoggedIn ?? false);
@@ -46,7 +46,12 @@ interface NavItem {
 // Консолидированная навигация (COMPONENTS.md §1): только контентные разделы.
 // «Профиль» — в меню аккаунта, «Добавить» — кнопка в тулбаре Медиатеки.
 const navItems: NavItem[] = [
-  { key: "library", label: "Медиатека", to: "/library/collection", tour: "nav-library" },
+  {
+    key: "library",
+    label: "Медиатека",
+    to: "/library/collection",
+    tour: "nav-library",
+  },
   { key: "favorites", label: "Избранное", to: "/favorites" },
   { key: "leaderboard", label: "Топ", to: "/leaderboard" },
   { key: "social", label: "Общение", to: "/chat", badge: true },
@@ -249,226 +254,244 @@ const handleMarkAllRead = async () => {
 <template>
   <header v-if="isLoggedIn" class="topbar">
     <div class="topbar__inner">
-    <a class="topbar__logo" @click="router.push('/library/collection')">
-      <span class="topbar__logo-mark">
-        <BaseIcon name="ph:film-slate-fill" :width="19" :height="19" />
-      </span>
-      favorite
-    </a>
-
-    <nav class="topbar__nav">
-      <button
-        v-for="item in navItems"
-        :key="item.key"
-        type="button"
-        class="topbar__nav-link"
-        :class="{ 'is-active': selectedKeys.includes(item.key) }"
-        @click="router.push(item.to)"
-      >
-        <span v-if="item.tour" :data-tour="item.tour">{{ item.label }}</span>
-        <template v-else>{{ item.label }}</template>
-        <span
-          v-if="item.badge && socialUnread > 0"
-          class="topbar__nav-badge"
-          >{{ socialBadge }}</span
-        >
-      </button>
-    </nav>
-
-    <div class="topbar__actions">
-      <!-- Колокольчик уведомлений — логика notificationsStore без изменений -->
-      <a-dropdown
-        trigger="click"
-        placement="bottomRight"
-        @open-change="onDropdownOpenChange"
-      >
-        <span
-          class="topbar__icon-btn topbar__bell"
-          data-tour="nav-notifications"
-          role="button"
-          tabindex="0"
-          aria-label="Уведомления"
-        >
-          <BellOutlined class="topbar__bell-icon" />
-          <span
-            v-if="notificationsStore.unreadCount > 0"
-            class="topbar__bell-dot"
-            aria-hidden="true"
-          ></span>
+      <a class="topbar__logo" @click="router.push('/library/collection')">
+        <span class="topbar__logo-mark">
+          <BaseIcon name="ph:film-slate-fill" :width="19" :height="19" />
         </span>
+        favorite
+      </a>
 
-        <template #overlay>
-          <div class="notif-panel">
-            <div class="notif-panel__head">
-              <span class="notif-panel__title">Уведомления</span>
-              <a-button
-                v-if="notificationsStore.items.some((i) => i.readAt === null)"
-                type="link"
-                size="small"
-                @click="handleMarkAllRead"
-              >
-                Прочитать все
-              </a-button>
-            </div>
-
-            <div v-if="notificationsStore.isLoading" class="notif-panel__loading">
-              <div
-                v-for="n in 4"
-                :key="`notif-skel-${n}`"
-                class="notif-panel__skel-row"
-              >
-                <SkeletonBar height="12px" width="80%" radius="6px" />
-                <SkeletonBar height="10px" width="45%" radius="6px" />
-              </div>
-            </div>
-
-            <StateBlock
-              v-else-if="notificationsStore.isError"
-              class="notif-panel__empty"
-              compact
-              variant="error"
-              icon="ph:warning-circle"
-              title="Не удалось загрузить"
-              :actions="[
-                {
-                  label: 'Повторить',
-                  icon: 'ph:arrow-clockwise',
-                  kind: 'primary',
-                  onClick: retryNotifications,
-                },
-              ]"
-            />
-
-            <StateBlock
-              v-else-if="notificationsStore.items.length === 0"
-              class="notif-panel__empty"
-              compact
-              v-bind="STATE_PRESETS.notificationsEmpty"
-            />
-
-            <ul v-else class="notif-panel__list" role="list">
-              <li
-                v-for="n in notificationsStore.items"
-                :key="n.id"
-                role="listitem"
-                class="notif-panel__item"
-                :class="{
-                  'notif-panel__item--unread': n.readAt === null,
-                }"
-                @click="handleNotificationClick(n)"
-              >
-                <span class="notif-panel__text">{{ summary(n) }}</span>
-                <span class="notif-panel__time">{{
-                  new Date(n.createdAt).toLocaleString("ru-RU", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                }}</span>
-              </li>
-            </ul>
-          </div>
-        </template>
-      </a-dropdown>
-
-      <!-- Аватар → меню аккаунта (Профиль · Помощь · Цветовая тема · Выйти) -->
-      <a-dropdown
-        v-model:open="accountMenuOpen"
-        trigger="click"
-        placement="bottomRight"
-      >
+      <nav class="topbar__nav">
         <button
+          v-for="item in navItems"
+          :key="item.key"
           type="button"
-          class="topbar__avatar-btn"
-          aria-label="Меню аккаунта"
+          class="topbar__nav-link"
+          :class="{ 'is-active': selectedKeys.includes(item.key) }"
+          @click="router.push(item.to)"
         >
-          <a-avatar
-            class="topbar__avatar"
-            :style="{ background: 'linear-gradient(135deg, #3a6ff0, #1b2a6b)' }"
+          <span v-if="item.tour" :data-tour="item.tour">{{ item.label }}</span>
+          <template v-else>{{ item.label }}</template>
+          <span
+            v-if="item.badge && socialUnread > 0"
+            class="topbar__nav-badge"
+            >{{ socialBadge }}</span
           >
-            {{ initials }}
-          </a-avatar>
         </button>
+      </nav>
 
-        <template #overlay>
-          <div class="acctmenu">
-            <div class="acctmenu__head">
-              <a-avatar
-                class="acctmenu__avatar"
-                :style="{ background: 'linear-gradient(135deg, #3a6ff0, #1b2a6b)' }"
-              >
-                {{ initials }}
-              </a-avatar>
-              <div class="acctmenu__id">
-                <span class="acctmenu__name">{{ fullName || "Профиль" }}</span>
-                <span v-if="email" class="acctmenu__email">{{ email }}</span>
+      <div class="topbar__actions">
+        <!-- Колокольчик уведомлений — логика notificationsStore без изменений -->
+        <a-dropdown
+          trigger="click"
+          placement="bottomRight"
+          @open-change="onDropdownOpenChange"
+        >
+          <span
+            class="topbar__icon-btn topbar__bell"
+            data-tour="nav-notifications"
+            role="button"
+            tabindex="0"
+            aria-label="Уведомления"
+          >
+            <BellOutlined class="topbar__bell-icon" />
+            <span
+              v-if="notificationsStore.unreadCount > 0"
+              class="topbar__bell-dot"
+              aria-hidden="true"
+            ></span>
+          </span>
+
+          <template #overlay>
+            <div class="notif-panel">
+              <div class="notif-panel__head">
+                <span class="notif-panel__title">Уведомления</span>
+                <a-button
+                  v-if="notificationsStore.items.some((i) => i.readAt === null)"
+                  type="link"
+                  size="small"
+                  @click="handleMarkAllRead"
+                >
+                  Прочитать все
+                </a-button>
               </div>
-            </div>
 
-            <div class="acctmenu__divider"></div>
-
-            <button class="acctmenu__item" @click="goTo('/profile')">
-              <BaseIcon name="ph:user" :width="18" :height="18" />
-              <span>Профиль</span>
-            </button>
-            <button class="acctmenu__item" @click="startOnboarding">
-              <BaseIcon name="ph:question" :width="18" :height="18" />
-              <span>Помощь и онбординг</span>
-            </button>
-            <button class="acctmenu__item" @click="goTo('/feedback')">
-              <BaseIcon name="ph:megaphone" :width="18" :height="18" />
-              <span>Обратная связь</span>
-            </button>
-
-            <div class="acctmenu__divider"></div>
-
-            <div class="acctmenu__section-label">Цветовая тема</div>
-            <div class="acctmenu__themes">
-              <button
-                v-for="t in themeSwatches"
-                :key="t.value"
-                type="button"
-                class="acctmenu__theme"
-                :class="{ 'is-active': currentTheme === t.value }"
-                @click="setTheme(t.value)"
+              <div
+                v-if="notificationsStore.isLoading"
+                class="notif-panel__loading"
               >
-                <span
-                  class="acctmenu__swatch"
-                  :style="{ background: t.bg, '--swatch-accent': t.accent }"
-                ></span>
-                <span class="acctmenu__theme-label">{{ t.label }}</span>
-                <BaseIcon
-                  v-if="currentTheme === t.value"
-                  name="ph:check-circle"
-                  class="acctmenu__check"
-                  :width="18"
-                  :height="18"
-                />
+                <div
+                  v-for="n in 4"
+                  :key="`notif-skel-${n}`"
+                  class="notif-panel__skel-row"
+                >
+                  <SkeletonBar height="12px" width="80%" radius="6px" />
+                  <SkeletonBar height="10px" width="45%" radius="6px" />
+                </div>
+              </div>
+
+              <StateBlock
+                v-else-if="notificationsStore.isError"
+                class="notif-panel__empty"
+                compact
+                variant="error"
+                icon="ph:warning-circle"
+                title="Не удалось загрузить"
+                :actions="[
+                  {
+                    label: 'Повторить',
+                    icon: 'ph:arrow-clockwise',
+                    kind: 'primary',
+                    onClick: retryNotifications,
+                  },
+                ]"
+              />
+
+              <StateBlock
+                v-else-if="notificationsStore.items.length === 0"
+                class="notif-panel__empty"
+                compact
+                v-bind="STATE_PRESETS.notificationsEmpty"
+              />
+
+              <ul v-else class="notif-panel__list" role="list">
+                <li
+                  v-for="n in notificationsStore.items"
+                  :key="n.id"
+                  role="listitem"
+                  class="notif-panel__item"
+                  :class="{
+                    'notif-panel__item--unread': n.readAt === null,
+                  }"
+                  @click="handleNotificationClick(n)"
+                >
+                  <span class="notif-panel__text">{{ summary(n) }}</span>
+                  <span class="notif-panel__time">{{
+                    new Date(n.createdAt).toLocaleString("ru-RU", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  }}</span>
+                </li>
+              </ul>
+            </div>
+          </template>
+        </a-dropdown>
+
+        <!-- Аватар → меню аккаунта (Профиль · Помощь · Цветовая тема · Выйти) -->
+        <a-dropdown
+          v-model:open="accountMenuOpen"
+          trigger="click"
+          placement="bottomRight"
+        >
+          <button
+            type="button"
+            class="topbar__avatar-btn"
+            aria-label="Меню аккаунта"
+          >
+            <a-avatar
+              class="topbar__avatar"
+              :src="
+                store.userData?.avatarThumbnailUrl ||
+                store.userData?.avatarUrl ||
+                undefined
+              "
+              :style="{
+                background: 'linear-gradient(135deg, #3a6ff0, #1b2a6b)',
+              }"
+            >
+              {{ initials }}
+            </a-avatar>
+          </button>
+
+          <template #overlay>
+            <div class="acctmenu">
+              <div class="acctmenu__head">
+                <a-avatar
+                  class="acctmenu__avatar"
+                  :src="
+                    store.userData?.avatarThumbnailUrl ||
+                    store.userData?.avatarUrl ||
+                    undefined
+                  "
+                  :style="{
+                    background: 'linear-gradient(135deg, #3a6ff0, #1b2a6b)',
+                  }"
+                >
+                  {{ initials }}
+                </a-avatar>
+                <div class="acctmenu__id">
+                  <span class="acctmenu__name">{{
+                    fullName || "Профиль"
+                  }}</span>
+                  <span v-if="email" class="acctmenu__email">{{ email }}</span>
+                </div>
+              </div>
+
+              <div class="acctmenu__divider"></div>
+
+              <button class="acctmenu__item" @click="goTo('/profile')">
+                <BaseIcon name="ph:user" :width="18" :height="18" />
+                <span>Профиль</span>
+              </button>
+              <button class="acctmenu__item" @click="startOnboarding">
+                <BaseIcon name="ph:question" :width="18" :height="18" />
+                <span>Помощь и онбординг</span>
+              </button>
+              <button class="acctmenu__item" @click="goTo('/feedback')">
+                <BaseIcon name="ph:megaphone" :width="18" :height="18" />
+                <span>Обратная связь</span>
+              </button>
+
+              <div class="acctmenu__divider"></div>
+
+              <div class="acctmenu__section-label">Цветовая тема</div>
+              <div class="acctmenu__themes">
+                <button
+                  v-for="t in themeSwatches"
+                  :key="t.value"
+                  type="button"
+                  class="acctmenu__theme"
+                  :class="{ 'is-active': currentTheme === t.value }"
+                  @click="setTheme(t.value)"
+                >
+                  <span
+                    class="acctmenu__swatch"
+                    :style="{ background: t.bg, '--swatch-accent': t.accent }"
+                  ></span>
+                  <span class="acctmenu__theme-label">{{ t.label }}</span>
+                  <BaseIcon
+                    v-if="currentTheme === t.value"
+                    name="ph:check-circle"
+                    class="acctmenu__check"
+                    :width="18"
+                    :height="18"
+                  />
+                </button>
+              </div>
+
+              <div class="acctmenu__divider"></div>
+
+              <button class="acctmenu__item acctmenu__signout" @click="signOut">
+                <BaseIcon name="ph:sign-out" :width="18" :height="18" />
+                <span>Выйти</span>
               </button>
             </div>
+          </template>
+        </a-dropdown>
 
-            <div class="acctmenu__divider"></div>
-
-            <button class="acctmenu__item acctmenu__signout" @click="signOut">
-              <BaseIcon name="ph:sign-out" :width="18" :height="18" />
-              <span>Выйти</span>
-            </button>
-          </div>
-        </template>
-      </a-dropdown>
-
-      <!-- Бургер для мобильных -->
-      <button
-        type="button"
-        class="topbar__burger"
-        aria-label="Меню"
-        @click="drawerOpen = true"
-      >
-        <BaseIcon name="ph:list" :width="24" :height="24" />
-      </button>
-    </div>
-
+        <!-- Бургер для мобильных -->
+        <button
+          type="button"
+          class="topbar__burger"
+          aria-label="Меню"
+          @click="drawerOpen = true"
+        >
+          <BaseIcon name="ph:list" :width="24" :height="24" />
+        </button>
+      </div>
     </div>
 
     <a-drawer
@@ -912,11 +935,7 @@ const handleMarkAllRead = async () => {
     }
 
     &--unread {
-      background: color-mix(
-        in srgb,
-        var(--fv-color-accent) 10%,
-        transparent
-      );
+      background: color-mix(in srgb, var(--fv-color-accent) 10%, transparent);
     }
   }
 
@@ -987,7 +1006,6 @@ const handleMarkAllRead = async () => {
     align-items: center;
     gap: 11px;
   }
-
 }
 
 @media (max-width: 768px) {

@@ -669,10 +669,6 @@ export type MovieUpdategenresInput = {
   push?: $Enums.Genre | $Enums.Genre[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
@@ -683,10 +679,6 @@ export type NullableIntFieldUpdateOperationsInput = {
   decrement?: number
   multiply?: number
   divide?: number
-}
-
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
 }
 
 export type MovieCreateNestedOneWithoutPosterInput = {

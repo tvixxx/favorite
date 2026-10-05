@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { message } from "ant-design-vue";
 import { RouterLink } from "vue-router";
 
@@ -10,8 +10,36 @@ import StateBlock, {
 } from "@/components/StateBlock/StateBlock.vue";
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import { useActorsStore } from "@/stores";
+import { useMainStore } from "@/state/state";
+import type { Actor } from "@/stores/actors/actorsStore";
+import ActorPhotoEditor from "@/components/ImagePicker/ActorPhotoEditor.vue";
+import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 
 const actorsStore = useActorsStore();
+const main = useMainStore();
+const photoOpen = ref(false);
+const editingActor = ref<Actor | null>(null);
+const imageErrors = ref(new Set<string>());
+const canEditPhoto = (actor: Actor): boolean =>
+  main.userData?.role === "ADMIN" ||
+  (!!actor.createdById && actor.createdById === main.userData?.id);
+
+function editPhoto(actor: Actor): void {
+  editingActor.value = actor;
+  photoOpen.value = true;
+}
+
+watch(photoOpen, (open) => {
+  if (!open) {
+    editingActor.value = null;
+  }
+});
+watch(
+  () => actorsStore.actorsPageItems,
+  () => {
+    imageErrors.value = new Set();
+  }
+);
 
 const runLoad = async (): Promise<void> => {
   try {
@@ -27,6 +55,7 @@ const runLoad = async (): Promise<void> => {
 
 // Поиск живёт в шапке (LibraryLayout) и пишет в actorsStore.actorsSearchQ — реагируем здесь
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
+
 onBeforeUnmount(() => clearTimeout(searchTimer));
 
 watch(
@@ -37,7 +66,7 @@ watch(
       actorsStore.actorsPageCurrent = 1;
       void runLoad();
     }, 350);
-  },
+  }
 );
 
 onMounted(async () => {
@@ -57,7 +86,7 @@ const onPageSizeChange = (_current: number, size: number): void => {
 };
 
 const showSkeleton = useMinLoading(
-  () => actorsStore.isActorsLoading && !actorsStore.actorsPageItems.length,
+  () => actorsStore.isActorsLoading && !actorsStore.actorsPageItems.length
 );
 
 const actorsEmptyState = computed(() => {
@@ -82,13 +111,14 @@ const actorsEmptyState = computed(() => {
 
   return {
     ...STATE_PRESETS.actorsEmpty,
-    description: "Актёры появляются, когда вы добавляете фильмы в свою коллекцию.",
+    description:
+      "Актёры появляются, когда вы добавляете фильмы в свою коллекцию.",
     actions: [] as StateAction[],
   };
 });
 
 const showEmptyBlock = computed(
-  () => !actorsStore.isActorsLoading && actorsStore.actorsPageItems.length === 0,
+  () => !actorsStore.isActorsLoading && actorsStore.actorsPageItems.length === 0
 );
 
 const initial = (name: string): string => (name.trim()[0] ?? "?").toUpperCase();
@@ -105,6 +135,7 @@ const AVATAR_GRADIENTS = [
 
 const gradientFor = (id: string): string => {
   let hash = 0;
+
   for (let i = 0; i < id.length; i += 1) {
     hash = (hash + id.charCodeAt(i)) % AVATAR_GRADIENTS.length;
   }
@@ -140,20 +171,40 @@ const gradientFor = (id: string): string => {
 
       <template v-else>
         <div class="actors-grid">
-          <RouterLink
+          <div
             v-for="a in actorsStore.actorsPageItems"
             :key="a.id"
             class="actor-card"
-            :to="`/library/actors/${a.id}`"
           >
-            <span
-              class="actor-card__avatar"
-              :style="{ background: gradientFor(a.id) }"
-              aria-hidden="true"
-              >{{ initial(a.name) }}</span
+            <RouterLink
+              class="actor-card__link"
+              :to="`/library/actors/${a.id}`"
             >
-            <span class="actor-card__name">{{ a.name }}</span>
-          </RouterLink>
+              <span
+                class="actor-card__avatar"
+                :style="{ background: gradientFor(a.id) }"
+                aria-hidden="true"
+              >
+                <img
+                  v-if="a.imageUrl && !imageErrors.has(a.id)"
+                  :src="a.imageThumbnailUrl || a.imageUrl"
+                  alt=""
+                  @error="imageErrors.add(a.id)"
+                />
+                <template v-else>{{ initial(a.name) }}</template>
+              </span>
+              <span class="actor-card__name">{{ a.name }}</span>
+            </RouterLink>
+            <button
+              v-if="canEditPhoto(a)"
+              type="button"
+              class="actor-card__photo-action"
+              :aria-label="`Сменить фото: ${a.name}`"
+              @click="editPhoto(a)"
+            >
+              <BaseIcon name="ph:camera" :width="18" :height="18" />
+            </button>
+          </div>
         </div>
 
         <div
@@ -172,6 +223,11 @@ const gradientFor = (id: string): string => {
         </div>
       </template>
     </div>
+    <ActorPhotoEditor
+      v-if="editingActor"
+      v-model="photoOpen"
+      :actor="editingActor"
+    />
   </div>
 </template>
 
@@ -213,6 +269,7 @@ const gradientFor = (id: string): string => {
 }
 
 .actor-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -244,6 +301,37 @@ const gradientFor = (id: string): string => {
     font-family: var(--fv-font-display);
     font-weight: 500;
     font-size: 2rem;
+    overflow: hidden;
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    width: 100%;
+  }
+  &__photo-action {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    border: 1px solid var(--fv-color-border);
+    border-radius: 50%;
+    background: var(--fv-color-bg-primary);
+    color: var(--fv-color-text-secondary);
+    cursor: pointer;
   }
 
   &__name {

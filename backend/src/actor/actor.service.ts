@@ -3,6 +3,7 @@ import { CreateActorDto } from './dto/create-actor.dto';
 import type { ActorsListResponseDto } from './dto/actors-list-response.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import type { Actor, Prisma } from '../generated/prisma/client';
+import { MediaService } from '../media/media.service';
 import {
   assertCatalogOwner,
   type CatalogUser,
@@ -10,7 +11,10 @@ import {
 
 @Injectable()
 export class ActorService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly media: MediaService,
+  ) {}
 
   public async findMany(params: {
     q?: string;
@@ -62,12 +66,43 @@ export class ActorService {
     user: CatalogUser,
   ): Promise<boolean> {
     const actor = await this.findById(id);
+
     assertCatalogOwner(actor.createdById, user);
-    await this.prismaService.actor.update({
-      where: { id },
-      data: {
-        name: dto.name,
-      },
+
+    await this.prismaService.$transaction(async (tx) => {
+      const current = await tx.actor.findUnique({ where: { id } });
+
+      if (!current) {
+        throw new NotFoundException('Актёр не найден');
+      }
+
+      assertCatalogOwner(current.createdById, user);
+
+      const data: Prisma.ActorUpdateInput = { name: dto.name };
+
+      if (dto.imageAssetId !== undefined || dto.imageUrl !== undefined) {
+        const selected = await this.media.select(
+          tx,
+          { assetId: dto.imageAssetId, url: dto.imageUrl },
+          user.id,
+          'ACTOR_PHOTO',
+          current.imageAssetId,
+        );
+
+        data.imageUrl = selected.url;
+        data.imageThumbnailUrl = selected.thumbnailUrl;
+        data.imageAsset = selected.assetId
+          ? { connect: { id: selected.assetId } }
+          : { disconnect: true };
+
+        await tx.actor.update({ where: { id }, data });
+
+        if (current.imageAssetId !== selected.assetId) {
+          await this.media.release(tx, current.imageAssetId);
+        }
+      } else {
+        await tx.actor.update({ where: { id }, data });
+      }
     });
 
     return true;
@@ -79,8 +114,29 @@ export class ActorService {
   ): Promise<Actor> {
     const { name } = createActorDto;
 
-    return this.prismaService.actor.create({
-      data: { name, createdById: user.role === 'ADMIN' ? null : user.id },
+    return this.prismaService.$transaction(async (tx) => {
+      const photo =
+        createActorDto.imageUrl || createActorDto.imageAssetId
+          ? await this.media.select(
+              tx,
+              {
+                assetId: createActorDto.imageAssetId,
+                url: createActorDto.imageUrl,
+              },
+              user.id,
+              'ACTOR_PHOTO',
+            )
+          : null;
+
+      return tx.actor.create({
+        data: {
+          name,
+          createdById: user.role === 'ADMIN' ? null : user.id,
+          imageUrl: photo?.url,
+          imageThumbnailUrl: photo?.thumbnailUrl,
+          imageAssetId: photo?.assetId,
+        },
+      });
     });
   }
 }

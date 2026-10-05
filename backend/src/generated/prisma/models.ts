@@ -8,6 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
+export type * from './models/MediaAsset.js'
 export type * from './models/User.js'
 export type * from './models/Movie.js'
 export type * from './models/MoviePoster.js'

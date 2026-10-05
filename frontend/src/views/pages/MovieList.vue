@@ -51,7 +51,7 @@ const totalMovies = computed(() => userMoviesStore.currentList.length);
 
 // Догрузка вместо страниц (спека new-9): порция = pageSize
 const restCount = computed(
-  () => totalMovies.value - userMoviesStore.visibleUserMovies.length,
+  () => totalMovies.value - userMoviesStore.visibleUserMovies.length
 );
 
 const showMore = (): void => {
@@ -134,7 +134,7 @@ const goToCreate = () => {
 const getPosterSrc = (item: UserMovie) => {
   return imageErrors.value.has(item.movieId)
     ? FALLBACK_IMAGE_URL
-    : item.movie.imageUrl || FALLBACK_IMAGE_URL;
+    : item.movie.imageThumbnailUrl || item.movie.imageUrl || FALLBACK_IMAGE_URL;
 };
 
 const handleImageError = (movieId: string) => {
@@ -161,15 +161,26 @@ const removal = ref<UserMovie | null>(null);
 const isRemoving = ref(false);
 const removalOpen = computed({
   get: () => removal.value !== null,
-  set: (open: boolean) => { if (!open && !isRemoving.value) removal.value = null; },
+  set: (open: boolean) => {
+    if (!open && !isRemoving.value) {
+      removal.value = null;
+    }
+  },
 });
 
-const removeMovie = (item: UserMovie): void => { removal.value = item; };
+const removeMovie = (item: UserMovie): void => {
+  removal.value = item;
+};
 
 const confirmRemoval = async (): Promise<void> => {
   const item = removal.value;
-  if (!item || isRemoving.value) return;
+
+  if (!item || isRemoving.value) {
+    return;
+  }
+
   isRemoving.value = true;
+
   try {
     await userMoviesStore.removeUserMovie(userId.value, item.movieId);
     removal.value = null;
@@ -248,18 +259,18 @@ const applyRoutePresetFilters = async () => {
     isSerialRaw === null
       ? undefined
       : isSerialRaw === "true"
-      ? true
-      : isSerialRaw === "false"
-      ? false
-      : undefined;
+        ? true
+        : isSerialRaw === "false"
+          ? false
+          : undefined;
   const seeLater =
     seeLaterRaw === null
       ? undefined
       : seeLaterRaw === "true"
-      ? true
-      : seeLaterRaw === "false"
-      ? false
-      : undefined;
+        ? true
+        : seeLaterRaw === "false"
+          ? false
+          : undefined;
 
   userMoviesStore.setFilters({
     ...userMoviesStore.filters,
@@ -371,6 +382,7 @@ const handleQuickAddSearch = (value: string) => {
   }
 
   const q = value.trim();
+
   if (!q || q.length < QUICK_ADD_MIN_QUERY_LENGTH) {
     quickAddOptions.value = [];
     isQuickAddLoading.value = false;
@@ -774,7 +786,9 @@ watch(
     gap: 0.42rem;
     cursor: pointer;
     box-shadow: var(--fv-shadow-brand-md);
-    transition: transform var(--fv-motion-slow) var(--fv-ease), box-shadow var(--fv-motion-slow) var(--fv-ease);
+    transition:
+      transform var(--fv-motion-slow) var(--fv-ease),
+      box-shadow var(--fv-motion-slow) var(--fv-ease);
 
     &:hover {
       transform: translateY(-2px);

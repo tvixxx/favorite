@@ -5,8 +5,12 @@ import {
   IsOptional,
   IsString,
   Length,
+  IsUrl,
+  IsUUID,
+  MaxLength,
 } from 'class-validator';
 import { Genre } from '../../constants';
+import { PartialType } from '@nestjs/mapped-types';
 
 export class UpdateUserDto {
   @IsString({ message: 'Полное имя должно быть строкой' })
@@ -20,4 +24,19 @@ export class UpdateUserDto {
   @IsEnum(Genre, { message: 'Недопустимое значение тега', each: true })
   @IsOptional()
   tags: Genre[];
+
+  @IsOptional()
+  @IsUUID('4')
+  avatarAssetId?: string | null;
+
+  @IsOptional()
+  @MaxLength(2048)
+  @IsUrl({
+    protocols: ['http', 'https'],
+    require_protocol: true,
+    require_tld: false,
+  })
+  avatarUrl?: string | null;
 }
+
+export class PatchUserDto extends PartialType(UpdateUserDto) {}

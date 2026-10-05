@@ -1,5 +1,12 @@
 <script lang="ts" setup>
-import { onBeforeUnmount, onMounted, reactive, ref, computed } from "vue";
+import {
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  computed,
+  watch,
+} from "vue";
 import { useNavigateBack } from "@/composable/useNavigateBack";
 
 import { message, type FormInstance } from "ant-design-vue";
@@ -21,6 +28,8 @@ import type { CreateMoviePayload } from "@/stores/movies/types";
 import type { SelectProps } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
+import ImagePicker from "@/components/ImagePicker/ImagePicker.vue";
+import type { ImageSelection } from "@/services/media";
 
 const { navigateBack } = useNavigateBack();
 const moviesStore = useMoviesStore();
@@ -31,11 +40,25 @@ const mainStore = useMainStore();
 const userId = computed(() => mainStore.userData?.id || "");
 const isActorResolving = ref(false);
 const isSubmitting = ref(false);
+const posterSelection = ref<ImageSelection | null>(null);
+const posterUploading = ref(false);
+const posterPreviewFailed = ref(false);
+
+watch(
+  () => posterSelection.value?.thumbnailUrl || posterSelection.value?.url,
+  () => {
+    posterPreviewFailed.value = false;
+  }
+);
 let actorSelectionRevision = 0;
-onBeforeUnmount(() => { actorSelectionRevision += 1; });
+
+onBeforeUnmount(() => {
+  actorSelectionRevision += 1;
+});
 
 const handleActorSelection = async (selectedValues: string[]) => {
   const revision = ++actorSelectionRevision;
+
   isActorResolving.value = true;
   const processedValues: string[] = [];
 
@@ -46,10 +69,17 @@ const handleActorSelection = async (selectedValues: string[]) => {
     if (!uuidRegex.test(value)) {
       try {
         const newActor = await actorsStore.addActorByName(value);
-        if (revision !== actorSelectionRevision) return;
+
+        if (revision !== actorSelectionRevision) {
+          return;
+        }
+
         processedValues.push(newActor.id);
       } catch {
-        if (revision !== actorSelectionRevision) return;
+        if (revision !== actorSelectionRevision) {
+          return;
+        }
+
         message.error(`Не удалось добавить актера: ${value}`);
       }
     } else {
@@ -99,6 +129,10 @@ const formData = reactive<CreateMovieForm>({
   actorIds: [],
 });
 const formRef = ref<FormInstance | null>(null);
+
+watch(posterSelection, (selection) => {
+  formData.imageUrl = selection?.url ?? "";
+});
 
 const countrySelectOptions: SelectProps["options"] = PRODUCTION_COUNTRIES.map(
   (c) => ({
@@ -155,7 +189,10 @@ onMounted(async () => {
 });
 
 const addNewMovie = async () => {
-  if (isSubmitting.value || isActorResolving.value) return;
+  if (isSubmitting.value || isActorResolving.value || posterUploading.value) {
+    return;
+  }
+
   isSubmitting.value = true;
   const { title } = formData;
 
@@ -169,7 +206,8 @@ const addNewMovie = async () => {
         ? new Date(formData.publishDate).toISOString()
         : null,
       actorIds: formData.actorIds,
-      imageUrl: formData.imageUrl,
+      imageUrl: posterSelection.value?.assetId ? undefined : formData.imageUrl,
+      posterAssetId: posterSelection.value?.assetId ?? undefined,
       isSerial: formData.isSerial,
       seasonCount: formData.isSerial ? formData.seasonCount : undefined,
       episodeCount: formData.isSerial ? formData.episodeCount : undefined,
@@ -179,10 +217,10 @@ const addNewMovie = async () => {
         personalRate: formData.personalRate || null,
         watchStatus: watchStatus.value,
         currentSeason: formData.isSerial
-          ? formData.currentSeason ?? null
+          ? (formData.currentSeason ?? null)
           : null,
         currentEpisode: formData.isSerial
-          ? formData.currentEpisode ?? null
+          ? (formData.currentEpisode ?? null)
           : null,
       },
     };
@@ -197,6 +235,7 @@ const addNewMovie = async () => {
     }
 
     formRef?.value?.resetFields();
+    posterSelection.value = null;
     formData.actorIds = [];
     formData.countryCodes = ["US"];
     formData.personalRate = 0;
@@ -268,21 +307,23 @@ const addNewMovie = async () => {
               </a-form-item>
 
               <a-form-item
-                label="Ссылка на постер"
+                label="Постер"
                 name="imageUrl"
                 :rules="[
-                  { required: true, message: 'Введите ссылку на постер' },
+                  {
+                    required: true,
+                    message: 'Выберите изображение или вставьте ссылку',
+                  },
                 ]"
               >
-                <a-input
-                  v-model:value="formData.imageUrl"
-                  size="large"
-                  placeholder="https://image.tmdb.org/t/p/w500/..."
-                >
-                  <template #prefix>
-                    <BaseIcon name="ph:link" :width="18" :height="18" />
-                  </template>
-                </a-input>
+                <ImagePicker
+                  v-model="posterSelection"
+                  purpose="MOVIE_POSTER"
+                  label="Постер"
+                  :show-preview="false"
+                  :disabled="isSubmitting"
+                  @busy="posterUploading = $event"
+                />
               </a-form-item>
 
               <a-form-item label="Актёры" name="actorIds">
@@ -511,13 +552,16 @@ const addNewMovie = async () => {
             <div class="cm-side">
               <div
                 class="cm-poster"
-                :class="{ 'cm-poster--empty': !formData.imageUrl }"
+                :class="{
+                  'cm-poster--empty': !formData.imageUrl || posterPreviewFailed,
+                }"
               >
                 <img
-                  v-if="formData.imageUrl"
-                  :src="formData.imageUrl"
+                  v-if="formData.imageUrl && !posterPreviewFailed"
+                  :src="posterSelection?.thumbnailUrl || formData.imageUrl"
                   alt="Предпросмотр постера"
                   class="cm-poster__img"
+                  @error="posterPreviewFailed = true"
                 />
                 <span v-else class="cm-poster__ph">
                   <BaseIcon
@@ -526,7 +570,13 @@ const addNewMovie = async () => {
                     :width="24"
                     :height="24"
                   />
-                  <span class="cm-poster__ph-text">Постер</span>
+                  <span class="cm-poster__ph-text">{{
+                    posterUploading
+                      ? "Готовим постер…"
+                      : posterPreviewFailed
+                        ? "Не удалось открыть изображение"
+                        : "Постер"
+                  }}</span>
                 </span>
                 <span class="cm-poster__badge">
                   {{ formData.personalRate || "?" }}/10
@@ -554,7 +604,7 @@ const addNewMovie = async () => {
               size="large"
               class="cm-footer__submit"
               :loading="isSubmitting"
-              :disabled="isActorResolving"
+              :disabled="isActorResolving || posterUploading"
             >
               <BaseIcon name="ph:plus" :width="18" :height="18" />
               Добавить
@@ -692,7 +742,8 @@ const addNewMovie = async () => {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background var(--fv-motion-fast) var(--fv-ease),
+  transition:
+    background var(--fv-motion-fast) var(--fv-ease),
     color var(--fv-motion-fast) var(--fv-ease);
 
   &:hover:not(&--on) {

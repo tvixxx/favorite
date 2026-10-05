@@ -95,6 +95,7 @@ export class AuthService {
     }
 
     let payload: JwtPayload;
+
     try {
       payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken);
     } catch {
@@ -140,6 +141,9 @@ export class AuthService {
         fullName: true,
         role: true,
         tags: true,
+        avatarUrl: true,
+        avatarThumbnailUrl: true,
+        avatarAssetId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -154,6 +158,7 @@ export class AuthService {
 
   public async verifyAccessToken(token: string) {
     let payload: JwtPayload;
+
     try {
       payload = await this.jwtService.verifyAsync<JwtPayload>(token);
     } catch {
