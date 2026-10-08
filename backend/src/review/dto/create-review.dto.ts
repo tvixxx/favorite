@@ -1,12 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsNotEmpty,
-  IsNumber,
+  IsInt,
   IsString,
   IsUUID,
   Max,
   Min,
   MinLength,
+  Matches,
 } from 'class-validator';
 
 export class CreateReviewDto {
@@ -18,6 +19,7 @@ export class CreateReviewDto {
   @IsNotEmpty()
   @IsString()
   @MinLength(10)
+  @Matches(/\S/)
   text: string;
 
   @ApiProperty({
@@ -26,7 +28,7 @@ export class CreateReviewDto {
     minimum: 0,
     maximum: 10,
   })
-  @IsNumber()
+  @IsInt()
   @Min(0)
   @Max(10)
   rate: number;

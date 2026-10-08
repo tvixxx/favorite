@@ -23,6 +23,7 @@ describe('Права на общие и пользовательские фил�
     posterExists = true;
     posterFailure = false;
     const tx = {
+      $executeRaw: jest.fn().mockResolvedValue(1),
       movie: {
         findUnique: jest.fn(() => Promise.resolve(movie)),
         findFirst: jest.fn().mockResolvedValue(null),

@@ -4,11 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  AddMovieToListDto,
-  CreateUserListDto,
-  UpdateUserListDto,
-} from './dto';
+import type { Prisma } from '../generated/prisma/client';
+import { lockResource } from '../common/utils/transaction-lock';
+import { AddMovieToListDto, CreateUserListDto, UpdateUserListDto } from './dto';
 
 @Injectable()
 export class UserListService {
@@ -36,8 +34,12 @@ export class UserListService {
     return Array.from(unique);
   }
 
-  private async getOwnedList(userId: string, listId: string) {
-    const list = await this.prismaService.userList.findFirst({
+  private async getOwnedList(
+    userId: string,
+    listId: string,
+    tx: Prisma.TransactionClient = this.prismaService,
+  ) {
+    const list = await tx.userList.findFirst({
       where: {
         id: listId,
         userId,
@@ -133,8 +135,8 @@ export class UserListService {
   public async update(userId: string, listId: string, dto: UpdateUserListDto) {
     const list = await this.getOwnedList(userId, listId);
 
-    let name = list.name;
-    let nameNormalized = list.nameNormalized;
+    let name: string | undefined;
+    let nameNormalized: string | undefined;
 
     if (dto.name !== undefined) {
       name = dto.name.trim();
@@ -153,17 +155,22 @@ export class UserListService {
         });
 
         if (existing) {
-          throw new ConflictException('Список с таким названием уже существует');
+          throw new ConflictException(
+            'Список с таким названием уже существует',
+          );
         }
       }
     }
 
     return this.prismaService.userList.update({
-      where: { id: listId },
+      where: { id: listId, userId },
       data: {
         name,
         nameNormalized,
-        description: dto.description !== undefined ? dto.description.trim() : undefined,
+        description:
+          dto.description !== undefined
+            ? (dto.description?.trim() ?? null)
+            : undefined,
         color: dto.color !== undefined ? dto.color : undefined,
         labels: dto.labels ? this.normalizeLabels(dto.labels) : undefined,
       },
@@ -187,49 +194,56 @@ export class UserListService {
     return true;
   }
 
-  public async addMovie(userId: string, listId: string, dto: AddMovieToListDto) {
-    await this.getOwnedList(userId, listId);
+  public async addMovie(
+    userId: string,
+    listId: string,
+    dto: AddMovieToListDto,
+  ) {
+    return this.prismaService.$transaction(async (tx) => {
+      await this.getOwnedList(userId, listId, tx);
+      await lockResource(tx, `collection:${userId}:${dto.movieId}`);
 
-    const userMovie = await this.prismaService.userMovie.findUnique({
-      where: {
-        userId_movieId: {
-          userId,
-          movieId: dto.movieId,
-        },
-      },
-      select: { movieId: true },
-    });
-
-    if (!userMovie) {
-      throw new NotFoundException(
-        'Фильм сначала нужно добавить в вашу коллекцию, затем в список',
-      );
-    }
-
-    try {
-      return await this.prismaService.userListItem.create({
-        data: {
-          listId,
-          movieId: dto.movieId,
-        },
-        include: {
-          movie: {
-            include: {
-              poster: true,
-              actors: true,
-            },
+      const userMovie = await tx.userMovie.findUnique({
+        where: {
+          userId_movieId: {
+            userId,
+            movieId: dto.movieId,
           },
         },
+        select: { movieId: true },
       });
-    } catch (error: unknown) {
-      const code = (error as { code?: string }).code;
 
-      if (code === 'P2002') {
-        throw new ConflictException('Фильм уже добавлен в этот список');
+      if (!userMovie) {
+        throw new NotFoundException(
+          'Фильм сначала нужно добавить в вашу коллекцию, затем в список',
+        );
       }
 
-      throw error;
-    }
+      try {
+        return await tx.userListItem.create({
+          data: {
+            listId,
+            movieId: dto.movieId,
+          },
+          include: {
+            movie: {
+              include: {
+                poster: true,
+                actors: true,
+              },
+            },
+          },
+        });
+      } catch (error: unknown) {
+        const code = (error as { code?: string }).code;
+
+        if (code === 'P2002') {
+          throw new ConflictException('Фильм уже добавлен в этот список');
+        }
+
+        throw error;
+      }
+    });
   }
 
   public async removeMovie(userId: string, listId: string, movieId: string) {

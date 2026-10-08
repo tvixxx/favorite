@@ -4,6 +4,7 @@ import {
   IsString,
   MaxLength,
   MinLength,
+  Matches,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -15,6 +16,7 @@ export class RegisterRequest {
   })
   @IsString({ message: 'Имя должно быть строкой' })
   @IsNotEmpty({ message: 'Имя обязательно для заполнения' })
+  @Matches(/\S/, { message: 'Имя не должно состоять из пробелов' })
   @MaxLength(50, { message: 'Имя не должно превышать 50 символов' })
   fullName: string;
 

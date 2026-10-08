@@ -6,6 +6,8 @@ import {
   IsOptional,
   IsString,
   Length,
+  Matches,
+  ValidateIf,
 } from 'class-validator';
 
 export class UpdateUserListDto {
@@ -14,9 +16,10 @@ export class UpdateUserListDto {
     description: 'Новое название списка',
     example: 'Вечерние фильмы',
   })
-  @IsOptional()
+  @ValidateIf((_object, value: unknown) => value !== undefined)
   @IsString()
   @Length(2, 80)
+  @Matches(/\S/)
   name?: string;
 
   @ApiProperty({
@@ -27,7 +30,7 @@ export class UpdateUserListDto {
   @IsOptional()
   @IsString()
   @Length(0, 240)
-  description?: string;
+  description?: string | null;
 
   @ApiProperty({
     required: false,
@@ -36,7 +39,7 @@ export class UpdateUserListDto {
   })
   @IsOptional()
   @IsHexColor()
-  color?: string;
+  color?: string | null;
 
   @ApiProperty({
     required: false,
@@ -44,7 +47,7 @@ export class UpdateUserListDto {
     example: ['уютно', 'детектив'],
     type: [String],
   })
-  @IsOptional()
+  @ValidateIf((_object, value: unknown) => value !== undefined)
   @IsArray()
   @ArrayMaxSize(12)
   @IsString({ each: true })

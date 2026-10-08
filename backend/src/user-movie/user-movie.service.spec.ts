@@ -32,6 +32,7 @@ describe('Статусы просмотра и удаление из колле�
     isSerial = false;
     listFailure = false;
     const tx = {
+      $executeRaw: jest.fn().mockResolvedValue(1),
       userMovie: {
         findUnique: jest.fn(() => Promise.resolve(current)),
         update: jest.fn(({ data }: { data: Prisma.UserMovieUpdateInput }) => {

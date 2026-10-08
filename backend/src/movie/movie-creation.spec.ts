@@ -17,6 +17,7 @@ describe('Создание фильма вместе с личной запис�
     collection = [];
     failCollection = false;
     const tx = {
+      $executeRaw: jest.fn().mockResolvedValue(1),
       movie: {
         findFirst: jest.fn().mockResolvedValue(null),
         findUnique: jest.fn(() => Promise.resolve(movies[0])),

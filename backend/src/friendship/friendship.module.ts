@@ -6,11 +6,7 @@ import { NotificationModule } from '../notification/notification.module';
 import { MessageModule } from '../message/message.module';
 
 @Module({
-  imports: [
-    PrismaModule,
-    NotificationModule,
-    forwardRef(() => MessageModule),
-  ],
+  imports: [PrismaModule, NotificationModule, forwardRef(() => MessageModule)],
   controllers: [FriendshipController],
   providers: [FriendshipService],
   exports: [FriendshipService],

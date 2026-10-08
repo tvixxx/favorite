@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  Matches,
 } from 'class-validator';
 
 export class CreateUserListDto {
@@ -15,6 +16,7 @@ export class CreateUserListDto {
   })
   @IsString()
   @Length(2, 80)
+  @Matches(/\S/)
   name: string;
 
   @ApiProperty({

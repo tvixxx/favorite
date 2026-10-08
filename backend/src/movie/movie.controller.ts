@@ -33,6 +33,11 @@ import {
   Authorized,
 } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
+import {
+  queryDate,
+  queryInteger,
+  queryString,
+} from '../common/utils/query-value';
 
 @ApiTags('Movies')
 @Controller('movies')
@@ -59,8 +64,8 @@ export class MovieController {
     return this.movieService.findAll({
       genres: parseGenreFilters(genres),
       countryCodes: parseCountryFilters(countryCode),
-      publishDateFrom,
-      publishDateTo,
+      publishDateFrom: queryDate(publishDateFrom, 'publishDateFrom'),
+      publishDateTo: queryDate(publishDateTo, 'publishDateTo'),
       actorIds: parseCsvOrRepeated(actorIds),
     });
   }
@@ -78,18 +83,18 @@ export class MovieController {
   })
   @Get('search')
   public search(
-    @Query('q') query?: string,
+    @Query('q') query?: unknown,
     @Query('genres') genres?: string | string[],
     @Query('countryCode') countryCode?: string | string[],
     @Query('publishDateFrom') publishDateFrom?: string,
     @Query('publishDateTo') publishDateTo?: string,
     @Query('actorIds') actorIds?: string | string[],
   ) {
-    return this.movieService.search(query, {
+    return this.movieService.search(queryString(query, 'q'), {
       genres: parseGenreFilters(genres),
       countryCodes: parseCountryFilters(countryCode),
-      publishDateFrom,
-      publishDateTo,
+      publishDateFrom: queryDate(publishDateFrom, 'publishDateFrom'),
+      publishDateTo: queryDate(publishDateTo, 'publishDateTo'),
       actorIds: parseCsvOrRepeated(actorIds),
     });
   }
@@ -146,10 +151,7 @@ export class MovieController {
     @Authorized() user: User,
     @Query('limit') limitRaw?: string,
   ) {
-    const parsed = Number.parseInt(limitRaw ?? '', 10);
-    const limit = Number.isFinite(parsed)
-      ? Math.min(Math.max(parsed, 1), 12)
-      : 4;
+    const limit = queryInteger(limitRaw, 'limit', 4, 1, 12);
 
     return this.movieService.findSimilarFromCollection(id, user.id, limit);
   }

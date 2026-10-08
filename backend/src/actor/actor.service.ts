@@ -4,6 +4,7 @@ import type { ActorsListResponseDto } from './dto/actors-list-response.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import type { Actor, Prisma } from '../generated/prisma/client';
 import { MediaService } from '../media/media.service';
+import { lockResource } from '../common/utils/transaction-lock';
 import {
   assertCatalogOwner,
   type CatalogUser,
@@ -70,6 +71,7 @@ export class ActorService {
     assertCatalogOwner(actor.createdById, user);
 
     await this.prismaService.$transaction(async (tx) => {
+      await lockResource(tx, `actor:${id}`);
       const current = await tx.actor.findUnique({ where: { id } });
 
       if (!current) {

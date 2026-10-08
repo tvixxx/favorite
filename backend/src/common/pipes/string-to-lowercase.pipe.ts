@@ -1,7 +1,7 @@
-import { ArgumentMetadata, PipeTransform } from '@nestjs/common';
+import type { PipeTransform } from '@nestjs/common';
 
 export class StringToLowercasePipe implements PipeTransform {
-  transform(value: any, metadata: ArgumentMetadata): any {
+  public transform(value: unknown): unknown {
     if (typeof value === 'string') {
       return value.toLowerCase();
     }

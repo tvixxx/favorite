@@ -5,6 +5,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { MediaService } from '../media/media.service';
 import type { Prisma } from '../generated/prisma/client';
+import { lockResource } from '../common/utils/transaction-lock';
 
 const publicUserSelect = {
   id: true,
@@ -75,7 +76,7 @@ export class UserService {
         email,
         fullName,
         password: hashedPass,
-        tags: tags as never,
+        tags,
       },
       select: publicUserSelect,
     });
@@ -91,6 +92,7 @@ export class UserService {
     options?: { allowTags?: boolean; actorId?: string },
   ) {
     return this.prismaService.$transaction(async (tx) => {
+      await lockResource(tx, `user:${id}`);
       const current = await tx.user.findUnique({
         where: { id },
         select: publicUserSelect,
@@ -103,7 +105,7 @@ export class UserService {
       const data: Prisma.UserUpdateInput = { fullName: dto.fullName };
 
       if (options?.allowTags && dto.tags !== undefined) {
-        data.tags = dto.tags as never;
+        data.tags = dto.tags;
       }
 
       if (dto.avatarAssetId !== undefined || dto.avatarUrl !== undefined) {
@@ -140,6 +142,7 @@ export class UserService {
   public async delete(id: string) {
     try {
       await this.prismaService.$transaction(async (tx) => {
+        await lockResource(tx, `user:${id}`);
         const deleted = await tx.user.delete({
           where: { id },
           select: { avatarAssetId: true },

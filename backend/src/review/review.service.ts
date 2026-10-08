@@ -119,8 +119,13 @@ export class ReviewService {
       });
 
       return id;
-    } catch (error) {
-      if (error?.code === 'P2025') {
+    } catch (error: unknown) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2025'
+      ) {
         throw new NotFoundException(`Ревью с айди: ${id} не найдено`);
       }
 

@@ -5,12 +5,14 @@ import {
   IsUrl,
   IsUUID,
   MaxLength,
+  Matches,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 
 export class CreateActorDto {
   @IsNotEmpty()
   @IsString()
+  @Matches(/\S/)
   name: string;
 
   @IsOptional()
@@ -27,4 +29,6 @@ export class CreateActorDto {
   imageUrl?: string | null;
 }
 
-export class PatchActorDto extends PartialType(CreateActorDto) {}
+export class PatchActorDto extends PartialType(CreateActorDto, {
+  skipNullProperties: false,
+}) {}

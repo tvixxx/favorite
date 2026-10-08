@@ -10,6 +10,7 @@ import type { Request as ExpressRequest } from 'express';
 import { MessageService } from './message.service';
 import { AuthProtected } from '../common/decorators';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { queryInteger } from '../common/utils/query-value';
 
 type RequestWithUser = ExpressRequest & { user: { id: string } };
 
@@ -56,7 +57,7 @@ export class MessageController {
     @Param('userId') userId: string,
     @Param('otherUserId') otherUserId: string,
     @Request() req: RequestWithUser,
-    @Query('limit') limit?: string,
+    @Query('limit') limit?: unknown,
   ) {
     if (req.user.id !== userId) {
       throw new BadRequestException('Unauthorized');
@@ -65,7 +66,7 @@ export class MessageController {
     return this.messageService.getMessages(
       userId,
       otherUserId,
-      limit ? parseInt(limit, 10) : 50,
+      queryInteger(limit, 'limit', 50, 1, 100),
     );
   }
 }

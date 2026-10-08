@@ -6,6 +6,7 @@ import {
   IsString,
   Length,
   MaxLength,
+  Matches,
 } from 'class-validator';
 import { FeedbackType } from '../../generated/prisma/enums';
 
@@ -24,6 +25,7 @@ export class CreateFeedbackDto {
   })
   @IsString()
   @Length(10, 1000)
+  @Matches(/\S/)
   message: string;
 
   @ApiProperty({

@@ -75,13 +75,15 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('Пользователь с такой почтой не найден');
+      // Выполняем сопоставимую работу, чтобы отсутствие аккаунта не давало быстрый ответ.
+      await hash(password);
+      throw new NotFoundException('Неверная почта или пароль');
     }
 
     const isValidPassword = await verify(user.password, password);
 
     if (!isValidPassword) {
-      throw new NotFoundException('Пользователь не найден');
+      throw new NotFoundException('Неверная почта или пароль');
     }
 
     return this.auth(res, user.id);

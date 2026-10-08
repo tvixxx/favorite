@@ -4,6 +4,7 @@ jest.mock('../prisma/prisma.service', () => ({ PrismaService: class {} }));
 describe('Фото актёра', () => {
   it('привязывает фото автора записи в одной транзакции', async () => {
     const tx = {
+      $executeRaw: jest.fn().mockResolvedValue(1),
       actor: {
         findUnique: jest.fn().mockResolvedValue({
           id: 'actor-id',

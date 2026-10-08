@@ -5,6 +5,7 @@ import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PrismaService } from '../prisma/prisma.service';
+import { hash } from 'argon2';
 
 jest.mock('../prisma/prisma.service', () => ({ PrismaService: class {} }));
 
@@ -49,6 +50,32 @@ describe('Авторизация и назначение токенов', () => 
       id: 'user-id',
       type: 'refresh',
     });
+  });
+
+  it('не раскрывает существование аккаунта текстом ошибки входа', async () => {
+    const password = await hash('test-only-password');
+
+    prisma.user.findUnique.mockResolvedValueOnce(null);
+    await expect(
+      service.login(res, {
+        email: 'missing@example.test',
+        password: 'wrong-password',
+      }),
+    ).rejects.toMatchObject({
+      status: 404,
+      message: 'Неверная почта или пароль',
+    });
+    prisma.user.findUnique.mockResolvedValueOnce({ id: 'user-id', password });
+    await expect(
+      service.login(res, {
+        email: 'existing@example.test',
+        password: 'wrong-password',
+      }),
+    ).rejects.toMatchObject({
+      status: 404,
+      message: 'Неверная почта или пароль',
+    });
+    expect(cookie).not.toHaveBeenCalled();
   });
 
   it('отклоняет access в refresh-cookie', async () => {

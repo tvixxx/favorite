@@ -23,6 +23,7 @@ describe('Атомарное сохранение оценки и отзыва �
     review = { id: 'review-id', text: 'Предыдущий отзыв', rate: 4 };
     failReview = false;
     const tx = {
+      $executeRaw: jest.fn().mockResolvedValue(1),
       userMovie: {
         findUnique: jest.fn(() =>
           Promise.resolve({ id: 'link-id', personalRate }),

@@ -21,6 +21,8 @@ import { WatchStatus } from '../generated/prisma/enums';
 import { normalizeMovieTitle } from '../common/utils';
 import { UserMovieService } from '../user-movie/user-movie.service';
 import { MediaService } from '../media/media.service';
+import { queryInteger } from '../common/utils/query-value';
+import { lockResource } from '../common/utils/transaction-lock';
 
 interface MovieFilters {
   genres?: Genre[];
@@ -176,7 +178,7 @@ class MovieService {
             user.role === 'ADMIN' ? undefined : { connect: { id: user.id } },
           title,
           titleNormalized: normalizeMovieTitle(title),
-          publishDate,
+          publishDate: publishDate ? new Date(publishDate) : publishDate,
           description,
           countryCodes,
           genres,
@@ -265,7 +267,7 @@ class MovieService {
     id: string,
     take: string = '10',
   ): Promise<Actor[]> {
-    const takeLimit = parseInt(take) ?? 10;
+    const takeLimit = queryInteger(take, 'take', 10, 1, 100);
 
     return this.prismaService.actor.findMany({
       where: {
@@ -406,7 +408,7 @@ class MovieService {
     id: string,
     take: string = '10',
   ): Promise<Review[]> {
-    const takeLimit = parseInt(take) ?? 10;
+    const takeLimit = queryInteger(take, 'take', 10, 1, 100);
 
     return this.prismaService.review.findMany({
       where: {
@@ -448,6 +450,7 @@ class MovieService {
     } = dto;
 
     return this.prismaService.$transaction(async (tx) => {
+      await lockResource(tx, `movie:${id}`);
       const movie = await tx.movie.findUnique({
         where: { id },
         include: { poster: true },
@@ -489,7 +492,7 @@ class MovieService {
         data: {
           title,
           titleNormalized: normalizeMovieTitle(title),
-          publishDate,
+          publishDate: publishDate ? new Date(publishDate) : publishDate,
           description,
           countryCodes,
           genres,
@@ -498,7 +501,7 @@ class MovieService {
           episodeCount,
           poster: posterChange?.relation,
           actors: {
-            connect: actors.map((actor) => ({ id: actor.id })),
+            set: actors.map((actor) => ({ id: actor.id })),
           },
         },
       });
@@ -517,6 +520,7 @@ class MovieService {
     user: CatalogUser,
   ): Promise<boolean> {
     return this.prismaService.$transaction(async (tx) => {
+      await lockResource(tx, `movie:${id}`);
       const movie = await tx.movie.findUnique({
         where: { id },
         include: { poster: true },
@@ -559,7 +563,7 @@ class MovieService {
       }
 
       if (publishDate !== undefined) {
-        updateData.publishDate = publishDate;
+        updateData.publishDate = publishDate ? new Date(publishDate) : null;
       }
 
       if (description !== undefined) {
@@ -586,7 +590,7 @@ class MovieService {
         updateData.episodeCount = episodeCount;
       }
 
-      if (actorIds !== undefined && actorIds.length) {
+      if (actorIds !== undefined) {
         const actors = await tx.actor.findMany({
           where: { id: { in: actorIds } },
         });
@@ -596,7 +600,7 @@ class MovieService {
         }
 
         updateData.actors = {
-          connect: actors.map((actor) => ({ id: actor.id })),
+          set: actors.map((actor) => ({ id: actor.id })),
         };
       }
 
@@ -673,6 +677,7 @@ class MovieService {
   public async delete(id: string, user: CatalogUser): Promise<string> {
     try {
       await this.prismaService.$transaction(async (tx) => {
+        await lockResource(tx, `movie:${id}`);
         const movie = await tx.movie.findUnique({
           where: { id },
           include: { poster: true },

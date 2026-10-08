@@ -23,6 +23,9 @@ import { UpdateUserDto, PatchUserDto } from './dto/update-user.dto';
 import { AdminOnly, AuthProtected, Authorized } from '../common/decorators';
 import { UserRole } from '../generated/prisma/enums';
 import type { User } from '../generated/prisma/client';
+import { queryString } from '../common/utils/query-value';
+import { BadRequestException } from '@nestjs/common';
+import { isEmail } from 'class-validator';
 
 @ApiTags('Users')
 @Controller('users')
@@ -45,8 +48,14 @@ export class UserController {
     description: 'Нужен вход; для приглашения друзей',
   })
   @ApiNotFoundResponse({ description: 'Не найден' })
-  public searchByEmail(@Query('email') email: string) {
-    return this.userService.findByEmail(email);
+  public searchByEmail(@Query('email') email: unknown) {
+    const value = queryString(email, 'email')?.trim();
+
+    if (!value || !isEmail(value)) {
+      throw new BadRequestException('Укажите корректный email');
+    }
+
+    return this.userService.findByEmail(value);
   }
 
   @AuthProtected()

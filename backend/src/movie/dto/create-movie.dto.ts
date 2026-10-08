@@ -15,6 +15,7 @@ import {
   Min,
   Matches,
   ValidateNested,
+  IsDateString,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
@@ -41,8 +42,8 @@ export class CreateMovieRequest {
     nullable: true,
   })
   @IsOptional()
-  @IsString()
-  publishDate?: string;
+  @IsDateString({ strict: true })
+  publishDate?: string | null;
 
   @ApiProperty({
     description: 'Ссылка на постер фильма',

@@ -11,7 +11,6 @@ import {
   Post,
   StreamableFile,
   UploadedFile,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -23,7 +22,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import {
@@ -53,7 +52,6 @@ export class MediaController {
   }
 
   @AuthProtected()
-  @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiBearerAuth()
   @ApiConsumes('multipart/form-data')

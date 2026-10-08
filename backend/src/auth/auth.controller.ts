@@ -9,7 +9,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { SkipThrottle, Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import type { Response, Request } from 'express';
 import {
   ApiBadRequestResponse,
@@ -27,10 +27,11 @@ import { LoginRequest } from './dto/login.dto';
 import { AuthResponse } from './dto/auth.dto';
 import { AuthProtected, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
+import { AuthOriginGuard } from '../common/guards/auth-origin.guard';
 
 @ApiTags('Authorization')
 @Controller('auth')
-@UseGuards(ThrottlerGuard)
+@UseGuards(AuthOriginGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -114,7 +115,7 @@ export class AuthController {
   @AuthProtected()
   @Get('@me')
   @HttpCode(HttpStatus.OK)
-  public async me(@Authorized() user: User) {
+  public me(@Authorized() user: User) {
     return user;
   }
 }

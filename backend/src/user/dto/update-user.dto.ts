@@ -1,5 +1,4 @@
 import {
-  IsArray,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -8,22 +7,23 @@ import {
   IsUrl,
   IsUUID,
   MaxLength,
+  Matches,
 } from 'class-validator';
-import { Genre } from '../../constants';
+import { Genre } from '../../generated/prisma/enums';
 import { PartialType } from '@nestjs/mapped-types';
 
 export class UpdateUserDto {
   @IsString({ message: 'Полное имя должно быть строкой' })
   @IsNotEmpty({ message: 'Полное имя не должно быть пустым' })
+  @Matches(/\S/)
   @Length(3, 20, {
     message: 'Длина имени должна быть длинной от 3 до 20 символов',
   })
   fullName: string;
 
-  @IsArray({ message: 'Теги должны быть массивом строк' })
-  @IsEnum(Genre, { message: 'Недопустимое значение тега', each: true })
+  @IsEnum(Genre, { message: 'Недопустимое значение тега' })
   @IsOptional()
-  tags: Genre[];
+  tags?: Genre | null;
 
   @IsOptional()
   @IsUUID('4')
@@ -39,4 +39,6 @@ export class UpdateUserDto {
   avatarUrl?: string | null;
 }
 
-export class PatchUserDto extends PartialType(UpdateUserDto) {}
+export class PatchUserDto extends PartialType(UpdateUserDto, {
+  skipNullProperties: false,
+}) {}

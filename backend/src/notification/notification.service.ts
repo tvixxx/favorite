@@ -32,8 +32,9 @@ export class NotificationService {
     userId: string,
     type: NotificationType,
     payload: Prisma.InputJsonValue,
+    tx: Prisma.TransactionClient = this.prismaService,
   ): Promise<Notification> {
-    return this.prismaService.notification.create({
+    return tx.notification.create({
       data: {
         userId,
         type,
