@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -8,6 +9,7 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import type { Review } from '../generated/prisma/client';
+import { lockResource } from '../common/utils/transaction-lock';
 
 @Injectable()
 export class ReviewService {
@@ -16,30 +18,43 @@ export class ReviewService {
   public async create(dto: CreateReviewDto, userId: string): Promise<Review> {
     const { movieId, text, rate } = dto;
 
-    return this.prismaService.review.create({
-      data: {
-        text,
-        rate,
-        user: {
-          connect: {
-            id: userId,
+    return this.prismaService.$transaction(async (tx) => {
+      await lockResource(tx, `collection:${userId}:${movieId}`);
+      const existing = await tx.review.findFirst({
+        where: { userId, movieId },
+      });
+
+      if (existing) {
+        throw new ConflictException(
+          'Вы уже оставили отзыв. Отредактируйте существующий.',
+        );
+      }
+
+      return tx.review.create({
+        data: {
+          text,
+          rate,
+          user: {
+            connect: {
+              id: userId,
+            },
+          },
+          movie: {
+            connect: {
+              id: movieId,
+            },
           },
         },
-        movie: {
-          connect: {
-            id: movieId,
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+            },
           },
         },
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-          },
-        },
-      },
+      });
     });
   }
 
@@ -62,6 +77,14 @@ export class ReviewService {
     }
 
     return review;
+  }
+
+  public findMine(movieId: string, userId: string): Promise<Review | null> {
+    return this.prismaService.review.findFirst({
+      where: { movieId, userId },
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { id: true, fullName: true } } },
+    });
   }
 
   public async update(

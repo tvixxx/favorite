@@ -26,14 +26,40 @@ const formState = reactive<FormState>({
 // Полевая валидация Ant → inline-ошибки под полем + aria-invalid + красная рамка
 const rules: Record<string, Rule[]> = {
   name: [
-    { required: true, whitespace: true, message: "Введите имя", trigger: "blur" },
+    {
+      required: true,
+      whitespace: true,
+      message: "Введите имя",
+      trigger: "blur",
+    },
+    {
+      min: 3,
+      max: 50,
+      transform: (value: string) => value.trim(),
+      message: "Имя должно содержать от 3 до 50 символов",
+      trigger: "blur",
+    },
   ],
   email: [
-    { required: true, whitespace: true, message: "Введите email", trigger: "blur" },
-    { pattern: EMAIL_REGEX, message: "Введите корректный email", trigger: "blur" },
+    {
+      required: true,
+      whitespace: true,
+      message: "Введите email",
+      trigger: "blur",
+    },
+    {
+      pattern: EMAIL_REGEX,
+      message: "Введите корректный email",
+      trigger: "blur",
+    },
   ],
   password: [
-    { required: true, whitespace: true, message: "Введите пароль", trigger: "blur" },
+    {
+      required: true,
+      whitespace: true,
+      message: "Введите пароль",
+      trigger: "blur",
+    },
     {
       pattern: PASSWORD_REGEX,
       message: "Минимум 6 символов, включая буквы и цифры",
@@ -48,7 +74,7 @@ const onFinish = async (values: FormState): Promise<void> => {
     await store.register({
       email: values.email,
       password: values.password,
-      name: values.name,
+      name: values.name.trim(),
     });
     message.success("Регистрация прошла успешно!");
     router.push("/library/collection");

@@ -12,6 +12,7 @@ describe('Права на общие и пользовательские фил�
   let service: MovieService;
   let posterExists: boolean;
   let posterFailure: boolean;
+  let progress: { currentSeason: number | null; currentEpisode: number | null };
 
   beforeEach(() => {
     movie = {
@@ -22,8 +23,37 @@ describe('Права на общие и пользовательские фил�
     };
     posterExists = true;
     posterFailure = false;
+    progress = { currentSeason: null, currentEpisode: null };
     const tx = {
       $executeRaw: jest.fn().mockResolvedValue(1),
+      userMovie: {
+        findFirst: jest.fn(
+          ({
+            where,
+          }: {
+            where: {
+              movieId: string;
+              OR: Array<
+                Partial<
+                  Record<'currentSeason' | 'currentEpisode', { gt: number }>
+                >
+              >;
+            };
+          }) =>
+            Promise.resolve(
+              where.movieId === movie.id &&
+                where.OR.some((condition) =>
+                  Object.entries(condition).some(
+                    ([key, range]) =>
+                      (progress[key as keyof typeof progress] ?? 0) >
+                      (range as { gt: number }).gt,
+                  ),
+                )
+                ? { id: 'another-users-progress' }
+                : null,
+            ),
+        ),
+      },
       movie: {
         findUnique: jest.fn(() => Promise.resolve(movie)),
         findFirst: jest.fn().mockResolvedValue(null),
@@ -95,6 +125,51 @@ describe('Права на общие и пользовательские фил�
     ).rejects.toBeInstanceOf(ForbiddenException);
     expect(movie.title).toBe('Исходное название');
   });
+
+  describe.each(['patch', 'update'] as const)(
+    '%s: изменение типа',
+    (method) => {
+      const dto = {
+        title: 'Исходное название',
+        description: 'Описание',
+        countryCodes: ['US'],
+        genres: [Genre.DRAMA],
+        actorIds: ['actor-id'],
+        isSerial: false,
+      };
+
+      it.each([
+        { currentSeason: 1, currentEpisode: null },
+        { currentSeason: null, currentEpisode: 1 },
+      ])('сохраняет сериал при чужом прогрессе %p', async (savedProgress) => {
+        movie.isSerial = true;
+        progress = savedProgress;
+
+        await expect(
+          service[method]('movie-id', dto, { id: 'admin-id', role: 'ADMIN' }),
+        ).rejects.toMatchObject({ status: 409 });
+        expect(movie.isSerial).toBe(true);
+        expect(progress).toEqual(savedProgress);
+      });
+
+      it('разрешает исправление типа без прогресса и очищает числа сезонов/эпизодов', async () => {
+        movie.isSerial = true;
+        movie.seasonCount = 2;
+        movie.episodeCount = 14;
+        progress = { currentSeason: 0, currentEpisode: 0 };
+
+        await service[method]('movie-id', dto, {
+          id: 'admin-id',
+          role: 'ADMIN',
+        });
+        expect(movie).toMatchObject({
+          isSerial: false,
+          seasonCount: null,
+          episodeCount: null,
+        });
+      });
+    },
+  );
 
   it('позволяет автору менять созданный им фильм', async () => {
     movie.createdById = 'user-id';

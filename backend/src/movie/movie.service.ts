@@ -462,6 +462,7 @@ class MovieService {
 
       assertCatalogOwner(movie.createdById, user);
 
+      await this.assertTypeChangeAllowed(tx, movie, isSerial);
       const posterChange = await this.posterChange(tx, movie, dto, user.id);
 
       const actors = await tx.actor.findMany({
@@ -497,8 +498,8 @@ class MovieService {
           countryCodes,
           genres,
           isSerial,
-          seasonCount,
-          episodeCount,
+          seasonCount: isSerial ? seasonCount : null,
+          episodeCount: isSerial ? episodeCount : null,
           poster: posterChange?.relation,
           actors: {
             set: actors.map((actor) => ({ id: actor.id })),
@@ -546,6 +547,8 @@ class MovieService {
 
       const updateData: Prisma.MovieUpdateInput = {};
 
+      await this.assertTypeChangeAllowed(tx, movie, isSerial);
+
       if (title !== undefined) {
         const duplicateId = await this.findDuplicateMovieIdByNormalizedTitle(
           title,
@@ -590,6 +593,11 @@ class MovieService {
         updateData.episodeCount = episodeCount;
       }
 
+      if (isSerial === false) {
+        updateData.seasonCount = null;
+        updateData.episodeCount = null;
+      }
+
       if (actorIds !== undefined) {
         const actors = await tx.actor.findMany({
           where: { id: { in: actorIds } },
@@ -617,6 +625,30 @@ class MovieService {
 
       return true;
     });
+  }
+
+  private async assertTypeChangeAllowed(
+    tx: Prisma.TransactionClient,
+    movie: Movie,
+    isSerial: boolean | undefined,
+  ): Promise<void> {
+    if (!movie.isSerial || isSerial !== false) {
+      return;
+    }
+
+    const progress = await tx.userMovie.findFirst({
+      where: {
+        movieId: movie.id,
+        OR: [{ currentSeason: { gt: 0 } }, { currentEpisode: { gt: 0 } }],
+      },
+      select: { id: true },
+    });
+
+    if (progress) {
+      throw new ConflictException(
+        'Нельзя изменить сериал на фильм: у пользователей есть прогресс по сезонам или эпизодам.',
+      );
+    }
   }
 
   private async posterChange(

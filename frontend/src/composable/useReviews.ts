@@ -40,7 +40,11 @@ export const useReviewsStore = defineStore("movieReviews", () => {
     }
   };
 
-  const fetchReviews = async (movieId: string, take: number = 10) => {
+  const fetchReviews = async (
+    movieId: string,
+    take = 10,
+    includeOwn = false
+  ) => {
     const gen = ++fetchGeneration;
 
     if (loadedMovieId.value !== movieId) {
@@ -70,7 +74,28 @@ export const useReviewsStore = defineStore("movieReviews", () => {
         throw new Error("Ошибка загрузки отзывов");
       }
 
-      setReviews(data ?? []);
+      const result = [...(data ?? [])];
+
+      if (includeOwn) {
+        const own = await useFetch<Review | null>(
+          `${REVIEWS_ENDPOINT}/mine/${movieId}`,
+          { method: FETCH_METHOD.get }
+        );
+
+        if (gen !== fetchGeneration) {
+          return;
+        }
+
+        if (!isSuccessStatus(own.status)) {
+          throw new Error("Не удалось загрузить ваш отзыв");
+        }
+
+        if (own.data && !result.some((review) => review.id === own.data?.id)) {
+          result.unshift(own.data);
+        }
+      }
+
+      setReviews(result);
     } catch (err) {
       if (gen !== fetchGeneration) {
         return;
@@ -93,7 +118,9 @@ export const useReviewsStore = defineStore("movieReviews", () => {
         method: FETCH_METHOD.post,
         data: payload,
       });
-      if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
+      if (requestRevision !== sessionRevision) {
+        throw new Error("Сессия изменилась");
+      }
 
       if (!isSuccessStatus(status) || !data) {
         throw new Error("Не удалось создать отзыв");
@@ -101,9 +128,7 @@ export const useReviewsStore = defineStore("movieReviews", () => {
 
       const reviewMovieId = data.movieId ?? requestedMovieId;
       const sameMovie = (a: string | null, b: string | undefined | null) =>
-        !!a &&
-        !!b &&
-        String(a).trim() === String(b).trim();
+        !!a && !!b && String(a).trim() === String(b).trim();
 
       if (
         reviewMovieId &&
@@ -137,9 +162,14 @@ export const useReviewsStore = defineStore("movieReviews", () => {
           data: payload,
         }
       );
-      if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
+      if (requestRevision !== sessionRevision) {
+        throw new Error("Сессия изменилась");
+      }
 
-      if (!isSuccessStatus(status) || !data) throw new Error("Не удалось обновить отзыв");
+      if (!isSuccessStatus(status) || !data) {
+        throw new Error("Не удалось обновить отзыв");
+      }
+
       if (loadedMovieId.value === requestedMovieId) {
         reviews.value = reviews.value.map((review) => {
           return review.id === reviewId ? data : review;
@@ -160,9 +190,14 @@ export const useReviewsStore = defineStore("movieReviews", () => {
           method: FETCH_METHOD.delete,
         }
       );
-      if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
+      if (requestRevision !== sessionRevision) {
+        throw new Error("Сессия изменилась");
+      }
 
-      if (!isSuccessStatus(status)) throw new Error("Не удалось удалить отзыв");
+      if (!isSuccessStatus(status)) {
+        throw new Error("Не удалось удалить отзыв");
+      }
+
       if (loadedMovieId.value === requestedMovieId) {
         reviews.value = reviews.value.filter(
           (review) => review.id !== reviewId

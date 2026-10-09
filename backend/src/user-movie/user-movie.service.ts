@@ -526,6 +526,7 @@ export class UserMovieService {
 
     const { movieId, ...data } = dto;
 
+    await lockResource(prisma, `movie:${movieId}`);
     await lockResource(prisma, `collection:${userId}:${movieId}`);
 
     const existingUserMovie = await prisma.userMovie.findUnique({
@@ -594,6 +595,7 @@ export class UserMovieService {
       );
     }
 
+    await lockResource(prisma, `movie:${movieId}`);
     await lockResource(prisma, `collection:${userId}:${movieId}`);
     const userMovie = await this.findByUserAndMovie(
       userId,

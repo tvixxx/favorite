@@ -119,24 +119,28 @@ export class CreateMovieRequest {
 
   @ApiProperty({
     description: 'Количество сезонов',
+    minimum: 1,
+    maximum: 1000,
     example: '2',
     type: Number,
   })
   @IsInt()
   @IsOptional()
   @Min(1)
-  @Max(100)
+  @Max(1000)
   seasonCount?: number;
 
   @ApiProperty({
     description: 'Количество эпизодов',
+    minimum: 1,
+    maximum: 10000,
     example: '10',
     type: Number,
   })
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(100)
+  @Max(10000)
   episodeCount?: number;
 
   @ApiProperty({

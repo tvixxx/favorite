@@ -217,10 +217,10 @@ const addNewMovie = async () => {
         personalRate: formData.personalRate || null,
         watchStatus: watchStatus.value,
         currentSeason: formData.isSerial
-          ? (formData.currentSeason ?? null)
+          ? formData.currentSeason ?? null
           : null,
         currentEpisode: formData.isSerial
-          ? (formData.currentEpisode ?? null)
+          ? formData.currentEpisode ?? null
           : null,
       },
     };
@@ -468,6 +468,7 @@ const addNewMovie = async () => {
                   <a-input-number
                     v-model:value="formData.seasonCount"
                     :min="1"
+                    :max="1000"
                     :precision="0"
                     size="large"
                     placeholder="Например: 5"
@@ -479,6 +480,7 @@ const addNewMovie = async () => {
                   <a-input-number
                     v-model:value="formData.episodeCount"
                     :min="1"
+                    :max="10000"
                     :precision="0"
                     size="large"
                     placeholder="Например: 10"
@@ -574,8 +576,8 @@ const addNewMovie = async () => {
                     posterUploading
                       ? "Готовим постер…"
                       : posterPreviewFailed
-                        ? "Не удалось открыть изображение"
-                        : "Постер"
+                      ? "Не удалось открыть изображение"
+                      : "Постер"
                   }}</span>
                 </span>
                 <span class="cm-poster__badge">
@@ -742,8 +744,7 @@ const addNewMovie = async () => {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition:
-    background var(--fv-motion-fast) var(--fv-ease),
+  transition: background var(--fv-motion-fast) var(--fv-ease),
     color var(--fv-motion-fast) var(--fv-ease);
 
   &:hover:not(&--on) {

@@ -49,7 +49,7 @@ services:
       target: build
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-    command: ["npx", "prisma", "migrate", "deploy"]
+    command: ["yarn", "prisma", "migrate", "deploy"]
     depends_on:
       postgres:
         condition: service_healthy

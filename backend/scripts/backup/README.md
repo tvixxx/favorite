@@ -87,7 +87,7 @@ node scripts/backup/db-restore.cjs backups/favorites-....dump --into favorites -
 Порядок на сервере:
 
 1. `node scripts/backup/db-backup.cjs` — слепок ДО миграции;
-2. `npx prisma migrate deploy`;
+2. `yarn prisma migrate deploy`.
 3. проверить, что приложение поднялось;
 4. только потом переключать трафик.
 

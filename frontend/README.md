@@ -1,39 +1,43 @@
 # favourite
 
+Node 22 и Yarn Classic 1.22.22. Источник версий — `yarn.lock`. Сборка проверяет TypeScript, затем создаёт Vite/PWA assets. `package-lock.json` не используется.
+
+`workbox-build` генерирует service worker при сборке. `workbox-window` регистрирует и обновляет его в браузере через `virtual:pwa-register`. Оба используются существующим `vite-plugin-pwa` и закреплены явно как его peer-зависимости. Настройки кеша API этим не добавляются.
+
 ## Project setup
 
 ```
-npm install
+yarn install --frozen-lockfile
 ```
 
 ### Compiles and hot-reloads for development
 
 ```
-npm run serve
+yarn dev
 ```
 
 ### Compiles and minifies for production
 
 ```
-npm run build
+yarn build
 ```
 
 ### Run your unit tests
 
 ```
-npm run test:unit
+yarn test:unit --run
 ```
 
 ### Lints and fixes files
 
 ```
-npm run lint
+yarn lint
 ```
 
 Автоисправление стиля (в т.ч. пустые строки перед `return` и после `block-like` по правилам ESLint):
 
 ```
-npm run lint:fix
+yarn lint:fix
 ```
 
 Конфиг: `eslint.config.mjs` (flat config, ESLint 10). Старый `.eslintrc.js` сохранён как `.eslintrc.legacy.js.bak`.
@@ -67,7 +71,7 @@ npm run lint:fix
 Перегенерация:
 
 ```
-npm run pwa:icons
+yarn pwa:icons
 ```
 
 (скрипт `scripts/generate-pwa-icons.mjs`, dev-зависимость `pngjs`).
@@ -83,7 +87,7 @@ npm run pwa:icons
 1. Сборка и превью продакшена (SW в dev по умолчанию выключен: `devOptions.enabled: false`):
 
    ```
-   npm run build && npm run preview
+   yarn build && yarn preview
    ```
 
    Открыть URL из консоли (обычно `http://localhost:4173`).
@@ -97,7 +101,7 @@ npm run pwa:icons
 4. Установка и push-токены на продакшене требуют **`https://`** (исключение — `localhost`). Убедись, что сервер отдаёт
    корректные заголовки для JS/CSS и не ломает путь к `/sw.js` и `/manifest.webmanifest`.
 
-**Замечание:** в `npm run dev` PWA обычно не используют; для отладки SW можно временно выставить
+**Замечание:** в `yarn dev` PWA обычно не используют; для отладки SW можно временно выставить
 `devOptions.enabled: true` в `vite.config.ts`.
 
 ## Продукт и контент (статус)
@@ -134,10 +138,7 @@ npm run pwa:icons
 - **Swagger:** в `include` добавлены **Friendship**, **Message**, **Badge**; защищённые ручки помечены декоратором \* \*
   `AuthProtected()`** (`ApiBearerAuth` + JWT). У **Users** и **Actors\*\* добавлены `@ApiTags` / `@ApiOperation` где не
   хватало.
-- **Роли:** в таблице `users` поле **`role`** (`USER` | `ADMIN`). **Каталог** (фильмы/актёры): мутации доступны **любому
-  залогиненному пользователю** + лимит запросов (`AuthCatalogWrite`, анти-спам). **ADMIN** используется для
-  администрирования **пользователей** (список всех, создание/удаление учёток и т.п.), а не для добавления фильмов в
-  каталог.
+- **Роли:** `USER` и `ADMIN`. Общие фильмы/актёров редактирует администратор. Пользователь может создавать записи и редактировать свои. Личная коллекция доступна только владельцу.
 - **JWT `@me`:** в `req.user` не попадает `password`.
 - **Rate limit:** `ThrottlerModule` + лимиты на `login` / `register` / `refresh`; `logout` и `GET auth/@me` без лимита (
   `SkipThrottle`).
@@ -145,7 +146,6 @@ npm run pwa:icons
 
 ### Что сделать локально после `git pull`
 
-1. Миграции: `cd backend && npx prisma migrate deploy` (или `migrate dev` в разработке).
-2. По желанию назначить **ADMIN** в БД (`role = 'ADMIN'`) — для модерации пользователей через админские ручки `/users`,
-   а не для добавления фильмов.
+1. В каждом приложении выполнить `yarn install --frozen-lockfile`. В `backend` выполнить `yarn prisma generate` и `yarn prisma migrate deploy`. Не использовать reset при расхождении истории.
+2. **ADMIN** нужен для администрирования пользователей и общего каталога. Обычная регистрация всегда создаёт `USER`.
 3. В проде проверить **cookie** refresh (`COOKIE_DOMAIN`, `sameSite`, `secure`) под домен и HTTPS.

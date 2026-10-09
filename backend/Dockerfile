@@ -3,18 +3,18 @@ FROM node:22-alpine AS build
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+COPY package.json yarn.lock .yarnrc .npmrc ./
+RUN test "$(yarn --version)" = "1.22.22" && yarn install --frozen-lockfile --non-interactive
 
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 # prisma.config.ts читает env('DATABASE_URL') сразу при загрузке, поэтому на
 # сборке подставляем заглушку: подключения тут не происходит, генератору нужна
 # только схема
-RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build npx prisma generate
+RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build yarn prisma generate
 
 COPY . .
-RUN npm run build
+RUN yarn build
 
 # ---- прод ----
 FROM node:22-alpine AS runtime
@@ -22,10 +22,11 @@ FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY package*.json ./
-# npm сохраняет optional peer Prisma CLI даже при omit=dev. Runtime использует
-# скомпилированный клиент, миграции запускаются из отдельной build-стадии.
-RUN npm ci --omit=dev && rm -rf node_modules/prisma node_modules/@prisma/dev node_modules/@prisma/config
+COPY package.json yarn.lock .yarnrc .npmrc ./
+# CLI нужен только build-стадии и отдельному сервису миграций.
+RUN test "$(yarn --version)" = "1.22.22" && yarn install --frozen-lockfile --production=true --non-interactive \
+    && rm -rf node_modules/prisma node_modules/@prisma/dev node_modules/@prisma/config \
+    && yarn cache clean
 
 # Сгенерированный клиент лежит в src/generated/prisma и целиком состоит из .ts,
 # поэтому попадает в dist при сборке — отдельно копировать нечего

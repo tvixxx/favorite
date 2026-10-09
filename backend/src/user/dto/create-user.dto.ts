@@ -11,12 +11,16 @@ import {
 } from 'class-validator';
 import { BlackListNames } from '../decorators';
 import { Genre } from '../../generated/prisma/enums';
+import { Transform } from 'class-transformer';
 
 export class CreateUserDto {
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @IsNotEmpty()
   @BlackListNames(['xxx', 'xx', 'nigger', 'slave', 'master'])
-  @Length(3, 20)
+  @Length(3, 50)
   @Matches(/\S/)
   fullName: string;
 

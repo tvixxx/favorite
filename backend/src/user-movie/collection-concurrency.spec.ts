@@ -1,10 +1,86 @@
 import { UserMovieService } from './user-movie.service';
 import { UserListService } from '../user-list/user-list.service';
 import { transactionRunner } from '../common/testing/transaction-lock';
+import MovieService from '../movie/movie.service';
+import { WatchStatus } from '../generated/prisma/enums';
 
 jest.mock('../prisma/prisma.service', () => ({ PrismaService: class {} }));
 
 describe('Параллельные изменения коллекции', () => {
+  it.each(['create', 'update'] as const)(
+    '%s прогресса защищён от одновременной смены типа',
+    async (method) => {
+      const movie = {
+        id: 'movie',
+        isSerial: true,
+        seasonCount: 2,
+        episodeCount: 14,
+        createdById: null,
+      };
+      let current: {
+        currentSeason: number | null;
+        currentEpisode: number | null;
+        watchStatus: WatchStatus;
+      } | null =
+        method === 'update'
+          ? {
+              currentSeason: null,
+              currentEpisode: null,
+              watchStatus: WatchStatus.NOT_STARTED,
+            }
+          : null;
+      const tx = {
+        movie: {
+          findUnique: () => Promise.resolve({ ...movie }),
+          update: ({ data }: { data: Partial<typeof movie> }) =>
+            Promise.resolve(Object.assign(movie, data)),
+        },
+        userMovie: {
+          findUnique: () => Promise.resolve(current),
+          findFirst: () =>
+            Promise.resolve(
+              (current?.currentEpisode ?? 0) > 0 ? { id: 'progress' } : null,
+            ),
+          create: ({ data }: { data: NonNullable<typeof current> }) => {
+            current = data;
+            return Promise.resolve(current);
+          },
+          update: ({ data }: { data: NonNullable<typeof current> }) => {
+            current = { ...current, ...data };
+            return Promise.resolve(current);
+          },
+        },
+      };
+      const prisma = { ...tx, $transaction: transactionRunner(tx) };
+      const collection = new UserMovieService(prisma as never);
+      const catalog = new MovieService(
+        prisma as never,
+        collection,
+        {} as never,
+      );
+      const progress =
+        method === 'create'
+          ? collection.create('viewer', { movieId: 'movie', currentEpisode: 1 })
+          : collection.update('viewer', 'movie', { currentEpisode: 1 });
+      const results = await Promise.allSettled([
+        progress,
+        catalog.patch(
+          'movie',
+          { isSerial: false },
+          { id: 'admin', role: 'ADMIN' },
+        ),
+      ]);
+
+      expect(results[0].status).toBe('fulfilled');
+      expect(results[1]).toMatchObject({
+        status: 'rejected',
+        reason: { status: 409 },
+      });
+      expect(movie.isSerial).toBe(true);
+      expect(current).toMatchObject({ currentEpisode: 1 });
+    },
+  );
+
   it('сохраняет одну согласованную оценку и один отзыв', async () => {
     let personalRate = 0;
     const reviews: Array<{ id: string; rate: number; text: string }> = [];

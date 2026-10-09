@@ -149,8 +149,8 @@ const saveProfile = async () => {
 
   const name = editForm.value.fullName.trim();
 
-  if (name.length < 3 || name.length > 20) {
-    message.error("Имя должно содержать от 3 до 20 символов");
+  if (name.length < 3 || name.length > 50) {
+    message.error("Имя должно содержать от 3 до 50 символов");
 
     return;
   }
@@ -552,7 +552,6 @@ onMounted(async () => {
             <a-input
               v-model:value="editForm.fullName"
               size="large"
-              :maxlength="20"
             >
               <template #prefix>
                 <BaseIcon name="ph:user" :width="18" :height="18" />

@@ -18,6 +18,47 @@ const validate = (value: unknown, metatype: new () => object) =>
   pipe.transform(value, { type: 'body', metatype });
 
 describe('Контракты входных данных API', () => {
+  describe.each([RegisterRequest, CreateUserDto, PatchUserDto])(
+    '%p: имя',
+    (dto) => {
+      const account = { email: 'qa@example.test', password: 'Test1234' };
+      const body = (fullName: string) =>
+        dto === PatchUserDto ? { fullName } : { ...account, fullName };
+
+      it.each(['Имя', 'Я'.repeat(50)])(
+        'принимает границы после trim',
+        async (name) => {
+          await expect(
+            validate(body(`  ${name}  `), dto),
+          ).resolves.toMatchObject({
+            fullName: name,
+          });
+        },
+      );
+
+      it.each(['  Яя  ', 'Я'.repeat(51)])(
+        'отклоняет длину вне границ',
+        async (name) => {
+          await expect(validate(body(name), dto)).rejects.toMatchObject({
+            status: 400,
+          });
+        },
+      );
+    },
+  );
+
+  it('принимает 1000 сезонов и 10000 эпизодов, отклоняет превышение', async () => {
+    await expect(
+      validate({ seasonCount: 1000, episodeCount: 10000 }, PatchMovieDto),
+    ).resolves.toMatchObject({ seasonCount: 1000, episodeCount: 10000 });
+    await expect(
+      validate({ seasonCount: 1001 }, PatchMovieDto),
+    ).rejects.toMatchObject({ status: 400 });
+    await expect(
+      validate({ episodeCount: 10001 }, PatchMovieDto),
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
   it.each([
     [PatchMovieDto, { title: null }],
     [PatchMovieDto, { actorIds: null }],
