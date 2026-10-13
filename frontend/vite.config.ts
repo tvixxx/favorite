@@ -45,6 +45,8 @@ export default defineConfig(({ command }) => ({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        // Админка загружается при открытии, без предварительной загрузки для всех пользователей.
+        globIgnores: ["**/AdminPage-*.{js,css}"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//],
       },

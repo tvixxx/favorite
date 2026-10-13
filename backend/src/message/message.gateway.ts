@@ -72,6 +72,10 @@ export class MessageGateway
     return Promise.resolve();
   }
 
+  public disconnectUser(userId: string): void {
+    this.server.in(`user:${userId}`).disconnectSockets(true);
+  }
+
   async handleConnection(client: ChatSocket) {
     try {
       if (

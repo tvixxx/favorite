@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateMovieRequest } from './dto';
+import { CreateMovieRequest, PatchMovieDto } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   assertCatalogOwner,
@@ -83,7 +83,7 @@ class MovieService {
     const ids = movies.map((m) => m.id);
     const grouped = await this.prismaService.review.groupBy({
       by: ['movieId'],
-      where: { movieId: { in: ids } },
+      where: { movieId: { in: ids }, hiddenAt: null },
       _avg: { rate: true },
     });
     const map = new Map(grouped.map((g) => [g.movieId, g._avg.rate]));
@@ -114,7 +114,7 @@ class MovieService {
         },
         _count: {
           select: {
-            reviews: true,
+            reviews: { where: { hiddenAt: null } },
             actors: true,
           },
         },
@@ -122,6 +122,47 @@ class MovieService {
     });
 
     return this.withAverageRatings(movies);
+  }
+
+  public async findPage(
+    filters: MovieFilters,
+    query: string | undefined,
+    limit: number,
+    offset: number,
+  ): Promise<{
+    items: MovieWithAverageRating[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const where = this.buildWhereClause(filters, query?.trim() || undefined);
+    const [movies, total] = await this.prismaService.$transaction(
+      [
+        this.prismaService.movie.findMany({
+          where,
+          take: limit,
+          skip: offset,
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          include: {
+            poster: {
+              select: { url: true, thumbnailUrl: true, assetId: true },
+            },
+            _count: {
+              select: { reviews: { where: { hiddenAt: null } }, actors: true },
+            },
+          },
+        }),
+        this.prismaService.movie.count({ where }),
+      ],
+      { isolationLevel: 'RepeatableRead' },
+    );
+
+    return {
+      items: await this.withAverageRatings(movies),
+      total,
+      limit,
+      offset,
+    };
   }
 
   public async create(
@@ -225,6 +266,14 @@ class MovieService {
         );
       }
 
+      await this.auditCatalogChange(
+        tx,
+        user,
+        movie.id,
+        'MOVIE_CREATE',
+        Object.keys(dto),
+      );
+
       return movie;
     });
 
@@ -242,6 +291,7 @@ class MovieService {
         // Инлайн отдаём только 10 свежих (превью показывает latest-10);
         // полный список — через пагинированный getReviewsByMovieId
         reviews: {
+          where: { hiddenAt: null },
           take: 10,
           orderBy: { createdAt: 'desc' },
         },
@@ -253,7 +303,7 @@ class MovieService {
     }
 
     const avg = await this.prismaService.review.aggregate({
-      where: { movieId: id },
+      where: { movieId: id, hiddenAt: null },
       _avg: { rate: true },
     });
 
@@ -412,6 +462,7 @@ class MovieService {
 
     return this.prismaService.review.findMany({
       where: {
+        hiddenAt: null,
         movie: {
           id,
         },
@@ -511,13 +562,21 @@ class MovieService {
         await this.finishPosterChange(tx, posterChange);
       }
 
+      await this.auditCatalogChange(
+        tx,
+        user,
+        id,
+        'MOVIE_UPDATE',
+        Object.keys(dto),
+      );
+
       return true;
     });
   }
 
   public async patch(
     id: string,
-    dto: Partial<CreateMovieRequest>,
+    dto: PatchMovieDto,
     user: CatalogUser,
   ): Promise<boolean> {
     return this.prismaService.$transaction(async (tx) => {
@@ -544,6 +603,15 @@ class MovieService {
         seasonCount,
         episodeCount,
       } = dto;
+
+      if (
+        dto.expectedUpdatedAt &&
+        movie.updatedAt.getTime() !== new Date(dto.expectedUpdatedAt).getTime()
+      ) {
+        throw new ConflictException(
+          'Карточку уже изменили. Откройте её заново перед сохранением',
+        );
+      }
 
       const updateData: Prisma.MovieUpdateInput = {};
 
@@ -623,6 +691,14 @@ class MovieService {
         await this.finishPosterChange(tx, posterChange);
       }
 
+      await this.auditCatalogChange(
+        tx,
+        user,
+        id,
+        'MOVIE_UPDATE',
+        Object.keys(dto),
+      );
+
       return true;
     });
   }
@@ -649,6 +725,29 @@ class MovieService {
         'Нельзя изменить сериал на фильм: у пользователей есть прогресс по сезонам или эпизодам.',
       );
     }
+  }
+
+  private async auditCatalogChange(
+    tx: Prisma.TransactionClient,
+    user: CatalogUser,
+    targetId: string,
+    action: string,
+    fields: string[] = [],
+  ): Promise<void> {
+    if (user.role !== 'ADMIN') {
+      return;
+    }
+
+    await tx.adminAuditLog.create({
+      data: {
+        actorId: user.id,
+        targetId,
+        action,
+        reason: fields.length
+          ? `Поля: ${fields.join(', ')}`
+          : 'Удаление тайтла',
+      },
+    });
   }
 
   private async posterChange(
@@ -726,6 +825,7 @@ class MovieService {
         }
 
         await this.media.release(tx, movie.poster?.assetId);
+        await this.auditCatalogChange(tx, user, id, 'MOVIE_DELETE');
       });
 
       return id;
@@ -789,7 +889,7 @@ class MovieService {
         poster: true,
         _count: {
           select: {
-            reviews: true,
+            reviews: { where: { hiddenAt: null } },
             actors: true,
           },
         },

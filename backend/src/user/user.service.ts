@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { hash } from 'argon2';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -139,10 +144,34 @@ export class UserService {
     });
   }
 
-  public async delete(id: string) {
+  public async delete(id: string, actorId?: string) {
+    if (actorId === id) {
+      throw new ForbiddenException(
+        'Нельзя удалить собственный аккаунт администратора',
+      );
+    }
+
     try {
       await this.prismaService.$transaction(async (tx) => {
+        await lockResource(tx, 'admin:user-access');
         await lockResource(tx, `user:${id}`);
+        const target = await tx.user.findUnique({
+          where: { id },
+          select: { role: true, blockedAt: true },
+        });
+
+        if (
+          target?.role === 'ADMIN' &&
+          !target.blockedAt &&
+          (await tx.user.count({
+            where: { role: 'ADMIN', blockedAt: null },
+          })) <= 1
+        ) {
+          throw new ConflictException(
+            'Нельзя удалить последнего администратора',
+          );
+        }
+
         const deleted = await tx.user.delete({
           where: { id },
           select: { avatarAssetId: true },

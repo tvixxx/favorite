@@ -139,4 +139,50 @@ describe('Авторизация и назначение токенов', () => 
       type: 'access',
     });
   });
+
+  it('не принимает действующий access-токен заблокированного пользователя', async () => {
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-id',
+      blockedAt: new Date(),
+    });
+
+    await expect(
+      service.verifyAccessToken(jwt.sign({ id: 'user-id', type: 'access' })),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('не обновляет сессию заблокированного пользователя', async () => {
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-id',
+      blockedAt: new Date(),
+    });
+
+    await expect(
+      service.refresh(
+        {
+          cookies: {
+            refresh_token: jwt.sign({ id: 'user-id', type: 'refresh' }),
+          },
+        } as unknown as Request,
+        res,
+      ),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(cookie).not.toHaveBeenCalled();
+  });
+
+  it('не выдаёт токены заблокированному пользователю даже с верным паролем', async () => {
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-id',
+      password: await hash('test-only-password'),
+      blockedAt: new Date(),
+    });
+
+    await expect(
+      service.login(res, {
+        email: 'blocked@example.test',
+        password: 'test-only-password',
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(cookie).not.toHaveBeenCalled();
+  });
 });

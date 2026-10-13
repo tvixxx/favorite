@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFeedbackDto } from './dto';
-import type { Feedback } from '../generated/prisma/client';
+import type { Feedback, Prisma } from '../generated/prisma/client';
+import {
+  createdAtRange,
+  type FeedbackQueryDto,
+} from '../common/dto/list-query.dto';
 import { FeedbackStatus } from '../generated/prisma/enums';
 
 export interface FeedbackListResponse {
@@ -40,17 +44,31 @@ export class FeedbackService {
   }
 
   /** Список для администратора: свежие сверху, с фильтром по статусу. */
-  public async findAll(params: {
-    status?: FeedbackStatus;
-    limit: number;
-    offset: number;
-  }): Promise<FeedbackListResponse> {
-    const where = params.status ? { status: params.status } : {};
+  public async findAll(
+    params: FeedbackQueryDto,
+  ): Promise<FeedbackListResponse> {
+    const where: Prisma.FeedbackWhereInput = {
+      status: params.status,
+      type: params.type,
+      createdAt: createdAtRange(params),
+      ...(params.q
+        ? {
+            OR: [
+              { message: { contains: params.q, mode: 'insensitive' } },
+              { email: { contains: params.q, mode: 'insensitive' } },
+              {
+                user: { fullName: { contains: params.q, mode: 'insensitive' } },
+              },
+            ],
+          }
+        : {}),
+    };
+    const order = params.sort === 'oldest' ? 'asc' : 'desc';
 
     const [items, total] = await Promise.all([
       this.prismaService.feedback.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: order }, { id: order }],
         take: params.limit,
         skip: params.offset,
         include: {
@@ -77,19 +95,33 @@ export class FeedbackService {
   public async updateStatus(
     id: string,
     status: FeedbackStatus,
+    actorId: string,
   ): Promise<Feedback> {
     const existing = await this.prismaService.feedback.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, status: true },
     });
 
     if (!existing) {
       throw new NotFoundException(`Обращение с айди: ${id} не найдено`);
     }
 
-    return this.prismaService.feedback.update({
-      where: { id },
-      data: { status },
+    return this.prismaService.$transaction(async (tx) => {
+      const updated = await tx.feedback.update({
+        where: { id },
+        data: { status },
+      });
+
+      await tx.adminAuditLog.create({
+        data: {
+          actorId,
+          targetId: id,
+          action: 'FEEDBACK_STATUS',
+          reason: `${existing.status} → ${status}`,
+        },
+      });
+
+      return updated;
     });
   }
 }

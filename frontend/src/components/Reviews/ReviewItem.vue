@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { Review } from "@/stores";
 import { computed, ref } from "vue";
+import { Menu as AMenu, MenuItem as AMenuItem } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import ConfirmDialog from "@/components/ConfirmDialog/ConfirmDialog.vue";
 
@@ -9,6 +10,7 @@ const props = withDefaults(
     review: Review;
     isEditing?: boolean;
     canEdit?: boolean;
+    canReport?: boolean;
     busy?: boolean;
   }>(),
   { canEdit: false, busy: false },
@@ -17,6 +19,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   edit: [review: Review];
   delete: [reviewId: string];
+  report: [reviewId: string];
 }>();
 
 const ratePercent = computed(() => (props.review.rate / 10) * 100);
@@ -104,6 +107,11 @@ const confirmDelete = (): void => {
       </div>
 
       <span v-if="props.canEdit" class="review-item__badge">Ваш отзыв</span>
+      <span v-if="review.hiddenAt" class="review-item__badge">Скрыт модератором</span>
+      <a-dropdown v-if="canReport" :trigger="['click']">
+        <a-button type="text" aria-label="Действия с отзывом"><BaseIcon name="ph:dots-three" :width="24" :height="24" /></a-button>
+        <template #overlay><a-menu><a-menu-item key="report" @click="emit('report', review.id)">Пожаловаться</a-menu-item></a-menu></template>
+      </a-dropdown>
 
       <div v-if="props.canEdit" class="review-item__actions">
         <button

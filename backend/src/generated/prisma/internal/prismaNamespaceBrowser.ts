@@ -64,7 +64,10 @@ export const ModelName = {
   Message: 'Message',
   UserStatus: 'UserStatus',
   Notification: 'Notification',
-  Feedback: 'Feedback'
+  Feedback: 'Feedback',
+  ReviewReport: 'ReviewReport',
+  AdminAuditLog: 'AdminAuditLog',
+  UsageEvent: 'UsageEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -109,6 +112,8 @@ export const UserScalarFieldEnum = {
   password: 'password',
   fullName: 'fullName',
   role: 'role',
+  blockedAt: 'blockedAt',
+  blockedReason: 'blockedReason',
   tags: 'tags',
   avatarUrl: 'avatarUrl',
   avatarThumbnailUrl: 'avatarThumbnailUrl',
@@ -156,6 +161,8 @@ export const ReviewScalarFieldEnum = {
   id: 'id',
   text: 'text',
   rate: 'rate',
+  hiddenAt: 'hiddenAt',
+  moderationReason: 'moderationReason',
   userId: 'userId',
   movieId: 'movieId',
   createdAt: 'createdAt',
@@ -292,6 +299,41 @@ export const FeedbackScalarFieldEnum = {
 } as const
 
 export type FeedbackScalarFieldEnum = (typeof FeedbackScalarFieldEnum)[keyof typeof FeedbackScalarFieldEnum]
+
+
+export const ReviewReportScalarFieldEnum = {
+  id: 'id',
+  reviewId: 'reviewId',
+  reporterId: 'reporterId',
+  reason: 'reason',
+  comment: 'comment',
+  resolvedAt: 'resolvedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type ReviewReportScalarFieldEnum = (typeof ReviewReportScalarFieldEnum)[keyof typeof ReviewReportScalarFieldEnum]
+
+
+export const AdminAuditLogScalarFieldEnum = {
+  id: 'id',
+  actorId: 'actorId',
+  action: 'action',
+  targetId: 'targetId',
+  reason: 'reason',
+  createdAt: 'createdAt'
+} as const
+
+export type AdminAuditLogScalarFieldEnum = (typeof AdminAuditLogScalarFieldEnum)[keyof typeof AdminAuditLogScalarFieldEnum]
+
+
+export const UsageEventScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  feature: 'feature',
+  occurredAt: 'occurredAt'
+} as const
+
+export type UsageEventScalarFieldEnum = (typeof UsageEventScalarFieldEnum)[keyof typeof UsageEventScalarFieldEnum]
 
 
 export const SortOrder = {

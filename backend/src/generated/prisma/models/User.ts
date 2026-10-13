@@ -30,6 +30,8 @@ export type UserMinAggregateOutputType = {
   password: string | null
   fullName: string | null
   role: $Enums.UserRole | null
+  blockedAt: Date | null
+  blockedReason: string | null
   tags: $Enums.Genre | null
   avatarUrl: string | null
   avatarThumbnailUrl: string | null
@@ -44,6 +46,8 @@ export type UserMaxAggregateOutputType = {
   password: string | null
   fullName: string | null
   role: $Enums.UserRole | null
+  blockedAt: Date | null
+  blockedReason: string | null
   tags: $Enums.Genre | null
   avatarUrl: string | null
   avatarThumbnailUrl: string | null
@@ -58,6 +62,8 @@ export type UserCountAggregateOutputType = {
   password: number
   fullName: number
   role: number
+  blockedAt: number
+  blockedReason: number
   tags: number
   avatarUrl: number
   avatarThumbnailUrl: number
@@ -74,6 +80,8 @@ export type UserMinAggregateInputType = {
   password?: true
   fullName?: true
   role?: true
+  blockedAt?: true
+  blockedReason?: true
   tags?: true
   avatarUrl?: true
   avatarThumbnailUrl?: true
@@ -88,6 +96,8 @@ export type UserMaxAggregateInputType = {
   password?: true
   fullName?: true
   role?: true
+  blockedAt?: true
+  blockedReason?: true
   tags?: true
   avatarUrl?: true
   avatarThumbnailUrl?: true
@@ -102,6 +112,8 @@ export type UserCountAggregateInputType = {
   password?: true
   fullName?: true
   role?: true
+  blockedAt?: true
+  blockedReason?: true
   tags?: true
   avatarUrl?: true
   avatarThumbnailUrl?: true
@@ -189,6 +201,8 @@ export type UserGroupByOutputType = {
   password: string
   fullName: string
   role: $Enums.UserRole
+  blockedAt: Date | null
+  blockedReason: string | null
   tags: $Enums.Genre | null
   avatarUrl: string | null
   avatarThumbnailUrl: string | null
@@ -224,6 +238,8 @@ export type UserWhereInput = {
   password?: Prisma.StringFilter<"User"> | string
   fullName?: Prisma.StringFilter<"User"> | string
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
+  blockedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  blockedReason?: Prisma.StringNullableFilter<"User"> | string | null
   tags?: Prisma.EnumGenreNullableFilter<"User"> | $Enums.Genre | null
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
   avatarThumbnailUrl?: Prisma.StringNullableFilter<"User"> | string | null
@@ -244,6 +260,9 @@ export type UserWhereInput = {
   feedbacks?: Prisma.FeedbackListRelationFilter
   createdMovies?: Prisma.MovieListRelationFilter
   createdActors?: Prisma.ActorListRelationFilter
+  reviewReports?: Prisma.ReviewReportListRelationFilter
+  usageEvents?: Prisma.UsageEventListRelationFilter
+  adminActions?: Prisma.AdminAuditLogListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -252,6 +271,8 @@ export type UserOrderByWithRelationInput = {
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  blockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  blockedReason?: Prisma.SortOrderInput | Prisma.SortOrder
   tags?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarThumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -272,6 +293,9 @@ export type UserOrderByWithRelationInput = {
   feedbacks?: Prisma.FeedbackOrderByRelationAggregateInput
   createdMovies?: Prisma.MovieOrderByRelationAggregateInput
   createdActors?: Prisma.ActorOrderByRelationAggregateInput
+  reviewReports?: Prisma.ReviewReportOrderByRelationAggregateInput
+  usageEvents?: Prisma.UsageEventOrderByRelationAggregateInput
+  adminActions?: Prisma.AdminAuditLogOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -284,6 +308,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   password?: Prisma.StringFilter<"User"> | string
   fullName?: Prisma.StringFilter<"User"> | string
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
+  blockedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  blockedReason?: Prisma.StringNullableFilter<"User"> | string | null
   tags?: Prisma.EnumGenreNullableFilter<"User"> | $Enums.Genre | null
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
   avatarThumbnailUrl?: Prisma.StringNullableFilter<"User"> | string | null
@@ -303,6 +329,9 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   feedbacks?: Prisma.FeedbackListRelationFilter
   createdMovies?: Prisma.MovieListRelationFilter
   createdActors?: Prisma.ActorListRelationFilter
+  reviewReports?: Prisma.ReviewReportListRelationFilter
+  usageEvents?: Prisma.UsageEventListRelationFilter
+  adminActions?: Prisma.AdminAuditLogListRelationFilter
 }, "id" | "email" | "avatarAssetId">
 
 export type UserOrderByWithAggregationInput = {
@@ -311,6 +340,8 @@ export type UserOrderByWithAggregationInput = {
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  blockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  blockedReason?: Prisma.SortOrderInput | Prisma.SortOrder
   tags?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarThumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -331,6 +362,8 @@ export type UserScalarWhereWithAggregatesInput = {
   password?: Prisma.StringWithAggregatesFilter<"User"> | string
   fullName?: Prisma.StringWithAggregatesFilter<"User"> | string
   role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
+  blockedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  blockedReason?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   tags?: Prisma.EnumGenreNullableWithAggregatesFilter<"User"> | $Enums.Genre | null
   avatarUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   avatarThumbnailUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -345,6 +378,8 @@ export type UserCreateInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -364,6 +399,9 @@ export type UserCreateInput = {
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -372,6 +410,8 @@ export type UserUncheckedCreateInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -391,6 +431,9 @@ export type UserUncheckedCreateInput = {
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserUpdateInput = {
@@ -399,6 +442,8 @@ export type UserUpdateInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -418,6 +463,9 @@ export type UserUpdateInput = {
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -426,6 +474,8 @@ export type UserUncheckedUpdateInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -445,6 +495,9 @@ export type UserUncheckedUpdateInput = {
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -453,6 +506,8 @@ export type UserCreateManyInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -467,6 +522,8 @@ export type UserUpdateManyMutationInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -480,6 +537,8 @@ export type UserUncheckedUpdateManyInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -499,6 +558,8 @@ export type UserCountOrderByAggregateInput = {
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  blockedAt?: Prisma.SortOrder
+  blockedReason?: Prisma.SortOrder
   tags?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   avatarThumbnailUrl?: Prisma.SortOrder
@@ -513,6 +574,8 @@ export type UserMaxOrderByAggregateInput = {
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  blockedAt?: Prisma.SortOrder
+  blockedReason?: Prisma.SortOrder
   tags?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   avatarThumbnailUrl?: Prisma.SortOrder
@@ -527,6 +590,8 @@ export type UserMinOrderByAggregateInput = {
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  blockedAt?: Prisma.SortOrder
+  blockedReason?: Prisma.SortOrder
   tags?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   avatarThumbnailUrl?: Prisma.SortOrder
@@ -770,12 +835,58 @@ export type UserUpdateOneWithoutFeedbacksNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFeedbacksInput, Prisma.UserUpdateWithoutFeedbacksInput>, Prisma.UserUncheckedUpdateWithoutFeedbacksInput>
 }
 
+export type UserCreateNestedOneWithoutReviewReportsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReviewReportsInput, Prisma.UserUncheckedCreateWithoutReviewReportsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReviewReportsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutReviewReportsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReviewReportsInput, Prisma.UserUncheckedCreateWithoutReviewReportsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReviewReportsInput
+  upsert?: Prisma.UserUpsertWithoutReviewReportsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutReviewReportsInput, Prisma.UserUpdateWithoutReviewReportsInput>, Prisma.UserUncheckedUpdateWithoutReviewReportsInput>
+}
+
+export type UserCreateNestedOneWithoutAdminActionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAdminActionsInput, Prisma.UserUncheckedCreateWithoutAdminActionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAdminActionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutAdminActionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAdminActionsInput, Prisma.UserUncheckedCreateWithoutAdminActionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAdminActionsInput
+  upsert?: Prisma.UserUpsertWithoutAdminActionsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAdminActionsInput, Prisma.UserUpdateWithoutAdminActionsInput>, Prisma.UserUncheckedUpdateWithoutAdminActionsInput>
+}
+
+export type UserCreateNestedOneWithoutUsageEventsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUsageEventsInput, Prisma.UserUncheckedCreateWithoutUsageEventsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUsageEventsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutUsageEventsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUsageEventsInput, Prisma.UserUncheckedCreateWithoutUsageEventsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUsageEventsInput
+  upsert?: Prisma.UserUpsertWithoutUsageEventsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutUsageEventsInput, Prisma.UserUpdateWithoutUsageEventsInput>, Prisma.UserUncheckedUpdateWithoutUsageEventsInput>
+}
+
 export type UserCreateWithoutUploadedMediaInput = {
   id?: string
   email: string
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -794,6 +905,9 @@ export type UserCreateWithoutUploadedMediaInput = {
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutUploadedMediaInput = {
@@ -802,6 +916,8 @@ export type UserUncheckedCreateWithoutUploadedMediaInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -820,6 +936,9 @@ export type UserUncheckedCreateWithoutUploadedMediaInput = {
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutUploadedMediaInput = {
@@ -833,6 +952,8 @@ export type UserCreateWithoutAvatarAssetInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -851,6 +972,9 @@ export type UserCreateWithoutAvatarAssetInput = {
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutAvatarAssetInput = {
@@ -859,6 +983,8 @@ export type UserUncheckedCreateWithoutAvatarAssetInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -877,6 +1003,9 @@ export type UserUncheckedCreateWithoutAvatarAssetInput = {
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutAvatarAssetInput = {
@@ -901,6 +1030,8 @@ export type UserUpdateWithoutUploadedMediaInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -919,6 +1050,9 @@ export type UserUpdateWithoutUploadedMediaInput = {
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUploadedMediaInput = {
@@ -927,6 +1061,8 @@ export type UserUncheckedUpdateWithoutUploadedMediaInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -945,6 +1081,9 @@ export type UserUncheckedUpdateWithoutUploadedMediaInput = {
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserUpsertWithoutAvatarAssetInput = {
@@ -964,6 +1103,8 @@ export type UserUpdateWithoutAvatarAssetInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -982,6 +1123,9 @@ export type UserUpdateWithoutAvatarAssetInput = {
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAvatarAssetInput = {
@@ -990,6 +1134,8 @@ export type UserUncheckedUpdateWithoutAvatarAssetInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1008,6 +1154,9 @@ export type UserUncheckedUpdateWithoutAvatarAssetInput = {
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutCreatedMoviesInput = {
@@ -1016,6 +1165,8 @@ export type UserCreateWithoutCreatedMoviesInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1034,6 +1185,9 @@ export type UserCreateWithoutCreatedMoviesInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutCreatedMoviesInput = {
@@ -1042,6 +1196,8 @@ export type UserUncheckedCreateWithoutCreatedMoviesInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1060,6 +1216,9 @@ export type UserUncheckedCreateWithoutCreatedMoviesInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutCreatedMoviesInput = {
@@ -1084,6 +1243,8 @@ export type UserUpdateWithoutCreatedMoviesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1102,6 +1263,9 @@ export type UserUpdateWithoutCreatedMoviesInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCreatedMoviesInput = {
@@ -1110,6 +1274,8 @@ export type UserUncheckedUpdateWithoutCreatedMoviesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1128,6 +1294,9 @@ export type UserUncheckedUpdateWithoutCreatedMoviesInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutReviewsInput = {
@@ -1136,6 +1305,8 @@ export type UserCreateWithoutReviewsInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1154,6 +1325,9 @@ export type UserCreateWithoutReviewsInput = {
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutReviewsInput = {
@@ -1162,6 +1336,8 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1180,6 +1356,9 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutReviewsInput = {
@@ -1204,6 +1383,8 @@ export type UserUpdateWithoutReviewsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1222,6 +1403,9 @@ export type UserUpdateWithoutReviewsInput = {
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewsInput = {
@@ -1230,6 +1414,8 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1248,6 +1434,9 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutCreatedActorsInput = {
@@ -1256,6 +1445,8 @@ export type UserCreateWithoutCreatedActorsInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1274,6 +1465,9 @@ export type UserCreateWithoutCreatedActorsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutCreatedActorsInput = {
@@ -1282,6 +1476,8 @@ export type UserUncheckedCreateWithoutCreatedActorsInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1300,6 +1496,9 @@ export type UserUncheckedCreateWithoutCreatedActorsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutCreatedActorsInput = {
@@ -1324,6 +1523,8 @@ export type UserUpdateWithoutCreatedActorsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1342,6 +1543,9 @@ export type UserUpdateWithoutCreatedActorsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCreatedActorsInput = {
@@ -1350,6 +1554,8 @@ export type UserUncheckedUpdateWithoutCreatedActorsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1368,6 +1574,9 @@ export type UserUncheckedUpdateWithoutCreatedActorsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutUserMoviesInput = {
@@ -1376,6 +1585,8 @@ export type UserCreateWithoutUserMoviesInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1394,6 +1605,9 @@ export type UserCreateWithoutUserMoviesInput = {
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutUserMoviesInput = {
@@ -1402,6 +1616,8 @@ export type UserUncheckedCreateWithoutUserMoviesInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1420,6 +1636,9 @@ export type UserUncheckedCreateWithoutUserMoviesInput = {
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutUserMoviesInput = {
@@ -1444,6 +1663,8 @@ export type UserUpdateWithoutUserMoviesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1462,6 +1683,9 @@ export type UserUpdateWithoutUserMoviesInput = {
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUserMoviesInput = {
@@ -1470,6 +1694,8 @@ export type UserUncheckedUpdateWithoutUserMoviesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1488,6 +1714,9 @@ export type UserUncheckedUpdateWithoutUserMoviesInput = {
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutListsInput = {
@@ -1496,6 +1725,8 @@ export type UserCreateWithoutListsInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1514,6 +1745,9 @@ export type UserCreateWithoutListsInput = {
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutListsInput = {
@@ -1522,6 +1756,8 @@ export type UserUncheckedCreateWithoutListsInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1540,6 +1776,9 @@ export type UserUncheckedCreateWithoutListsInput = {
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutListsInput = {
@@ -1564,6 +1803,8 @@ export type UserUpdateWithoutListsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1582,6 +1823,9 @@ export type UserUpdateWithoutListsInput = {
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutListsInput = {
@@ -1590,6 +1834,8 @@ export type UserUncheckedUpdateWithoutListsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1608,6 +1854,9 @@ export type UserUncheckedUpdateWithoutListsInput = {
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutFriendshipsRequestedInput = {
@@ -1616,6 +1865,8 @@ export type UserCreateWithoutFriendshipsRequestedInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1634,6 +1885,9 @@ export type UserCreateWithoutFriendshipsRequestedInput = {
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutFriendshipsRequestedInput = {
@@ -1642,6 +1896,8 @@ export type UserUncheckedCreateWithoutFriendshipsRequestedInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1660,6 +1916,9 @@ export type UserUncheckedCreateWithoutFriendshipsRequestedInput = {
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutFriendshipsRequestedInput = {
@@ -1673,6 +1932,8 @@ export type UserCreateWithoutFriendshipsReceivedInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1691,6 +1952,9 @@ export type UserCreateWithoutFriendshipsReceivedInput = {
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutFriendshipsReceivedInput = {
@@ -1699,6 +1963,8 @@ export type UserUncheckedCreateWithoutFriendshipsReceivedInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1717,6 +1983,9 @@ export type UserUncheckedCreateWithoutFriendshipsReceivedInput = {
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutFriendshipsReceivedInput = {
@@ -1741,6 +2010,8 @@ export type UserUpdateWithoutFriendshipsRequestedInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1759,6 +2030,9 @@ export type UserUpdateWithoutFriendshipsRequestedInput = {
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFriendshipsRequestedInput = {
@@ -1767,6 +2041,8 @@ export type UserUncheckedUpdateWithoutFriendshipsRequestedInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1785,6 +2061,9 @@ export type UserUncheckedUpdateWithoutFriendshipsRequestedInput = {
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserUpsertWithoutFriendshipsReceivedInput = {
@@ -1804,6 +2083,8 @@ export type UserUpdateWithoutFriendshipsReceivedInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1822,6 +2103,9 @@ export type UserUpdateWithoutFriendshipsReceivedInput = {
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFriendshipsReceivedInput = {
@@ -1830,6 +2114,8 @@ export type UserUncheckedUpdateWithoutFriendshipsReceivedInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1848,6 +2134,9 @@ export type UserUncheckedUpdateWithoutFriendshipsReceivedInput = {
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutSentMessagesInput = {
@@ -1856,6 +2145,8 @@ export type UserCreateWithoutSentMessagesInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1874,6 +2165,9 @@ export type UserCreateWithoutSentMessagesInput = {
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutSentMessagesInput = {
@@ -1882,6 +2176,8 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1900,6 +2196,9 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutSentMessagesInput = {
@@ -1913,6 +2212,8 @@ export type UserCreateWithoutReceivedMessagesInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1931,6 +2232,9 @@ export type UserCreateWithoutReceivedMessagesInput = {
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutReceivedMessagesInput = {
@@ -1939,6 +2243,8 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1957,6 +2263,9 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutReceivedMessagesInput = {
@@ -1981,6 +2290,8 @@ export type UserUpdateWithoutSentMessagesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1999,6 +2310,9 @@ export type UserUpdateWithoutSentMessagesInput = {
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSentMessagesInput = {
@@ -2007,6 +2321,8 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2025,6 +2341,9 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserUpsertWithoutReceivedMessagesInput = {
@@ -2044,6 +2363,8 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2062,6 +2383,9 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
@@ -2070,6 +2394,8 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2088,6 +2414,9 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutStatusInput = {
@@ -2096,6 +2425,8 @@ export type UserCreateWithoutStatusInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2114,6 +2445,9 @@ export type UserCreateWithoutStatusInput = {
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutStatusInput = {
@@ -2122,6 +2456,8 @@ export type UserUncheckedCreateWithoutStatusInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2140,6 +2476,9 @@ export type UserUncheckedCreateWithoutStatusInput = {
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutStatusInput = {
@@ -2164,6 +2503,8 @@ export type UserUpdateWithoutStatusInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2182,6 +2523,9 @@ export type UserUpdateWithoutStatusInput = {
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutStatusInput = {
@@ -2190,6 +2534,8 @@ export type UserUncheckedUpdateWithoutStatusInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2208,6 +2554,9 @@ export type UserUncheckedUpdateWithoutStatusInput = {
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutNotificationsInput = {
@@ -2216,6 +2565,8 @@ export type UserCreateWithoutNotificationsInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2234,6 +2585,9 @@ export type UserCreateWithoutNotificationsInput = {
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -2242,6 +2596,8 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2260,6 +2616,9 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -2284,6 +2643,8 @@ export type UserUpdateWithoutNotificationsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2302,6 +2663,9 @@ export type UserUpdateWithoutNotificationsInput = {
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -2310,6 +2674,8 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2328,6 +2694,9 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutFeedbacksInput = {
@@ -2336,6 +2705,8 @@ export type UserCreateWithoutFeedbacksInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2354,6 +2725,9 @@ export type UserCreateWithoutFeedbacksInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutFeedbacksInput = {
@@ -2362,6 +2736,8 @@ export type UserUncheckedCreateWithoutFeedbacksInput = {
   password: string
   fullName: string
   role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2380,6 +2756,9 @@ export type UserUncheckedCreateWithoutFeedbacksInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutFeedbacksInput = {
@@ -2404,6 +2783,8 @@ export type UserUpdateWithoutFeedbacksInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2422,6 +2803,9 @@ export type UserUpdateWithoutFeedbacksInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFeedbacksInput = {
@@ -2430,6 +2814,8 @@ export type UserUncheckedUpdateWithoutFeedbacksInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2448,6 +2834,429 @@ export type UserUncheckedUpdateWithoutFeedbacksInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
+}
+
+export type UserCreateWithoutReviewReportsInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
+  tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
+  userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
+  createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
+  createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
+}
+
+export type UserUncheckedCreateWithoutReviewReportsInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
+  tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
+  userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
+  createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
+  createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
+}
+
+export type UserCreateOrConnectWithoutReviewReportsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutReviewReportsInput, Prisma.UserUncheckedCreateWithoutReviewReportsInput>
+}
+
+export type UserUpsertWithoutReviewReportsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutReviewReportsInput, Prisma.UserUncheckedUpdateWithoutReviewReportsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutReviewReportsInput, Prisma.UserUncheckedCreateWithoutReviewReportsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutReviewReportsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutReviewReportsInput, Prisma.UserUncheckedUpdateWithoutReviewReportsInput>
+}
+
+export type UserUpdateWithoutReviewReportsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
+  userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
+  createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
+  createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
+}
+
+export type UserUncheckedUpdateWithoutReviewReportsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
+  userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
+  createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
+}
+
+export type UserCreateWithoutAdminActionsInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
+  tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
+  userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
+  createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
+  createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutAdminActionsInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
+  tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
+  userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
+  createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
+  createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutAdminActionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutAdminActionsInput, Prisma.UserUncheckedCreateWithoutAdminActionsInput>
+}
+
+export type UserUpsertWithoutAdminActionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutAdminActionsInput, Prisma.UserUncheckedUpdateWithoutAdminActionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutAdminActionsInput, Prisma.UserUncheckedCreateWithoutAdminActionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutAdminActionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutAdminActionsInput, Prisma.UserUncheckedUpdateWithoutAdminActionsInput>
+}
+
+export type UserUpdateWithoutAdminActionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
+  userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
+  createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
+  createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutAdminActionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
+  userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
+  createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutUsageEventsInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
+  tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
+  userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
+  createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
+  createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
+}
+
+export type UserUncheckedCreateWithoutUsageEventsInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
+  tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
+  userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
+  createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
+  createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
+}
+
+export type UserCreateOrConnectWithoutUsageEventsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutUsageEventsInput, Prisma.UserUncheckedCreateWithoutUsageEventsInput>
+}
+
+export type UserUpsertWithoutUsageEventsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutUsageEventsInput, Prisma.UserUncheckedUpdateWithoutUsageEventsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutUsageEventsInput, Prisma.UserUncheckedCreateWithoutUsageEventsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutUsageEventsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutUsageEventsInput, Prisma.UserUncheckedUpdateWithoutUsageEventsInput>
+}
+
+export type UserUpdateWithoutUsageEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
+  userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
+  createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
+  createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
+}
+
+export type UserUncheckedUpdateWithoutUsageEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
+  userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
+  createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
 }
 
 
@@ -2468,6 +3277,9 @@ export type UserCountOutputType = {
   feedbacks: number
   createdMovies: number
   createdActors: number
+  reviewReports: number
+  usageEvents: number
+  adminActions: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2483,6 +3295,9 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   feedbacks?: boolean | UserCountOutputTypeCountFeedbacksArgs
   createdMovies?: boolean | UserCountOutputTypeCountCreatedMoviesArgs
   createdActors?: boolean | UserCountOutputTypeCountCreatedActorsArgs
+  reviewReports?: boolean | UserCountOutputTypeCountReviewReportsArgs
+  usageEvents?: boolean | UserCountOutputTypeCountUsageEventsArgs
+  adminActions?: boolean | UserCountOutputTypeCountAdminActionsArgs
 }
 
 /**
@@ -2579,6 +3394,27 @@ export type UserCountOutputTypeCountCreatedActorsArgs<ExtArgs extends runtime.Ty
   where?: Prisma.ActorWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountReviewReportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReviewReportWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountUsageEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UsageEventWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountAdminActionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AdminAuditLogWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2586,6 +3422,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   password?: boolean
   fullName?: boolean
   role?: boolean
+  blockedAt?: boolean
+  blockedReason?: boolean
   tags?: boolean
   avatarUrl?: boolean
   avatarThumbnailUrl?: boolean
@@ -2606,6 +3444,9 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   feedbacks?: boolean | Prisma.User$feedbacksArgs<ExtArgs>
   createdMovies?: boolean | Prisma.User$createdMoviesArgs<ExtArgs>
   createdActors?: boolean | Prisma.User$createdActorsArgs<ExtArgs>
+  reviewReports?: boolean | Prisma.User$reviewReportsArgs<ExtArgs>
+  usageEvents?: boolean | Prisma.User$usageEventsArgs<ExtArgs>
+  adminActions?: boolean | Prisma.User$adminActionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -2615,6 +3456,8 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   password?: boolean
   fullName?: boolean
   role?: boolean
+  blockedAt?: boolean
+  blockedReason?: boolean
   tags?: boolean
   avatarUrl?: boolean
   avatarThumbnailUrl?: boolean
@@ -2630,6 +3473,8 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   password?: boolean
   fullName?: boolean
   role?: boolean
+  blockedAt?: boolean
+  blockedReason?: boolean
   tags?: boolean
   avatarUrl?: boolean
   avatarThumbnailUrl?: boolean
@@ -2645,6 +3490,8 @@ export type UserSelectScalar = {
   password?: boolean
   fullName?: boolean
   role?: boolean
+  blockedAt?: boolean
+  blockedReason?: boolean
   tags?: boolean
   avatarUrl?: boolean
   avatarThumbnailUrl?: boolean
@@ -2653,7 +3500,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "fullName" | "role" | "tags" | "avatarUrl" | "avatarThumbnailUrl" | "avatarAssetId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "fullName" | "role" | "blockedAt" | "blockedReason" | "tags" | "avatarUrl" | "avatarThumbnailUrl" | "avatarAssetId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   avatarAsset?: boolean | Prisma.User$avatarAssetArgs<ExtArgs>
   uploadedMedia?: boolean | Prisma.User$uploadedMediaArgs<ExtArgs>
@@ -2669,6 +3516,9 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   feedbacks?: boolean | Prisma.User$feedbacksArgs<ExtArgs>
   createdMovies?: boolean | Prisma.User$createdMoviesArgs<ExtArgs>
   createdActors?: boolean | Prisma.User$createdActorsArgs<ExtArgs>
+  reviewReports?: boolean | Prisma.User$reviewReportsArgs<ExtArgs>
+  usageEvents?: boolean | Prisma.User$usageEventsArgs<ExtArgs>
+  adminActions?: boolean | Prisma.User$adminActionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2695,6 +3545,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     feedbacks: Prisma.$FeedbackPayload<ExtArgs>[]
     createdMovies: Prisma.$MoviePayload<ExtArgs>[]
     createdActors: Prisma.$ActorPayload<ExtArgs>[]
+    reviewReports: Prisma.$ReviewReportPayload<ExtArgs>[]
+    usageEvents: Prisma.$UsageEventPayload<ExtArgs>[]
+    adminActions: Prisma.$AdminAuditLogPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2702,6 +3555,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     password: string
     fullName: string
     role: $Enums.UserRole
+    blockedAt: Date | null
+    blockedReason: string | null
     tags: $Enums.Genre | null
     avatarUrl: string | null
     avatarThumbnailUrl: string | null
@@ -3116,6 +3971,9 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   feedbacks<T extends Prisma.User$feedbacksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$feedbacksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FeedbackPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   createdMovies<T extends Prisma.User$createdMoviesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdMoviesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MoviePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   createdActors<T extends Prisma.User$createdActorsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdActorsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ActorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reviewReports<T extends Prisma.User$reviewReportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reviewReportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  usageEvents<T extends Prisma.User$usageEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$usageEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UsageEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  adminActions<T extends Prisma.User$adminActionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$adminActionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AdminAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3150,6 +4008,8 @@ export interface UserFieldRefs {
   readonly password: Prisma.FieldRef<"User", 'String'>
   readonly fullName: Prisma.FieldRef<"User", 'String'>
   readonly role: Prisma.FieldRef<"User", 'UserRole'>
+  readonly blockedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly blockedReason: Prisma.FieldRef<"User", 'String'>
   readonly tags: Prisma.FieldRef<"User", 'Genre'>
   readonly avatarUrl: Prisma.FieldRef<"User", 'String'>
   readonly avatarThumbnailUrl: Prisma.FieldRef<"User", 'String'>
@@ -3880,6 +4740,78 @@ export type User$createdActorsArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.ActorScalarFieldEnum | Prisma.ActorScalarFieldEnum[]
+}
+
+/**
+ * User.reviewReports
+ */
+export type User$reviewReportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ReviewReport
+   */
+  select?: Prisma.ReviewReportSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ReviewReport
+   */
+  omit?: Prisma.ReviewReportOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReviewReportInclude<ExtArgs> | null
+  where?: Prisma.ReviewReportWhereInput
+  orderBy?: Prisma.ReviewReportOrderByWithRelationInput | Prisma.ReviewReportOrderByWithRelationInput[]
+  cursor?: Prisma.ReviewReportWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReviewReportScalarFieldEnum | Prisma.ReviewReportScalarFieldEnum[]
+}
+
+/**
+ * User.usageEvents
+ */
+export type User$usageEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UsageEvent
+   */
+  select?: Prisma.UsageEventSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UsageEvent
+   */
+  omit?: Prisma.UsageEventOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UsageEventInclude<ExtArgs> | null
+  where?: Prisma.UsageEventWhereInput
+  orderBy?: Prisma.UsageEventOrderByWithRelationInput | Prisma.UsageEventOrderByWithRelationInput[]
+  cursor?: Prisma.UsageEventWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UsageEventScalarFieldEnum | Prisma.UsageEventScalarFieldEnum[]
+}
+
+/**
+ * User.adminActions
+ */
+export type User$adminActionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AdminAuditLog
+   */
+  select?: Prisma.AdminAuditLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AdminAuditLog
+   */
+  omit?: Prisma.AdminAuditLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AdminAuditLogInclude<ExtArgs> | null
+  where?: Prisma.AdminAuditLogWhereInput
+  orderBy?: Prisma.AdminAuditLogOrderByWithRelationInput | Prisma.AdminAuditLogOrderByWithRelationInput[]
+  cursor?: Prisma.AdminAuditLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AdminAuditLogScalarFieldEnum | Prisma.AdminAuditLogScalarFieldEnum[]
 }
 
 /**

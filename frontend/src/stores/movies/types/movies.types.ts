@@ -122,6 +122,8 @@ export interface UserMovie {
 }
 
 export interface Review {
+  hiddenAt?: string | null;
+  moderationReason?: string | null;
   id: string;
   text: string;
   rate: number;

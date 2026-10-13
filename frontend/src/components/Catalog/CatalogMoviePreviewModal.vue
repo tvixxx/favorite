@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import axios from "axios";
-import { message } from "ant-design-vue";
+import { Menu as AMenu, MenuItem as AMenuItem, message } from "ant-design-vue";
 
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
+import ReportReviewModal from "@/components/Reviews/ReportReviewModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import DetailSkeleton from "@/components/Skeleton/DetailSkeleton.vue";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
@@ -22,6 +23,13 @@ const modelValue = defineModel<boolean>({ required: true });
 
 // После добавления тайтла футер меняется на отметку + переход на полную страницу
 const isAdded = ref(false);
+const reportOpen = ref(false);
+const reportedId = ref("");
+
+function report(id: string): void {
+  reportedId.value = id;
+  reportOpen.value = true;
+}
 
 const props = defineProps<{
   movieId: string | null;
@@ -57,6 +65,7 @@ const hasActors = computed(() => !!movie.value?.actors?.length);
 watch(
   () => [modelValue.value, props.movieId] as const,
   async ([open, id]) => {
+    reportOpen.value = false;
     if (!open || !id) {
       return;
     }
@@ -319,6 +328,10 @@ function openFullPage(): void {
                 <span class="catalog-preview__review-rate"
                   >{{ rev.rate }}/10</span
                 >
+                <a-dropdown v-if="userId && rev.userId !== userId" :trigger="['click']">
+                  <a-button type="text" aria-label="Действия с отзывом"><BaseIcon name="ph:dots-three" :width="24" :height="24" /></a-button>
+                  <template #overlay><a-menu><a-menu-item key="report" @click="report(rev.id)">Пожаловаться</a-menu-item></a-menu></template>
+                </a-dropdown>
               </div>
               <p class="catalog-preview__review-text">{{ rev.text }}</p>
             </article>
@@ -356,6 +369,7 @@ function openFullPage(): void {
       </a-button>
     </template>
   </BaseModal>
+  <ReportReviewModal v-model="reportOpen" :review-id="reportedId" />
 </template>
 
 <style scoped lang="scss">

@@ -24,6 +24,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiTags,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { MoviesStatsResponse } from './dto/movies-stats.dto';
 import { ReviewResponse } from '../review/dto/review.dto';
@@ -43,6 +44,48 @@ import {
 @Controller('movies')
 export class MovieController {
   constructor(private readonly movieService: MovieService) {}
+
+  @ApiOperation({ summary: 'Страница каталога с поиском и фильтрами' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Размер порции от 1 до 100, по умолчанию 20',
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'Смещение от 0 до 1000000, по умолчанию 0',
+  })
+  @ApiOkResponse({
+    description:
+      'items — фильмы, total — число совпадений, limit и offset — параметры порции',
+  })
+  @Get('page')
+  public findPage(
+    @Query('q') query?: unknown,
+    @Query('genres') genres?: string | string[],
+    @Query('countryCode') countryCode?: string | string[],
+    @Query('publishDateFrom') publishDateFrom?: string,
+    @Query('publishDateTo') publishDateTo?: string,
+    @Query('actorIds') actorIds?: string | string[],
+    @Query('limit') limit?: unknown,
+    @Query('offset') offset?: unknown,
+  ): ReturnType<MovieService['findPage']> {
+    return this.movieService.findPage(
+      {
+        genres: parseGenreFilters(genres),
+        countryCodes: parseCountryFilters(countryCode),
+        publishDateFrom: queryDate(publishDateFrom, 'publishDateFrom'),
+        publishDateTo: queryDate(publishDateTo, 'publishDateTo'),
+        actorIds: parseCsvOrRepeated(actorIds),
+      },
+      queryString(query, 'q'),
+      queryInteger(limit, 'limit', 20, 1, 100),
+      queryInteger(offset, 'offset', 0, 0, 1_000_000),
+    );
+  }
 
   @ApiOperation({
     summary: 'Получить список фильмов',

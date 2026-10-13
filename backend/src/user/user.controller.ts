@@ -122,7 +122,7 @@ export class UserController {
   @Delete(':id')
   @ApiOperation({ summary: 'Удалить пользователя (только ADMIN)' })
   @ApiForbiddenResponse()
-  public delete(@Param('id') id: string) {
-    return this.userService.delete(id);
+  public delete(@Param('id') id: string, @Authorized() user: User) {
+    return this.userService.delete(id, user.id);
   }
 }

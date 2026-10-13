@@ -17,6 +17,12 @@ import {
 
 const routes: Array<RouteRecordRaw> = [
   {
+    path: "/admin",
+    name: "admin",
+    component: () => import("@/views/pages/AdminPage.vue"),
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
+  {
     path: "/",
     redirect: "/library/collection",
   },
@@ -213,6 +219,12 @@ router.beforeEach(async (to, _, next) => {
 
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
   const guestOnly = to.matched.some((record) => record.meta.guest);
+
+  if (to.matched.some((record) => record.meta.requiresAdmin) && store.isLoggedIn && store.userData?.role !== "ADMIN") {
+    next("/library/collection");
+
+    return;
+  }
 
   if (requiresAuth && !store.isLoggedIn) {
     next("/login");

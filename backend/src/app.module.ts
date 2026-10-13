@@ -29,6 +29,7 @@ import { HttpThrottlerGuard } from './common/guards/http-throttler.guard';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { MediaModule } from './media/media.module';
 import { HealthController } from './health/health.controller';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { HealthController } from './health/health.controller';
     NotificationModule,
     FeedbackModule,
     MediaModule,
+    AdminModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

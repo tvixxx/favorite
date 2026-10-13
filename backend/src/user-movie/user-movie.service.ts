@@ -311,7 +311,7 @@ export class UserMovieService {
     const [userMovie, avg] = await Promise.all([
       query,
       prisma.review.aggregate({
-        where: { movieId },
+        where: { movieId, hiddenAt: null },
         _avg: { rate: true },
       }),
     ]);
@@ -691,7 +691,7 @@ export class UserMovieService {
       }
 
       const avg = await tx.review.aggregate({
-        where: { movieId },
+        where: { movieId, hiddenAt: null },
         _avg: { rate: true },
       });
 

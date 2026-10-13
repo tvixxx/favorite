@@ -71,6 +71,7 @@ export class AuthService {
       select: {
         id: true,
         password: true,
+        blockedAt: true,
       },
     });
 
@@ -84,6 +85,10 @@ export class AuthService {
 
     if (!isValidPassword) {
       throw new NotFoundException('Неверная почта или пароль');
+    }
+
+    if (user.blockedAt) {
+      throw new UnauthorizedException('Доступ к аккаунту ограничен');
     }
 
     return this.auth(res, user.id);
@@ -117,11 +122,16 @@ export class AuthService {
         where: { id: payload.id },
         select: {
           id: true,
+          blockedAt: true,
         },
       });
 
       if (!user) {
         throw new NotFoundException('Пользователь не найден');
+      }
+
+      if (user.blockedAt) {
+        throw new UnauthorizedException('Доступ к аккаунту ограничен');
       }
 
       return this.auth(res, user.id);
@@ -142,6 +152,7 @@ export class AuthService {
         email: true,
         fullName: true,
         role: true,
+        blockedAt: true,
         tags: true,
         avatarUrl: true,
         avatarThumbnailUrl: true,
@@ -153,6 +164,10 @@ export class AuthService {
 
     if (!user) {
       throw new NotFoundException('Пользователь не найден');
+    }
+
+    if (user.blockedAt) {
+      throw new UnauthorizedException('Доступ к аккаунту ограничен');
     }
 
     return user;

@@ -436,6 +436,10 @@ const handleMarkAllRead = async () => {
                 <BaseIcon name="ph:user" :width="18" :height="18" />
                 <span>Профиль</span>
               </button>
+              <button v-if="store.userData?.role === 'ADMIN'" class="acctmenu__item" @click="goTo('/admin')">
+                <BaseIcon name="ph:shield-check" :width="18" :height="18" />
+                <span>Администрирование</span>
+              </button>
               <button class="acctmenu__item" @click="startOnboarding">
                 <BaseIcon name="ph:question" :width="18" :height="18" />
                 <span>Помощь и онбординг</span>

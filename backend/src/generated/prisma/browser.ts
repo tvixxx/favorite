@@ -88,3 +88,18 @@ export type Notification = Prisma.NotificationModel
  * Читается администратором через GET /feedback.
  */
 export type Feedback = Prisma.FeedbackModel
+/**
+ * Model ReviewReport
+ * 
+ */
+export type ReviewReport = Prisma.ReviewReportModel
+/**
+ * Model AdminAuditLog
+ * 
+ */
+export type AdminAuditLog = Prisma.AdminAuditLogModel
+/**
+ * Model UsageEvent
+ * 
+ */
+export type UsageEvent = Prisma.UsageEventModel

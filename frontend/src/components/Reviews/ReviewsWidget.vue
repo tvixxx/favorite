@@ -11,6 +11,7 @@ import type { Review } from "@/stores";
 import { message } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { useMainStore } from "@/state/state";
+import ReportReviewModal from "./ReportReviewModal.vue";
 
 const { movieId } = defineProps<{ movieId: string }>();
 const emit = defineEmits<{ changed: [] }>();
@@ -29,6 +30,13 @@ const editingReview = ref<Review | null>(null);
 const isEditing = ref(false);
 const isSaving = ref(false);
 const deletingIds = ref(new Set<string>());
+const reportOpen = ref(false);
+const reportedId = ref("");
+
+function report(id: string): void {
+  reportedId.value = id;
+  reportOpen.value = true;
+}
 
 type ReviewFormExpose = { resetForm: () => void };
 const reviewFormRef = ref<ReviewFormExpose | null>(null);
@@ -65,6 +73,7 @@ watch(
     }
 
     editingReview.value = null;
+    reportOpen.value = false;
     isEditing.value = false;
     try {
       await fetchReviews(id, 10, isLoggedIn.value);
@@ -196,10 +205,12 @@ const handleDelete = async (reviewId: string) => {
           :key="review.id"
           :review="review"
           :can-edit="canEditReview(review)"
+          :can-report="isLoggedIn && !canEditReview(review) && !review.hiddenAt"
           :is-editing="editingReview?.id === review.id"
           :busy="isSaving || deletingIds.has(review.id)"
           @edit="startEdit(review)"
           @delete="handleDelete(review.id)"
+          @report="report"
         />
       </div>
 
@@ -250,6 +261,7 @@ const handleDelete = async (reviewId: string) => {
       </template>
     </div>
   </section>
+  <ReportReviewModal v-model="reportOpen" :review-id="reportedId" />
 </template>
 
 <style scoped lang="scss">
