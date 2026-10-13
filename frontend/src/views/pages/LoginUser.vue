@@ -57,6 +57,7 @@ const mode = ref<AuthMode>("login");
 </template>
 
 <style lang="scss">
+@use "../../styles/media" as *;
 .auth-page {
   display: flex;
   align-items: center;
@@ -109,7 +110,7 @@ const mode = ref<AuthMode>("login");
     background: var(--fv-color-bg-primary);
     box-shadow: var(--fv-shadow-low);
 
-    @media (max-width: 480px) {
+    @include mediaMax(480px) {
       padding: 22px;
     }
   }
@@ -208,7 +209,7 @@ const mode = ref<AuthMode>("login");
 
 /* Мобильный макет эталона: белый экран без карточки, крупная app-иконка,
    лейблы над полями */
-@media (max-width: 767.98px) {
+@include mediaMax($tablet - 0.02px) {
   .auth-page {
     align-items: center;
     padding: 24px;

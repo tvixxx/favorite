@@ -413,7 +413,7 @@ const submit = async (): Promise<void> => {
   gap: 22px;
   align-items: start;
 
-  @media (max-width: 900px) {
+  @include mediaMax(900px) {
     grid-template-columns: 1fr;
   }
 }
@@ -513,7 +513,7 @@ const submit = async (): Promise<void> => {
     color: var(--fv-color-text-primary);
   }
 
-  @media (max-width: 767.98px) {
+  @include mediaMax($tablet - 0.02px) {
     padding: 12px 6px;
     font-size: 12px;
   }
@@ -610,7 +610,7 @@ const submit = async (): Promise<void> => {
   }
 }
 
-@media (max-width: 767.98px) {
+@include mediaMax($tablet - 0.02px) {
   // Место под закреплённую кнопку
   .feedback-page__content {
     padding-bottom: 96px;

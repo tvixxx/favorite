@@ -13,6 +13,7 @@ import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { useMainStore } from "@/state/state";
 
 const { movieId } = defineProps<{ movieId: string }>();
+const emit = defineEmits<{ changed: [] }>();
 
 const mainStore = useMainStore();
 const currentUserId = computed(() => mainStore.userData?.id ?? null);
@@ -113,6 +114,8 @@ const handleSubmit = async (text: string, rate: number) => {
       message.success("Отзыв добавлен");
       reviewFormRef.value?.resetForm();
     }
+
+    emit("changed");
   } catch (error) {
     showErrorRequest(error);
   } finally {
@@ -126,8 +129,15 @@ const handleDelete = async (reviewId: string) => {
   }
 
   deletingIds.value.add(reviewId);
+  const submittedMovieId = movieId;
+
   try {
     await deleteReview(reviewId);
+    if (movieId !== submittedMovieId) {
+      return;
+    }
+
+    emit("changed");
     message.success("Отзыв удалён");
 
     if (editingReview.value?.id === reviewId) {

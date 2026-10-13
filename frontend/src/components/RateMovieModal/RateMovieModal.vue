@@ -152,6 +152,10 @@ const save = async (): Promise<void> => {
 <style lang="scss">
 /* Не scoped: содержимое BaseModal телепортируется в body */
 .rate-modal {
+  .modal__footer {
+    flex-wrap: wrap;
+  }
+
   // Пропорции кнопок футера как в эталоне
   .modal__footer .ant-btn {
     flex: 2;

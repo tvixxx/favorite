@@ -544,6 +544,7 @@ const handleMarkAllRead = async () => {
 </template>
 
 <style lang="scss">
+@use "../../styles/media" as *;
 @use "@/styles/scrollbar" as *;
 
 .topbar {
@@ -1008,8 +1009,8 @@ const handleMarkAllRead = async () => {
   }
 }
 
-@media (max-width: 768px) {
-  .topbar {
+@include mediaMax($tablet) {
+  .topbar__inner {
     gap: 12px;
   }
 

@@ -1200,7 +1200,7 @@ const addMovieToList = async (listId: string) => {
                     <BaseIcon name="ph:eye" :width="18" :height="18" />
                     Добавлено
                   </span>
-                  <b class="detail-info__value">
+                  <b class="detail-info__value detail-info__value--date">
                     {{ formatDate(currentUserMovie.addedAt) }}
                   </b>
                 </div>
@@ -1424,7 +1424,7 @@ const addMovieToList = async (listId: string) => {
                 v-if="currentMovieId"
                 class="movie-detail__review-widget review-widget"
               >
-                <ReviewsWidget :movie-id="currentMovieId" />
+                <ReviewsWidget :movie-id="currentMovieId" @changed="loadDetail" />
               </div>
             </div>
             <!-- /Отзывы -->
@@ -1432,7 +1432,7 @@ const addMovieToList = async (listId: string) => {
             <!-- «Похожее» — последний блок страницы (эталон); на мобилке живёт в «Обзоре» -->
             <div
               v-if="similarMovies.length && showTab('overview')"
-              class="detail-section"
+              class="detail-section detail-section--similar"
             >
               <h2 class="detail-section__title">
                 <BaseIcon name="ph:squares-four" :width="22" :height="22" />
@@ -1906,7 +1906,7 @@ const addMovieToList = async (listId: string) => {
   gap: 22px;
   align-items: start;
 
-  @media (max-width: 1080px) {
+  @include mediaMax(1080px) {
     grid-template-columns: 1fr;
   }
 }
@@ -1929,7 +1929,7 @@ const addMovieToList = async (listId: string) => {
   margin: -8px;
   @include customScrollbar();
 
-  @media (max-width: 1080px) {
+  @include mediaMax(1080px) {
     position: static;
     order: -1;
     max-height: none;
@@ -1954,7 +1954,7 @@ const addMovieToList = async (listId: string) => {
     align-items: start;
     margin-bottom: 18px;
 
-    @media (max-width: 1080px) {
+    @include mediaMax(1080px) {
       grid-template-columns: 150px 1fr;
       grid-template-areas: "poster info" "poster rates";
       gap: 10px 22px;
@@ -2053,7 +2053,7 @@ const addMovieToList = async (listId: string) => {
         content: none;
       }
 
-      @media (max-width: 1080px) {
+      @include mediaMax(1080px) {
         flex-basis: auto;
 
         &.detail-panel__meta-item::before {
@@ -3022,7 +3022,7 @@ const addMovieToList = async (listId: string) => {
     gap: 14px;
     margin-top: 2px;
 
-    @media (max-width: 640px) {
+    @include mediaMax(640px) {
       grid-template-columns: 1fr;
     }
   }
@@ -3117,7 +3117,7 @@ const addMovieToList = async (listId: string) => {
     }
   }
 
-  @media (max-width: 640px) {
+  @include mediaMax(640px) {
     &__status-row {
       flex-direction: column;
       align-items: flex-start;
@@ -3126,7 +3126,7 @@ const addMovieToList = async (listId: string) => {
   }
 }
 /* Мобильные переопределения — в конце файла, чтобы перебивать базовые правила */
-@media (max-width: 767.98px) {
+@include mediaMax($tablet - 0.02px) {
   .movie-detail__content {
     padding-top: 0;
     padding-bottom: 96px;
@@ -3135,6 +3135,34 @@ const addMovieToList = async (listId: string) => {
   .detail-crumbs,
   .detail-side {
     display: none;
+  }
+
+  .detail-info {
+    font-size: 14px;
+    line-height: 1.5;
+
+    &__label svg {
+      flex-shrink: 0;
+    }
+
+    &__value {
+      font-weight: 600;
+    }
+
+    &__value--date {
+      font-size: 13px;
+      font-weight: 500;
+    }
+  }
+
+  .detail-section--similar .detail-section__title {
+    align-items: flex-start;
+    font-size: 1.125rem;
+    line-height: 1.35;
+
+    svg {
+      flex-shrink: 0;
+    }
   }
 
   .actors-grid {

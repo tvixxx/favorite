@@ -132,6 +132,10 @@ const formRef = ref<FormInstance | null>(null);
 
 watch(posterSelection, (selection) => {
   formData.imageUrl = selection?.url ?? "";
+
+  if (formData.imageUrl) {
+    formRef.value?.clearValidate(["imageUrl"]);
+  }
 });
 
 const countrySelectOptions: SelectProps["options"] = PRODUCTION_COUNTRIES.map(
@@ -648,7 +652,7 @@ const addNewMovie = async () => {
     }
 
     // 320–400px: карточке нужен более скромный паддинг, иначе полям тесно
-    @media (max-width: 400px) {
+    @include mediaMax(400px) {
       padding: 16px;
     }
 
@@ -711,7 +715,7 @@ const addNewMovie = async () => {
   grid-template-columns: 1fr;
   gap: 0 16px;
 
-  @media (min-width: 520px) {
+  @include mediaMin(520px) {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -731,7 +735,7 @@ const addNewMovie = async () => {
   height: 36px;
   padding: 0 16px;
 
-  @media (max-width: 400px) {
+  @include mediaMax(400px) {
     height: 32px;
     padding: 0 12px;
     font-size: 13px;
@@ -789,7 +793,7 @@ const addNewMovie = async () => {
   order: -1; // на мобиле превью сверху
   margin-bottom: 8px;
 
-  @media (max-width: 400px) {
+  @include mediaMax(400px) {
     gap: 12px;
   }
 
@@ -813,7 +817,7 @@ const addNewMovie = async () => {
   aspect-ratio: 2 / 3;
   width: 96px; // компактный постер на мобиле (эталон)
 
-  @media (max-width: 400px) {
+  @include mediaMax(400px) {
     width: 84px;
   }
   border-radius: var(--fv-radius-md);
@@ -913,7 +917,7 @@ const addNewMovie = async () => {
   font-size: 22px;
   color: var(--fv-color-warning, #fac031);
 
-  @media (max-width: 400px) {
+  @include mediaMax(400px) {
     font-size: 17px;
   }
 

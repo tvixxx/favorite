@@ -379,7 +379,7 @@ function openFullPage(): void {
 }
 
 // На мобиле CTA во всю ширину 52px (эталон)
-@media (max-width: 767.98px) {
+@include mediaMax($tablet - 0.02px) {
   .catalog-preview__cta {
     width: 100%;
     height: 52px;
@@ -395,7 +395,7 @@ function openFullPage(): void {
   overflow: hidden;
 
   // Эталон: ≤900px hero в одну колонку, постер сверху пропорцией 16/9
-  @media (max-width: 900px) {
+  @include mediaMax(900px) {
     grid-template-columns: 1fr;
   }
 }
@@ -405,7 +405,7 @@ function openFullPage(): void {
   overflow: hidden;
   background: var(--fv-color-bg-secondary);
 
-  @media (max-width: 900px) {
+  @include mediaMax(900px) {
     aspect-ratio: 16 / 9;
   }
 }
@@ -424,7 +424,7 @@ function openFullPage(): void {
   display: flex;
   flex-direction: column;
 
-  @media (max-width: 900px) {
+  @include mediaMax(900px) {
     padding: 14px 16px;
   }
 }
@@ -436,7 +436,7 @@ function openFullPage(): void {
   line-height: 1.25;
   color: var(--fv-color-link);
 
-  @media (max-width: 900px) {
+  @include mediaMax(900px) {
     font-size: 20px;
   }
 }

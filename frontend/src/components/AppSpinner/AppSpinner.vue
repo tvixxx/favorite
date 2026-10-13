@@ -20,6 +20,7 @@ const { size = 20, onDark = false } = defineProps<Props>();
 </template>
 
 <style scoped lang="scss">
+@use "../../styles/media" as *;
 /* Точечный спиннер (эталон): трек grey + дуга text-primary */
 .app-spinner {
   display: inline-block;
@@ -41,7 +42,7 @@ const { size = 20, onDark = false } = defineProps<Props>();
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@include mediaReducedMotion {
   .app-spinner {
     animation-duration: 1.4s;
   }

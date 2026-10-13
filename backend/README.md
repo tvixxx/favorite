@@ -1,6 +1,6 @@
 # FavouriteApp API
 
-NestJS 11, Prisma 7.3, PostgreSQL 18 и Socket.IO. Требуются Node 22 и Yarn Classic 1.22.22. Зависимости закреплены в `yarn.lock`, проект использует публичный npm registry.
+NestJS 11, Prisma 7.10, PostgreSQL 18 и Socket.IO. Требуются Node 22 и Yarn Classic 1.22.22. Зависимости закреплены в `yarn.lock`, проект использует публичный npm registry.
 
 ## Локальный запуск
 

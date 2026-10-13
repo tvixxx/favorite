@@ -179,7 +179,7 @@ export type ActorGroupByOutputType = {
   _max: ActorMaxAggregateOutputType | null
 }
 
-type GetActorGroupByPayload<T extends ActorGroupByArgs> = Prisma.PrismaPromise<
+export type GetActorGroupByPayload<T extends ActorGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<ActorGroupByOutputType, T['by']> &
       {
@@ -1494,6 +1494,11 @@ export type ActorFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Skip the first `n` Actors.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Actors.
+   */
   distinct?: Prisma.ActorScalarFieldEnum | Prisma.ActorScalarFieldEnum[]
 }
 

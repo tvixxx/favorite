@@ -59,6 +59,7 @@ const onSegmentChange = (value: string | number): void => {
 </template>
 
 <style lang="scss" scoped>
+@use "../../styles/media" as *;
 @use "@/styles/layout" as *;
 
 .leaderboard-app-layout {
@@ -78,7 +79,7 @@ const onSegmentChange = (value: string | number): void => {
 
   // Мобильный эталон «Топа»: без карточки и кубка — eyebrow, заголовок и сегмент
   // лежат прямо на канве
-  @media (max-width: 640px) {
+  @include mediaMax(640px) {
     :deep(.hero-header__card) {
       padding: 0;
       background: none;

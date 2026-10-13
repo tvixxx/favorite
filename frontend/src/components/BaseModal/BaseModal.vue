@@ -300,6 +300,7 @@ const handleConfirm = () => {
 </template>
 
 <style lang="scss">
+@use "../../styles/media" as *;
 @use "@/styles/scrollbar" as *;
 
 .modal-backdrop {
@@ -650,7 +651,7 @@ const handleConfirm = () => {
 /* Ниже боевых правил и с той же специфичностью — иначе анимация не отключится.
    `animation: none` на скриме заодно снимает ожидание: Vue не находит ни transition,
    ни animation и убирает узел сразу, не задерживая снятие лока скролла */
-@media (prefers-reduced-motion: reduce) {
+@include mediaReducedMotion {
   .modal-enter-active,
   .modal-leave-active,
   .modal-enter-active .modal:not(.modal--sheet),

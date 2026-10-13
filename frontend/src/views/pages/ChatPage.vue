@@ -430,6 +430,7 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
+@use "../../styles/media" as *;
 @use "@/styles/scrollbar" as *;
 
 .chat-page-shell {
@@ -671,7 +672,7 @@ onMounted(async () => {
 }
 
 // Мобайл: одна панель за раз (список ИЛИ переписка) — иначе 2 колонки не влезают
-@media (max-width: 768px) {
+@include mediaMax($tablet) {
   .chat-page-shell {
     // высота с учётом верхней шапки + нижнего таб-бара; отступы — как на Друзьях
     height: calc(100dvh - 128px);
