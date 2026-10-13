@@ -37,7 +37,7 @@ describe('Multipart изображения', () => {
         transform: true,
       }),
     );
-    await app.init();
+    await app.listen(0, '127.0.0.1');
 
     try {
       await request(app.getHttpServer() as Server)

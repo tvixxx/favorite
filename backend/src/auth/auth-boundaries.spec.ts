@@ -62,7 +62,8 @@ describe('HTTP границы авторизации и приватных до�
       .compile();
 
     app = module.createNestApplication();
-    await app.init();
+    // Supertest обращается к IPv4, поэтому сервер тоже явно занимает IPv4 loopback.
+    await app.listen(0, '127.0.0.1');
   });
 
   afterEach(async () => {

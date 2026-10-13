@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
@@ -24,6 +25,9 @@ export class CreateFeedbackDto {
     example: 'Не хватает импорта коллекции из файла',
   })
   @IsString()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @Length(10, 1000)
   @Matches(/\S/)
   message: string;

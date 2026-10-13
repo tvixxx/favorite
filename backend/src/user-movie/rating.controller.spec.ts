@@ -85,7 +85,7 @@ describe('Атомарное сохранение оценки и отзыва �
       .compile();
     app = module.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ transform: true }));
-    await app.init();
+    await app.listen(0, '127.0.0.1');
   });
   afterEach(async () => {
     await app.close();

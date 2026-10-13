@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -64,7 +65,7 @@ export class FeedbackController {
   @AdminOnly()
   @Patch(':id/status')
   public async updateStatus(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: UpdateFeedbackStatusDto,
     @Authorized() user: User,
   ) {

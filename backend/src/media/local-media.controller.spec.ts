@@ -27,7 +27,7 @@ describe('Раздача готового локального изображе�
     }).compile();
     const app = module.createNestApplication();
 
-    await app.init();
+    await app.listen(0, '127.0.0.1');
 
     try {
       const response = await request(app.getHttpServer() as Server)
