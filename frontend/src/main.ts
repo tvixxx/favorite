@@ -1,5 +1,4 @@
 import { createApp } from "vue";
-import { registerSW } from "virtual:pwa-register";
 import App from "./App.vue";
 import router from "./router";
 import {
@@ -18,8 +17,6 @@ import "./styles/forms.scss";
 import "./styles/scroll-lock.scss";
 import "./styles/feedback-overlays.scss";
 import { createPinia } from "pinia";
-
-registerSW({ immediate: true });
 
 const app = createApp(App);
 const pinia = createPinia();

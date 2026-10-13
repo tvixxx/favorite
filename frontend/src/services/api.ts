@@ -47,14 +47,22 @@ function isAuthMutation(config: InternalAxiosRequestConfig): boolean {
   return /\/auth\/(login|register|refresh|logout)\/?$/.test(path);
 }
 
-type SessionRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean; _authRevision?: number };
-let refreshRequest: { revision: number; promise: Promise<string> } | null = null;
+type SessionRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+  _authRevision?: number;
+};
+let refreshRequest: { revision: number; promise: Promise<string> } | null =
+  null;
 
 function getRefreshedAccessToken(revision: number): Promise<string> {
   if (!refreshRequest || refreshRequest.revision !== revision) {
     const store = useMainStore();
     const controller = new AbortController();
-    const stopWatching = watch(() => store.sessionRevision, () => controller.abort(), { flush: "sync" });
+    const stopWatching = watch(
+      () => store.sessionRevision,
+      () => controller.abort(),
+      { flush: "sync" }
+    );
     const request = (async () => {
       const { data } = await axios.post<AuthResponse>(
         AUTH_REFRESH_ENDPOINT,
@@ -66,7 +74,10 @@ function getRefreshedAccessToken(revision: number): Promise<string> {
         throw new Error("Refresh: empty access token");
       }
 
-      if (store.sessionRevision !== revision || !store.applyAccessToken(data.accessToken, revision)) {
+      if (
+        store.sessionRevision !== revision ||
+        !store.applyAccessToken(data.accessToken, revision)
+      ) {
         throw new Error("Сессия изменилась");
       }
 
@@ -83,6 +94,17 @@ function getRefreshedAccessToken(revision: number): Promise<string> {
 
 api.interceptors.request.use(
   (config) => {
+    const base = config.baseURL?.replace(/\/+$/, "");
+    const url = config.url ?? "";
+
+    if (
+      base?.startsWith("/") &&
+      !base.startsWith("//") &&
+      (url === base || url.startsWith(`${base}/`))
+    ) {
+      config.url = url.slice(base.length) || "/";
+    }
+
     const store = useMainStore();
     const sessionConfig = config as SessionRequestConfig;
     sessionConfig._authRevision ??= store.sessionRevision;
@@ -118,8 +140,10 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const revision = originalRequest._authRevision ?? useMainStore().sessionRevision;
-    if (revision !== useMainStore().sessionRevision) return Promise.reject(error);
+    const revision =
+      originalRequest._authRevision ?? useMainStore().sessionRevision;
+    if (revision !== useMainStore().sessionRevision)
+      return Promise.reject(error);
 
     if (originalRequest._retry) {
       forceLogoutAndRedirectToLogin();
@@ -131,13 +155,22 @@ api.interceptors.response.use(
 
     try {
       const newToken = await getRefreshedAccessToken(revision);
-      if (revision !== useMainStore().sessionRevision) return Promise.reject(error);
+      if (revision !== useMainStore().sessionRevision)
+        return Promise.reject(error);
       originalRequest.headers = originalRequest.headers ?? {};
       originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
       return api(originalRequest);
-    } catch {
-      if (revision === useMainStore().sessionRevision) forceLogoutAndRedirectToLogin();
+    } catch (refreshError) {
+      if (
+        isAxiosError(refreshError) &&
+        (!refreshError.response || refreshError.response.status >= 500)
+      ) {
+        return Promise.reject(refreshError);
+      }
+
+      if (revision === useMainStore().sessionRevision)
+        forceLogoutAndRedirectToLogin();
 
       return Promise.reject(error);
     }

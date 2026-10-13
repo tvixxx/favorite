@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { computed, onScopeDispose, ref } from "vue";
+import { isAxiosError } from "axios";
 import {
   AUTH_ME_ENDPOINT,
   AUTH_USER_ENDPOINT,
@@ -58,6 +59,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
   // Состояние копируем: DEFAULT_MAIN_STATE — общая константа, её нельзя мутировать
   const state = ref<State>(structuredClone(DEFAULT_MAIN_STATE));
   const sessionRevision = ref(0);
+  const authUnavailable = ref(false);
 
   /** Разделяемый запрос проверки сессии — чтобы не гонять `/auth/@me` дважды */
   let authRequest: Promise<void> | null = null;
@@ -182,7 +184,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
    * оказаться «залогиненным» с истёкшим токеном и увидеть шапку на /login.
    */
   async function fetchUser(): Promise<void> {
-    if (user.value.isAuthLoaded) {
+    if (user.value.isAuthLoaded && !authUnavailable.value) {
       return;
     }
 
@@ -207,12 +209,15 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     state.value.isFetchingUser = true;
 
     try {
-      const { data, status } =
-        await useFetch<UserProfileResponse>(AUTH_ME_ENDPOINT);
+      const { data, status } = await useFetch<UserProfileResponse>(
+        AUTH_ME_ENDPOINT
+      );
 
       if (requestRevision !== sessionRevision.value) {
         return;
       }
+
+      authUnavailable.value = false;
 
       if (isSuccessStatus(status)) {
         const userObj = profileData(data);
@@ -225,15 +230,18 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
         state.value.user.data = null;
         state.value.user.loggedIn = false;
       }
-    } catch {
+    } catch (error) {
       if (requestRevision !== sessionRevision.value) {
         return;
       }
 
+      authUnavailable.value =
+        isAxiosError(error) &&
+        (!error.response || error.response.status >= 500);
       userDataRaw.value = null;
       state.value.user.data = null;
       state.value.user.loggedIn = false;
-      throw new Error("Не удалось получить данные пользователя");
+      throw new Error("Не удалось получить данные пользователя", { cause: error });
     } finally {
       if (requestRevision === sessionRevision.value) {
         state.value.user.isAuthLoaded = true;
@@ -294,6 +302,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
   function clearAuthState(): void {
     sessionRevision.value++;
     authRequest = null;
+    authUnavailable.value = false;
     userDataRaw.value = null;
     accessToken.value = null;
     state.value.user.data = null;
@@ -353,6 +362,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     userDataRaw,
     accessToken,
     sessionRevision,
+    authUnavailable,
 
     updateDisplayName,
     updateProfile,

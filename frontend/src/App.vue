@@ -1,10 +1,13 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+import { useOnline } from "@vueuse/core";
 import NavigationLinks from "@/components/NavigationLinks/NavigationLinks.vue";
 import MobileTabBar from "@/components/MobileTabBar/MobileTabBar.vue";
 import OnboardingModal from "@/components/Onboarding/OnboardingModal.vue";
 import AppSpinner from "@/components/AppSpinner/AppSpinner.vue";
+import PwaStatus from "@/components/PwaStatus/PwaStatus.vue";
+import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import { useMainStore } from "@/state/state";
 import { ConfigProvider } from "ant-design-vue";
 import { themeConfig, useHotThemeKeys, useTheme } from "@/composable";
@@ -17,6 +20,37 @@ const chatStore = useChatStore();
 const notificationsStore = useNotificationsStore();
 
 const route = useRoute();
+const router = useRouter();
+const online = useOnline();
+
+async function retryAuth(): Promise<void> {
+  if (store.isFetchingUser) {
+    return;
+  }
+
+  try {
+    await store.fetchUser();
+    if (store.isLoggedIn) {
+      const target = route.query.redirect;
+
+      await router.replace(
+        typeof target === "string" &&
+          target.startsWith("/") &&
+          !target.startsWith("//")
+          ? target
+          : "/library/collection"
+      );
+    }
+  } catch {
+    // Экран повторной попытки остаётся видимым, данные форм не перезагружаем.
+  }
+}
+
+watch(online, (connected) => {
+  if (connected && store.authUnavailable) {
+    void retryAuth();
+  }
+});
 
 const isAuthLoaded = computed(() => store.user.isAuthLoaded);
 
@@ -90,6 +124,7 @@ useHotThemeKeys();
   <ConfigProvider :theme="themeConfig">
     <NavigationLinks v-if="showNavMenu" />
     <MobileTabBar v-if="showNavMenu && !hideMobileTabBar" />
+    <PwaStatus />
 
     <OnboardingModal
       v-if="store.userData?.id"
@@ -97,7 +132,21 @@ useHotThemeKeys();
       :user-id="store.userData.id"
     />
 
-    <Suspense>
+    <StateBlock
+      v-if="store.authUnavailable"
+      variant="error"
+      icon="ph:wifi-slash"
+      title="Не удалось подключиться"
+      description="Проверьте соединение и повторите загрузку. Проверим вход, когда сервер станет доступен."
+      :actions="[
+        {
+          label: 'Повторить',
+          onClick: retryAuth,
+          loading: store.isFetchingUser,
+        },
+      ]"
+    />
+    <Suspense v-else>
       <router-view />
       <template #fallback>
         <div class="app-suspense-fallback">

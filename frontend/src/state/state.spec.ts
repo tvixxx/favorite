@@ -6,6 +6,7 @@ import {
 } from "pinia";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useMainStore } from "./state";
+import { AxiosError } from "axios";
 
 const mocks = vi.hoisted(() => ({ fetch: vi.fn(), reset: vi.fn() }));
 
@@ -71,6 +72,36 @@ describe("Жизненный цикл авторизации", () => {
     expect(store.isLoggedIn).toBe(false);
     expect(store.userData).toBeNull();
     expect(store.accessToken).toBeNull();
+  });
+
+  it("повторно проверяет сессию после сетевого сбоя, не доверяя кешированному профилю", async () => {
+    mocks.fetch.mockRejectedValueOnce(
+      new AxiosError("Network Error", "ERR_NETWORK")
+    );
+    mocks.fetch.mockResolvedValueOnce({ status: 200, data: profile });
+    const store = useMainStore();
+
+    store.userDataRaw = { ...profile, role: "ADMIN" };
+    store.applyAccessToken("fixture-access");
+    await expect(store.fetchUser()).rejects.toThrow();
+    expect(store.isLoggedIn).toBe(false);
+    await store.fetchUser();
+    expect(store.isLoggedIn).toBe(true);
+    expect(store.userData?.role).toBeUndefined();
+  });
+
+  it("не повторяет проверку отклонённой сессии как временную сетевую ошибку", async () => {
+    mocks.fetch.mockRejectedValueOnce(
+      new AxiosError("Unauthorized", "ERR_BAD_REQUEST", undefined, undefined, {
+        status: 401,
+      } as never)
+    );
+    const store = useMainStore();
+
+    await expect(store.fetchUser()).rejects.toThrow();
+    await store.fetchUser();
+    expect(store.isLoggedIn).toBe(false);
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
   });
 
   it("хранит профиль без второй копии токена и завершает загрузку авторизации", async () => {
