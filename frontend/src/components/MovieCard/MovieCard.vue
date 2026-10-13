@@ -127,6 +127,7 @@ const emit = defineEmits<{
 </template>
 
 <style lang="scss" scoped>
+@use "../../styles/media" as *;
 .movie-card {
   min-width: 0;
   cursor: pointer;
@@ -234,7 +235,7 @@ const emit = defineEmits<{
     }
   }
 
-  @media (hover: hover) {
+  @include mediaHover {
     &__action--delete {
       opacity: 0;
       pointer-events: none;

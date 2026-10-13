@@ -67,7 +67,9 @@ export class UserListController {
     description: 'Создает пользовательский список с опциональными метками',
   })
   @ApiOkResponse({ description: 'Список создан' })
-  @ApiConflictResponse({ description: 'Список с таким названием уже существует' })
+  @ApiConflictResponse({
+    description: 'Список с таким названием уже существует',
+  })
   @AuthProtected()
   @Post()
   public create(
@@ -86,7 +88,9 @@ export class UserListController {
   })
   @ApiOkResponse({ description: 'Список обновлен' })
   @ApiNotFoundResponse({ description: 'Список не найден' })
-  @ApiConflictResponse({ description: 'Список с таким названием уже существует' })
+  @ApiConflictResponse({
+    description: 'Список с таким названием уже существует',
+  })
   @AuthProtected()
   @Patch(':listId')
   public update(

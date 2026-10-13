@@ -1,7 +1,25 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Genre } from '../../generated/prisma/enums';
+import type { Actor } from '../../generated/prisma/client';
+
+export class MoviePosterResponse {
+  @ApiProperty({ description: 'Ссылка на постер' })
+  url: string;
+
+  @ApiProperty({ type: String, nullable: true })
+  thumbnailUrl: string | null;
+
+  @ApiProperty({ type: String, nullable: true, format: 'uuid' })
+  assetId: string | null;
+}
 
 export class MovieResponse {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ description: 'Нормализованное название для проверки дублей' })
+  titleNormalized: string;
+
   @ApiProperty({
     description: 'Название фильма',
     example: 'Титаник',
@@ -10,28 +28,16 @@ export class MovieResponse {
   title: string;
 
   @ApiProperty({
-    description: 'Дата просмотра',
-    example: '05.12.2024',
-    type: String,
-    nullable: true,
-  })
-  date?: string;
-
-  @ApiProperty({
     description: 'Дата выхода',
-    example: '1993',
+    example: '1993-01-01T00:00:00.000Z',
     type: String,
+    format: 'date-time',
     nullable: true,
   })
-  publishDate?: string;
+  publishDate: string | null;
 
-  @ApiProperty({
-    description: 'Ссылка на постер фильма',
-    example: 'https://example.com/',
-    type: String,
-    nullable: true,
-  })
-  imageUrl?: string;
+  @ApiProperty({ type: MoviePosterResponse, nullable: true })
+  poster: MoviePosterResponse | null;
 
   @ApiProperty({
     description: 'Описание фильма',
@@ -44,7 +50,6 @@ export class MovieResponse {
     description: 'ISO 3166-1 alpha-2 — страны производства',
     example: ['US', 'GB'],
     type: [String],
-    isArray: true,
   })
   countryCodes: string[];
 
@@ -57,33 +62,12 @@ export class MovieResponse {
   genres: Genre[];
 
   @ApiProperty({
-    description: 'Средний балл отзывов (по шкале 1–10)',
+    description: 'Средний балл отзывов (по шкале 0–10)',
     example: 8.4,
     nullable: true,
     type: Number,
   })
   averageRating: number | null;
-
-  @ApiProperty({
-    description: 'Рейтинг',
-    example: '7',
-    type: Number,
-  })
-  rate: number;
-
-  @ApiProperty({
-    description: 'Добавлен в избранное',
-    example: false,
-    type: Boolean,
-  })
-  isFavorite: boolean;
-
-  @ApiProperty({
-    description: 'Добавлен в посмотреть позже',
-    example: false,
-    type: Boolean,
-  })
-  seeLater: boolean;
 
   @ApiProperty({
     description: 'Признак сериала',
@@ -94,38 +78,41 @@ export class MovieResponse {
 
   @ApiProperty({
     description: 'Количество сезонов',
-    example: '1',
-    type: Number,
-  })
-  seasonCount: number;
-
-  @ApiProperty({
-    description: 'Количество эпизодов',
-    example: '5',
-    type: Number,
-  })
-  episodeCount: number;
-
-  @ApiProperty({
-    description: 'Текущий сезон просмотра',
-    example: 2,
+    example: 1,
     type: Number,
     nullable: true,
   })
-  currentSeason?: number;
+  seasonCount: number | null;
 
   @ApiProperty({
-    description: 'Текущий эпизод просмотра',
+    description: 'Количество эпизодов',
     example: 5,
     type: Number,
     nullable: true,
   })
-  currentEpisode?: number;
+  episodeCount: number | null;
 
-  @ApiProperty({
-    description: 'ID актеров',
-    example: ['dad213-dad21-d1213-dokojp2', 'dopdad1-1212dsx-cczcsq-d1221q'],
-    type: [String],
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  createdById: string | null;
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  posterId: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  updatedAt: string;
+
+  @ApiPropertyOptional({
+    type: [Object],
+    description: 'Актёры в детальном ответе и поиске',
   })
-  actorIds: string[];
+  actors?: Actor[];
+
+  @ApiPropertyOptional({
+    type: Object,
+    description: 'Число отзывов и актёров в каталоге',
+  })
+  _count?: { reviews: number; actors: number };
 }

@@ -5,10 +5,16 @@ import { FETCH_METHOD, useFetch } from "@/composable";
 import { isSuccessStatus } from "@/utils";
 import { ACTORS_ENDPOINT } from "@/constants";
 import { createRequestGuard } from "@/utils/requestGuard";
+import api from "@/services/api";
+import type { ImageSelection } from "@/services/media";
 
 export interface Actor {
   id: string;
   name: string;
+  createdById?: string | null;
+  imageUrl?: string | null;
+  imageThumbnailUrl?: string | null;
+  imageAssetId?: string | null;
 }
 
 export interface ActorsListResponse {
@@ -38,7 +44,9 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
 
   const isPageLoading = ref(false);
   const isPickerLoading = ref(false);
-  const isActorsLoading = computed(() => isPageLoading.value || isPickerLoading.value);
+  const isActorsLoading = computed(
+    () => isPageLoading.value || isPickerLoading.value
+  );
   const isActorsError = ref<string | null>(null);
   const isActorsLoaded = ref(false);
 
@@ -57,6 +65,7 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
     offset: number;
   }): string {
     const params = new URLSearchParams();
+
     params.set("limit", String(opts.limit));
     params.set("offset", String(opts.offset));
     if (opts.q?.trim()) {
@@ -86,6 +95,7 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
 
     const isCurrent = pageRequests.begin();
     const limit = Math.min(API_PAGE_LIMIT, Math.max(1, actorsPageSize.value));
+
     actorsPageSize.value = limit;
     const offset = (actorsPageCurrent.value - 1) * limit;
 
@@ -99,9 +109,12 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
         offset,
       });
       const { data, status } = await useFetch<ActorsListResponse>(
-        `${API_BASE_URL}/actors?${qs}`,
+        `${API_BASE_URL}/actors?${qs}`
       );
-      if (!isCurrent()) return;
+
+      if (!isCurrent()) {
+        return;
+      }
 
       if (status !== 200) {
         throw new Error("Ошибка загрузки актёров");
@@ -110,49 +123,81 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
       actorsPageItems.value = data.items;
       actorsPageTotal.value = data.total;
     } catch {
-      if (!isCurrent()) return;
+      if (!isCurrent()) {
+        return;
+      }
+
       setErrorActors("Ошибка загрузки актёров");
       throw new Error("Ошибка загрузки актёров");
     } finally {
-      if (isCurrent()) isPageLoading.value = false;
+      if (isCurrent()) {
+        isPageLoading.value = false;
+      }
     }
   };
 
   /** Загрузка среза для выпадающих списков (до PICKER_LIMIT записей). */
   const loadPickerActors = async () => {
     const isCurrent = pickerRequests.begin();
+
     isPickerLoading.value = true;
     setErrorActors(null);
 
     try {
       const items: Actor[] = [];
       let total = PICKER_LIMIT;
+
       while (items.length < Math.min(total, PICKER_LIMIT)) {
-        const qs = buildListParams({ limit: API_PAGE_LIMIT, offset: items.length });
-        const { data, status } = await useFetch<ActorsListResponse>(`${API_BASE_URL}/actors?${qs}`);
-        if (!isCurrent()) return;
-        if (status !== 200) throw new Error("Ошибка загрузки актёров");
+        const qs = buildListParams({
+          limit: API_PAGE_LIMIT,
+          offset: items.length,
+        });
+        const { data, status } = await useFetch<ActorsListResponse>(
+          `${API_BASE_URL}/actors?${qs}`
+        );
+
+        if (!isCurrent()) {
+          return;
+        }
+
+        if (status !== 200) {
+          throw new Error("Ошибка загрузки актёров");
+        }
+
         total = data.total;
         items.push(...data.items);
-        if (!data.items.length) break;
+        if (!data.items.length) {
+          break;
+        }
       }
 
       pickerActors.value = items.slice(0, PICKER_LIMIT);
       isActorsLoaded.value = true;
     } catch (err) {
-      if (!isCurrent()) return;
+      if (!isCurrent()) {
+        return;
+      }
+
       setErrorActors("Ошибка загрузки актёров");
       throw err;
     } finally {
-      if (isCurrent()) isPickerLoading.value = false;
+      if (isCurrent()) {
+        isPickerLoading.value = false;
+      }
     }
   };
 
   const fetchActorsForPickers = (): Promise<void> => {
-    if (pickerRequest) return pickerRequest;
+    if (pickerRequest) {
+      return pickerRequest;
+    }
+
     const request = loadPickerActors().finally(() => {
-      if (pickerRequest === request) pickerRequest = null;
+      if (pickerRequest === request) {
+        pickerRequest = null;
+      }
     });
+
     pickerRequest = request;
 
     return request;
@@ -160,11 +205,16 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
 
   const fetchActorById = async (id: string): Promise<Actor | null> => {
     const isCurrent = detailRequests.begin();
+
     try {
       const { data, status } = await useFetch<Actor>(
-        `${ACTORS_ENDPOINT}/${id}`,
+        `${ACTORS_ENDPOINT}/${id}`
       );
-      if (!isCurrent()) return null;
+
+      if (!isCurrent()) {
+        return null;
+      }
+
       if (status === 200 && data) {
         detailActor.value = data;
 
@@ -174,7 +224,9 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
       /* */
     }
 
-    if (isCurrent()) detailActor.value = null;
+    if (isCurrent()) {
+      detailActor.value = null;
+    }
 
     return null;
   };
@@ -192,6 +244,7 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
 
     if (isSuccessStatus(response.status) && response.data) {
       const newActor = response.data;
+
       if (!pickerActors.value.some((a) => a.id === newActor.id)) {
         pickerActors.value.push(newActor);
       }
@@ -205,9 +258,13 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
   const pendingActorsByName = new Map<string, Promise<Actor>>();
   const addActorByName = async (name: string): Promise<Actor> => {
     const normalized = name.trim();
-    if (!normalized) throw new Error("Введите имя актёра");
+
+    if (!normalized) {
+      throw new Error("Введите имя актёра");
+    }
+
     const existingActor = pickerActors.value.find(
-      (actor) => actor.name.trim().toLowerCase() === normalized.toLowerCase(),
+      (actor) => actor.name.trim().toLowerCase() === normalized.toLowerCase()
     );
 
     if (existingActor) {
@@ -216,12 +273,45 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
 
     const key = normalized.toLowerCase();
     const existingRequest = pendingActorsByName.get(key);
-    if (existingRequest) return existingRequest;
-    const request = createActor({ name: normalized }).finally(() => pendingActorsByName.delete(key));
+
+    if (existingRequest) {
+      return existingRequest;
+    }
+
+    const request = createActor({ name: normalized }).finally(() =>
+      pendingActorsByName.delete(key)
+    );
+
     pendingActorsByName.set(key, request);
 
     return request;
   };
+
+  async function updateActorImage(
+    actor: Actor,
+    selection: ImageSelection | null
+  ): Promise<void> {
+    await api.patch(`/actors/${actor.id}`, {
+      imageAssetId: selection?.assetId ?? null,
+      imageUrl: selection?.assetId ? undefined : (selection?.url ?? null),
+    });
+    const updated = {
+      ...actor,
+      imageUrl: selection?.url ?? null,
+      imageThumbnailUrl: selection?.thumbnailUrl ?? null,
+      imageAssetId: selection?.assetId ?? null,
+    };
+
+    actorsPageItems.value = actorsPageItems.value.map((item) =>
+      item.id === actor.id ? updated : item
+    );
+    pickerActors.value = pickerActors.value.map((item) =>
+      item.id === actor.id ? updated : item
+    );
+    if (detailActor.value?.id === actor.id) {
+      detailActor.value = updated;
+    }
+  }
 
   return {
     actorsPageItems,
@@ -245,5 +335,6 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
 
     createActor,
     addActorByName,
+    updateActorImage,
   };
 });

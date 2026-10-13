@@ -2,7 +2,7 @@
 import { useMainStore } from "@/state/state";
 import { useRouter } from "vue-router";
 
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import SkeletonBar from "@/components/Skeleton/SkeletonBar.vue";
@@ -15,31 +15,28 @@ import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import SettingBlock from "@/components/ProfileSettings/components/SettingBlock/SettingBlock.vue";
 import { message } from "ant-design-vue";
 import { GenreLabels } from "@/components/Genres/constants/genres.constants";
-import {
-  ERROR_UPDATE_USER_NAME_TEXT,
-  SUCCESS_UPDATE_USER_NAME_TEXT,
-} from "@/state/constants";
 import { useBadgesStore, useUserMoviesStore } from "@/stores";
 import { useNotificationPrefs } from "@/composable/useNotificationPrefs";
 import { avatarGradient } from "@/composable/useAvatarGradient";
+import ImagePicker from "@/components/ImagePicker/ImagePicker.vue";
+import type { ImageSelection } from "@/services/media";
 
 const store = useMainStore();
 const router = useRouter();
 const badgesStore = useBadgesStore();
 const userMoviesStore = useUserMoviesStore();
 
-// min-display скелетонов (шиммер появляется сразу, держится минимум ~0.4с)
 const showBadgesSkeleton = useMinLoading(() => badgesStore.isLoading);
 const showAnalyticsSkeleton = useMinLoading(
-  () => userMoviesStore.isAnalyticsLoading,
+  () => userMoviesStore.isAnalyticsLoading
 );
 
 const isModalVisible = ref(false);
 const isSaving = ref(false);
 const editForm = ref({ fullName: "" });
+const editAvatar = ref<ImageSelection | null>(null);
+const avatarUploading = ref(false);
 
-// Настройки уведомлений (локально, без бэка). Единый источник ключей в composable;
-// эти же значения гейтят входящие уведомления в notificationsStore.applyIncoming
 const {
   newMessages: notifyNewMessages,
   friendRequests: notifyFriendRequests,
@@ -48,6 +45,21 @@ const {
 const achievementsView = ref<"unlocked" | "locked">("unlocked");
 
 const user = computed<UserData | null>(() => store.userData ?? null);
+const avatarFailed = ref(false);
+const avatarPreviewFailed = ref(false);
+
+watch(
+  () => user.value?.avatarUrl,
+  () => {
+    avatarFailed.value = false;
+  }
+);
+watch(
+  () => editAvatar.value?.url,
+  () => {
+    avatarPreviewFailed.value = false;
+  }
+);
 const fullName = computed(() => store.userData?.fullName || "");
 const showCard = computed(() => store.isLoggedIn);
 const showContent = computed(() => showCard.value && user.value);
@@ -89,7 +101,7 @@ const hasQuickActions = computed(() => {
 });
 
 const continueWatchingItem = computed(
-  () => analytics.value?.continueWatching?.[0] ?? null,
+  () => analytics.value?.continueWatching?.[0] ?? null
 );
 
 const openContinueWatching = () => {
@@ -130,15 +142,33 @@ const goToLogin = () => {
   router.push("/login");
 };
 
-const updateName = async () => {
+const saveProfile = async () => {
+  if (isSaving.value || avatarUploading.value) {
+    return;
+  }
+
+  const name = editForm.value.fullName.trim();
+
+  if (name.length < 3 || name.length > 50) {
+    message.error("Имя должно содержать от 3 до 50 символов");
+
+    return;
+  }
+
   isSaving.value = true;
 
   try {
-    await store.updateDisplayName(editForm.value.fullName);
-    message.success(SUCCESS_UPDATE_USER_NAME_TEXT);
+    await store.updateProfile({
+      fullName: name,
+      avatarAssetId: editAvatar.value?.assetId ?? null,
+      avatarUrl: editAvatar.value?.assetId
+        ? undefined
+        : editAvatar.value?.url ?? null,
+    });
+    message.success("Профиль сохранён");
     isModalVisible.value = false;
   } catch {
-    message.error(ERROR_UPDATE_USER_NAME_TEXT);
+    message.error("Не удалось сохранить профиль");
   } finally {
     isSaving.value = false;
   }
@@ -146,6 +176,13 @@ const updateName = async () => {
 
 const showEditDisplayNameModal = () => {
   editForm.value.fullName = fullName.value;
+  editAvatar.value = user.value?.avatarUrl
+    ? {
+        url: user.value.avatarUrl,
+        thumbnailUrl: user.value.avatarThumbnailUrl,
+        assetId: user.value.avatarAssetId,
+      }
+    : null;
   isModalVisible.value = true;
 };
 
@@ -185,7 +222,14 @@ onMounted(async () => {
             class="profile-hero__avatar"
             :style="{ background: avatarGradient(userId) }"
           >
-            {{ initials }}
+            <img
+              v-if="user?.avatarUrl && !avatarFailed"
+              :src="user.avatarThumbnailUrl || user.avatarUrl"
+              alt="Фото профиля"
+              class="profile-avatar-image"
+              @error="avatarFailed = true"
+            />
+            <template v-else>{{ initials }}</template>
           </div>
           <div class="profile-hero__info">
             <p class="profile-hero__eyebrow">Ваш кинопрофиль</p>
@@ -218,10 +262,7 @@ onMounted(async () => {
             class="profile-hero__settings"
             @click="showEditDisplayNameModal"
           >
-            <BaseIcon
-              name="ph:gear"
-              class="profile-hero__settings-icon"
-            />
+            <BaseIcon name="ph:gear" class="profile-hero__settings-icon" />
             Настройки
           </button>
         </section>
@@ -229,209 +270,227 @@ onMounted(async () => {
         <div class="profile-page__grid">
           <div class="profile-page__primary-column">
             <div class="profile-page__top-row">
-            <article class="friends-card">
-              <SettingBlock
-                title="Друзья"
-                description="Управление друзьями и подписками"
-                type="friends"
-                icon="ph:users-three"
-              />
-            </article>
+              <article class="friends-card">
+                <SettingBlock
+                  title="Друзья"
+                  description="Управление друзьями и подписками"
+                  type="friends"
+                  icon="ph:users-three"
+                />
+              </article>
 
-            <article class="badges-card">
-          <div class="badges-card__header">
-            <BaseIcon name="ph:trophy" class="badges-card__icon" />
-            <h3 class="badges-card__title">Достижения</h3>
-          </div>
-
-          <RowsSkeleton
-            v-if="showBadgesSkeleton"
-            :count="4"
-            :badge="false"
-          />
-
-          <StateBlock
-            v-else-if="badgesStore.isError"
-            compact
-            variant="error"
-            icon="ph:warning-circle"
-            title="Не удалось загрузить достижения"
-            :actions="[
-              {
-                label: 'Повторить',
-                icon: 'ph:arrow-clockwise',
-                kind: 'primary',
-                onClick: retryBadges,
-              },
-            ]"
-          />
-
-          <div v-else class="badges-card__content">
-            <div class="badges-card__seg" role="tablist">
-              <button
-                type="button"
-                class="badges-card__seg-btn"
-                :class="{
-                  'badges-card__seg-btn--on': achievementsView === 'unlocked',
-                }"
-                @click="achievementsView = 'unlocked'"
-              >
-                Открытые
-              </button>
-              <button
-                type="button"
-                class="badges-card__seg-btn"
-                :class="{
-                  'badges-card__seg-btn--on': achievementsView === 'locked',
-                }"
-                @click="achievementsView = 'locked'"
-              >
-                Закрытые
-              </button>
-            </div>
-
-            <BadgesList
-              v-if="achievementsView === 'unlocked'"
-              :badges="badgesStore.unlockedBadges"
-            />
-            <BadgesList
-              v-else
-              :badges="badgesStore.lockedBadges"
-              :show-locked="true"
-            />
-          </div>
-            </article>
-          </div>
-
-          <article class="analytics-card">
-            <div class="analytics-card__header">
-              <BaseIcon name="ph:chart-line-up" class="analytics-card__icon" />
-              <h3 class="analytics-card__title">Персональная аналитика</h3>
-            </div>
-
-            <div v-if="showAnalyticsSkeleton" class="analytics-card__skel">
-              <SkeletonBar
-                v-for="i in 4"
-                :key="`an-skel-${i}`"
-                height="92px"
-                radius="var(--fv-radius-md)"
-              />
-            </div>
-
-            <StateBlock
-              v-else-if="userMoviesStore.isAnalyticsError || !analytics"
-              compact
-              variant="error"
-              icon="ph:warning-circle"
-              title="Не удалось загрузить аналитику"
-              :actions="[
-                {
-                  label: 'Повторить',
-                  icon: 'ph:arrow-clockwise',
-                  kind: 'primary',
-                  onClick: retryAnalytics,
-                },
-              ]"
-            />
-
-            <div v-else class="analytics-card__content">
-              <div class="analytics-tiles">
-                <div class="analytics-tile">
-                  <span class="analytics-tile__label">Тренд просмотров</span>
-                  <div class="analytics-tile__trend">
-                    <span class="analytics-tile__trend-part">
-                      <b>{{ analytics.addedLast7Days }}</b> за 7 дней
-                    </span>
-                    <span class="analytics-tile__trend-part">
-                      <b>{{ analytics.addedLast30Days }}</b> за 30 дней
-                    </span>
-                  </div>
+              <article class="badges-card">
+                <div class="badges-card__header">
+                  <BaseIcon name="ph:trophy" class="badges-card__icon" />
+                  <h3 class="badges-card__title">Достижения</h3>
                 </div>
 
-                <div class="analytics-tile">
-                  <span class="analytics-tile__label">Фильмы / Сериалы</span>
-                  <span class="analytics-tile__value">
-                    {{ analytics.totalMovies }} / {{ analytics.totalSerials }}
-                  </span>
-                  <span class="analytics-tile__hint">
-                    завершено {{ analytics.completionRate }}%
-                  </span>
-                </div>
+                <RowsSkeleton
+                  v-if="showBadgesSkeleton"
+                  :count="4"
+                  :badge="false"
+                />
 
-                <div class="analytics-tile">
-                  <span class="analytics-tile__label">Топ жанров</span>
-                  <div
-                    v-if="analytics.topGenres.length"
-                    class="analytics-tile__chips"
-                  >
-                    <span
-                      v-for="g in analytics.topGenres"
-                      :key="g.genre"
-                      class="analytics-tile__chip"
+                <StateBlock
+                  v-else-if="badgesStore.isError"
+                  compact
+                  variant="error"
+                  icon="ph:warning-circle"
+                  title="Не удалось загрузить достижения"
+                  :actions="[
+                    {
+                      label: 'Повторить',
+                      icon: 'ph:arrow-clockwise',
+                      kind: 'primary',
+                      onClick: retryBadges,
+                    },
+                  ]"
+                />
+
+                <div v-else class="badges-card__content">
+                  <div class="badges-card__seg" role="tablist">
+                    <button
+                      type="button"
+                      class="badges-card__seg-btn"
+                      :class="{
+                        'badges-card__seg-btn--on':
+                          achievementsView === 'unlocked',
+                      }"
+                      @click="achievementsView = 'unlocked'"
                     >
-                      {{ GenreLabels[g.genre] ?? g.genre }} · {{ g.count }}
+                      Открытые
+                    </button>
+                    <button
+                      type="button"
+                      class="badges-card__seg-btn"
+                      :class="{
+                        'badges-card__seg-btn--on':
+                          achievementsView === 'locked',
+                      }"
+                      @click="achievementsView = 'locked'"
+                    >
+                      Закрытые
+                    </button>
+                  </div>
+
+                  <BadgesList
+                    v-if="achievementsView === 'unlocked'"
+                    class="badges-card__list"
+                    tabindex="0"
+                    role="region"
+                    aria-label="Открытые достижения"
+                    :badges="badgesStore.unlockedBadges"
+                  />
+                  <BadgesList
+                    v-else
+                    class="badges-card__list"
+                    tabindex="0"
+                    role="region"
+                    aria-label="Закрытые достижения"
+                    :badges="badgesStore.lockedBadges"
+                    :show-locked="true"
+                  />
+                </div>
+              </article>
+            </div>
+
+            <article class="analytics-card">
+              <div class="analytics-card__header">
+                <BaseIcon
+                  name="ph:chart-line-up"
+                  class="analytics-card__icon"
+                />
+                <h3 class="analytics-card__title">Персональная аналитика</h3>
+              </div>
+
+              <div v-if="showAnalyticsSkeleton" class="analytics-card__skel">
+                <SkeletonBar
+                  v-for="i in 4"
+                  :key="`an-skel-${i}`"
+                  height="92px"
+                  radius="var(--fv-radius-md)"
+                />
+              </div>
+
+              <StateBlock
+                v-else-if="userMoviesStore.isAnalyticsError || !analytics"
+                compact
+                variant="error"
+                icon="ph:warning-circle"
+                title="Не удалось загрузить аналитику"
+                :actions="[
+                  {
+                    label: 'Повторить',
+                    icon: 'ph:arrow-clockwise',
+                    kind: 'primary',
+                    onClick: retryAnalytics,
+                  },
+                ]"
+              />
+
+              <div v-else class="analytics-card__content">
+                <div class="analytics-tiles">
+                  <div class="analytics-tile">
+                    <span class="analytics-tile__label">Тренд просмотров</span>
+                    <div class="analytics-tile__trend">
+                      <span class="analytics-tile__trend-part">
+                        <b>{{ analytics.addedLast7Days }}</b> за 7 дней
+                      </span>
+                      <span class="analytics-tile__trend-part">
+                        <b>{{ analytics.addedLast30Days }}</b> за 30 дней
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="analytics-tile">
+                    <span class="analytics-tile__label">Фильмы / Сериалы</span>
+                    <span class="analytics-tile__value">
+                      {{ analytics.totalMovies }} / {{ analytics.totalSerials }}
+                    </span>
+                    <span class="analytics-tile__hint">
+                      завершено {{ analytics.completionRate }}%
                     </span>
                   </div>
-                  <span v-else class="analytics-tile__hint">
-                    Пока недостаточно данных
-                  </span>
-                </div>
 
-                <div class="analytics-tile">
-                  <span class="analytics-tile__label">Продолжить смотреть</span>
-                  <button
-                    v-if="continueWatchingItem"
-                    type="button"
-                    class="analytics-tile__continue"
-                    @click="openContinueWatching"
-                  >
-                    <span
-                      class="analytics-tile__poster"
-                      aria-hidden="true"
-                    ></span>
-                    <span class="analytics-tile__continue-info">
-                      <span class="analytics-tile__continue-title">
-                        {{ continueWatchingItem.title }}
+                  <div class="analytics-tile">
+                    <span class="analytics-tile__label">Топ жанров</span>
+                    <div
+                      v-if="analytics.topGenres.length"
+                      class="analytics-tile__chips"
+                    >
+                      <span
+                        v-for="g in analytics.topGenres"
+                        :key="g.genre"
+                        class="analytics-tile__chip"
+                      >
+                        {{ GenreLabels[g.genre] ?? g.genre }} · {{ g.count }}
                       </span>
-                      <span class="analytics-tile__continue-meta">
-                        С{{ continueWatchingItem.currentSeason ?? 0 }} · Э{{
-                          continueWatchingItem.currentEpisode ?? 0
-                        }}<template v-if="continueWatchingItem.episodeCount">
-                          из {{ continueWatchingItem.episodeCount }}</template
-                        >
-                      </span>
+                    </div>
+                    <span v-else class="analytics-tile__hint">
+                      Пока недостаточно данных
                     </span>
-                  </button>
-                  <span v-else class="analytics-tile__hint">
-                    Нет сериалов в процессе
-                  </span>
+                  </div>
+
+                  <div class="analytics-tile">
+                    <span class="analytics-tile__label"
+                      >Продолжить смотреть</span
+                    >
+                    <button
+                      v-if="continueWatchingItem"
+                      type="button"
+                      class="analytics-tile__continue"
+                      @click="openContinueWatching"
+                    >
+                      <span
+                        class="analytics-tile__poster"
+                        aria-hidden="true"
+                      ></span>
+                      <span class="analytics-tile__continue-info">
+                        <span class="analytics-tile__continue-title">
+                          {{ continueWatchingItem.title }}
+                        </span>
+                        <span class="analytics-tile__continue-meta">
+                          С{{ continueWatchingItem.currentSeason ?? 0 }} · Э{{
+                            continueWatchingItem.currentEpisode ?? 0
+                          }}<template v-if="continueWatchingItem.episodeCount">
+                            из {{ continueWatchingItem.episodeCount }}</template
+                          >
+                        </span>
+                      </span>
+                    </button>
+                    <span v-else class="analytics-tile__hint">
+                      Нет сериалов в процессе
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  v-if="hasQuickActions"
+                  class="analytics-card__quick-actions"
+                >
+                  <a-button
+                    v-if="analytics.watchingSerialsCount > 0"
+                    type="primary"
+                    @click="openWatchingSerials"
+                  >
+                    Сериалы в процессе ({{ analytics.watchingSerialsCount }})
+                  </a-button>
+                  <a-button
+                    v-if="analytics.statusBreakdown.dropped > 0"
+                    @click="openDroppedTitles"
+                  >
+                    Брошено ({{ analytics.statusBreakdown.dropped }})
+                  </a-button>
+                  <a-button
+                    v-if="analytics.seeLaterCount > 0"
+                    @click="openSeeLaterTitles"
+                  >
+                    Досмотреть позже ({{ analytics.seeLaterCount }})
+                  </a-button>
                 </div>
               </div>
-
-              <div v-if="hasQuickActions" class="analytics-card__quick-actions">
-                <a-button
-                  v-if="analytics.watchingSerialsCount > 0"
-                  type="primary"
-                  @click="openWatchingSerials"
-                >
-                  Сериалы в процессе ({{ analytics.watchingSerialsCount }})
-                </a-button>
-                <a-button
-                  v-if="analytics.statusBreakdown.dropped > 0"
-                  @click="openDroppedTitles"
-                >
-                  Брошено ({{ analytics.statusBreakdown.dropped }})
-                </a-button>
-                <a-button
-                  v-if="analytics.seeLaterCount > 0"
-                  @click="openSeeLaterTitles"
-                >
-                  Досмотреть позже ({{ analytics.seeLaterCount }})
-                </a-button>
-              </div>
-            </div>
-          </article>
-        </div>
+            </article>
+          </div>
 
           <div class="profile-page__secondary-column">
             <ProfileSettings :types="['theme', 'stats']" />
@@ -468,17 +527,23 @@ onMounted(async () => {
             class="settings-modal__avatar"
             :style="{ background: avatarGradient(userId) }"
           >
-            {{ initials }}
+            <img
+              v-if="editAvatar?.url && !avatarPreviewFailed"
+              :src="editAvatar.thumbnailUrl || editAvatar.url"
+              alt="Предпросмотр фото профиля"
+              class="profile-avatar-image"
+              @error="avatarPreviewFailed = true"
+            />
+            <template v-else>{{ initials }}</template>
           </div>
-          <button
-            type="button"
-            class="settings-modal__photo-btn"
-            disabled
-            title="Загрузка фото появится позже"
-          >
-            <BaseIcon name="ph:camera" :width="18" :height="18" />
-            Сменить фото
-          </button>
+          <ImagePicker
+            v-model="editAvatar"
+            purpose="USER_AVATAR"
+            label="Фото профиля"
+            :show-preview="false"
+            :disabled="isSaving"
+            @busy="avatarUploading = $event"
+          />
         </div>
 
         <div class="settings-modal__fields">
@@ -487,7 +552,6 @@ onMounted(async () => {
             <a-input
               v-model:value="editForm.fullName"
               size="large"
-              :maxlength="50"
             >
               <template #prefix>
                 <BaseIcon name="ph:user" :width="18" :height="18" />
@@ -534,7 +598,8 @@ onMounted(async () => {
         type="primary"
         html-type="button"
         :loading="isSaving"
-        @click="updateName"
+        :disabled="avatarUploading"
+        @click="saveProfile"
       >
         Сохранить
       </a-button>
@@ -545,12 +610,24 @@ onMounted(async () => {
 <style scoped lang="scss">
 @use "../../styles/media" as *;
 @use "@/styles/layout" as *;
+@use "@/styles/scrollbar" as *;
 
-/* ── Модалка «Настройки» (эталон) ── */
+.profile-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
 .settings-modal {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  padding-bottom: 16px;
+
+  @include mediaTablet {
+    padding-bottom: 24px;
+  }
 
   &__avatar-row {
     display: flex;
@@ -569,36 +646,6 @@ onMounted(async () => {
     color: #fff;
     font-weight: 700;
     font-size: 24px;
-  }
-
-  &__photo-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    height: 44px;
-    padding: 0 18px;
-    border: 0;
-    border-radius: var(--fv-radius-sm);
-    background: var(--fv-color-bg-secondary);
-    color: var(--fv-color-text-primary);
-    font: inherit;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background var(--fv-motion-fast) var(--fv-ease);
-
-    &:hover:not(:disabled) {
-      background: color-mix(
-        in srgb,
-        var(--fv-color-text-primary) 6%,
-        var(--fv-color-bg-secondary)
-      );
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
   }
 
   &__fields {
@@ -654,7 +701,7 @@ onMounted(async () => {
   }
 
   &__logout {
-    margin-inline-end: auto; // прижать влево (Сохранить остаётся справа)
+    margin-inline-end: auto;
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -663,7 +710,11 @@ onMounted(async () => {
     color: var(--fv-color-brand);
 
     &:hover {
-      background: color-mix(in srgb, var(--fv-color-brand) 18%, transparent) !important;
+      background: color-mix(
+        in srgb,
+        var(--fv-color-brand) 18%,
+        transparent
+      ) !important;
       color: var(--fv-color-brand) !important;
     }
   }
@@ -675,6 +726,8 @@ onMounted(async () => {
   flex-direction: column;
 
   &__content {
+    width: 100%;
+    min-width: 0;
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 1rem;
@@ -687,7 +740,6 @@ onMounted(async () => {
     margin: 2rem 0;
     align-items: start;
 
-    // Эталон: основа 2/3 + боковая колонка 1/3 (высокий блок не ломает сетку)
     @include mediaDesktopXS {
       grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
       gap: 1.25rem;
@@ -701,7 +753,6 @@ onMounted(async () => {
     min-width: 0;
   }
 
-  // Друзья + Достижения в ряд (1fr/1fr), схлопывается в 1 колонку на узких
   &__top-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -712,7 +763,6 @@ onMounted(async () => {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    // Карточки не должны раздвигать треки длинным текстом
     > * {
       min-width: 0;
     }
@@ -726,7 +776,6 @@ onMounted(async () => {
   }
 }
 
-// Профиль-карточка = шапка страницы (эталон: аватар + инфо + «Настройки»)
 .profile-hero {
   display: flex;
   align-items: center;
@@ -807,7 +856,7 @@ onMounted(async () => {
   &__meta-icon {
     width: 16px;
     height: 16px;
-    color: inherit; // нейтральный цвет по тексту строки (не синий accent)
+    color: inherit;
     flex-shrink: 0;
   }
 
@@ -992,7 +1041,14 @@ onMounted(async () => {
     gap: 1rem;
   }
 
-  // Эталон: сегмент-переключатель Открытые / Закрытые
+  &__list {
+    @include customScrollbar;
+    height: 16rem;
+    min-width: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+
   &__seg {
     display: inline-flex;
     align-self: flex-start;
@@ -1013,8 +1069,7 @@ onMounted(async () => {
     font-weight: 500;
     color: var(--fv-color-text-secondary);
     cursor: pointer;
-    transition:
-      color var(--fv-motion-fast) var(--fv-ease),
+    transition: color var(--fv-motion-fast) var(--fv-ease),
       background var(--fv-motion-fast) var(--fv-ease);
 
     &--on {
@@ -1103,7 +1158,6 @@ onMounted(async () => {
   }
 }
 
-// Эталон: аналитика — сетка из 4 тайлов
 .analytics-tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -1172,7 +1226,7 @@ onMounted(async () => {
     padding: 0 14px;
     border-radius: 999px;
     background: var(--fv-color-bg-secondary);
-    border: 1px solid var(--fv-color-border); // обводка (эталон .chip)
+    border: 1px solid var(--fv-color-border);
     font-size: 0.82rem;
     font-weight: 500;
     color: var(--fv-color-text-primary);

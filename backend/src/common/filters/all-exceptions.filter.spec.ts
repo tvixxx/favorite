@@ -1,4 +1,8 @@
-import { BadRequestException, type ArgumentsHost } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  type ArgumentsHost,
+} from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { AllExceptionsFilter } from './all-exceptions.filter';
 
@@ -41,5 +45,28 @@ describe('Ошибки API без внутренних данных', () => {
     );
     expect(status).toBe(400);
     expect(body.message).toEqual(['Введите название', 'Введите описание']);
+  });
+
+  it('обрабатывает пустой payload исключения без второй ошибки', () => {
+    expect(() =>
+      new AllExceptionsFilter().catch(
+        new HttpException(null as never, 400),
+        host,
+      ),
+    ).not.toThrow();
+    expect(status).toBe(400);
+    expect(typeof body.message).toBe('string');
+  });
+
+  it('возвращает 400 при отсутствии связанной записи вместо 500', () => {
+    new AllExceptionsFilter().catch(
+      new PrismaClientKnownRequestError('private SQL', {
+        code: 'P2003',
+        clientVersion: 'test',
+      }),
+      host,
+    );
+    expect(status).toBe(400);
+    expect(JSON.stringify(body)).not.toContain('private SQL');
   });
 });

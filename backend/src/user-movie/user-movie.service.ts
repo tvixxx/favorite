@@ -12,6 +12,7 @@ import {
 } from './dto';
 import type { UserMovie, Prisma } from '../generated/prisma/client';
 import { Genre, WatchStatus } from '../generated/prisma/enums';
+import { lockResource } from '../common/utils/transaction-lock';
 
 interface UserMovieFilters {
   genres?: Genre[];
@@ -283,8 +284,9 @@ export class UserMovieService {
     userId: string,
     movieId: string,
     withAverageRating = false,
+    prisma: Prisma.TransactionClient = this.prismaService,
   ): Promise<UserMovie | null> {
-    const query = this.prismaService.userMovie.findUnique({
+    const query = prisma.userMovie.findUnique({
       where: {
         userId_movieId: {
           userId,
@@ -308,7 +310,7 @@ export class UserMovieService {
     // Запросы независимы — считаем параллельно
     const [userMovie, avg] = await Promise.all([
       query,
-      this.prismaService.review.aggregate({
+      prisma.review.aggregate({
         where: { movieId },
         _avg: { rate: true },
       }),
@@ -516,7 +518,16 @@ export class UserMovieService {
     dto: CreateUserMovieBodyDto,
     prisma: Prisma.TransactionClient = this.prismaService,
   ): Promise<UserMovie> {
+    if (prisma === this.prismaService) {
+      return this.prismaService.$transaction((tx) =>
+        this.create(userId, dto, tx),
+      );
+    }
+
     const { movieId, ...data } = dto;
+
+    await lockResource(prisma, `movie:${movieId}`);
+    await lockResource(prisma, `collection:${userId}:${movieId}`);
 
     const existingUserMovie = await prisma.userMovie.findUnique({
       where: { userId_movieId: { userId, movieId } },
@@ -576,14 +587,28 @@ export class UserMovieService {
     userId: string,
     movieId: string,
     dto: UpdateUserMovieDto,
+    prisma: Prisma.TransactionClient = this.prismaService,
   ): Promise<UserMovie> {
-    const userMovie = await this.findByUserAndMovie(userId, movieId);
+    if (prisma === this.prismaService) {
+      return this.prismaService.$transaction((tx) =>
+        this.update(userId, movieId, dto, tx),
+      );
+    }
+
+    await lockResource(prisma, `movie:${movieId}`);
+    await lockResource(prisma, `collection:${userId}:${movieId}`);
+    const userMovie = await this.findByUserAndMovie(
+      userId,
+      movieId,
+      false,
+      prisma,
+    );
 
     if (!userMovie) {
       throw new NotFoundException('UserMovie not found');
     }
 
-    const movie = await this.prismaService.movie.findUnique({
+    const movie = await prisma.movie.findUnique({
       where: { id: movieId },
       select: {
         isSerial: true,
@@ -605,7 +630,7 @@ export class UserMovieService {
       startedAt: userMovie.startedAt,
     });
 
-    return this.prismaService.userMovie.update({
+    return prisma.userMovie.update({
       where: {
         userId_movieId: {
           userId,
@@ -630,13 +655,20 @@ export class UserMovieService {
     dto: RateUserMovieDto,
   ): Promise<UserMovie & { movie: { averageRating: number | null } }> {
     const text = dto.reviewText?.trim();
+
     if (text && text.length < 10) {
       throw new BadRequestException('Минимальная длина отзыва — 10 символов');
     }
+
     return this.prismaService.$transaction(async (tx) => {
+      await lockResource(tx, `collection:${userId}:${movieId}`);
       const where = { userId_movieId: { userId, movieId } };
       const current = await tx.userMovie.findUnique({ where });
-      if (!current) throw new NotFoundException('Фильм не найден в коллекции');
+
+      if (!current) {
+        throw new NotFoundException('Фильм не найден в коллекции');
+      }
+
       const ownReview = await tx.review.findFirst({
         where: { userId, movieId },
         orderBy: { createdAt: 'desc' },
@@ -646,6 +678,7 @@ export class UserMovieService {
         data: { personalRate: dto.personalRate },
         include: { movie: { include: { poster: true, actors: true } } },
       });
+
       if (ownReview) {
         await tx.review.update({
           where: { id: ownReview.id },
@@ -656,10 +689,12 @@ export class UserMovieService {
           data: { userId, movieId, rate: dto.personalRate, text },
         });
       }
+
       const avg = await tx.review.aggregate({
         where: { movieId },
         _avg: { rate: true },
       });
+
       return {
         ...updated,
         movie: { ...updated.movie, averageRating: avg._avg.rate },
@@ -670,6 +705,7 @@ export class UserMovieService {
   public async delete(userId: string, movieId: string): Promise<string> {
     try {
       await this.prismaService.$transaction(async (tx) => {
+        await lockResource(tx, `collection:${userId}:${movieId}`);
         await tx.userMovie.delete({
           where: {
             userId_movieId: {

@@ -206,7 +206,7 @@ export type ReviewGroupByOutputType = {
   _max: ReviewMaxAggregateOutputType | null
 }
 
-type GetReviewGroupByPayload<T extends ReviewGroupByArgs> = Prisma.PrismaPromise<
+export type GetReviewGroupByPayload<T extends ReviewGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<ReviewGroupByOutputType, T['by']> &
       {
@@ -250,6 +250,7 @@ export type ReviewOrderByWithRelationInput = {
 
 export type ReviewWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  userId_movieId?: Prisma.ReviewUserIdMovieIdCompoundUniqueInput
   AND?: Prisma.ReviewWhereInput | Prisma.ReviewWhereInput[]
   OR?: Prisma.ReviewWhereInput[]
   NOT?: Prisma.ReviewWhereInput | Prisma.ReviewWhereInput[]
@@ -261,7 +262,7 @@ export type ReviewWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   movie?: Prisma.XOR<Prisma.MovieScalarRelationFilter, Prisma.MovieWhereInput>
-}, "id">
+}, "id" | "userId_movieId">
 
 export type ReviewOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -367,6 +368,11 @@ export type ReviewListRelationFilter = {
 
 export type ReviewOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type ReviewUserIdMovieIdCompoundUniqueInput = {
+  userId: string
+  movieId: string
 }
 
 export type ReviewCountOrderByAggregateInput = {
@@ -489,14 +495,6 @@ export type ReviewUncheckedUpdateManyWithoutMovieNestedInput = {
   update?: Prisma.ReviewUpdateWithWhereUniqueWithoutMovieInput | Prisma.ReviewUpdateWithWhereUniqueWithoutMovieInput[]
   updateMany?: Prisma.ReviewUpdateManyWithWhereWithoutMovieInput | Prisma.ReviewUpdateManyWithWhereWithoutMovieInput[]
   deleteMany?: Prisma.ReviewScalarWhereInput | Prisma.ReviewScalarWhereInput[]
-}
-
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
 }
 
 export type ReviewCreateWithoutUserInput = {
@@ -1376,6 +1374,11 @@ export type ReviewFindManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Skip the first `n` Reviews.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Reviews.
+   */
   distinct?: Prisma.ReviewScalarFieldEnum | Prisma.ReviewScalarFieldEnum[]
 }
 

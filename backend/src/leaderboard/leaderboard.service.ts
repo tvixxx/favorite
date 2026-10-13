@@ -300,27 +300,24 @@ export class LeaderboardService {
 
     const total = sorted.length;
     const pageRows = sorted.slice(offset, offset + limit);
-
-    const items: LeaderboardUserItemDto[] = await Promise.all(
-      pageRows.map(async (row, index) => {
-        const badges = await this.badgeService.getTopUnlockedBadges(
-          row.userId,
-          6,
-        );
-
-        return {
-          rank: offset + index + 1,
-          userId: row.userId,
-          displayName: row.displayName,
-          registeredAt: row.registeredAt.toISOString(),
-          filmsCount: row.filmsCount,
-          serialsTotal: row.serialsTotal,
-          serialsCompleted: row.serialsCompleted,
-          totalScore: row.filmsCount + row.serialsCompleted,
-          badges,
-        };
-      }),
+    const badgesByUser = await this.badgeService.getTopUnlockedBadgesForUsers(
+      pageRows.map((row) => row.userId),
+      6,
     );
+
+    const items: LeaderboardUserItemDto[] = pageRows.map((row, index) => {
+      return {
+        rank: offset + index + 1,
+        userId: row.userId,
+        displayName: row.displayName,
+        registeredAt: row.registeredAt.toISOString(),
+        filmsCount: row.filmsCount,
+        serialsTotal: row.serialsTotal,
+        serialsCompleted: row.serialsCompleted,
+        totalScore: row.filmsCount + row.serialsCompleted,
+        badges: badgesByUser.get(row.userId) ?? [],
+      };
+    });
 
     return {
       items,

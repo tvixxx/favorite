@@ -30,6 +30,7 @@ const {
 </template>
 
 <style scoped lang="scss">
+@use "../../styles/media" as *;
 /* Примитив-плейсхолдер загрузки (эталон): бегущий шиммер */
 .skel {
   display: block;
@@ -58,7 +59,7 @@ const {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@include mediaReducedMotion {
   .skel::after {
     animation: none;
   }

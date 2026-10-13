@@ -10,6 +10,7 @@ import { AuthService } from '../auth/auth.service';
 jest.mock('../prisma/prisma.service', () => ({ PrismaService: class {} }));
 
 describe('Доступ к чату и несколько вкладок', () => {
+  const peerId = 'dfbb0bf9-2b86-4b8b-a1c7-d139326edaa7';
   let gateway: MessageGateway;
   let online: Set<string>;
   let created: Array<{ senderId: string; content: string }>;
@@ -20,6 +21,7 @@ describe('Доступ к чату и несколько вкладок', () => 
   const socket = (id: string, token?: string, claimedId = 'user-id'): Socket =>
     ({
       id,
+      connected: true,
       data: {},
       handshake: { auth: { token, userId: claimedId }, query: {} },
       join: jest.fn(),
@@ -33,8 +35,10 @@ describe('Доступ к чату и несколько вкладок', () => 
     disconnected = [];
     auth = {
       verifyAccessToken: jest.fn((token: string) => {
-        if (token !== 'valid-access')
+        if (token !== 'valid-access') {
           return Promise.reject(new Error('Invalid token'));
+        }
+
         return Promise.resolve({ id: 'user-id' });
       }),
     };
@@ -48,9 +52,13 @@ describe('Доступ к чату и несколько вкладок', () => 
             create: jest.fn(
               (senderId: string, _receiver: string, content: string) => {
                 created.push({ senderId, content });
+
                 return Promise.resolve({
-                  id: 'message-id',
-                  sender: { fullName: 'Тест' },
+                  message: {
+                    id: 'message-id',
+                    sender: { fullName: 'Тест' },
+                  },
+                  notification: {},
                 });
               },
             ),
@@ -81,11 +89,13 @@ describe('Доступ к чату и несколько вкладок', () => 
         },
       ],
     }).compile();
+
     gateway = module.get(MessageGateway);
     const broadcast = (room: string) => ({
       emit: (event: string) => emitted.push({ room, event }),
       except: () => broadcast(room),
     });
+
     gateway.server = { to: broadcast } as unknown as Server;
     jest.spyOn(console, 'log').mockImplementation(() => undefined);
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -95,16 +105,27 @@ describe('Доступ к чату и несколько вкладок', () => 
 
   it('не подключает пользователя по одному userId без токена', async () => {
     const client = socket('socket-1');
+
     await gateway.handleConnection(client);
     expect(disconnected).toEqual(['socket-1']);
     expect(online.size).toBe(0);
   });
 
+  it('не подключает сокет с постороннего origin даже с токеном', async () => {
+    const client = socket('socket-1', 'valid-access');
+
+    client.handshake.headers = { origin: 'https://other.example.test' };
+    await gateway.handleConnection(client);
+    expect(disconnected).toEqual(['socket-1']);
+    expect(auth.verifyAccessToken).not.toHaveBeenCalled();
+  });
+
   it('берёт отправителя из проверенного токена вместо заявленного userId', async () => {
     const client = socket('socket-1', 'valid-access', 'someone-else');
+
     await gateway.handleConnection(client);
     await gateway.handleMessage(
-      { receiverId: 'peer-id', content: 'Привет' },
+      { receiverId: peerId, content: 'Привет' },
       client,
     );
     expect(created).toEqual([{ senderId: 'user-id', content: 'Привет' }]);
@@ -112,9 +133,10 @@ describe('Доступ к чату и несколько вкладок', () => 
 
   it('не отправляет сообщения через неподтверждённое соединение', async () => {
     const client = socket('socket-1', 'bad-token');
+
     await gateway.handleConnection(client);
     await gateway.handleMessage(
-      { receiverId: 'peer-id', content: 'Привет' },
+      { receiverId: peerId, content: 'Привет' },
       client,
     );
     expect(created).toEqual([]);
@@ -123,6 +145,7 @@ describe('Доступ к чату и несколько вкладок', () => 
   it('оставляет пользователя онлайн после закрытия одной из двух вкладок', async () => {
     const first = socket('socket-1', 'valid-access');
     const second = socket('socket-2', 'valid-access');
+
     await gateway.handleConnection(first);
     await gateway.handleConnection(second);
     await gateway.handleDisconnect(first);
@@ -140,11 +163,59 @@ describe('Доступ к чату и несколько вкладок', () => 
 
   it('не сохраняет пустое сообщение', async () => {
     const client = socket('socket-1', 'valid-access');
+
     await gateway.handleConnection(client);
-    await gateway.handleMessage(
-      { receiverId: 'peer-id', content: '   ' },
-      client,
+    await gateway.handleMessage({ receiverId: peerId, content: '   ' }, client);
+    expect(created).toEqual([]);
+  });
+
+  it('не оставляет онлайн соединение, закрытое во время авторизации', async () => {
+    const client = socket('early-close', 'valid-access');
+    let resolve!: (value: { id: string }) => void;
+
+    auth.verifyAccessToken.mockReturnValueOnce(
+      new Promise((done) => {
+        resolve = done;
+      }),
     );
+    const connecting = gateway.handleConnection(client);
+    Object.defineProperty(client, 'connected', { value: false });
+    await gateway.handleDisconnect(client);
+    resolve({ id: 'user-id' });
+    await connecting;
+    expect(online.size).toBe(0);
+  });
+
+  it('ограничивает поток событий до дорогой проверки токена', async () => {
+    const client = socket('flood', 'valid-access');
+
+    await gateway.handleConnection(client);
+    let result: unknown;
+
+    for (let index = 0; index < 61; index++) {
+      result = await gateway.handleMessage(
+        { receiverId: peerId, content: 'Привет' },
+        client,
+      );
+    }
+
+    expect(result).toEqual({ error: 'Too many requests' });
+    expect(created).toHaveLength(60);
+  });
+
+  it('отклоняет некорректный ID собеседника до сохранения', async () => {
+    const client = socket('invalid-peer', 'valid-access');
+
+    await gateway.handleConnection(client);
+    expect(
+      await gateway.handleMessage(
+        { receiverId: 'not-a-uuid', content: 'Привет' },
+        client,
+      ),
+    ).toEqual({ error: 'Invalid message' });
+    expect(
+      await gateway.handleMessageRead({ otherUserId: 'not-a-uuid' }, client),
+    ).toEqual({ error: 'Invalid conversation' });
     expect(created).toEqual([]);
   });
 });

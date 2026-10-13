@@ -1,3 +1,4 @@
+@use "./media" as *;
 /**
  * Тултипы и тосты — «инвертированные поверхности» поверх контента.
  * Спеки new-9: `Тултип - компонент` и `Тосты - компонент`.
@@ -26,7 +27,7 @@
 
 /* Спека: на тач-устройствах подсказку не показываем — там нет ховера,
    и она открывается по тапу, перехватывая нажатие */
-@media (hover: none) {
+@include mediaNoHover {
   .ant-tooltip {
     display: none !important;
   }
@@ -76,7 +77,7 @@
   }
 }
 
-@media (max-width: 767.98px) {
+@include mediaMax($tablet - 0.02px) {
   .ant-message-notice {
     padding-inline: 16px;
   }

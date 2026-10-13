@@ -55,6 +55,7 @@ export HEALTHCHECK_URL="https://hc-ping.com/<uuid>"
 
 - `S3_URI` — выгрузка через `aws s3 cp`. Ключ доступа выдать **только на запись**:
   взломанный сервер не должен уметь стирать архив.
+- `S3_ENDPOINT_URL` — endpoint S3-совместимого провайдера, например `https://s3.twcstorage.ru`. Нужны AWS CLI и отдельные `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION=ru-1`. Ключи `MEDIA_S3_*` не используются скриптом бэкапа.
 - `GPG_RECIPIENT` — дамп шифруется, локальная незашифрованная копия удаляется.
   Приватный ключ хранить НЕ на этом сервере, иначе шифрование бессмысленно.
 - `HEALTHCHECK_URL` — dead-man switch: cron падает молча, а сервис напишет вам,
@@ -86,7 +87,7 @@ node scripts/backup/db-restore.cjs backups/favorites-....dump --into favorites -
 Порядок на сервере:
 
 1. `node scripts/backup/db-backup.cjs` — слепок ДО миграции;
-2. `npx prisma migrate deploy`;
+2. `yarn prisma migrate deploy`.
 3. проверить, что приложение поднялось;
 4. только потом переключать трафик.
 

@@ -8,9 +8,8 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiCreatedResponse,
   ApiOkResponse,
@@ -22,13 +21,13 @@ import { CreateFeedbackDto, UpdateFeedbackStatusDto } from './dto';
 import { AdminOnly, AuthProtected, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
 import { FeedbackStatus } from '../generated/prisma/enums';
+import { queryEnum, queryInteger } from '../common/utils/query-value';
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
 @ApiTags('Feedback')
 @Controller('feedback')
-@UseGuards(ThrottlerGuard)
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}
 
@@ -59,24 +58,20 @@ export class FeedbackController {
   @AdminOnly()
   @Get()
   public async findAll(
-    @Query('status') statusRaw?: string,
-    @Query('limit') limitRaw?: string,
-    @Query('offset') offsetRaw?: string,
+    @Query('status') statusRaw?: unknown,
+    @Query('limit') limitRaw?: unknown,
+    @Query('offset') offsetRaw?: unknown,
   ) {
-    const parsedLimit = Number.parseInt(limitRaw ?? '', 10);
-    const parsedOffset = Number.parseInt(offsetRaw ?? '', 10);
-
-    const status =
-      statusRaw && statusRaw in FeedbackStatus
-        ? (statusRaw as FeedbackStatus)
-        : undefined;
+    const status = queryEnum(
+      statusRaw,
+      'status',
+      Object.values(FeedbackStatus),
+    );
 
     return this.feedbackService.findAll({
       status,
-      limit: Number.isFinite(parsedLimit)
-        ? Math.min(Math.max(parsedLimit, 1), MAX_LIMIT)
-        : DEFAULT_LIMIT,
-      offset: Number.isFinite(parsedOffset) ? Math.max(parsedOffset, 0) : 0,
+      limit: queryInteger(limitRaw, 'limit', DEFAULT_LIMIT, 1, MAX_LIMIT),
+      offset: queryInteger(offsetRaw, 'offset', 0, 0, 2147483647),
     });
   }
 

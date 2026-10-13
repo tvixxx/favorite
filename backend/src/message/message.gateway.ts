@@ -1,4 +1,4 @@
-import { forwardRef, Inject } from '@nestjs/common';
+import { forwardRef, Inject, Logger } from '@nestjs/common';
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -14,21 +14,41 @@ import { UserStatusService } from '../user-status/user-status.service';
 import { FriendshipService } from '../friendship/friendship.service';
 import { NotificationService } from '../notification/notification.service';
 import type { NotificationDto } from '../notification/notification.service';
-import { NotificationType } from '../generated/prisma/enums';
 import { AuthService } from '../auth/auth.service';
+import { isAllowedOrigin } from '../common/utils/cors-policy';
+import { isUUID } from 'class-validator';
 
 type ChatSocket = Omit<Socket, 'data'> & {
   data: { userId?: string; accessToken?: string };
 };
 
 @WebSocketGateway({
-  cors: { origin: '*' },
+  cors: {
+    origin: (
+      origin: string | undefined,
+      callback: (error: Error | null, allowed: boolean) => void,
+    ) =>
+      callback(
+        null,
+        isAllowedOrigin(
+          origin,
+          process.env.CORS_ORIGINS ?? process.env.FRONTEND_ORIGIN,
+        ),
+      ),
+    credentials: true,
+  },
   namespace: '/chat',
 })
 export class MessageGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
   private readonly connections = new Map<string, Set<string>>();
+  private readonly presenceUpdates = new Map<string, Promise<void>>();
+  private readonly eventWindows = new Map<
+    string,
+    { count: number; expiresAt: number }
+  >();
+  private readonly logger = new Logger(MessageGateway.name);
 
   @WebSocketServer()
   server: Server;
@@ -43,72 +63,123 @@ export class MessageGateway
   ) {}
 
   emitToUser(userId: string, dto: NotificationDto): Promise<void> {
-    this.server.to(`user:${userId}`).emit('notification:new', dto);
+    try {
+      this.server.to(`user:${userId}`).emit('notification:new', dto);
+    } catch {
+      this.logger.warn('Не удалось доставить уведомление по WebSocket');
+    }
+
     return Promise.resolve();
   }
 
   async handleConnection(client: ChatSocket) {
     try {
-      const token: unknown = client.handshake.auth?.token;
-      if (typeof token !== 'string' || !token) {
+      if (
+        !isAllowedOrigin(
+          client.handshake.headers?.origin,
+          process.env.CORS_ORIGINS ?? process.env.FRONTEND_ORIGIN,
+        )
+      ) {
         client.disconnect();
+
         return;
       }
+
+      const token: unknown = client.handshake.auth?.token;
+
+      if (typeof token !== 'string' || !token) {
+        client.disconnect();
+
+        return;
+      }
+
       const user = await this.authService.verifyAccessToken(token);
       const userId = user.id;
+
+      if (!client.connected) {
+        return;
+      }
+
       client.data.userId = userId;
       client.data.accessToken = token;
       await client.join(`user:${userId}`);
+
+      if (!client.connected) {
+        return;
+      }
+
       const sockets = this.connections.get(userId) ?? new Set<string>();
       const wasOnline = sockets.size > 0;
+
       sockets.add(client.id);
       this.connections.set(userId, sockets);
-      await this.userStatusService.setOnline(userId, client.id);
+      await this.updatePresence(userId);
 
-      if (wasOnline) return;
+      if (wasOnline || !this.connections.has(userId)) {
+        return;
+      }
 
       // Уведомить друзей что пользователь онлайн (один запрос вместо N+1)
       const friends = await this.friendshipService.getFriends(userId);
       const onlineFriends = await this.userStatusService.getOnlineFriends(
         friends.map((f) => f.friend.id),
       );
+
       for (const status of onlineFriends) {
-        this.server.to(`user:${status.userId}`).emit('user:online', { userId });
+        if (this.connections.has(userId)) {
+          this.server
+            .to(`user:${status.userId}`)
+            .emit('user:online', { userId });
+        }
       }
 
       console.log(`User ${userId} connected with socket ${client.id}`);
-    } catch (error) {
-      console.error('Connection error:', error);
+    } catch {
+      this.logger.warn('Не удалось подключить чат');
       client.disconnect();
+      await this.handleDisconnect(client);
     }
   }
 
   async handleDisconnect(client: ChatSocket) {
     try {
       const userId = client.data.userId;
-      if (!userId) return;
+
+      if (!userId) {
+        return;
+      }
 
       const sockets = this.connections.get(userId);
-      if (!sockets?.delete(client.id)) return;
-      if (sockets.size > 0) return;
+
+      if (!sockets?.delete(client.id)) {
+        return;
+      }
+
+      if (sockets.size > 0) {
+        return;
+      }
+
       this.connections.delete(userId);
 
-      await this.userStatusService.setOffline(userId);
+      await this.updatePresence(userId);
 
       // Уведомить друзей что пользователь оффлайн (один запрос вместо N+1)
       const friends = await this.friendshipService.getFriends(userId);
       const onlineFriends = await this.userStatusService.getOnlineFriends(
         friends.map((f) => f.friend.id),
       );
+
       for (const status of onlineFriends) {
-        this.server
-          .to(`user:${status.userId}`)
-          .emit('user:offline', { userId });
+        if (!this.connections.has(userId)) {
+          this.server
+            .to(`user:${status.userId}`)
+            .emit('user:offline', { userId });
+        }
       }
 
       console.log(`User ${userId} disconnected`);
-    } catch (error) {
-      console.error('Disconnect error:', error);
+    } catch {
+      this.logger.warn('Не удалось обновить статус чата');
     }
   }
 
@@ -118,14 +189,23 @@ export class MessageGateway
     @ConnectedSocket() client: ChatSocket,
   ) {
     try {
+      if (
+        client.data.userId &&
+        !this.allowEvent(`${client.data.userId}:send`, 60)
+      ) {
+        return { error: 'Too many requests' };
+      }
+
       const senderId = await this.getAuthorizedUserId(client);
+
       if (!senderId) {
         return { error: 'Unauthorized' };
       }
+
       if (
         !data ||
         typeof data.receiverId !== 'string' ||
-        !data.receiverId.trim() ||
+        !isUUID(data.receiverId, '4') ||
         typeof data.content !== 'string' ||
         !data.content.trim() ||
         data.content.length > 5000
@@ -134,40 +214,36 @@ export class MessageGateway
       }
 
       // Сохранить в БД
-      const message = await this.messageService.create(
+      const { message, notification } = await this.messageService.create(
         senderId,
         data.receiverId,
         data.content,
       );
 
-      const created = await this.notificationService.create(
-        data.receiverId,
-        NotificationType.CHAT_MESSAGE,
-        {
-          messageId: message.id,
-          senderId,
-          senderName: message.sender.fullName,
-          preview: data.content.slice(0, 200),
-        },
-      );
-
       await this.emitToUser(
         data.receiverId,
-        this.notificationService.toDto(created),
+        this.notificationService.toDto(notification),
       );
 
       // Отправить получателю через WebSocket
-      this.server
-        .to(`user:${data.receiverId}`)
-        .emit('message:received', message);
-      this.server
-        .to(`user:${senderId}`)
-        .except(client.id)
-        .emit('message:received', message);
+      try {
+        this.server
+          .to(`user:${data.receiverId}`)
+          .emit('message:received', message);
+        this.server
+          .to(`user:${senderId}`)
+          .except(client.id)
+          .emit('message:received', message);
+      } catch {
+        this.logger.warn(
+          'Сообщение сохранено, доставка по WebSocket не удалась',
+        );
+      }
 
       return message;
-    } catch (error) {
-      console.error('Send message error:', error);
+    } catch {
+      this.logger.warn('Не удалось сохранить сообщение');
+
       return { error: 'Failed to send message' };
     }
   }
@@ -178,14 +254,23 @@ export class MessageGateway
     @ConnectedSocket() client: ChatSocket,
   ) {
     try {
+      if (
+        client.data.userId &&
+        !this.allowEvent(`${client.data.userId}:read`, 120)
+      ) {
+        return { error: 'Too many requests' };
+      }
+
       const userId = await this.getAuthorizedUserId(client);
+
       if (!userId) {
         return { error: 'Unauthorized' };
       }
+
       if (
         !data ||
         typeof data.otherUserId !== 'string' ||
-        !data.otherUserId.trim()
+        !isUUID(data.otherUserId, '4')
       ) {
         return { error: 'Invalid conversation' };
       }
@@ -200,9 +285,67 @@ export class MessageGateway
         .emit('messages:read', { userId });
 
       return { success: true };
-    } catch (error) {
-      console.error('Mark as read error:', error);
+    } catch {
+      this.logger.warn('Не удалось отметить сообщения прочитанными');
+
       return { error: 'Failed to mark as read' };
+    }
+  }
+
+  private allowEvent(key: string, limit: number): boolean {
+    const now = Date.now();
+    const current = this.eventWindows.get(key);
+
+    if (current && current.expiresAt > now) {
+      current.count++;
+
+      return current.count <= limit;
+    }
+
+    this.eventWindows.delete(key);
+
+    if (this.eventWindows.size >= 4096) {
+      for (const [storedKey, window] of this.eventWindows) {
+        if (window.expiresAt <= now) {
+          this.eventWindows.delete(storedKey);
+        }
+      }
+    }
+
+    if (this.eventWindows.size >= 4096) {
+      return false;
+    }
+
+    this.eventWindows.set(key, { count: 1, expiresAt: now + 60000 });
+
+    return true;
+  }
+
+  private async updatePresence(userId: string): Promise<void> {
+    const previous = this.presenceUpdates.get(userId) ?? Promise.resolve();
+    const update = previous
+      .catch(() => undefined)
+      .then(async () => {
+        const socketId: unknown = this.connections
+          .get(userId)
+          ?.values()
+          .next().value;
+
+        if (typeof socketId === 'string') {
+          await this.userStatusService.setOnline(userId, socketId);
+        } else {
+          await this.userStatusService.setOffline(userId);
+        }
+      });
+
+    this.presenceUpdates.set(userId, update);
+
+    try {
+      await update;
+    } finally {
+      if (this.presenceUpdates.get(userId) === update) {
+        this.presenceUpdates.delete(userId);
+      }
     }
   }
 
@@ -210,12 +353,18 @@ export class MessageGateway
     client: ChatSocket,
   ): Promise<string | null> {
     const token: unknown = client.data.accessToken;
-    if (typeof token !== 'string') return null;
+
+    if (!client.connected || typeof token !== 'string') {
+      return null;
+    }
+
     try {
       const user = await this.authService.verifyAccessToken(token);
+
       return user.id === client.data.userId ? user.id : null;
     } catch {
       client.disconnect();
+
       return null;
     }
   }

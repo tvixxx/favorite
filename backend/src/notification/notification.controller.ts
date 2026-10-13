@@ -18,11 +18,14 @@ import { AuthProtected, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '../generated/prisma/enums';
+import { queryInteger } from '../common/utils/query-value';
 
 function notificationTypes(
   raw?: string | string[],
 ): NotificationType[] | undefined {
-  if (raw === undefined) return undefined;
+  if (raw === undefined) {
+    return undefined;
+  }
   const values = Array.isArray(raw) ? raw : [raw];
   if (
     values.some(
@@ -54,16 +57,16 @@ export class NotificationController {
   public findAll(
     @Param('userId') userId: string,
     @Authorized() user: User,
-    @Query('limit') limitRaw?: string,
+    @Query('limit') limitRaw?: unknown,
     @Query('types') types?: string | string[],
   ) {
     this.ensureSelf(userId, user);
 
-    const limit = limitRaw ? Number.parseInt(limitRaw, 10) : 30;
+    const limit = queryInteger(limitRaw, 'limit', 30, 1, 50);
 
     return this.notificationService.findManyForUser(
       userId,
-      Number.isFinite(limit) ? limit : 30,
+      limit,
       notificationTypes(types),
     );
   }

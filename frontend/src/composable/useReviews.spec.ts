@@ -1,19 +1,54 @@
-import { createPinia, disposePinia, getActivePinia, setActivePinia } from "pinia";
+import {
+  createPinia,
+  disposePinia,
+  getActivePinia,
+  setActivePinia,
+} from "pinia";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useReviews } from "./useReviews";
 
 const mocks = vi.hoisted(() => ({ fetch: vi.fn() }));
-vi.mock("@/composable/useFetch", () => ({ useFetch: mocks.fetch, FETCH_METHOD: { get: "GET", post: "POST", put: "PUT", delete: "DELETE" } }));
+vi.mock("@/composable/useFetch", () => ({
+  useFetch: mocks.fetch,
+  FETCH_METHOD: { get: "GET", post: "POST", put: "PUT", delete: "DELETE" },
+}));
 
 describe("Изоляция отзывов", () => {
-  beforeEach(() => { setActivePinia(createPinia()); mocks.fetch.mockReset(); });
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    mocks.fetch.mockReset();
+  });
   afterEach(() => disposePinia(getActivePinia()!));
+
+  it("подгружает свой отзыв, даже если он старше последних десяти", async () => {
+    const recent = Array.from({ length: 10 }, (_, index) => ({
+      id: `recent-${index}`,
+    }));
+    const own = { id: "own-old", userId: "user-id", movieId: "movie-id" };
+    mocks.fetch.mockResolvedValueOnce({ status: 200, data: recent });
+    mocks.fetch.mockResolvedValueOnce({ status: 200, data: own });
+    const store = useReviews();
+
+    await store.fetchReviews("movie-id", 10, true);
+    expect(store.reviews.value).toEqual([own, ...recent]);
+    expect(mocks.fetch.mock.calls[1][0]).toContain("/reviews/mine/movie-id");
+  });
 
   it("не меняет счётчик нового фильма поздним удалением отзыва предыдущего", async () => {
     let finish!: (value: unknown) => void;
-    mocks.fetch.mockResolvedValueOnce({ status: 200, data: [{ id: "old-review", movieId: "old" }] });
-    mocks.fetch.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
-    mocks.fetch.mockResolvedValueOnce({ status: 200, data: [{ id: "new-review", movieId: "new" }] });
+    mocks.fetch.mockResolvedValueOnce({
+      status: 200,
+      data: [{ id: "old-review", movieId: "old" }],
+    });
+    mocks.fetch.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+    );
+    mocks.fetch.mockResolvedValueOnce({
+      status: 200,
+      data: [{ id: "new-review", movieId: "new" }],
+    });
     const store = useReviews();
     await store.fetchReviews("old");
     const deletion = store.deleteReview("old-review");
@@ -26,7 +61,11 @@ describe("Изоляция отзывов", () => {
 
   it("сбрасывает отзывы и незавершённые запросы при завершении сессии", async () => {
     let finish!: (value: unknown) => void;
-    mocks.fetch.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+    mocks.fetch.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+    );
     const store = useReviews();
     const pending = store.fetchReviews("old");
     store.resetSession();

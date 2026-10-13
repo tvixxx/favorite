@@ -15,4 +15,9 @@ Dockerfile
 .dockerignore
 test
 coverage
+.media
+src/generated
+src/media/fixtures
+**/*.pem
+secrets
 *.log

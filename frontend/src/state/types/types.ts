@@ -2,6 +2,10 @@ export interface UserData {
   email: string;
   fullName: string;
   id: string;
+  role?: "USER" | "ADMIN";
+  avatarUrl?: string | null;
+  avatarThumbnailUrl?: string | null;
+  avatarAssetId?: string | null;
 }
 
 export interface UserInfo {
@@ -29,4 +33,8 @@ export interface UserProfileResponse {
   fullName: string;
   fullname?: string;
   name?: string;
+  role?: "USER" | "ADMIN";
+  avatarUrl?: string | null;
+  avatarThumbnailUrl?: string | null;
+  avatarAssetId?: string | null;
 }

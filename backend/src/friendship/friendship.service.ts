@@ -14,6 +14,12 @@ import {
 import { CreateFriendshipDto, FriendshipTypeDto } from './dto';
 import { NotificationService } from '../notification/notification.service';
 import { MessageGateway } from '../message/message.gateway';
+import type {
+  Friendship,
+  Notification,
+  Prisma,
+} from '../generated/prisma/client';
+import { lockResource } from '../common/utils/transaction-lock';
 
 const friendshipPeople = {
   requester: { select: { id: true, fullName: true, email: true } },
@@ -34,74 +40,89 @@ export class FriendshipService {
       throw new ConflictException('Cannot send request to yourself');
     }
 
-    const addressee = await this.prismaService.user.findUnique({
-      where: { id: dto.addresseeId },
-    });
-
-    if (!addressee) {
-      throw new NotFoundException('User not found');
-    }
-
-    const directions = [
-      { requesterId, addresseeId: dto.addresseeId },
-      { requesterId: dto.addresseeId, addresseeId: requesterId },
-    ];
-    const blocked = await this.prismaService.friendship.findFirst({
-      where: { OR: directions, status: FriendshipStatus.BLOCKED },
-    });
-    if (blocked) throw new ConflictException('Relationship is blocked');
-
-    const existing = await this.prismaService.friendship.findFirst({
-      where: {
-        type: dto.type,
-        OR:
-          dto.type === FriendshipTypeDto.FRIEND_REQUEST
-            ? directions
-            : [directions[0]],
-      },
-    });
-
-    if (existing && existing.status !== FriendshipStatus.REJECTED) {
-      throw new ConflictException('Friendship already exists');
-    }
-
-    const data = {
-      requesterId,
-      addresseeId: dto.addresseeId,
-      type: dto.type,
-      status:
-        dto.type === FriendshipTypeDto.SUBSCRIPTION
-          ? FriendshipStatus.ACCEPTED
-          : FriendshipStatus.PENDING,
-    };
-    const friendship = existing
-      ? await this.prismaService.friendship.update({
-          where: { id: existing.id },
-          data,
-          include: friendshipPeople,
-        })
-      : await this.prismaService.friendship.create({
-          data,
-          include: friendshipPeople,
+    const { friendship, notification } = await this.prismaService.$transaction(
+      async (tx) => {
+        await lockResource(tx, this.pairKey(requesterId, dto.addresseeId));
+        const addressee = await tx.user.findUnique({
+          where: { id: dto.addresseeId },
         });
 
-    if (
-      dto.type === FriendshipTypeDto.FRIEND_REQUEST &&
-      friendship.status === FriendshipStatus.PENDING
-    ) {
-      const row = await this.notificationService.create(
-        friendship.addresseeId,
-        NotificationType.FRIEND_REQUEST,
-        {
-          friendshipId: friendship.id,
-          requesterId: friendship.requesterId,
-          requesterName: friendship.requester.fullName,
-        },
-      );
+        if (!addressee) {
+          throw new NotFoundException('User not found');
+        }
 
+        const directions = [
+          { requesterId, addresseeId: dto.addresseeId },
+          { requesterId: dto.addresseeId, addresseeId: requesterId },
+        ];
+        const blocked = await tx.friendship.findFirst({
+          where: { OR: directions, status: FriendshipStatus.BLOCKED },
+        });
+
+        if (blocked) {
+          throw new ConflictException('Relationship is blocked');
+        }
+
+        const existing = await tx.friendship.findFirst({
+          where: {
+            type: dto.type,
+            OR:
+              dto.type === FriendshipTypeDto.FRIEND_REQUEST
+                ? directions
+                : [directions[0]],
+          },
+        });
+
+        if (existing && existing.status !== FriendshipStatus.REJECTED) {
+          throw new ConflictException('Friendship already exists');
+        }
+
+        const data = {
+          requesterId,
+          addresseeId: dto.addresseeId,
+          type: dto.type,
+          status:
+            dto.type === FriendshipTypeDto.SUBSCRIPTION
+              ? FriendshipStatus.ACCEPTED
+              : FriendshipStatus.PENDING,
+        };
+        const friendship = existing
+          ? await tx.friendship.update({
+              where: { id: existing.id },
+              data,
+              include: friendshipPeople,
+            })
+          : await tx.friendship.create({
+              data,
+              include: friendshipPeople,
+            });
+
+        let notification: Notification | undefined;
+
+        if (
+          dto.type === FriendshipTypeDto.FRIEND_REQUEST &&
+          friendship.status === FriendshipStatus.PENDING
+        ) {
+          notification = await this.notificationService.create(
+            friendship.addresseeId,
+            NotificationType.FRIEND_REQUEST,
+            {
+              friendshipId: friendship.id,
+              requesterId: friendship.requesterId,
+              requesterName: friendship.requester.fullName,
+            },
+            tx,
+          );
+        }
+
+        return { friendship, notification };
+      },
+    );
+
+    if (notification) {
       await this.messageGateway.emitToUser(
         friendship.addresseeId,
-        this.notificationService.toDto(row),
+        this.notificationService.toDto(notification),
       );
     }
 
@@ -109,94 +130,116 @@ export class FriendshipService {
   }
 
   async acceptRequest(userId: string, friendshipId: string) {
-    const friendship = await this.prismaService.friendship.findUnique({
-      where: { id: friendshipId },
-    });
+    const { updated, notification } = await this.prismaService.$transaction(
+      async (tx) => {
+        const friendship = await this.getLockedFriendship(tx, friendshipId);
 
-    if (!friendship) {
-      throw new NotFoundException('Friendship request not found');
-    }
+        if (friendship.addresseeId !== userId) {
+          throw new ConflictException(
+            'You can only accept requests sent to you',
+          );
+        }
 
-    if (friendship.addresseeId !== userId) {
-      throw new ConflictException('You can only accept requests sent to you');
-    }
+        if (
+          friendship.status !== 'PENDING' ||
+          friendship.type !== FriendshipType.FRIEND_REQUEST
+        ) {
+          throw new ConflictException('Request is not pending');
+        }
 
-    if (
-      friendship.status !== 'PENDING' ||
-      friendship.type !== FriendshipType.FRIEND_REQUEST
-    ) {
-      throw new ConflictException('Request is not pending');
-    }
+        const updated = await tx.friendship.update({
+          where: { id: friendshipId },
+          data: { status: 'ACCEPTED' },
+          include: friendshipPeople,
+        });
 
-    const updated = await this.prismaService.friendship.update({
-      where: { id: friendshipId },
-      data: { status: 'ACCEPTED' },
-      include: friendshipPeople,
-    });
+        const notification = await this.notificationService.create(
+          updated.requesterId,
+          NotificationType.FRIEND_ACCEPTED,
+          {
+            friendshipId: updated.id,
+            friendId: updated.addresseeId,
+            friendName: updated.addressee.fullName,
+          },
+          tx,
+        );
 
-    const row = await this.notificationService.create(
-      updated.requesterId,
-      NotificationType.FRIEND_ACCEPTED,
-      {
-        friendshipId: updated.id,
-        friendId: updated.addresseeId,
-        friendName: updated.addressee.fullName,
+        return { updated, notification };
       },
     );
 
     await this.messageGateway.emitToUser(
       updated.requesterId,
-      this.notificationService.toDto(row),
+      this.notificationService.toDto(notification),
     );
 
     return updated;
   }
 
   async rejectRequest(userId: string, friendshipId: string) {
-    const friendship = await this.prismaService.friendship.findUnique({
-      where: { id: friendshipId },
-    });
+    return this.prismaService.$transaction(async (tx) => {
+      const friendship = await this.getLockedFriendship(tx, friendshipId);
 
-    if (!friendship) {
-      throw new NotFoundException('Friendship request not found');
-    }
+      if (friendship.addresseeId !== userId) {
+        throw new ConflictException('You can only reject requests sent to you');
+      }
 
-    if (friendship.addresseeId !== userId) {
-      throw new ConflictException('You can only reject requests sent to you');
-    }
+      if (
+        friendship.status !== FriendshipStatus.PENDING ||
+        friendship.type !== FriendshipType.FRIEND_REQUEST
+      ) {
+        throw new ConflictException('Request is not pending');
+      }
 
-    if (
-      friendship.status !== FriendshipStatus.PENDING ||
-      friendship.type !== FriendshipType.FRIEND_REQUEST
-    ) {
-      throw new ConflictException('Request is not pending');
-    }
-
-    return this.prismaService.friendship.update({
-      where: { id: friendshipId },
-      data: { status: 'REJECTED' },
+      return tx.friendship.update({
+        where: { id: friendshipId },
+        data: { status: 'REJECTED' },
+      });
     });
   }
 
   async removeFriendship(userId: string, friendshipId: string) {
-    const friendship = await this.prismaService.friendship.findUnique({
-      where: { id: friendshipId },
-    });
+    return this.prismaService.$transaction(async (tx) => {
+      const friendship = await this.getLockedFriendship(tx, friendshipId);
 
-    if (!friendship) {
-      throw new NotFoundException('Friendship not found');
+      if (
+        friendship.requesterId !== userId &&
+        friendship.addresseeId !== userId
+      ) {
+        throw new ConflictException('You can only remove your own friendships');
+      }
+
+      return tx.friendship.delete({
+        where: { id: friendshipId },
+      });
+    });
+  }
+
+  private pairKey(first: string, second: string): string {
+    return `friendship:${[first, second].sort().join(':')}`;
+  }
+
+  private async getLockedFriendship(
+    tx: Prisma.TransactionClient,
+    id: string,
+  ): Promise<Friendship> {
+    const initial = await tx.friendship.findUnique({ where: { id } });
+
+    if (!initial) {
+      throw new NotFoundException('Friendship request not found');
     }
 
-    if (
-      friendship.requesterId !== userId &&
-      friendship.addresseeId !== userId
-    ) {
-      throw new ConflictException('You can only remove your own friendships');
+    await lockResource(
+      tx,
+      this.pairKey(initial.requesterId, initial.addresseeId),
+    );
+    const current = await tx.friendship.findUnique({ where: { id } });
+
+    if (!current) {
+      throw new NotFoundException('Friendship request not found');
     }
 
-    return this.prismaService.friendship.delete({
-      where: { id: friendshipId },
-    });
+    return current;
   }
 
   async getFriends(userId: string) {

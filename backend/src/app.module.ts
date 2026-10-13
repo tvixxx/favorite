@@ -24,8 +24,11 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { UserListModule } from './user-list/user-list.module';
 import { NotificationModule } from './notification/notification.module';
 import { FeedbackModule } from './feedback/feedback.module';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { HttpThrottlerGuard } from './common/guards/http-throttler.guard';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { MediaModule } from './media/media.module';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -54,11 +57,13 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     UserListModule,
     NotificationModule,
     FeedbackModule,
+    MediaModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, HealthController],
   providers: [
     AppService,
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
+    { provide: APP_GUARD, useClass: HttpThrottlerGuard },
   ],
 })
 export class AppModule implements NestModule {

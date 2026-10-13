@@ -4,20 +4,20 @@ import vueDevTools from "vite-plugin-vue-devtools";
 import { VitePWA } from "vite-plugin-pwa";
 import { fileURLToPath, URL } from "node:url";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  cacheDir: process.env.FAVOURITE_VITE_CACHE_DIR ?? "node_modules/.vite",
   plugins: [
     vue(),
-    vueDevTools({
-      launchEditor: "/Applications/WebStorm.app/Contents/MacOS/webstorm",
-    }),
+    ...(command === "serve"
+      ? [vueDevTools({ launchEditor: process.env.LAUNCH_EDITOR })]
+      : []),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["pwa-192.png", "pwa-512.png"],
       manifest: {
         name: "Favorite — медиатека и журнал просмотров",
         short_name: "Favorite",
-        description:
-          "Личная медиатека, коллекция, списки и журнал просмотров.",
+        description: "Личная медиатека, коллекция, списки и журнал просмотров.",
         theme_color: "#1677ff",
         background_color: "#ffffff",
         display: "standalone",
@@ -61,4 +61,4 @@ export default defineConfig({
   server: {
     port: 8080,
   },
-});
+}));

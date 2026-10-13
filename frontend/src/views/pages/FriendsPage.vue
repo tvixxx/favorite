@@ -551,6 +551,7 @@ onMounted(loadAll);
 </template>
 
 <style scoped lang="scss">
+@use "../../styles/media" as *;
 @use "@/styles/scrollbar" as *;
 
 /* Модалка «Добавить пользователя»: лейбл группы и кнопки 1:2 (эталон) */
@@ -626,7 +627,7 @@ onMounted(loadAll);
     gap: 12px;
     flex-shrink: 0;
 
-    @media (max-width: 640px) {
+    @include mediaMax(640px) {
       width: 100%;
     }
   }
@@ -635,7 +636,7 @@ onMounted(loadAll);
     width: 260px;
     max-width: 100%;
 
-    @media (max-width: 640px) {
+    @include mediaMax(640px) {
       flex: 1;
       width: auto;
     }
@@ -663,7 +664,7 @@ onMounted(loadAll);
     gap: 8px;
     white-space: nowrap;
 
-    @media (max-width: 640px) {
+    @include mediaMax(640px) {
       flex-shrink: 0;
     }
   }
@@ -744,10 +745,10 @@ onMounted(loadAll);
   }
 }
 
-// Грид карточек пользователей (эталон: auto-fill minmax(300px,1fr))
+// На узком экране карточка ограничена шириной контейнера.
 .user-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
   gap: 16px;
 }
 

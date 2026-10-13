@@ -17,21 +17,21 @@
  * Почему Node, а не bash: ротация — это арифметика с датами, а у `date` в macOS
  * и Linux разный синтаксис. На проде и на ноутбуке скрипт должен вести себя одинаково.
  */
-const fs = require("fs");
-const path = require("path");
-const { execFileSync } = require("child_process");
+const fs = require('fs');
+const path = require('path');
+const { execFileSync } = require('child_process');
 
-const BACKEND_DIR = path.resolve(__dirname, "..", "..");
+const BACKEND_DIR = path.resolve(__dirname, '..', '..');
 
 function readEnvFile() {
-  const file = path.join(BACKEND_DIR, ".env");
+  const file = path.join(BACKEND_DIR, '.env');
 
   if (!fs.existsSync(file)) {
     return {};
   }
 
   const url = fs
-    .readFileSync(file, "utf8")
+    .readFileSync(file, 'utf8')
     .match(/^DATABASE_URL="?([^"\n]+)"?/m)?.[1];
 
   if (!url) {
@@ -42,20 +42,22 @@ function readEnvFile() {
 
   return {
     user: decodeURIComponent(parsed.username),
-    db: parsed.pathname.replace(/^\//, ""),
+    db: parsed.pathname.replace(/^\//, ''),
   };
 }
 
-const fromEnvFile = readEnvFile();
+const fromEnvFile =
+  process.env.PG_USER && process.env.PG_DB ? {} : readEnvFile();
 
 const CONFIG = {
-  container: process.env.PG_CONTAINER ?? "postgres",
-  user: process.env.PG_USER ?? fromEnvFile.user ?? "postgres",
-  db: process.env.PG_DB ?? fromEnvFile.db ?? "postgres",
-  dir: process.env.BACKUP_DIR ?? path.join(BACKEND_DIR, "backups"),
-  gpgRecipient: process.env.GPG_RECIPIENT ?? "",
-  s3Uri: process.env.S3_URI ?? "",
-  healthcheckUrl: process.env.HEALTHCHECK_URL ?? "",
+  container: process.env.PG_CONTAINER ?? 'postgres',
+  user: process.env.PG_USER ?? fromEnvFile.user ?? 'postgres',
+  db: process.env.PG_DB ?? fromEnvFile.db ?? 'postgres',
+  dir: process.env.BACKUP_DIR ?? path.join(BACKEND_DIR, 'backups'),
+  gpgRecipient: process.env.GPG_RECIPIENT ?? '',
+  s3Uri: process.env.S3_URI ?? '',
+  s3Endpoint: process.env.S3_ENDPOINT_URL ?? '',
+  healthcheckUrl: process.env.HEALTHCHECK_URL ?? '',
   keep: {
     hourly: Number(process.env.KEEP_HOURLY ?? 24),
     daily: Number(process.env.KEEP_DAILY ?? 7),
@@ -65,7 +67,7 @@ const CONFIG = {
 };
 
 const run = (cmd, args, opts = {}) =>
-  execFileSync(cmd, args, { encoding: "utf8", ...opts });
+  execFileSync(cmd, args, { encoding: 'utf8', ...opts });
 
 /** Имя файла несёт метку времени в UTC — по ней же работает ротация */
 function stamp(date) {
@@ -84,14 +86,23 @@ function dump(target) {
   // pg_dump запускаем ВНУТРИ контейнера: так версия клиента всегда совпадает
   // с версией сервера (иначе более новый сервер отказывается отдавать дамп)
   const args = CONFIG.container
-    ? ["exec", CONFIG.container, "pg_dump", "-U", CONFIG.user, "-d", CONFIG.db, "-Fc"]
-    : ["-U", CONFIG.user, "-d", CONFIG.db, "-Fc"];
+    ? [
+        'exec',
+        CONFIG.container,
+        'pg_dump',
+        '-U',
+        CONFIG.user,
+        '-d',
+        CONFIG.db,
+        '-Fc',
+      ]
+    : ['-U', CONFIG.user, '-d', CONFIG.db, '-Fc'];
 
-  const out = fs.openSync(target, "w");
+  const out = fs.openSync(target, 'w');
 
   try {
-    run(CONFIG.container ? "docker" : "pg_dump", args, {
-      stdio: ["ignore", out, "inherit"],
+    run(CONFIG.container ? 'docker' : 'pg_dump', args, {
+      stdio: ['ignore', out, 'inherit'],
       maxBuffer: 1024 * 1024 * 1024,
     });
   } finally {
@@ -102,16 +113,29 @@ function dump(target) {
 function encrypt(file) {
   const target = `${file}.gpg`;
 
-  run("gpg", ["--batch", "--yes", "--encrypt", "--recipient", CONFIG.gpgRecipient, "--output", target, file]);
+  run('gpg', [
+    '--batch',
+    '--yes',
+    '--encrypt',
+    '--recipient',
+    CONFIG.gpgRecipient,
+    '--output',
+    target,
+    file,
+  ]);
   fs.unlinkSync(file);
 
   return target;
 }
 
 function upload(file) {
-  const uri = `${CONFIG.s3Uri.replace(/\/$/, "")}/${path.basename(file)}`;
+  const uri = `${CONFIG.s3Uri.replace(/\/$/, '')}/${path.basename(file)}`;
 
-  run("aws", ["s3", "cp", file, uri], { stdio: "inherit" });
+  const endpoint = CONFIG.s3Endpoint
+    ? ['--endpoint-url', CONFIG.s3Endpoint]
+    : [];
+
+  run('aws', [...endpoint, 's3', 'cp', file, uri], { stdio: 'inherit' });
 
   return uri;
 }
@@ -144,9 +168,9 @@ function pickKeepers(files) {
     const week = Math.floor(file.at.getTime() / (7 * 864e5));
 
     for (const [bucket, key, limit] of [
-      ["day", day, CONFIG.keep.daily],
-      ["week", week, CONFIG.keep.weekly],
-      ["month", month, CONFIG.keep.monthly],
+      ['day', day, CONFIG.keep.daily],
+      ['week', week, CONFIG.keep.weekly],
+      ['month', month, CONFIG.keep.monthly],
     ]) {
       const seen = newestPer.get(bucket) ?? new Map();
 
@@ -182,9 +206,9 @@ function rotate() {
 
 async function ping(url) {
   try {
-    await fetch(url, { method: "POST" });
+    await fetch(url, { method: 'POST' });
   } catch {
-    console.warn("Не удалось пингнуть healthcheck — проверьте URL");
+    console.warn('Не удалось пингнуть healthcheck — проверьте URL');
   }
 }
 
@@ -212,13 +236,15 @@ async function ping(url) {
 
   const { kept, removed } = rotate();
 
-  console.log(`Дамп готов: ${path.basename(file)} (${(size / 1048576).toFixed(2)} МБ)`);
+  console.log(
+    `Дамп готов: ${path.basename(file)} (${(size / 1048576).toFixed(2)} МБ)`,
+  );
   console.log(`Хранится копий: ${kept}, удалено по ротации: ${removed.length}`);
 
   if (CONFIG.healthcheckUrl) {
     await ping(CONFIG.healthcheckUrl);
   }
 })().catch((error) => {
-  console.error("Бэкап НЕ выполнен:", error.message);
+  console.error('Бэкап НЕ выполнен:', error.message);
   process.exit(1);
 });

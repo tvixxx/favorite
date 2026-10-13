@@ -111,6 +111,7 @@ const handleCancel = () => {
 </template>
 
 <style scoped lang="scss">
+@use "../../styles/media" as *;
 .review-form {
   &__rating {
     :deep(.ant-rate) {
@@ -118,7 +119,7 @@ const handleCancel = () => {
     }
 
     // Мобилка (эталон): звёзды растянуты по ширине — удобнее попадать пальцем
-    @media (max-width: 767.98px) {
+    @include mediaMax($tablet - 0.02px) {
       :deep(.ant-rate) {
         display: flex;
         justify-content: space-between;

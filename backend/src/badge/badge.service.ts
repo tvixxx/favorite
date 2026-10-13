@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserMovieService } from '../user-movie/user-movie.service';
+import type { Prisma } from '../generated/prisma/client';
+
+type BadgeStats = Pick<
+  Awaited<ReturnType<UserMovieService['getUserStats']>>,
+  'totalMovies' | 'totalFavorites' | 'totalCompleted' | 'totalSerials'
+> & { totalRated: number };
+type TimeStats = { weekCount: number; monthCount: number };
 
 export interface Badge {
   id: string;
@@ -34,7 +41,7 @@ interface BadgeDefinition {
   category: Badge['category'];
   tier: Badge['tier'];
   requirement: number;
-  getValue: (stats: any, timeStats: any) => number;
+  getValue: (stats: BadgeStats, timeStats: TimeStats) => number;
 }
 
 @Injectable()
@@ -199,9 +206,11 @@ export class BadgeService {
   ) {}
 
   async getUserBadges(userId: string): Promise<Badge[]> {
-    const stats = await this.userMovieService.getUserStats(userId);
-    const timeStats = await this.getTimeBasedStats(userId);
-    const ratedCount = await this.getRatedCount(userId);
+    const [stats, timeStats, ratedCount] = await Promise.all([
+      this.userMovieService.getUserStats(userId),
+      this.getTimeBasedStats(userId),
+      this.getRatedCount(userId),
+    ]);
 
     const extendedStats = {
       ...stats,
@@ -215,14 +224,94 @@ export class BadgeService {
     userId: string,
     limit = 6,
   ): Promise<LeaderboardBadgePreview[]> {
+    const badges = await this.getUserBadges(userId);
+
+    return this.badgePreviews(badges, limit);
+  }
+
+  public async getTopUnlockedBadgesForUsers(
+    userIds: string[],
+    limit = 6,
+  ): Promise<Map<string, LeaderboardBadgePreview[]>> {
+    const ids = [...new Set(userIds)];
+    const result = new Map<string, LeaderboardBadgePreview[]>();
+
+    if (!ids.length) {
+      return result;
+    }
+
+    const weekAgo = new Date();
+    const monthAgo = new Date();
+
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    monthAgo.setDate(monthAgo.getDate() - 30);
+
+    const filters: Array<{
+      field: keyof (BadgeStats & TimeStats);
+      where: Prisma.UserMovieWhereInput;
+    }> = [
+      { field: 'totalMovies', where: {} },
+      { field: 'totalFavorites', where: { isFavorite: true } },
+      { field: 'totalCompleted', where: { watchStatus: 'COMPLETED' } },
+      { field: 'totalSerials', where: { movie: { isSerial: true } } },
+      { field: 'totalRated', where: { personalRate: { not: null } } },
+      { field: 'weekCount', where: { addedAt: { gte: weekAgo } } },
+      { field: 'monthCount', where: { addedAt: { gte: monthAgo } } },
+    ];
+    const grouped = await Promise.all(
+      filters.map(({ where }) =>
+        this.prismaService.userMovie.groupBy({
+          by: ['userId'],
+          where: { ...where, userId: { in: ids } },
+          _count: { _all: true },
+        }),
+      ),
+    );
+    const counts = new Map<string, BadgeStats & TimeStats>(
+      ids.map((id) => [
+        id,
+        {
+          totalMovies: 0,
+          totalFavorites: 0,
+          totalCompleted: 0,
+          totalSerials: 0,
+          totalRated: 0,
+          weekCount: 0,
+          monthCount: 0,
+        },
+      ]),
+    );
+
+    grouped.forEach((rows, index) => {
+      for (const row of rows) {
+        const stats = counts.get(row.userId);
+
+        if (stats) {
+          stats[filters[index].field] = row._count._all;
+        }
+      }
+    });
+
+    for (const [id, stats] of counts) {
+      result.set(
+        id,
+        this.badgePreviews(this.calculateBadges(stats, stats), limit),
+      );
+    }
+
+    return result;
+  }
+
+  private badgePreviews(
+    badges: Badge[],
+    limit: number,
+  ): LeaderboardBadgePreview[] {
     const tierRank: Record<Badge['tier'], number> = {
       platinum: 4,
       gold: 3,
       silver: 2,
       bronze: 1,
     };
-
-    const badges = await this.getUserBadges(userId);
 
     return badges
       .filter((b) => b.isUnlocked)
@@ -273,7 +362,7 @@ export class BadgeService {
     });
   }
 
-  private calculateBadges(stats: any, timeStats: any): Badge[] {
+  private calculateBadges(stats: BadgeStats, timeStats: TimeStats): Badge[] {
     return this.badgeDefinitions.map((def) => {
       const currentValue = def.getValue(stats, timeStats);
       const isUnlocked = currentValue >= def.requirement;

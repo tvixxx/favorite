@@ -7,6 +7,7 @@ import {
   IsUUID,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import { WatchStatus } from '../../generated/prisma/enums';
 
@@ -19,12 +20,12 @@ export class CreateUserMovieBodyDto {
   movieId: string;
 
   @ApiProperty({ required: false })
-  @IsOptional()
+  @ValidateIf((_object, value: unknown) => value !== undefined)
   @IsBoolean()
   isFavorite?: boolean;
 
   @ApiProperty({ required: false })
-  @IsOptional()
+  @ValidateIf((_object, value: unknown) => value !== undefined)
   @IsBoolean()
   seeLater?: boolean;
 
@@ -36,7 +37,7 @@ export class CreateUserMovieBodyDto {
   personalRate?: number;
 
   @ApiProperty({ required: false, enum: WatchStatus })
-  @IsOptional()
+  @ValidateIf((_object, value: unknown) => value !== undefined)
   @IsEnum(WatchStatus)
   watchStatus?: WatchStatus;
 

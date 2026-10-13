@@ -27,6 +27,8 @@ export type AggregateMoviePoster = {
 export type MoviePosterMinAggregateOutputType = {
   id: string | null
   url: string | null
+  thumbnailUrl: string | null
+  assetId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -34,6 +36,8 @@ export type MoviePosterMinAggregateOutputType = {
 export type MoviePosterMaxAggregateOutputType = {
   id: string | null
   url: string | null
+  thumbnailUrl: string | null
+  assetId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -41,6 +45,8 @@ export type MoviePosterMaxAggregateOutputType = {
 export type MoviePosterCountAggregateOutputType = {
   id: number
   url: number
+  thumbnailUrl: number
+  assetId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -50,6 +56,8 @@ export type MoviePosterCountAggregateOutputType = {
 export type MoviePosterMinAggregateInputType = {
   id?: true
   url?: true
+  thumbnailUrl?: true
+  assetId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -57,6 +65,8 @@ export type MoviePosterMinAggregateInputType = {
 export type MoviePosterMaxAggregateInputType = {
   id?: true
   url?: true
+  thumbnailUrl?: true
+  assetId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -64,6 +74,8 @@ export type MoviePosterMaxAggregateInputType = {
 export type MoviePosterCountAggregateInputType = {
   id?: true
   url?: true
+  thumbnailUrl?: true
+  assetId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -144,6 +156,8 @@ export type MoviePosterGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 export type MoviePosterGroupByOutputType = {
   id: string
   url: string
+  thumbnailUrl: string | null
+  assetId: string | null
   createdAt: Date
   updatedAt: Date
   _count: MoviePosterCountAggregateOutputType | null
@@ -151,7 +165,7 @@ export type MoviePosterGroupByOutputType = {
   _max: MoviePosterMaxAggregateOutputType | null
 }
 
-type GetMoviePosterGroupByPayload<T extends MoviePosterGroupByArgs> = Prisma.PrismaPromise<
+export type GetMoviePosterGroupByPayload<T extends MoviePosterGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<MoviePosterGroupByOutputType, T['by']> &
       {
@@ -172,33 +186,44 @@ export type MoviePosterWhereInput = {
   NOT?: Prisma.MoviePosterWhereInput | Prisma.MoviePosterWhereInput[]
   id?: Prisma.StringFilter<"MoviePoster"> | string
   url?: Prisma.StringFilter<"MoviePoster"> | string
+  thumbnailUrl?: Prisma.StringNullableFilter<"MoviePoster"> | string | null
+  assetId?: Prisma.StringNullableFilter<"MoviePoster"> | string | null
   createdAt?: Prisma.DateTimeFilter<"MoviePoster"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MoviePoster"> | Date | string
+  asset?: Prisma.XOR<Prisma.MediaAssetNullableScalarRelationFilter, Prisma.MediaAssetWhereInput> | null
   movie?: Prisma.XOR<Prisma.MovieNullableScalarRelationFilter, Prisma.MovieWhereInput> | null
 }
 
 export type MoviePosterOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   url?: Prisma.SortOrder
+  thumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  assetId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  asset?: Prisma.MediaAssetOrderByWithRelationInput
   movie?: Prisma.MovieOrderByWithRelationInput
 }
 
 export type MoviePosterWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  assetId?: string
   AND?: Prisma.MoviePosterWhereInput | Prisma.MoviePosterWhereInput[]
   OR?: Prisma.MoviePosterWhereInput[]
   NOT?: Prisma.MoviePosterWhereInput | Prisma.MoviePosterWhereInput[]
   url?: Prisma.StringFilter<"MoviePoster"> | string
+  thumbnailUrl?: Prisma.StringNullableFilter<"MoviePoster"> | string | null
   createdAt?: Prisma.DateTimeFilter<"MoviePoster"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MoviePoster"> | Date | string
+  asset?: Prisma.XOR<Prisma.MediaAssetNullableScalarRelationFilter, Prisma.MediaAssetWhereInput> | null
   movie?: Prisma.XOR<Prisma.MovieNullableScalarRelationFilter, Prisma.MovieWhereInput> | null
-}, "id">
+}, "id" | "assetId">
 
 export type MoviePosterOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   url?: Prisma.SortOrder
+  thumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  assetId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.MoviePosterCountOrderByAggregateInput
@@ -212,6 +237,8 @@ export type MoviePosterScalarWhereWithAggregatesInput = {
   NOT?: Prisma.MoviePosterScalarWhereWithAggregatesInput | Prisma.MoviePosterScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"MoviePoster"> | string
   url?: Prisma.StringWithAggregatesFilter<"MoviePoster"> | string
+  thumbnailUrl?: Prisma.StringNullableWithAggregatesFilter<"MoviePoster"> | string | null
+  assetId?: Prisma.StringNullableWithAggregatesFilter<"MoviePoster"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"MoviePoster"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"MoviePoster"> | Date | string
 }
@@ -219,14 +246,18 @@ export type MoviePosterScalarWhereWithAggregatesInput = {
 export type MoviePosterCreateInput = {
   id?: string
   url?: string
+  thumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  asset?: Prisma.MediaAssetCreateNestedOneWithoutPosterInput
   movie?: Prisma.MovieCreateNestedOneWithoutPosterInput
 }
 
 export type MoviePosterUncheckedCreateInput = {
   id?: string
   url?: string
+  thumbnailUrl?: string | null
+  assetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   movie?: Prisma.MovieUncheckedCreateNestedOneWithoutPosterInput
@@ -235,14 +266,18 @@ export type MoviePosterUncheckedCreateInput = {
 export type MoviePosterUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   url?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  asset?: Prisma.MediaAssetUpdateOneWithoutPosterNestedInput
   movie?: Prisma.MovieUpdateOneWithoutPosterNestedInput
 }
 
 export type MoviePosterUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   url?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   movie?: Prisma.MovieUncheckedUpdateOneWithoutPosterNestedInput
@@ -251,6 +286,8 @@ export type MoviePosterUncheckedUpdateInput = {
 export type MoviePosterCreateManyInput = {
   id?: string
   url?: string
+  thumbnailUrl?: string | null
+  assetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -258,6 +295,7 @@ export type MoviePosterCreateManyInput = {
 export type MoviePosterUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   url?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -265,6 +303,8 @@ export type MoviePosterUpdateManyMutationInput = {
 export type MoviePosterUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   url?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -277,6 +317,8 @@ export type MoviePosterNullableScalarRelationFilter = {
 export type MoviePosterCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   url?: Prisma.SortOrder
+  thumbnailUrl?: Prisma.SortOrder
+  assetId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -284,6 +326,8 @@ export type MoviePosterCountOrderByAggregateInput = {
 export type MoviePosterMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   url?: Prisma.SortOrder
+  thumbnailUrl?: Prisma.SortOrder
+  assetId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -291,8 +335,42 @@ export type MoviePosterMaxOrderByAggregateInput = {
 export type MoviePosterMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   url?: Prisma.SortOrder
+  thumbnailUrl?: Prisma.SortOrder
+  assetId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type MoviePosterCreateNestedOneWithoutAssetInput = {
+  create?: Prisma.XOR<Prisma.MoviePosterCreateWithoutAssetInput, Prisma.MoviePosterUncheckedCreateWithoutAssetInput>
+  connectOrCreate?: Prisma.MoviePosterCreateOrConnectWithoutAssetInput
+  connect?: Prisma.MoviePosterWhereUniqueInput
+}
+
+export type MoviePosterUncheckedCreateNestedOneWithoutAssetInput = {
+  create?: Prisma.XOR<Prisma.MoviePosterCreateWithoutAssetInput, Prisma.MoviePosterUncheckedCreateWithoutAssetInput>
+  connectOrCreate?: Prisma.MoviePosterCreateOrConnectWithoutAssetInput
+  connect?: Prisma.MoviePosterWhereUniqueInput
+}
+
+export type MoviePosterUpdateOneWithoutAssetNestedInput = {
+  create?: Prisma.XOR<Prisma.MoviePosterCreateWithoutAssetInput, Prisma.MoviePosterUncheckedCreateWithoutAssetInput>
+  connectOrCreate?: Prisma.MoviePosterCreateOrConnectWithoutAssetInput
+  upsert?: Prisma.MoviePosterUpsertWithoutAssetInput
+  disconnect?: Prisma.MoviePosterWhereInput | boolean
+  delete?: Prisma.MoviePosterWhereInput | boolean
+  connect?: Prisma.MoviePosterWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MoviePosterUpdateToOneWithWhereWithoutAssetInput, Prisma.MoviePosterUpdateWithoutAssetInput>, Prisma.MoviePosterUncheckedUpdateWithoutAssetInput>
+}
+
+export type MoviePosterUncheckedUpdateOneWithoutAssetNestedInput = {
+  create?: Prisma.XOR<Prisma.MoviePosterCreateWithoutAssetInput, Prisma.MoviePosterUncheckedCreateWithoutAssetInput>
+  connectOrCreate?: Prisma.MoviePosterCreateOrConnectWithoutAssetInput
+  upsert?: Prisma.MoviePosterUpsertWithoutAssetInput
+  disconnect?: Prisma.MoviePosterWhereInput | boolean
+  delete?: Prisma.MoviePosterWhereInput | boolean
+  connect?: Prisma.MoviePosterWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MoviePosterUpdateToOneWithWhereWithoutAssetInput, Prisma.MoviePosterUpdateWithoutAssetInput>, Prisma.MoviePosterUncheckedUpdateWithoutAssetInput>
 }
 
 export type MoviePosterCreateNestedOneWithoutMovieInput = {
@@ -311,16 +389,72 @@ export type MoviePosterUpdateOneWithoutMovieNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.MoviePosterUpdateToOneWithWhereWithoutMovieInput, Prisma.MoviePosterUpdateWithoutMovieInput>, Prisma.MoviePosterUncheckedUpdateWithoutMovieInput>
 }
 
+export type MoviePosterCreateWithoutAssetInput = {
+  id?: string
+  url?: string
+  thumbnailUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  movie?: Prisma.MovieCreateNestedOneWithoutPosterInput
+}
+
+export type MoviePosterUncheckedCreateWithoutAssetInput = {
+  id?: string
+  url?: string
+  thumbnailUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  movie?: Prisma.MovieUncheckedCreateNestedOneWithoutPosterInput
+}
+
+export type MoviePosterCreateOrConnectWithoutAssetInput = {
+  where: Prisma.MoviePosterWhereUniqueInput
+  create: Prisma.XOR<Prisma.MoviePosterCreateWithoutAssetInput, Prisma.MoviePosterUncheckedCreateWithoutAssetInput>
+}
+
+export type MoviePosterUpsertWithoutAssetInput = {
+  update: Prisma.XOR<Prisma.MoviePosterUpdateWithoutAssetInput, Prisma.MoviePosterUncheckedUpdateWithoutAssetInput>
+  create: Prisma.XOR<Prisma.MoviePosterCreateWithoutAssetInput, Prisma.MoviePosterUncheckedCreateWithoutAssetInput>
+  where?: Prisma.MoviePosterWhereInput
+}
+
+export type MoviePosterUpdateToOneWithWhereWithoutAssetInput = {
+  where?: Prisma.MoviePosterWhereInput
+  data: Prisma.XOR<Prisma.MoviePosterUpdateWithoutAssetInput, Prisma.MoviePosterUncheckedUpdateWithoutAssetInput>
+}
+
+export type MoviePosterUpdateWithoutAssetInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  movie?: Prisma.MovieUpdateOneWithoutPosterNestedInput
+}
+
+export type MoviePosterUncheckedUpdateWithoutAssetInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  movie?: Prisma.MovieUncheckedUpdateOneWithoutPosterNestedInput
+}
+
 export type MoviePosterCreateWithoutMovieInput = {
   id?: string
   url?: string
+  thumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  asset?: Prisma.MediaAssetCreateNestedOneWithoutPosterInput
 }
 
 export type MoviePosterUncheckedCreateWithoutMovieInput = {
   id?: string
   url?: string
+  thumbnailUrl?: string | null
+  assetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -344,13 +478,17 @@ export type MoviePosterUpdateToOneWithWhereWithoutMovieInput = {
 export type MoviePosterUpdateWithoutMovieInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   url?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  asset?: Prisma.MediaAssetUpdateOneWithoutPosterNestedInput
 }
 
 export type MoviePosterUncheckedUpdateWithoutMovieInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   url?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -360,47 +498,66 @@ export type MoviePosterUncheckedUpdateWithoutMovieInput = {
 export type MoviePosterSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   url?: boolean
+  thumbnailUrl?: boolean
+  assetId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  asset?: boolean | Prisma.MoviePoster$assetArgs<ExtArgs>
   movie?: boolean | Prisma.MoviePoster$movieArgs<ExtArgs>
 }, ExtArgs["result"]["moviePoster"]>
 
 export type MoviePosterSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   url?: boolean
+  thumbnailUrl?: boolean
+  assetId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  asset?: boolean | Prisma.MoviePoster$assetArgs<ExtArgs>
 }, ExtArgs["result"]["moviePoster"]>
 
 export type MoviePosterSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   url?: boolean
+  thumbnailUrl?: boolean
+  assetId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  asset?: boolean | Prisma.MoviePoster$assetArgs<ExtArgs>
 }, ExtArgs["result"]["moviePoster"]>
 
 export type MoviePosterSelectScalar = {
   id?: boolean
   url?: boolean
+  thumbnailUrl?: boolean
+  assetId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type MoviePosterOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "url" | "createdAt" | "updatedAt", ExtArgs["result"]["moviePoster"]>
+export type MoviePosterOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "url" | "thumbnailUrl" | "assetId" | "createdAt" | "updatedAt", ExtArgs["result"]["moviePoster"]>
 export type MoviePosterInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  asset?: boolean | Prisma.MoviePoster$assetArgs<ExtArgs>
   movie?: boolean | Prisma.MoviePoster$movieArgs<ExtArgs>
 }
-export type MoviePosterIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type MoviePosterIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type MoviePosterIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  asset?: boolean | Prisma.MoviePoster$assetArgs<ExtArgs>
+}
+export type MoviePosterIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  asset?: boolean | Prisma.MoviePoster$assetArgs<ExtArgs>
+}
 
 export type $MoviePosterPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "MoviePoster"
   objects: {
+    asset: Prisma.$MediaAssetPayload<ExtArgs> | null
     movie: Prisma.$MoviePayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     url: string
+    thumbnailUrl: string | null
+    assetId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["moviePoster"]>
@@ -797,6 +954,7 @@ readonly fields: MoviePosterFieldRefs;
  */
 export interface Prisma__MoviePosterClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  asset<T extends Prisma.MoviePoster$assetArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MoviePoster$assetArgs<ExtArgs>>): Prisma.Prisma__MediaAssetClient<runtime.Types.Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   movie<T extends Prisma.MoviePoster$movieArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MoviePoster$movieArgs<ExtArgs>>): Prisma.Prisma__MovieClient<runtime.Types.Result.GetResult<Prisma.$MoviePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -829,6 +987,8 @@ export interface Prisma__MoviePosterClient<T, Null = never, ExtArgs extends runt
 export interface MoviePosterFieldRefs {
   readonly id: Prisma.FieldRef<"MoviePoster", 'String'>
   readonly url: Prisma.FieldRef<"MoviePoster", 'String'>
+  readonly thumbnailUrl: Prisma.FieldRef<"MoviePoster", 'String'>
+  readonly assetId: Prisma.FieldRef<"MoviePoster", 'String'>
   readonly createdAt: Prisma.FieldRef<"MoviePoster", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"MoviePoster", 'DateTime'>
 }
@@ -1027,6 +1187,11 @@ export type MoviePosterFindManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Skip the first `n` MoviePosters.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of MoviePosters.
+   */
   distinct?: Prisma.MoviePosterScalarFieldEnum | Prisma.MoviePosterScalarFieldEnum[]
 }
 
@@ -1080,6 +1245,10 @@ export type MoviePosterCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Ext
    */
   data: Prisma.MoviePosterCreateManyInput | Prisma.MoviePosterCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MoviePosterIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1150,6 +1319,10 @@ export type MoviePosterUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Ext
    * Limit how many MoviePosters to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MoviePosterIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1216,6 +1389,25 @@ export type MoviePosterDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * Limit how many MoviePosters to delete.
    */
   limit?: number
+}
+
+/**
+ * MoviePoster.asset
+ */
+export type MoviePoster$assetArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MediaAsset
+   */
+  select?: Prisma.MediaAssetSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MediaAsset
+   */
+  omit?: Prisma.MediaAssetOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MediaAssetInclude<ExtArgs> | null
+  where?: Prisma.MediaAssetWhereInput
 }
 
 /**

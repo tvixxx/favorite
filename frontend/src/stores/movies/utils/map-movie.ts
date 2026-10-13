@@ -8,6 +8,7 @@ import {
 export function mapMovieFromApi(raw: MovieApiResponse): Movie {
   return {
     id: raw.id,
+    createdById: raw.createdById,
     title: raw.title,
     description: raw.description,
     isSerial: raw.isSerial,
@@ -17,6 +18,8 @@ export function mapMovieFromApi(raw: MovieApiResponse): Movie {
     genres: raw.genres ?? [],
     publishDate: raw.publishDate,
     imageUrl: raw.poster?.url ?? "",
+    imageThumbnailUrl: raw.poster?.thumbnailUrl ?? undefined,
+    posterAssetId: raw.poster?.assetId ?? null,
     createdAt: raw.createdAt,
     actors: raw.actors,
     reviews: raw.reviews,

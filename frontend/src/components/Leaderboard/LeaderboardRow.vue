@@ -84,6 +84,7 @@ const medalTone = computed<"gold" | "silver" | "bronze" | "default">(() => {
 </template>
 
 <style lang="scss" scoped>
+@use "../../styles/media" as *;
 .lb-row {
   display: flex;
   align-items: center;
@@ -231,7 +232,7 @@ const medalTone = computed<"gold" | "silver" | "bronze" | "default">(() => {
     }
   }
 
-  @media (max-width: 767.98px) {
+  @include mediaMax($tablet - 0.02px) {
     &__medal {
       display: block;
     }

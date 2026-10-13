@@ -11,11 +11,11 @@ ARG VITE_SOCKET_URL=
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
 
-COPY package*.json ./
-RUN npm ci
+COPY package.json yarn.lock .yarnrc .npmrc ./
+RUN test "$(yarn --version)" = "1.22.22" && yarn install --frozen-lockfile --non-interactive
 
 COPY . .
-RUN npm run build
+RUN yarn build
 
 # ---- раздача ----
 FROM nginx:1.27-alpine AS runtime

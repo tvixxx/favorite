@@ -1,23 +1,48 @@
 import {
-  IsArray,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   Length,
+  IsUrl,
+  IsUUID,
+  MaxLength,
+  Matches,
 } from 'class-validator';
-import { Genre } from '../../constants';
+import { Genre } from '../../generated/prisma/enums';
+import { PartialType } from '@nestjs/mapped-types';
+import { Transform } from 'class-transformer';
 
 export class UpdateUserDto {
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString({ message: 'Полное имя должно быть строкой' })
   @IsNotEmpty({ message: 'Полное имя не должно быть пустым' })
-  @Length(3, 20, {
-    message: 'Длина имени должна быть длинной от 3 до 20 символов',
+  @Matches(/\S/)
+  @Length(3, 50, {
+    message: 'Длина имени должна быть от 3 до 50 символов',
   })
   fullName: string;
 
-  @IsArray({ message: 'Теги должны быть массивом строк' })
-  @IsEnum(Genre, { message: 'Недопустимое значение тега', each: true })
+  @IsEnum(Genre, { message: 'Недопустимое значение тега' })
   @IsOptional()
-  tags: Genre[];
+  tags?: Genre | null;
+
+  @IsOptional()
+  @IsUUID('4')
+  avatarAssetId?: string | null;
+
+  @IsOptional()
+  @MaxLength(2048)
+  @IsUrl({
+    protocols: ['http', 'https'],
+    require_protocol: true,
+    require_tld: false,
+  })
+  avatarUrl?: string | null;
 }
+
+export class PatchUserDto extends PartialType(UpdateUserDto, {
+  skipNullProperties: false,
+}) {}

@@ -1,40 +1,68 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationType } from '../generated/prisma/enums';
 
 @Injectable()
 export class MessageService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async create(senderId: string, receiverId: string, content: string) {
-    return this.prismaService.message.create({
-      data: {
-        senderId,
-        receiverId,
-        content,
-      },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            email: true,
-            fullName: true,
+    return this.prismaService.$transaction(async (tx) => {
+      const message = await tx.message.create({
+        data: {
+          senderId,
+          receiverId,
+          content,
+        },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+            },
+          },
+          receiver: {
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+            },
           },
         },
-        receiver: {
-          select: {
-            id: true,
-            email: true,
-            fullName: true,
+      });
+      const notification = await tx.notification.create({
+        data: {
+          userId: receiverId,
+          type: NotificationType.CHAT_MESSAGE,
+          payload: {
+            messageId: message.id,
+            senderId,
+            senderName: message.sender.fullName,
+            preview: content.slice(0, 200),
           },
         },
-      },
+      });
+
+      return { message, notification };
     });
   }
 
   async getConversations(userId: string) {
+    const latestIds = await this.prismaService.$queryRaw<Array<{ id: string }>>`
+      SELECT DISTINCT ON (peer_id) id
+      FROM (
+        SELECT id, created_at,
+          CASE WHEN sender_id = ${userId} THEN receiver_id ELSE sender_id END AS peer_id
+        FROM messages
+        WHERE (sender_id = ${userId} OR receiver_id = ${userId})
+          AND sender_id <> receiver_id
+      ) AS conversations
+      ORDER BY peer_id, created_at DESC, id DESC
+    `;
     const messages = await this.prismaService.message.findMany({
       where: {
-        OR: [{ senderId: userId }, { receiverId: userId }],
+        id: { in: latestIds.map((row) => row.id) },
       },
       orderBy: {
         createdAt: 'desc',

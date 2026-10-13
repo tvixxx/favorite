@@ -75,13 +75,15 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('Пользователь с такой почтой не найден');
+      // Выполняем сопоставимую работу, чтобы отсутствие аккаунта не давало быстрый ответ.
+      await hash(password);
+      throw new NotFoundException('Неверная почта или пароль');
     }
 
     const isValidPassword = await verify(user.password, password);
 
     if (!isValidPassword) {
-      throw new NotFoundException('Пользователь не найден');
+      throw new NotFoundException('Неверная почта или пароль');
     }
 
     return this.auth(res, user.id);
@@ -95,6 +97,7 @@ export class AuthService {
     }
 
     let payload: JwtPayload;
+
     try {
       payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken);
     } catch {
@@ -140,6 +143,9 @@ export class AuthService {
         fullName: true,
         role: true,
         tags: true,
+        avatarUrl: true,
+        avatarThumbnailUrl: true,
+        avatarAssetId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -154,6 +160,7 @@ export class AuthService {
 
   public async verifyAccessToken(token: string) {
     let payload: JwtPayload;
+
     try {
       payload = await this.jwtService.verifyAsync<JwtPayload>(token);
     } catch {

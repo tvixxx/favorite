@@ -109,6 +109,7 @@ useHotThemeKeys();
 </template>
 
 <style lang="scss">
+@use "./styles/media" as *;
 #app {
   font-family: var(--fv-font-ui);
   -webkit-font-smoothing: antialiased;
@@ -149,7 +150,7 @@ body {
 }
 
 /* Место под нижний таб-бар на мобиле, чтобы контент не прятался */
-@media (max-width: 768px) {
+@include mediaMax($tablet) {
   #app {
     padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
   }

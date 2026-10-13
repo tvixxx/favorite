@@ -230,7 +230,7 @@ const {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@include mediaReducedMotion {
   .stateblock__spin {
     animation: none;
   }

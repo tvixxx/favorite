@@ -17,12 +17,15 @@ describe('Создание фильма вместе с личной запис�
     collection = [];
     failCollection = false;
     const tx = {
+      $executeRaw: jest.fn().mockResolvedValue(1),
       movie: {
         findFirst: jest.fn().mockResolvedValue(null),
         findUnique: jest.fn(() => Promise.resolve(movies[0])),
         create: jest.fn(({ data }: { data: Prisma.MovieCreateInput }) => {
           const movie = { id: 'movie-id', ...data };
+
           movies.push(movie);
+
           return Promise.resolve(movie);
         }),
       },
@@ -36,8 +39,12 @@ describe('Создание фильма вместе с личной запис�
         findUnique: jest.fn().mockResolvedValue(null),
         create: jest.fn(
           ({ data }: { data: Prisma.UserMovieUncheckedCreateInput }) => {
-            if (failCollection) throw new Error('Ошибка коллекции');
+            if (failCollection) {
+              throw new Error('Ошибка коллекции');
+            }
+
             collection.push(data);
+
             return Promise.resolve(data);
           },
         ),
@@ -49,6 +56,7 @@ describe('Создание фильма вместе с личной запис�
         work: (client: typeof tx) => Promise<T>,
       ): Promise<T> => {
         const before = structuredClone({ movies, collection });
+
         try {
           return await work(tx);
         } catch (error) {
@@ -59,7 +67,11 @@ describe('Создание фильма вместе с личной запис�
       },
     } as unknown as PrismaService;
     const userMovies = new UserMovieService(prisma);
-    service = new MovieService(prisma, userMovies);
+
+    service = new MovieService(prisma, userMovies, {
+      select: jest.fn(),
+      release: jest.fn(),
+    } as never);
   });
 
   const payload = () => ({
@@ -104,6 +116,7 @@ describe('Создание фильма вместе с личной запис�
 
   it('разрешает создать тайтл без необязательного списка актёров', async () => {
     const dto = payload();
+
     dto.actorIds = [];
     await service.create(dto, { id: 'user-id', role: 'USER' });
     expect(movies).toHaveLength(1);

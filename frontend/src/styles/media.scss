@@ -7,6 +7,30 @@
   }
 }
 
+@mixin mediaMin($min) {
+  @media (min-width: $min) {
+    @content;
+  }
+}
+
+@mixin mediaHover {
+  @media (hover: hover) {
+    @content;
+  }
+}
+
+@mixin mediaNoHover {
+  @media (hover: none) {
+    @content;
+  }
+}
+
+@mixin mediaReducedMotion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
 @mixin mediaMobile {
   @media (min-width: $mobile) {
     @content;

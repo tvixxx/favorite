@@ -17,6 +17,25 @@ export const UserRole = {
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
 
+export const MediaPurpose = {
+  MOVIE_POSTER: 'MOVIE_POSTER',
+  USER_AVATAR: 'USER_AVATAR',
+  ACTOR_PHOTO: 'ACTOR_PHOTO'
+} as const
+
+export type MediaPurpose = (typeof MediaPurpose)[keyof typeof MediaPurpose]
+
+
+export const MediaStatus = {
+  PROCESSING: 'PROCESSING',
+  READY: 'READY',
+  FAILED: 'FAILED',
+  DELETING: 'DELETING'
+} as const
+
+export type MediaStatus = (typeof MediaStatus)[keyof typeof MediaStatus]
+
+
 export const WatchStatus = {
   NOT_STARTED: 'NOT_STARTED',
   WATCHING: 'WATCHING',

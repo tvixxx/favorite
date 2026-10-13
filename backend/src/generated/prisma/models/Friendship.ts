@@ -172,7 +172,7 @@ export type FriendshipGroupByOutputType = {
   _max: FriendshipMaxAggregateOutputType | null
 }
 
-type GetFriendshipGroupByPayload<T extends FriendshipGroupByArgs> = Prisma.PrismaPromise<
+export type GetFriendshipGroupByPayload<T extends FriendshipGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<FriendshipGroupByOutputType, T['by']> &
       {
@@ -1339,6 +1339,11 @@ export type FriendshipFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Skip the first `n` Friendships.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Friendships.
+   */
   distinct?: Prisma.FriendshipScalarFieldEnum | Prisma.FriendshipScalarFieldEnum[]
 }
 

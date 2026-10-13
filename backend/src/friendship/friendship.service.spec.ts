@@ -5,6 +5,7 @@ import { FriendshipTypeDto } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { MessageGateway } from '../message/message.gateway';
+import { transactionRunner } from '../common/testing/transaction-lock';
 
 jest.mock('../prisma/prisma.service', () => ({ PrismaService: class {} }));
 jest.mock('../message/message.gateway', () => ({ MessageGateway: class {} }));
@@ -91,9 +92,11 @@ describe('Дружба и безопасные ответы', () => {
               ),
             ),
         ),
-        findUnique: jest.fn(({ where }: { where: { id: string } }) =>
-          Promise.resolve(rows.find((row) => row.id === where.id)),
-        ),
+        findUnique: jest.fn(({ where }: { where: { id: string } }) => {
+          const row = rows.find((item) => item.id === where.id);
+
+          return Promise.resolve(row ? { ...row } : undefined);
+        }),
         create: jest.fn(
           (
             query: Include & {
@@ -124,7 +127,10 @@ describe('Дружба и безопасные ответы', () => {
       },
     };
     service = new FriendshipService(
-      prisma as unknown as PrismaService,
+      {
+        ...prisma,
+        $transaction: transactionRunner(prisma),
+      } as unknown as PrismaService,
       {
         create: jest.fn().mockResolvedValue({}),
         toDto: jest.fn(() => ({})),
@@ -267,5 +273,42 @@ describe('Дружба и безопасные ответы', () => {
       }),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(rows).toHaveLength(1);
+  });
+
+  it('создаёт одну заявку при встречной одновременной отправке', async () => {
+    const results = await Promise.allSettled([
+      service.sendRequest('first', {
+        addresseeId: 'second',
+        type: FriendshipTypeDto.FRIEND_REQUEST,
+      }),
+      service.sendRequest('second', {
+        addresseeId: 'first',
+        type: FriendshipTypeDto.FRIEND_REQUEST,
+      }),
+    ]);
+
+    expect(
+      results.filter((result) => result.status === 'fulfilled'),
+    ).toHaveLength(1);
+    expect(rows).toHaveLength(1);
+  });
+
+  it('применяет только одно из одновременных принятия и отклонения', async () => {
+    rows.push({
+      id: 'relation-id',
+      requesterId: 'first',
+      addresseeId: 'second',
+      type: 'FRIEND_REQUEST',
+      status: 'PENDING',
+    });
+    const results = await Promise.allSettled([
+      service.acceptRequest('second', 'relation-id'),
+      service.rejectRequest('second', 'relation-id'),
+    ]);
+
+    expect(
+      results.filter((result) => result.status === 'fulfilled'),
+    ).toHaveLength(1);
+    expect(rows[0].status).toBe('ACCEPTED');
   });
 });

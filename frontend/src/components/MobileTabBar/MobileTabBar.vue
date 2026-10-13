@@ -154,6 +154,7 @@ const go = (to: string): void => {
 </template>
 
 <style lang="scss" scoped>
+@use "../../styles/media" as *;
 .mobile-tabbar {
   display: none;
   position: fixed;
@@ -169,7 +170,7 @@ const go = (to: string): void => {
   border-top: 1px solid var(--fv-color-border);
 
   // Показываем только на мобиле (десктоп — верхняя шапка)
-  @media (max-width: 768px) {
+  @include mediaMax($tablet) {
     display: flex;
   }
 

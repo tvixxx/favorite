@@ -9,7 +9,10 @@ import { useMainStore } from "@/state/state";
 import { useUserListsStore, useUserMoviesStore } from "@/stores";
 import { formatDate, formatYear, PLURAL, pluralize } from "@/utils";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
-import { DEFAULT_LIST_COLOR, LIST_COLOR_SWATCHES } from "@/constants/listColors";
+import {
+  DEFAULT_LIST_COLOR,
+  LIST_COLOR_SWATCHES,
+} from "@/constants/listColors";
 import { GenreLabels } from "@/components/Genres/constants/genres.constants";
 import { countriesLabelsRu } from "@/constants/countries/production-countries";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
@@ -33,6 +36,8 @@ import ReviewsWidget from "@/components/Reviews/ReviewsWidget.vue";
 import { useReviews } from "@/composable/useReviews";
 import WatchStatusSelect from "@/components/WatchStatusSelect/WatchStatusSelect.vue";
 import RateMovieModal from "@/components/RateMovieModal/RateMovieModal.vue";
+import MoviePosterEditor from "@/components/ImagePicker/MoviePosterEditor.vue";
+import type { ImageSelection } from "@/services/media";
 import CatalogMoviePreviewModal from "@/components/Catalog/CatalogMoviePreviewModal.vue";
 import type { UserListDetail, UserListSummary } from "@/stores/userLists/types";
 
@@ -49,8 +54,9 @@ const detailBackFallback = computed((): RouteLocationRaw => {
     typeof raw === "string"
       ? raw
       : Array.isArray(raw) && typeof raw[0] === "string"
-        ? raw[0]
-        : "";
+      ? raw[0]
+      : "";
+
   if (actorId) {
     return { path: `/library/actors/${actorId}` };
   }
@@ -58,9 +64,8 @@ const detailBackFallback = computed((): RouteLocationRaw => {
   return { path: "/library/collection" };
 });
 
-// Хлебные крошки (эталон): родительский раздел — откуда пришли
 const crumbParentLabel = computed(() =>
-  route.query.libActor ? "Актёры" : "Моя коллекция",
+  route.query.libActor ? "Актёры" : "Моя коллекция"
 );
 
 const goToCrumbParent = (): void => {
@@ -71,7 +76,6 @@ const goToActor = (actorId: string): void => {
   router.push({ name: "library-actor", params: { actorId } });
 };
 
-// «Лора Хэддок» → «ЛХ» (на мобиле актёры показываются чипами с инициалами)
 const actorInitials = (name: string): string =>
   name
     .trim()
@@ -80,46 +84,39 @@ const actorInitials = (name: string): string =>
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
 
-// Мобильная детальная разбита на три экрана с липкими табами (эталон):
-// правки прогресса/отзыва не требуют скролла через всю страницу
 const isMobile = useMediaQuery("(max-width: 767.98px)");
 
 type DetailTab = "overview" | "progress" | "reviews";
 
 const activeTab = ref<DetailTab>("overview");
 
-// Счётчик на табе «Отзывы» — из общего состояния виджета отзывов
 const { totalReviews: reviewsTotal } = useReviews();
 
-// У фильмов нет блока прогресса — таб не показываем
-const detailTabs = computed<Array<{ key: DetailTab; label: string; count: number }>>(
-  () => {
-    const tabs: Array<{ key: DetailTab; label: string; count: number }> = [
-      { key: "overview", label: "Обзор", count: 0 },
-    ];
+const detailTabs = computed<
+  Array<{ key: DetailTab; label: string; count: number }>
+>(() => {
+  const tabs: Array<{ key: DetailTab; label: string; count: number }> = [
+    { key: "overview", label: "Обзор", count: 0 },
+  ];
 
-    if (hasSerialProgress.value) {
-      tabs.push({ key: "progress", label: "Прогресс", count: 0 });
-    }
+  if (hasSerialProgress.value) {
+    tabs.push({ key: "progress", label: "Прогресс", count: 0 });
+  }
 
-    tabs.push({ key: "reviews", label: "Отзывы", count: reviewsTotal.value });
+  tabs.push({ key: "reviews", label: "Отзывы", count: reviewsTotal.value });
 
-    return tabs;
-  },
-);
+  return tabs;
+});
 
-// Если активный таб недоступен (фильм без прогресса) — падаем на «Обзор»
 const effectiveTab = computed<DetailTab>(() =>
   detailTabs.value.some((tab) => tab.key === activeTab.value)
     ? activeTab.value
-    : "overview",
+    : "overview"
 );
 
 const showTab = (tab: DetailTab): boolean =>
   !isMobile.value || effectiveTab.value === tab;
 
-// «Похожее из вашей коллекции» — непросмотренные тайтлы того же жанра.
-// Блок не рендерим, если совпадений нет (пустое состояние тут не нужно)
 interface SimilarMovie {
   movieId: string;
   title: string;
@@ -133,16 +130,20 @@ const similarRequests = createRequestGuard();
 
 const loadSimilar = async (movieId: string): Promise<void> => {
   const isCurrent = similarRequests.begin();
+
   try {
     const { data, status } = await useFetch<SimilarMovie[]>(
       `${MOVIES_ENDPOINTS}/${movieId}/similar?limit=4`,
-      { method: FETCH_METHOD.get },
+      { method: FETCH_METHOD.get }
     );
 
-    if (isCurrent()) similarMovies.value = isSuccessStatus(status) ? (data ?? []) : [];
+    if (isCurrent()) {
+      similarMovies.value = isSuccessStatus(status) ? data ?? [] : [];
+    }
   } catch {
-    // Блок необязательный — молча оставляем пустым
-    if (isCurrent()) similarMovies.value = [];
+    if (isCurrent()) {
+      similarMovies.value = [];
+    }
   }
 };
 
@@ -152,13 +153,10 @@ const openSimilar = (movieId: string): void => {
 
 const isRateModalVisible = ref(false);
 
-// Модалка сохранила оценку — обновляем панель без перезагрузки
 const onRateSaved = (updated: UserMovie): void => {
   currentUserMovie.value = updated;
 };
 
-// Реактивный id: с блоком «Похожее» можно уйти на другой фильм, оставаясь
-// в том же компоненте — иначе контент не перезагружался бы
 const currentMovieId = computed<string | null>(() => {
   const raw = route.params.id;
 
@@ -188,11 +186,8 @@ const loadDetail = async (): Promise<void> => {
   }
 
   const isCurrent = detailRequests.begin();
-
   isError.value = null;
 
-  // Если фильм уже в загруженной коллекции — показываем сразу, без скелетона.
-  // Но в списке нет averageRating, поэтому деталь всё равно догружаем.
   const cached = userMoviesStore.userMovies.find(
     (um) => um.movieId === movieId
   );
@@ -208,7 +203,10 @@ const loadDetail = async (): Promise<void> => {
       userId.value,
       movieId
     );
-    if (!isCurrent()) return;
+
+    if (!isCurrent()) {
+      return;
+    }
 
     if (loaded) {
       currentUserMovie.value = loaded;
@@ -220,13 +218,18 @@ const loadDetail = async (): Promise<void> => {
       catalogPreviewOpen.value = true;
     }
   } catch {
-    if (!isCurrent()) return;
+    if (!isCurrent()) {
+      return;
+    }
+
     if (!cached) {
       message.error("Не удалось загрузить фильм");
       isError.value = "Не удалось загрузить фильм";
     }
   } finally {
-    if (isCurrent()) isLoading.value = false;
+    if (isCurrent()) {
+      isLoading.value = false;
+    }
   }
 
   void loadSimilar(movieId);
@@ -242,15 +245,25 @@ onBeforeUnmount(() => {
 
 watch(catalogPreviewOpen, (open) => {
   const id = catalogPreviewId.value;
-  if (open || !id || id !== currentMovieId.value) return;
+
+  if (open || !id || id !== currentMovieId.value) {
+    return;
+  }
+
   catalogPreviewId.value = null;
   const own = userMoviesStore.userMovies.find((item) => item.movieId === id);
+
   if (own) {
     currentUserMovie.value = own;
     void loadDetail();
   } else {
     const actorId = route.query.libActor;
-    void router.replace(typeof actorId === "string" ? `/library/actors/${actorId}` : "/library/catalog");
+
+    void router.replace(
+      typeof actorId === "string"
+        ? `/library/actors/${actorId}`
+        : "/library/catalog"
+    );
   }
 });
 
@@ -259,7 +272,6 @@ const editSeason = ref<number | undefined>(undefined);
 const editEpisode = ref<number | undefined>(undefined);
 const isProgressSaving = ref(false);
 
-// Переход на другой фильм без размонтирования компонента
 watch(currentMovieId, (next, prev) => {
   if (!next || next === prev) {
     return;
@@ -275,7 +287,6 @@ watch(currentMovieId, (next, prev) => {
   void loadDetail();
 });
 
-// «Просмотрено» — как на остальных экранах (профиль, фильтры, Медиатека)
 const WATCH_STATUS_LABELS: Record<WatchStatus, string> = {
   [WatchStatus.NOT_STARTED]: "Не начато",
   [WatchStatus.WATCHING]: "Смотрю",
@@ -285,13 +296,50 @@ const WATCH_STATUS_LABELS: Record<WatchStatus, string> = {
 
 const movie = computed(() => currentUserMovie.value?.movie);
 const posterSrc = computed(() => movie.value?.imageUrl || FALLBACK_IMAGE_URL);
+const posterEditorOpen = ref(false);
+const canEditPoster = computed(
+  () =>
+    mainStore.userData?.role === "ADMIN" ||
+    (!!movie.value?.createdById &&
+      movie.value.createdById === mainStore.userData?.id)
+);
+const actorPhotoErrors = ref(new Set<string>());
 
-// Плитка «Средняя» в панели: средний балл по отзывам (приходит с бэка)
-const hasAverageRating = computed(
-  () => movie.value?.averageRating !== null && movie.value?.averageRating !== undefined,
+watch(
+  () => movie.value?.actors,
+  () => {
+    actorPhotoErrors.value.clear();
+  }
 );
 
-// Полоса рейтинга в мобильном hero
+watch(currentMovieId, () => {
+  posterEditorOpen.value = false;
+});
+
+function onPosterSaved(selection: ImageSelection | null): void {
+  if (!currentUserMovie.value) {
+    return;
+  }
+
+  const updatedMovie = {
+    ...currentUserMovie.value.movie,
+    imageUrl: selection?.url ?? "",
+    imageThumbnailUrl: selection?.thumbnailUrl ?? undefined,
+    posterAssetId: selection?.assetId ?? null,
+  };
+
+  currentUserMovie.value = { ...currentUserMovie.value, movie: updatedMovie };
+  userMoviesStore.userMovies = userMoviesStore.userMovies.map((item) =>
+    item.movieId === updatedMovie.id ? { ...item, movie: updatedMovie } : item
+  );
+}
+
+const hasAverageRating = computed(
+  () =>
+    movie.value?.averageRating !== null &&
+    movie.value?.averageRating !== undefined
+);
+
 const averageRatingPercent = computed(() => {
   const avg = movie.value?.averageRating;
 
@@ -312,11 +360,6 @@ const averageRatingLabel = computed(() => {
   return avg.toFixed(1).replace(".", ",");
 });
 
-/**
- * Чипы дат (эталон): «Начал» — при «смотрю» и дальше, «Досмотрел» — только
- * у просмотренных, «Бросил» — только у брошенных. При «не начато» чипов нет.
- * Активный чип — синий, пройденный этап — серый.
- */
 type DateChip = {
   key: string;
   icon: string;
@@ -324,7 +367,6 @@ type DateChip = {
   active: boolean;
 };
 
-// В чипах дата компактная — «12 мая» (эталон); год добавляем, только если не текущий
 const formatChipDate = (raw: string): string => {
   const date = new Date(raw);
 
@@ -380,7 +422,6 @@ const dateChips = computed<DateChip[]>(() => {
   return chips;
 });
 
-// Подпись в футере панели: «2 сезона, 14 серий»
 const seasonsEpisodesLabel = computed(() => {
   const parts: string[] = [];
 
@@ -414,10 +455,18 @@ const toggleFavorite = async () => {
 
   try {
     const newValue = !currentUserMovie.value.isFavorite;
-    await userMoviesStore.updateUserMovie(userId.value, currentUserMovie.value.movieId, {
+
+    await userMoviesStore.updateUserMovie(
+      userId.value,
+      currentUserMovie.value.movieId,
+      {
+        isFavorite: newValue,
+      }
+    );
+    currentUserMovie.value = {
+      ...currentUserMovie.value,
       isFavorite: newValue,
-    });
-    currentUserMovie.value = { ...currentUserMovie.value, isFavorite: newValue };
+    };
     message.success(
       newValue
         ? `"${movie.value?.title}" добавлен в избранное`
@@ -436,9 +485,13 @@ const toggleSeeLater = async () => {
   const newValue = !currentUserMovie.value.seeLater;
 
   try {
-    await userMoviesStore.updateUserMovie(userId.value, currentUserMovie.value.movieId, {
-      seeLater: newValue,
-    });
+    await userMoviesStore.updateUserMovie(
+      userId.value,
+      currentUserMovie.value.movieId,
+      {
+        seeLater: newValue,
+      }
+    );
     currentUserMovie.value = { ...currentUserMovie.value, seeLater: newValue };
 
     message.success(
@@ -502,7 +555,6 @@ const cancelEditProgress = () => {
   isEditingProgress.value = false;
 };
 
-// Esc отменяет правку — как закрытие модалки
 useEscapeKey(isEditingProgress, cancelEditProgress);
 
 const saveProgress = async () => {
@@ -519,7 +571,7 @@ const saveProgress = async () => {
       {
         currentSeason: editSeason.value,
         currentEpisode: editEpisode.value,
-      },
+      }
     );
 
     currentUserMovie.value = updated;
@@ -600,7 +652,6 @@ const changeWatchStatus = async (nextStatus: WatchStatus) => {
   }
 };
 
-// v-model селекта: значение читаем из userMovie, запись — через changeWatchStatus
 const watchStatusModel = computed<WatchStatus>({
   get: () => currentUserMovie.value?.watchStatus ?? WatchStatus.NOT_STARTED,
   set: (next) => void changeWatchStatus(next),
@@ -627,7 +678,9 @@ const canIncreaseEpisode = computed(() => {
     return false;
   }
 
-  return (currentUserMovie.value?.currentEpisode ?? 0) < movie.value.episodeCount;
+  return (
+    (currentUserMovie.value?.currentEpisode ?? 0) < movie.value.episodeCount
+  );
 });
 
 const updateSerialProgress = async (
@@ -662,7 +715,10 @@ const decreaseSeason = async () => {
     return;
   }
 
-  const nextSeason = Math.max((currentUserMovie.value?.currentSeason ?? 0) - 1, 0);
+  const nextSeason = Math.max(
+    (currentUserMovie.value?.currentSeason ?? 0) - 1,
+    0
+  );
 
   await updateSerialProgress(
     { currentSeason: nextSeason },
@@ -693,7 +749,10 @@ const decreaseEpisode = async () => {
     return;
   }
 
-  const nextEpisode = Math.max((currentUserMovie.value?.currentEpisode ?? 0) - 1, 0);
+  const nextEpisode = Math.max(
+    (currentUserMovie.value?.currentEpisode ?? 0) - 1,
+    0
+  );
 
   await updateSerialProgress(
     { currentEpisode: nextEpisode },
@@ -813,6 +872,7 @@ const createListFromModal = async () => {
     message.success(`Список «${created.name}» создан`);
   } catch (error: unknown) {
     const text = getApiResponseMessage(error);
+
     message.error(text || "Не удалось создать список");
   } finally {
     isListActionLoading.value = false;
@@ -850,6 +910,7 @@ const addMovieToList = async (listId: string) => {
     }
 
     const text = getApiResponseMessage(error);
+
     message.error(text || "Не удалось добавить фильм в список");
   } finally {
     isListActionLoading.value = false;
@@ -862,7 +923,11 @@ const addMovieToList = async (listId: string) => {
     <div class="movie-detail__content">
       <!-- Хлебные крошки вместо кнопки «Назад» (эталон) -->
       <nav class="detail-crumbs" aria-label="Навигация">
-        <button type="button" class="detail-crumbs__link" @click="goToCrumbParent">
+        <button
+          type="button"
+          class="detail-crumbs__link"
+          @click="goToCrumbParent"
+        >
           {{ crumbParentLabel }}
         </button>
         <BaseIcon
@@ -926,7 +991,9 @@ const addMovieToList = async (listId: string) => {
               @click="toggleFavorite"
             >
               <BaseIcon
-                :name="currentUserMovie.isFavorite ? 'ph:heart-fill' : 'ph:heart'"
+                :name="
+                  currentUserMovie.isFavorite ? 'ph:heart-fill' : 'ph:heart'
+                "
                 :width="18"
                 :height="18"
               />
@@ -968,6 +1035,15 @@ const addMovieToList = async (listId: string) => {
             </div>
 
             <div class="detail-mobile-actions">
+              <button
+                v-if="canEditPoster"
+                type="button"
+                class="detail-mobile-actions__icon"
+                aria-label="Изменить постер"
+                @click="posterEditorOpen = true"
+              >
+                <BaseIcon name="ph:image" :width="20" :height="20" />
+              </button>
               <MovieShareButton
                 v-if="currentMovieId"
                 :movie-id="currentMovieId"
@@ -990,532 +1066,612 @@ const addMovieToList = async (listId: string) => {
         </template>
 
         <div class="detail-grid">
-        <div class="detail-main">
-        <!-- Мобильные табы (эталон): контент детальной разбит на три экрана -->
-        <div v-if="isMobile" class="detail-tabs" role="tablist">
-          <button
-            v-for="tab in detailTabs"
-            :key="tab.key"
-            type="button"
-            role="tab"
-            class="detail-tabs__btn"
-            :class="{ 'detail-tabs__btn--on': activeTab === tab.key }"
-            :aria-selected="activeTab === tab.key"
-            @click="activeTab = tab.key"
-          >
-            {{ tab.label }}
-            <span v-if="tab.count" class="detail-tabs__count">
-              {{ tab.count }}
-            </span>
-          </button>
-        </div>
-
-        <div v-show="showTab('overview')" class="detail-tabpanel">
-        <div
-          v-if="movie.description || movie.genres?.length"
-          class="detail-section"
-        >
-          <h2 class="detail-section__title">
-            <BaseIcon name="ph:text-align-left" :width="22" :height="22" />
-            Описание
-          </h2>
-          <p v-if="movie.description" class="detail-section__text">
-            {{ movie.description }}
-          </p>
-          <!-- Жанры: в панели их нет (эталон — метастрока год·тип·страны) -->
-          <div v-if="movie.genres?.length" class="detail-genres">
-            <span v-for="g in movie.genres" :key="g" class="detail-genres__chip">
-              {{ GenreLabels[g] ?? g }}
-            </span>
-          </div>
-        </div>
-
-        <div v-if="hasActors" class="detail-section">
-          <h2 class="detail-section__title">
-            <BaseIcon name="ph:users-three" :width="22" :height="22" />
-            Актёры
-          </h2>
-          <!-- Карточки актёров (эталон): аватар + имя + переход к фильмографии -->
-          <div class="actors-grid">
-            <button
-              v-for="actor in movie.actors"
-              :key="actor.id"
-              type="button"
-              class="actor-card"
-              @click="goToActor(actor.id)"
-            >
-              <span class="actor-card__avatar">
-                <BaseIcon
-                  class="actor-card__avatar-icon"
-                  name="ph:user"
-                  :width="21"
-                  :height="21"
-                />
-                <span class="actor-card__initials">
-                  {{ actorInitials(actor.name) }}
-                </span>
-              </span>
-              <span class="actor-card__info">
-                <span class="actor-card__name">{{ actor.name }}</span>
-                <span class="actor-card__role">в главной роли</span>
-              </span>
-              <BaseIcon
-                class="actor-card__caret"
-                name="ph:caret-right"
-                :width="15"
-                :height="15"
-              />
-            </button>
-          </div>
-        </div>
-
-        <div v-if="isMobile" class="detail-section detail-info">
-          <div v-if="movie.countryCodes?.length" class="detail-info__row">
-            <span class="detail-info__label">
-              <BaseIcon name="ph:globe" :width="18" :height="18" />
-              Страны
-            </span>
-            <b class="detail-info__value">
-              {{ countriesLabelsRu(movie.countryCodes) }}
-            </b>
-          </div>
-
-          <div v-if="movie.isSerial && movie.seasonCount" class="detail-info__row">
-            <span class="detail-info__label">
-              <BaseIcon name="ph:monitor" :width="18" :height="18" />
-              Сезонов
-            </span>
-            <b class="detail-info__value">{{ movie.seasonCount }}</b>
-          </div>
-
-          <div v-if="movie.isSerial && movie.episodeCount" class="detail-info__row">
-            <span class="detail-info__label">
-              <BaseIcon name="ph:playlist" :width="18" :height="18" />
-              Эпизодов
-            </span>
-            <b class="detail-info__value">{{ movie.episodeCount }}</b>
-          </div>
-
-          <div v-if="currentUserMovie.addedAt" class="detail-info__row">
-            <span class="detail-info__label">
-              <BaseIcon name="ph:eye" :width="18" :height="18" />
-              Добавлено
-            </span>
-            <b class="detail-info__value">
-              {{ formatDate(currentUserMovie.addedAt) }}
-            </b>
-          </div>
-        </div>
-        </div>
-        <!-- /Обзор -->
-
-        <div v-show="showTab('progress')" class="detail-tabpanel">
-        <div v-if="hasSerialProgress" class="detail-section">
-          <div class="detail-section__header">
-            <h2 class="detail-section__title">
-              <BaseIcon name="ph:clock-countdown" :width="22" :height="22" />
-              Прогресс просмотра
-            </h2>
-            <a-button
-              v-if="!isEditingProgress"
-              type="text"
-              size="small"
-              class="detail-section__edit-btn"
-              @click="startEditProgress"
-            >
-              <BaseIcon name="ph:pencil-simple" :width="16" :height="16" />
-              <span>Изменить</span>
-            </a-button>
-          </div>
-
-          <div v-if="isSerialCompleted" class="serial-progress__completed">
-            <BaseIcon name="ph:check-circle" :width="20" :height="20" />
-            <span>Сериал просмотрен полностью</span>
-          </div>
-
-          <!-- Статус здесь только читается: управление — в панели фильма (эталон) -->
-          <div class="serial-progress__status-row">
-            <span class="serial-progress__status-info">
-              Статус:
-              <b class="serial-progress__status-value">
-                {{ currentWatchStatusLabel }}
-              </b>
-            </span>
-            <span class="serial-progress__status-hint">
-              Меняется в панели фильма
-            </span>
-          </div>
-
-          <!-- Даты статусов (эталон): состав зависит от текущего статуса -->
-          <div v-if="dateChips.length" class="serial-progress__date-chips">
-            <span
-              v-for="chip in dateChips"
-              :key="chip.key"
-              class="date-chip"
-              :class="{ 'date-chip--active': chip.active }"
-            >
-              <BaseIcon :name="chip.icon" :width="14" :height="14" />
-              {{ chip.label }}
-            </span>
-          </div>
-
-          <div v-if="!isEditingProgress" class="serial-progress">
-            <div v-if="movie.seasonCount" class="serial-progress__item">
-              <div class="serial-progress__label">
-                <span class="serial-progress__label-text">Сезоны</span>
-                <span class="serial-progress__label-value">
-                  {{ currentUserMovie.currentSeason ?? 0 }} / {{ movie.seasonCount }}
-                </span>
-              </div>
-              <div class="serial-progress__track">
-                <div
-                  class="serial-progress__fill"
-                  :class="{ 'serial-progress__fill_done': isSerialCompleted }"
-                  :style="{ width: `${seasonProgress}%` }"
-                />
-              </div>
-            </div>
-
-            <div v-if="movie.episodeCount" class="serial-progress__item">
-              <div class="serial-progress__label">
-                <span class="serial-progress__label-text">Эпизоды</span>
-                <span class="serial-progress__label-value">
-                  {{ currentUserMovie.currentEpisode ?? 0 }} / {{ movie.episodeCount }}
-                </span>
-              </div>
-              <div class="serial-progress__track">
-                <div
-                  class="serial-progress__fill"
-                  :class="{ 'serial-progress__fill_done': isSerialCompleted }"
-                  :style="{ width: `${episodeProgress}%` }"
-                />
-              </div>
-            </div>
-
-            <!-- Эталон: серая плашка + белый сегмент с «−1 / +1» -->
-            <div class="serial-progress__quick-actions">
-              <div v-if="movie.seasonCount" class="serial-progress__quick-group">
-                <span class="serial-progress__quick-label">Сезон</span>
-                <div class="serial-progress__seg">
-                  <button
-                    type="button"
-                    class="serial-progress__seg-btn"
-                    :disabled="isProgressSaving || !canDecreaseSeason"
-                    aria-label="Уменьшить сезон"
-                    @click="decreaseSeason"
-                  >
-                    −1
-                  </button>
-                  <button
-                    type="button"
-                    class="serial-progress__seg-btn"
-                    :disabled="isProgressSaving || !canIncreaseSeason"
-                    aria-label="Увеличить сезон"
-                    @click="increaseSeason"
-                  >
-                    +1
-                  </button>
-                </div>
-              </div>
-              <div v-if="movie.episodeCount" class="serial-progress__quick-group">
-                <span class="serial-progress__quick-label">Эпизод</span>
-                <div class="serial-progress__seg">
-                  <button
-                    type="button"
-                    class="serial-progress__seg-btn"
-                    :disabled="isProgressSaving || !canDecreaseEpisode"
-                    aria-label="Уменьшить эпизод"
-                    @click="decreaseEpisode"
-                  >
-                    −1
-                  </button>
-                  <button
-                    type="button"
-                    class="serial-progress__seg-btn"
-                    :disabled="isProgressSaving || !canIncreaseEpisode"
-                    aria-label="Увеличить эпизод"
-                    @click="increaseEpisode"
-                  >
-                    +1
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div v-else class="serial-progress serial-progress_editing">
-            <div v-if="movie.seasonCount" class="serial-progress__edit-item">
-              <label class="serial-progress__edit-label">
-                На каком сезоне
-              </label>
-              <a-input-number
-                v-model:value="editSeason"
-                :min="0"
-                :max="movie.seasonCount"
-                :precision="0"
-                size="large"
-                style="width: 100%"
-              />
-            </div>
-
-            <div v-if="movie.episodeCount" class="serial-progress__edit-item">
-              <label class="serial-progress__edit-label">
-                На какой серии
-              </label>
-              <a-input-number
-                v-model:value="editEpisode"
-                :min="0"
-                :max="movie.episodeCount"
-                :precision="0"
-                size="large"
-                style="width: 100%"
-              />
-            </div>
-
-            <div class="serial-progress__edit-actions">
-              <a-button @click="cancelEditProgress"> Отмена </a-button>
-              <a-button
-                type="primary"
-                :loading="isProgressSaving"
-                @click="saveProgress"
+          <div class="detail-main">
+            <!-- Мобильные табы (эталон): контент детальной разбит на три экрана -->
+            <div v-if="isMobile" class="detail-tabs" role="tablist">
+              <button
+                v-for="tab in detailTabs"
+                :key="tab.key"
+                type="button"
+                role="tab"
+                class="detail-tabs__btn"
+                :class="{ 'detail-tabs__btn--on': activeTab === tab.key }"
+                :aria-selected="activeTab === tab.key"
+                @click="activeTab = tab.key"
               >
-                <BaseIcon name="ph:check" :width="16" :height="16" />
-                Сохранить
-              </a-button>
+                {{ tab.label }}
+                <span v-if="tab.count" class="detail-tabs__count">
+                  {{ tab.count }}
+                </span>
+              </button>
             </div>
-          </div>
-        </div>
 
-        </div>
-        <!-- /Прогресс -->
-
-        <div v-show="showTab('reviews')" class="detail-tabpanel">
-        <div
-          v-if="currentMovieId"
-          class="movie-detail__review-widget review-widget"
-        >
-          <ReviewsWidget :movie-id="currentMovieId" />
-        </div>
-        </div>
-        <!-- /Отзывы -->
-
-        <!-- «Похожее» — последний блок страницы (эталон); на мобилке живёт в «Обзоре» -->
-        <div
-          v-if="similarMovies.length && showTab('overview')"
-          class="detail-section"
-        >
-          <h2 class="detail-section__title">
-            <BaseIcon name="ph:squares-four" :width="22" :height="22" />
-            Похожее из вашей коллекции
-          </h2>
-          <div class="similar-grid">
-            <button
-              v-for="item in similarMovies"
-              :key="item.movieId"
-              type="button"
-              class="similar-card"
-              @click="openSimilar(item.movieId)"
-            >
-              <span class="similar-card__poster">
-                <img
-                  v-if="item.posterUrl"
-                  :src="item.posterUrl"
-                  :alt="item.title"
-                  loading="lazy"
-                />
-              </span>
-              <span class="similar-card__title">{{ item.title }}</span>
-              <span class="similar-card__meta">
-                <template v-if="item.publishDate">
-                  {{ formatYear(item.publishDate) }} ·
-                </template>
-                {{ item.isSerial ? "сериал" : "фильм" }}
-              </span>
-            </button>
-          </div>
-        </div>
-        </div>
-        <!-- /detail-main -->
-
-        <!-- Липкая панель фильма (эталон 2c) -->
-        <aside class="detail-side">
-          <div class="detail-panel">
-            <div class="detail-panel__head">
-              <div class="detail-panel__poster">
-                <img
-                  :src="posterSrc"
-                  :alt="`${movie.title} постер`"
-                  class="detail-panel__poster-img"
-                />
+            <div v-show="showTab('overview')" class="detail-tabpanel">
+              <div
+                v-if="movie.description || movie.genres?.length"
+                class="detail-section"
+              >
+                <h2 class="detail-section__title">
+                  <BaseIcon
+                    name="ph:text-align-left"
+                    :width="22"
+                    :height="22"
+                  />
+                  Описание
+                </h2>
+                <p v-if="movie.description" class="detail-section__text">
+                  {{ movie.description }}
+                </p>
+                <!-- Жанры: в панели их нет (эталон — метастрока год·тип·страны) -->
+                <div v-if="movie.genres?.length" class="detail-genres">
+                  <span
+                    v-for="g in movie.genres"
+                    :key="g"
+                    class="detail-genres__chip"
+                  >
+                    {{ GenreLabels[g] ?? g }}
+                  </span>
+                </div>
               </div>
 
-              <div class="detail-panel__info">
-                <h1 class="detail-panel__title">{{ movie.title }}</h1>
-                <!-- Метастрока вместо чипов: это факты, а не фильтры -->
-                <div class="detail-panel__meta">
-                  <span v-if="movie.publishDate" class="detail-panel__meta-item">
-                    <BaseIcon name="ph:calendar-blank" :width="13" :height="13" />
-                    {{ formatYear(movie.publishDate) }}
+              <div v-if="hasActors" class="detail-section">
+                <h2 class="detail-section__title">
+                  <BaseIcon name="ph:users-three" :width="22" :height="22" />
+                  Актёры
+                </h2>
+                <!-- Карточки актёров (эталон): аватар + имя + переход к фильмографии -->
+                <div class="actors-grid">
+                  <button
+                    v-for="actor in movie.actors"
+                    :key="actor.id"
+                    type="button"
+                    class="actor-card"
+                    @click="goToActor(actor.id)"
+                  >
+                    <span class="actor-card__avatar">
+                      <img
+                        v-if="actor.imageUrl && !actorPhotoErrors.has(actor.id)"
+                        :src="actor.imageThumbnailUrl || actor.imageUrl"
+                        alt=""
+                        class="actor-card__photo"
+                        @error="actorPhotoErrors.add(actor.id)"
+                      />
+                      <template v-else>
+                        <BaseIcon
+                          class="actor-card__avatar-icon"
+                          name="ph:user"
+                          :width="21"
+                          :height="21"
+                        />
+                        <span class="actor-card__initials">
+                          {{ actorInitials(actor.name) }}
+                        </span>
+                      </template>
+                    </span>
+                    <span class="actor-card__info">
+                      <span class="actor-card__name">{{ actor.name }}</span>
+                      <span class="actor-card__role">в главной роли</span>
+                    </span>
+                    <BaseIcon
+                      class="actor-card__caret"
+                      name="ph:caret-right"
+                      :width="15"
+                      :height="15"
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="isMobile" class="detail-section detail-info">
+                <div v-if="movie.countryCodes?.length" class="detail-info__row">
+                  <span class="detail-info__label">
+                    <BaseIcon name="ph:globe" :width="18" :height="18" />
+                    Страны
                   </span>
-                  <span
-                    class="detail-panel__meta-item detail-panel__meta-item_kind"
+                  <b class="detail-info__value">
+                    {{ countriesLabelsRu(movie.countryCodes) }}
+                  </b>
+                </div>
+
+                <div
+                  v-if="movie.isSerial && movie.seasonCount"
+                  class="detail-info__row"
+                >
+                  <span class="detail-info__label">
+                    <BaseIcon name="ph:monitor" :width="18" :height="18" />
+                    Сезонов
+                  </span>
+                  <b class="detail-info__value">{{ movie.seasonCount }}</b>
+                </div>
+
+                <div
+                  v-if="movie.isSerial && movie.episodeCount"
+                  class="detail-info__row"
+                >
+                  <span class="detail-info__label">
+                    <BaseIcon name="ph:playlist" :width="18" :height="18" />
+                    Эпизодов
+                  </span>
+                  <b class="detail-info__value">{{ movie.episodeCount }}</b>
+                </div>
+
+                <div v-if="currentUserMovie.addedAt" class="detail-info__row">
+                  <span class="detail-info__label">
+                    <BaseIcon name="ph:eye" :width="18" :height="18" />
+                    Добавлено
+                  </span>
+                  <b class="detail-info__value detail-info__value--date">
+                    {{ formatDate(currentUserMovie.addedAt) }}
+                  </b>
+                </div>
+              </div>
+            </div>
+            <!-- /Обзор -->
+
+            <div v-show="showTab('progress')" class="detail-tabpanel">
+              <div v-if="hasSerialProgress" class="detail-section">
+                <div class="detail-section__header">
+                  <h2 class="detail-section__title">
+                    <BaseIcon
+                      name="ph:clock-countdown"
+                      :width="22"
+                      :height="22"
+                    />
+                    Прогресс просмотра
+                  </h2>
+                  <a-button
+                    v-if="!isEditingProgress"
+                    type="text"
+                    size="small"
+                    class="detail-section__edit-btn"
+                    @click="startEditProgress"
                   >
                     <BaseIcon
-                      :name="movie.isSerial ? 'ph:monitor' : 'ph:film-slate'"
-                      :width="13"
-                      :height="13"
+                      name="ph:pencil-simple"
+                      :width="16"
+                      :height="16"
                     />
-                    {{ movie.isSerial ? "сериал" : "фильм" }}
+                    <span>Изменить</span>
+                  </a-button>
+                </div>
+
+                <div
+                  v-if="isSerialCompleted"
+                  class="serial-progress__completed"
+                >
+                  <BaseIcon name="ph:check-circle" :width="20" :height="20" />
+                  <span>Сериал просмотрен полностью</span>
+                </div>
+
+                <!-- Статус здесь только читается: управление — в панели фильма (эталон) -->
+                <div class="serial-progress__status-row">
+                  <span class="serial-progress__status-info">
+                    Статус:
+                    <b class="serial-progress__status-value">
+                      {{ currentWatchStatusLabel }}
+                    </b>
                   </span>
+                  <span class="serial-progress__status-hint">
+                    Меняется в панели фильма
+                  </span>
+                </div>
+
+                <!-- Даты статусов (эталон): состав зависит от текущего статуса -->
+                <div
+                  v-if="dateChips.length"
+                  class="serial-progress__date-chips"
+                >
                   <span
-                    v-if="movie.countryCodes?.length"
-                    class="detail-panel__meta-item detail-panel__meta-item_country"
+                    v-for="chip in dateChips"
+                    :key="chip.key"
+                    class="date-chip"
+                    :class="{ 'date-chip--active': chip.active }"
                   >
-                    <BaseIcon name="ph:globe" :width="13" :height="13" />
-                    {{ countriesLabelsRu(movie.countryCodes) }}
+                    <BaseIcon :name="chip.icon" :width="14" :height="14" />
+                    {{ chip.label }}
                   </span>
                 </div>
-              </div>
 
-              <div class="detail-panel__rates">
-                <div class="detail-panel__rate">
-                  <span class="detail-panel__rate-label">Моя оценка</span>
-                  <span class="detail-panel__rate-value">
-                    <b
-                      class="detail-panel__rate-num detail-panel__rate-num_mine"
-                      :class="{
-                        'detail-panel__rate-num_empty':
-                          !currentUserMovie.personalRate,
-                      }"
+                <div v-if="!isEditingProgress" class="serial-progress">
+                  <div v-if="movie.seasonCount" class="serial-progress__item">
+                    <div class="serial-progress__label">
+                      <span class="serial-progress__label-text">Сезоны</span>
+                      <span class="serial-progress__label-value">
+                        {{ currentUserMovie.currentSeason ?? 0 }} /
+                        {{ movie.seasonCount }}
+                      </span>
+                    </div>
+                    <div class="serial-progress__track">
+                      <div
+                        class="serial-progress__fill"
+                        :class="{
+                          'serial-progress__fill_done': isSerialCompleted,
+                        }"
+                        :style="{ width: `${seasonProgress}%` }"
+                      />
+                    </div>
+                  </div>
+
+                  <div v-if="movie.episodeCount" class="serial-progress__item">
+                    <div class="serial-progress__label">
+                      <span class="serial-progress__label-text">Эпизоды</span>
+                      <span class="serial-progress__label-value">
+                        {{ currentUserMovie.currentEpisode ?? 0 }} /
+                        {{ movie.episodeCount }}
+                      </span>
+                    </div>
+                    <div class="serial-progress__track">
+                      <div
+                        class="serial-progress__fill"
+                        :class="{
+                          'serial-progress__fill_done': isSerialCompleted,
+                        }"
+                        :style="{ width: `${episodeProgress}%` }"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Эталон: серая плашка + белый сегмент с «−1 / +1» -->
+                  <div class="serial-progress__quick-actions">
+                    <div
+                      v-if="movie.seasonCount"
+                      class="serial-progress__quick-group"
                     >
-                      {{ currentUserMovie.personalRate || "нет" }}
-                    </b>
-                    <span
-                      v-if="currentUserMovie.personalRate"
-                      class="detail-panel__rate-max"
+                      <span class="serial-progress__quick-label">Сезон</span>
+                      <div class="serial-progress__seg">
+                        <button
+                          type="button"
+                          class="serial-progress__seg-btn"
+                          :disabled="isProgressSaving || !canDecreaseSeason"
+                          aria-label="Уменьшить сезон"
+                          @click="decreaseSeason"
+                        >
+                          −1
+                        </button>
+                        <button
+                          type="button"
+                          class="serial-progress__seg-btn"
+                          :disabled="isProgressSaving || !canIncreaseSeason"
+                          aria-label="Увеличить сезон"
+                          @click="increaseSeason"
+                        >
+                          +1
+                        </button>
+                      </div>
+                    </div>
+                    <div
+                      v-if="movie.episodeCount"
+                      class="serial-progress__quick-group"
                     >
-                      /10
-                    </span>
-                  </span>
+                      <span class="serial-progress__quick-label">Эпизод</span>
+                      <div class="serial-progress__seg">
+                        <button
+                          type="button"
+                          class="serial-progress__seg-btn"
+                          :disabled="isProgressSaving || !canDecreaseEpisode"
+                          aria-label="Уменьшить эпизод"
+                          @click="decreaseEpisode"
+                        >
+                          −1
+                        </button>
+                        <button
+                          type="button"
+                          class="serial-progress__seg-btn"
+                          :disabled="isProgressSaving || !canIncreaseEpisode"
+                          aria-label="Увеличить эпизод"
+                          @click="increaseEpisode"
+                        >
+                          +1
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div class="detail-panel__rate">
-                  <span class="detail-panel__rate-label">По отзывам</span>
-                  <span class="detail-panel__rate-value">
-                    <b
-                      class="detail-panel__rate-num"
-                      :class="{
-                        'detail-panel__rate-num_empty': !hasAverageRating,
-                      }"
+
+                <div v-else class="serial-progress serial-progress_editing">
+                  <div
+                    v-if="movie.seasonCount"
+                    class="serial-progress__edit-item"
+                  >
+                    <label class="serial-progress__edit-label">
+                      На каком сезоне
+                    </label>
+                    <a-input-number
+                      v-model:value="editSeason"
+                      :min="0"
+                      :max="movie.seasonCount"
+                      :precision="0"
+                      size="large"
+                      style="width: 100%"
+                    />
+                  </div>
+
+                  <div
+                    v-if="movie.episodeCount"
+                    class="serial-progress__edit-item"
+                  >
+                    <label class="serial-progress__edit-label">
+                      На какой серии
+                    </label>
+                    <a-input-number
+                      v-model:value="editEpisode"
+                      :min="0"
+                      :max="movie.episodeCount"
+                      :precision="0"
+                      size="large"
+                      style="width: 100%"
+                    />
+                  </div>
+
+                  <div class="serial-progress__edit-actions">
+                    <a-button @click="cancelEditProgress"> Отмена </a-button>
+                    <a-button
+                      type="primary"
+                      :loading="isProgressSaving"
+                      @click="saveProgress"
                     >
-                      {{ averageRatingLabel }}
-                    </b>
-                    <span v-if="hasAverageRating" class="detail-panel__rate-max">
-                      /10
-                    </span>
-                  </span>
+                      <BaseIcon name="ph:check" :width="16" :height="16" />
+                      Сохранить
+                    </a-button>
+                  </div>
                 </div>
               </div>
             </div>
+            <!-- /Прогресс -->
 
-            <!-- Статус просмотра (эталон 1c): единственная точка управления -->
-            <div class="detail-panel__status">
-              <span class="detail-panel__status-label">Статус</span>
-              <WatchStatusSelect
-                v-model="watchStatusModel"
-                :disabled="isProgressSaving"
-              />
-            </div>
-
-            <a-button
-              type="primary"
-              class="detail-panel__rate-cta"
-              @click="isRateModalVisible = true"
-            >
-              <BaseIcon name="ph:star" :width="18" :height="18" />
-              {{ currentUserMovie.personalRate ? "Изменить оценку" : "Оценить" }}
-            </a-button>
-
-            <!-- Действия: ряд иконок (эталон) -->
-            <div class="detail-panel__actions">
-              <button
-                type="button"
-                class="detail-panel__action"
-                :class="{
-                  'detail-panel__action_fav': currentUserMovie.isFavorite,
-                }"
-                :title="
-                  currentUserMovie.isFavorite
-                    ? 'В избранном'
-                    : 'Добавить в избранное'
-                "
-                :aria-label="
-                  currentUserMovie.isFavorite
-                    ? 'Убрать из избранного'
-                    : 'Добавить в избранное'
-                "
-                @click="toggleFavorite"
-              >
-                <BaseIcon
-                  :name="
-                    currentUserMovie.isFavorite ? 'ph:heart-fill' : 'ph:heart'
-                  "
-                  :width="20"
-                  :height="20"
-                />
-              </button>
-
-              <button
-                type="button"
-                class="detail-panel__action"
-                title="Добавить в список"
-                aria-label="Добавить в список"
-                @click="openListsModal"
-              >
-                <BaseIcon name="ph:list-plus" :width="20" :height="20" />
-              </button>
-
-              <MovieShareButton
+            <div v-show="showTab('reviews')" class="detail-tabpanel">
+              <div
                 v-if="currentMovieId"
-                compact
-                :movie-id="currentMovieId"
-                :movie-title="movie.title"
-              />
-
-              <button
-                type="button"
-                class="detail-panel__action"
-                :class="{
-                  'detail-panel__action_on': currentUserMovie.seeLater,
-                }"
-                :title="
-                  currentUserMovie.seeLater
-                    ? 'В списке «Смотреть позже»'
-                    : 'Смотреть позже'
-                "
-                aria-label="Смотреть позже"
-                :aria-pressed="currentUserMovie.seeLater"
-                @click="toggleSeeLater"
+                class="movie-detail__review-widget review-widget"
               >
-                <BaseIcon name="ph:clock" :width="20" :height="20" />
-              </button>
+                <ReviewsWidget :movie-id="currentMovieId" @changed="loadDetail" />
+              </div>
             </div>
+            <!-- /Отзывы -->
 
-            <p
-              v-if="
-                currentUserMovie.addedAt ||
-                (movie.isSerial && seasonsEpisodesLabel)
-              "
-              class="detail-panel__footnote"
+            <!-- «Похожее» — последний блок страницы (эталон); на мобилке живёт в «Обзоре» -->
+            <div
+              v-if="similarMovies.length && showTab('overview')"
+              class="detail-section detail-section--similar"
             >
-              <template v-if="currentUserMovie.addedAt">
-                Добавлено {{ formatDate(currentUserMovie.addedAt) }}
-              </template>
-              <template v-if="movie.isSerial && seasonsEpisodesLabel">
-                · {{ seasonsEpisodesLabel }}
-              </template>
-            </p>
+              <h2 class="detail-section__title">
+                <BaseIcon name="ph:squares-four" :width="22" :height="22" />
+                Похожее из вашей коллекции
+              </h2>
+              <div class="similar-grid">
+                <button
+                  v-for="item in similarMovies"
+                  :key="item.movieId"
+                  type="button"
+                  class="similar-card"
+                  @click="openSimilar(item.movieId)"
+                >
+                  <span class="similar-card__poster">
+                    <img
+                      v-if="item.posterUrl"
+                      :src="item.posterUrl"
+                      :alt="item.title"
+                      loading="lazy"
+                    />
+                  </span>
+                  <span class="similar-card__title">{{ item.title }}</span>
+                  <span class="similar-card__meta">
+                    <template v-if="item.publishDate">
+                      {{ formatYear(item.publishDate) }} ·
+                    </template>
+                    {{ item.isSerial ? "сериал" : "фильм" }}
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
-        </aside>
+          <!-- /detail-main -->
+
+          <!-- Липкая панель фильма (эталон 2c) -->
+          <aside class="detail-side">
+            <div class="detail-panel">
+              <div class="detail-panel__head">
+                <div class="detail-panel__poster">
+                  <img
+                    :src="posterSrc"
+                    :alt="`${movie.title} постер`"
+                    class="detail-panel__poster-img"
+                  />
+                  <button
+                    v-if="canEditPoster"
+                    type="button"
+                    class="detail-panel__poster-edit"
+                    aria-label="Изменить постер"
+                    title="Изменить постер"
+                    @click="posterEditorOpen = true"
+                  >
+                    <BaseIcon
+                      name="ph:pencil-simple"
+                      :width="18"
+                      :height="18"
+                    />
+                  </button>
+                </div>
+
+                <div class="detail-panel__info">
+                  <h1 class="detail-panel__title">{{ movie.title }}</h1>
+                  <!-- Метастрока вместо чипов: это факты, а не фильтры -->
+                  <div class="detail-panel__meta">
+                    <span
+                      v-if="movie.publishDate"
+                      class="detail-panel__meta-item"
+                    >
+                      <BaseIcon
+                        name="ph:calendar-blank"
+                        :width="13"
+                        :height="13"
+                      />
+                      {{ formatYear(movie.publishDate) }}
+                    </span>
+                    <span
+                      class="detail-panel__meta-item detail-panel__meta-item_kind"
+                    >
+                      <BaseIcon
+                        :name="movie.isSerial ? 'ph:monitor' : 'ph:film-slate'"
+                        :width="13"
+                        :height="13"
+                      />
+                      {{ movie.isSerial ? "сериал" : "фильм" }}
+                    </span>
+                    <span
+                      v-if="movie.countryCodes?.length"
+                      class="detail-panel__meta-item detail-panel__meta-item_country"
+                    >
+                      <BaseIcon name="ph:globe" :width="13" :height="13" />
+                      {{ countriesLabelsRu(movie.countryCodes) }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="detail-panel__rates">
+                  <div class="detail-panel__rate">
+                    <span class="detail-panel__rate-label">Моя оценка</span>
+                    <span class="detail-panel__rate-value">
+                      <b
+                        class="detail-panel__rate-num detail-panel__rate-num_mine"
+                        :class="{
+                          'detail-panel__rate-num_empty':
+                            !currentUserMovie.personalRate,
+                        }"
+                      >
+                        {{ currentUserMovie.personalRate || "нет" }}
+                      </b>
+                      <span
+                        v-if="currentUserMovie.personalRate"
+                        class="detail-panel__rate-max"
+                      >
+                        /10
+                      </span>
+                    </span>
+                  </div>
+                  <div class="detail-panel__rate">
+                    <span class="detail-panel__rate-label">По отзывам</span>
+                    <span class="detail-panel__rate-value">
+                      <b
+                        class="detail-panel__rate-num"
+                        :class="{
+                          'detail-panel__rate-num_empty': !hasAverageRating,
+                        }"
+                      >
+                        {{ averageRatingLabel }}
+                      </b>
+                      <span
+                        v-if="hasAverageRating"
+                        class="detail-panel__rate-max"
+                      >
+                        /10
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Статус просмотра (эталон 1c): единственная точка управления -->
+              <div class="detail-panel__status">
+                <span class="detail-panel__status-label">Статус</span>
+                <WatchStatusSelect
+                  v-model="watchStatusModel"
+                  :disabled="isProgressSaving"
+                />
+              </div>
+
+              <a-button
+                type="primary"
+                class="detail-panel__rate-cta"
+                @click="isRateModalVisible = true"
+              >
+                <BaseIcon name="ph:star" :width="18" :height="18" />
+                {{
+                  currentUserMovie.personalRate ? "Изменить оценку" : "Оценить"
+                }}
+              </a-button>
+
+              <!-- Действия: ряд иконок (эталон) -->
+              <div class="detail-panel__actions">
+                <button
+                  type="button"
+                  class="detail-panel__action"
+                  :class="{
+                    'detail-panel__action_fav': currentUserMovie.isFavorite,
+                  }"
+                  :title="
+                    currentUserMovie.isFavorite
+                      ? 'В избранном'
+                      : 'Добавить в избранное'
+                  "
+                  :aria-label="
+                    currentUserMovie.isFavorite
+                      ? 'Убрать из избранного'
+                      : 'Добавить в избранное'
+                  "
+                  @click="toggleFavorite"
+                >
+                  <BaseIcon
+                    :name="
+                      currentUserMovie.isFavorite ? 'ph:heart-fill' : 'ph:heart'
+                    "
+                    :width="20"
+                    :height="20"
+                  />
+                </button>
+
+                <button
+                  type="button"
+                  class="detail-panel__action"
+                  title="Добавить в список"
+                  aria-label="Добавить в список"
+                  @click="openListsModal"
+                >
+                  <BaseIcon name="ph:list-plus" :width="20" :height="20" />
+                </button>
+
+                <MovieShareButton
+                  v-if="currentMovieId"
+                  compact
+                  :movie-id="currentMovieId"
+                  :movie-title="movie.title"
+                />
+
+                <button
+                  type="button"
+                  class="detail-panel__action"
+                  :class="{
+                    'detail-panel__action_on': currentUserMovie.seeLater,
+                  }"
+                  :title="
+                    currentUserMovie.seeLater
+                      ? 'В списке «Смотреть позже»'
+                      : 'Смотреть позже'
+                  "
+                  aria-label="Смотреть позже"
+                  :aria-pressed="currentUserMovie.seeLater"
+                  @click="toggleSeeLater"
+                >
+                  <BaseIcon name="ph:clock" :width="20" :height="20" />
+                </button>
+              </div>
+
+              <p
+                v-if="
+                  currentUserMovie.addedAt ||
+                  (movie.isSerial && seasonsEpisodesLabel)
+                "
+                class="detail-panel__footnote"
+              >
+                <template v-if="currentUserMovie.addedAt">
+                  Добавлено {{ formatDate(currentUserMovie.addedAt) }}
+                </template>
+                <template v-if="movie.isSerial && seasonsEpisodesLabel">
+                  · {{ seasonsEpisodesLabel }}
+                </template>
+              </p>
+            </div>
+          </aside>
         </div>
         <!-- /detail-grid -->
 
@@ -1546,6 +1702,13 @@ const addMovieToList = async (listId: string) => {
     v-if="catalogPreviewId"
     v-model="catalogPreviewOpen"
     :movie-id="catalogPreviewId"
+  />
+
+  <MoviePosterEditor
+    v-if="movie && posterEditorOpen"
+    v-model="posterEditorOpen"
+    :movie="movie"
+    @saved="onPosterSaved"
   />
 
   <RateMovieModal
@@ -1584,13 +1747,19 @@ const addMovieToList = async (listId: string) => {
             :maxlength="140"
             size="large"
           />
-          <div class="lists-modal__swatches" role="radiogroup" aria-label="Цвет обложки">
+          <div
+            class="lists-modal__swatches"
+            role="radiogroup"
+            aria-label="Цвет обложки"
+          >
             <button
               v-for="swatch in LIST_COLOR_SWATCHES"
               :key="swatch"
               type="button"
               class="lists-modal__swatch"
-              :class="{ 'lists-modal__swatch--active': newListColor === swatch }"
+              :class="{
+                'lists-modal__swatch--active': newListColor === swatch,
+              }"
               :style="{ background: swatch }"
               :aria-label="`Цвет ${swatch}`"
               :aria-checked="newListColor === swatch"
@@ -1664,15 +1833,20 @@ const addMovieToList = async (listId: string) => {
 @use "@/styles/scrollbar" as *;
 @use "@/styles/layout" as *;
 
+.actor-card__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
 .movie-detail {
   @include pageShell(4rem);
 
   &__content {
-    // Эталон: страница 1180px (контент 1fr + панель 348px + gap 22)
     max-width: 1180px;
     margin: 0 auto;
     padding: 2rem 1rem 0;
-    // (StateBlock/скелетоны центрируются своими стилями и не задеты)
     text-align: left;
 
     @include mediaTablet {
@@ -1681,7 +1855,6 @@ const addMovieToList = async (listId: string) => {
   }
 }
 
-/* ============ Каркас детальной (эталон): контент + липкая панель ============ */
 .detail-crumbs {
   display: flex;
   align-items: center;
@@ -1717,7 +1890,6 @@ const addMovieToList = async (listId: string) => {
   }
 
   &__current {
-    // Спека: элемент крошек обрезается на 220px, полный текст — в title
     max-width: 220px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1734,8 +1906,7 @@ const addMovieToList = async (listId: string) => {
   gap: 22px;
   align-items: start;
 
-  // ≤1080px — одна колонка, панель уезжает наверх
-  @media (max-width: 1080px) {
+  @include mediaMax(1080px) {
     grid-template-columns: 1fr;
   }
 }
@@ -1743,7 +1914,6 @@ const addMovieToList = async (listId: string) => {
 .detail-main {
   min-width: 0;
 
-  // первая секция без верхнего отступа — панель и контент выровнены по верху
   > .detail-section:first-child,
   > .detail-tabpanel:first-child > .detail-section:first-child {
     margin-top: 0;
@@ -1752,17 +1922,14 @@ const addMovieToList = async (listId: string) => {
 
 .detail-side {
   position: sticky;
-  // Топбар проекта 64px + 16px зазор (в эталоне 96px при более высокой шапке)
   top: 80px;
   max-height: calc(100vh - 96px);
   overflow-y: auto;
-  // padding+отрицательный margin, чтобы тень панели не срезалась скроллом
   padding: 8px;
   margin: -8px;
-
   @include customScrollbar();
 
-  @media (max-width: 1080px) {
+  @include mediaMax(1080px) {
     position: static;
     order: -1;
     max-height: none;
@@ -1772,7 +1939,6 @@ const addMovieToList = async (listId: string) => {
   }
 }
 
-/* ============ Панель фильма ============ */
 .detail-panel {
   padding: 22px;
   border-radius: var(--fv-radius-lg);
@@ -1788,8 +1954,7 @@ const addMovieToList = async (listId: string) => {
     align-items: start;
     margin-bottom: 18px;
 
-    // Планшет: плитки оценок встают справа под метастрокой — пустота уходит
-    @media (max-width: 1080px) {
+    @include mediaMax(1080px) {
       grid-template-columns: 150px 1fr;
       grid-template-areas: "poster info" "poster rates";
       gap: 10px 22px;
@@ -1798,6 +1963,7 @@ const addMovieToList = async (listId: string) => {
   }
 
   &__poster {
+    position: relative;
     grid-area: poster;
     aspect-ratio: 2 / 3;
     border-radius: 14px;
@@ -1812,6 +1978,34 @@ const addMovieToList = async (listId: string) => {
     display: block;
   }
 
+  &__poster-edit {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid var(--fv-color-border);
+    border-radius: 50%;
+    background: var(--fv-color-bg-primary);
+    color: var(--fv-color-text-secondary);
+    box-shadow: var(--fv-shadow-low);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--fv-color-bg-secondary);
+      color: var(--fv-color-text-primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--fv-color-accent);
+      outline-offset: 2px;
+    }
+  }
+
   &__info {
     grid-area: info;
     min-width: 0;
@@ -1819,7 +2013,6 @@ const addMovieToList = async (listId: string) => {
 
   &__title {
     margin: 0;
-    // Эталон: mts-h4 (UI-шрифт), 20/24
     font-family: var(--fv-font-ui);
     font-size: 20px;
     font-weight: 500;
@@ -1827,7 +2020,6 @@ const addMovieToList = async (listId: string) => {
     color: var(--fv-color-text-primary);
   }
 
-  // Метастрока: год · тип · страны (факты, не фильтры)
   &__meta {
     display: flex;
     align-items: center;
@@ -1843,8 +2035,6 @@ const addMovieToList = async (listId: string) => {
     align-items: center;
     gap: 5px;
 
-    // Разделитель «·» прилипает к своему элементу, а не висит в конце строки
-    // при переносе (панель узкая — «США, Великобритания» часто уезжает вниз)
     + .detail-panel__meta-item::before {
       content: "·";
       margin-inline-end: 3px;
@@ -1856,9 +2046,6 @@ const addMovieToList = async (listId: string) => {
       font-weight: 500;
     }
 
-    // В узкой панели страны всё равно не влезают в строку с годом и типом —
-    // отдаём им отдельную строку без разделителя (иначе «·» висит перед ними).
-    // Класс удвоен: иначе правило-разделитель выше выигрывает по специфичности.
     &_country {
       flex-basis: 100%;
 
@@ -1866,8 +2053,7 @@ const addMovieToList = async (listId: string) => {
         content: none;
       }
 
-      // Панель развёрнута наверх — места хватает, возвращаем в общую строку
-      @media (max-width: 1080px) {
+      @include mediaMax(1080px) {
         flex-basis: auto;
 
         &.detail-panel__meta-item::before {
@@ -1917,7 +2103,6 @@ const addMovieToList = async (listId: string) => {
       color: var(--fv-color-accent);
     }
 
-    // Нет оценки: display-шрифт 24/700 превращал «—» в жирную черту
     &_empty {
       font-family: var(--fv-font-ui);
       font-size: 17px;
@@ -1943,7 +2128,6 @@ const addMovieToList = async (listId: string) => {
     color: var(--fv-color-text-secondary);
   }
 
-  // Основное действие — оценить (эталон: primary во всю ширину панели)
   &__rate-cta {
     display: flex;
     align-items: center;
@@ -1956,9 +2140,12 @@ const addMovieToList = async (listId: string) => {
     font-size: 15px;
     font-weight: 500;
     white-space: nowrap;
+
+    & :deep(span) {
+      padding-top: 1px;
+    }
   }
 
-  // Действия — ряд равных иконок (перенос текста исключён)
   &__actions {
     display: flex;
     gap: 10px;
@@ -1977,8 +2164,7 @@ const addMovieToList = async (listId: string) => {
     background: var(--fv-color-bg-secondary);
     color: var(--fv-color-text-primary);
     cursor: pointer;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
@@ -1994,17 +2180,12 @@ const addMovieToList = async (listId: string) => {
       outline-offset: 2px;
     }
 
-    // В избранном — красная подложка (эталон)
     &_fav {
       background: var(--fv-color-negative-soft);
       color: var(--fv-color-brand);
 
       &:hover {
-        background: color-mix(
-          in srgb,
-          var(--fv-color-brand) 18%,
-          transparent
-        );
+        background: color-mix(in srgb, var(--fv-color-brand) 18%, transparent);
       }
     }
 
@@ -2013,16 +2194,11 @@ const addMovieToList = async (listId: string) => {
       color: var(--fv-color-accent);
 
       &:hover {
-        background: color-mix(
-          in srgb,
-          var(--fv-color-accent) 20%,
-          transparent
-        );
+        background: color-mix(in srgb, var(--fv-color-accent) 20%, transparent);
       }
     }
   }
 
-  // «Поделиться» — общий компонент, приводим к виду соседних иконок
   &__actions :deep(.movie-share-btn) {
     flex: 1;
     min-width: 0;
@@ -2088,8 +2264,7 @@ const addMovieToList = async (listId: string) => {
     border-radius: 14px;
     background: var(--fv-color-bg-secondary);
     overflow: hidden;
-    transition:
-      transform var(--fv-motion-base) var(--fv-ease),
+    transition: transform var(--fv-motion-base) var(--fv-ease),
       box-shadow var(--fv-motion-base) var(--fv-ease);
 
     img {
@@ -2155,14 +2330,12 @@ const addMovieToList = async (listId: string) => {
   }
 }
 
-/* ===== Мобильный hero (эталон): постер на весь экран ===== */
 .detail-hero {
   position: relative;
   display: flex;
   align-items: flex-end;
   height: min(420px, 56vh);
   padding: 20px;
-  // Растягиваем на всю ширину, компенсируя padding контейнера
   margin: 0 -1rem;
   overflow: hidden;
 
@@ -2174,7 +2347,6 @@ const addMovieToList = async (listId: string) => {
     object-fit: cover;
   }
 
-  // Затемнение снизу, чтобы название и чипы читались на любом постере
   &__scrim {
     position: absolute;
     inset: 0;
@@ -2305,7 +2477,6 @@ const addMovieToList = async (listId: string) => {
   display: flex;
   gap: 10px;
 
-  // Канва страницы сама mist — серые кнопки на ней сливались, поэтому белые
   :deep(.movie-share-btn) {
     flex: 1;
     height: 48px;
@@ -2340,7 +2511,6 @@ const addMovieToList = async (listId: string) => {
   }
 }
 
-/* ===== Мобильная детальная: табы, панель действий, чипы актёров ===== */
 .detail-tabs {
   display: flex;
   gap: 6px;
@@ -2348,7 +2518,6 @@ const addMovieToList = async (listId: string) => {
   margin-bottom: 14px;
   border-radius: 12px;
   background: var(--fv-color-bg-secondary);
-  // Табы липнут под шапкой, чтобы переключаться не прокручивая наверх
   position: sticky;
   top: 64px;
   z-index: 5;
@@ -2369,8 +2538,7 @@ const addMovieToList = async (listId: string) => {
     font-weight: 500;
     color: var(--fv-color-text-secondary);
     cursor: pointer;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       color var(--fv-motion-fast) var(--fv-ease);
 
     &--on {
@@ -2395,7 +2563,6 @@ const addMovieToList = async (listId: string) => {
   }
 }
 
-/* Липкая панель действий: над мобильным таб-баром (64px + safe-area) */
 .detail-actionbar {
   position: fixed;
   left: 0;
@@ -2405,7 +2572,6 @@ const addMovieToList = async (listId: string) => {
   display: flex;
   align-items: center;
   gap: 10px;
-  // Таб-бар на детальной скрыт — панель занимает низ (эталон)
   padding: 12px 16px calc(18px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--fv-color-border);
   background: color-mix(in srgb, var(--fv-color-bg-primary) 94%, transparent);
@@ -2501,7 +2667,8 @@ const addMovieToList = async (listId: string) => {
     display: grid;
     gap: 0.75rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid color-mix(in srgb, var(--fv-color-border) 65%, transparent);
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--fv-color-border) 65%, transparent);
   }
 
   &__preview {
@@ -2533,7 +2700,8 @@ const addMovieToList = async (listId: string) => {
     border-radius: 999px;
     cursor: pointer;
     outline-offset: 2px;
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--fv-color-text-primary) 12%, transparent);
+    box-shadow: 0 0 0 1px
+      color-mix(in srgb, var(--fv-color-text-primary) 12%, transparent);
     transition: transform var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
@@ -2559,7 +2727,11 @@ const addMovieToList = async (listId: string) => {
     padding: 0.75rem;
     border-radius: 12px;
     border: 1px solid var(--fv-color-border);
-    background: color-mix(in srgb, var(--fv-color-bg-secondary) 75%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--fv-color-bg-secondary) 75%,
+      transparent
+    );
   }
 
   &__list-main {
@@ -2588,8 +2760,13 @@ const addMovieToList = async (listId: string) => {
   &__label {
     display: inline-flex;
     align-items: center;
-    border: 1px solid color-mix(in srgb, var(--fv-color-accent) 35%, transparent);
-    background: color-mix(in srgb, var(--fv-color-accent) 10%, var(--fv-color-bg-primary));
+    border: 1px solid
+      color-mix(in srgb, var(--fv-color-accent) 35%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--fv-color-accent) 10%,
+      var(--fv-color-bg-primary)
+    );
     color: var(--fv-color-accent);
     border-radius: 999px;
     font-size: 0.75rem;
@@ -2656,8 +2833,6 @@ const addMovieToList = async (listId: string) => {
 }
 
 .movie-detail__review-widget {
-  // Как между секциями (эталон). Через смежный селектор нельзя: контент
-  // разбит на .detail-tabpanel, и прогресс с отзывами — не соседи
   margin-top: 22px;
 }
 
@@ -2679,8 +2854,7 @@ const addMovieToList = async (listId: string) => {
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition:
-    border-color var(--fv-motion-fast) var(--fv-ease),
+  transition: border-color var(--fv-motion-fast) var(--fv-ease),
     background var(--fv-motion-fast) var(--fv-ease);
 
   &:hover {
@@ -2736,13 +2910,8 @@ const addMovieToList = async (listId: string) => {
 .serial-progress {
   display: flex;
   flex-direction: column;
-  // Между строками прогресса нужен воздух: с эталонными 14px полоса «Сезоны»
-  // визуально прилипала к подписи «Эпизоды»
   gap: 18px;
 
-  // Эталон: positive-soft подложка, текст и иконка затемнены для контраста
-  // (светло-зелёный на светлом фоне читался плохо). color-mix вместо хардкода
-  // #0F5C26/#0F7A32 — чтобы не потерять читаемость в тёмной теме.
   &__completed {
     display: flex;
     align-items: center;
@@ -2768,14 +2937,12 @@ const addMovieToList = async (listId: string) => {
     }
   }
 
-  // Эталон: без серой карточки — только подпись, бейдж и полоса
   &__item {
     display: flex;
     flex-direction: column;
     gap: 6px;
   }
 
-  // Полоса прогресса: 8px, полностью скруглённая (было 6px от a-progress)
   &__track {
     height: 8px;
     border-radius: 999px;
@@ -2787,11 +2954,9 @@ const addMovieToList = async (listId: string) => {
     height: 100%;
     border-radius: 999px;
     background: var(--fv-color-accent);
-    transition:
-      width 0.4s var(--fv-ease),
+    transition: width 0.4s var(--fv-ease),
       background var(--fv-motion-slow) var(--fv-ease);
 
-    // Зеленеет только у просмотренных (цвет идёт от статуса, не от 100%)
     &_done {
       background: var(--fv-color-positive);
     }
@@ -2848,7 +3013,6 @@ const addMovieToList = async (listId: string) => {
     background: var(--fv-color-accent-soft);
     color: var(--fv-color-accent);
     font-size: 13px;
-    // В шрифте есть 400/500/700 — при 600 браузер подставлял 700 (перетяжелён)
     font-weight: 500;
   }
 
@@ -2856,15 +3020,13 @@ const addMovieToList = async (listId: string) => {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 14px;
-    // До плашек с кнопками — чуть больше, чем между строками прогресса
     margin-top: 2px;
 
-    @media (max-width: 640px) {
+    @include mediaMax(640px) {
       grid-template-columns: 1fr;
     }
   }
 
-  // Эталон: серая плашка без рамки, radius 12, padding 10/14
   &__quick-group {
     display: flex;
     align-items: center;
@@ -2881,7 +3043,6 @@ const addMovieToList = async (listId: string) => {
     color: var(--fv-color-text-primary);
   }
 
-  // Сегмент «−1 / +1»: белая подложка, кнопки без рамок (эталон .seg)
   &__seg {
     display: inline-flex;
     gap: 2px;
@@ -2901,8 +3062,7 @@ const addMovieToList = async (listId: string) => {
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover:not(:disabled) {
@@ -2957,7 +3117,7 @@ const addMovieToList = async (listId: string) => {
     }
   }
 
-  @media (max-width: 640px) {
+  @include mediaMax(640px) {
     &__status-row {
       flex-direction: column;
       align-items: flex-start;
@@ -2966,21 +3126,45 @@ const addMovieToList = async (listId: string) => {
   }
 }
 /* Мобильные переопределения — в конце файла, чтобы перебивать базовые правила */
-@media (max-width: 767.98px) {
+@include mediaMax($tablet - 0.02px) {
   .movie-detail__content {
-    // Hero прижат к краям, поэтому боковой отступ гасим здесь
     padding-top: 0;
-    // Место под липкую панель действий
     padding-bottom: 96px;
   }
 
-  // На мобиле роль панели играет hero + блок под ним
   .detail-crumbs,
   .detail-side {
     display: none;
   }
 
-  // Актёры превращаются в чипы (эталон)
+  .detail-info {
+    font-size: 14px;
+    line-height: 1.5;
+
+    &__label svg {
+      flex-shrink: 0;
+    }
+
+    &__value {
+      font-weight: 600;
+    }
+
+    &__value--date {
+      font-size: 13px;
+      font-weight: 500;
+    }
+  }
+
+  .detail-section--similar .detail-section__title {
+    align-items: flex-start;
+    font-size: 1.125rem;
+    line-height: 1.35;
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
   .actors-grid {
     display: flex;
     flex-wrap: wrap;
@@ -3026,14 +3210,12 @@ const addMovieToList = async (listId: string) => {
       line-height: 1.2;
     }
 
-    // В чипе роль и стрелка не нужны
     &__role,
     &__caret {
       display: none;
     }
   }
 
-  // Тач-таргеты 44px (эталон)
   .serial-progress__seg-btn {
     min-width: 44px;
     height: 44px;
@@ -3043,5 +3225,4 @@ const addMovieToList = async (listId: string) => {
     padding: 9px 12px;
   }
 }
-
 </style>

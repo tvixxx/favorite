@@ -27,6 +27,9 @@ export type AggregateActor = {
 export type ActorMinAggregateOutputType = {
   id: string | null
   name: string | null
+  imageUrl: string | null
+  imageThumbnailUrl: string | null
+  imageAssetId: string | null
   createdById: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -35,6 +38,9 @@ export type ActorMinAggregateOutputType = {
 export type ActorMaxAggregateOutputType = {
   id: string | null
   name: string | null
+  imageUrl: string | null
+  imageThumbnailUrl: string | null
+  imageAssetId: string | null
   createdById: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -43,6 +49,9 @@ export type ActorMaxAggregateOutputType = {
 export type ActorCountAggregateOutputType = {
   id: number
   name: number
+  imageUrl: number
+  imageThumbnailUrl: number
+  imageAssetId: number
   createdById: number
   createdAt: number
   updatedAt: number
@@ -53,6 +62,9 @@ export type ActorCountAggregateOutputType = {
 export type ActorMinAggregateInputType = {
   id?: true
   name?: true
+  imageUrl?: true
+  imageThumbnailUrl?: true
+  imageAssetId?: true
   createdById?: true
   createdAt?: true
   updatedAt?: true
@@ -61,6 +73,9 @@ export type ActorMinAggregateInputType = {
 export type ActorMaxAggregateInputType = {
   id?: true
   name?: true
+  imageUrl?: true
+  imageThumbnailUrl?: true
+  imageAssetId?: true
   createdById?: true
   createdAt?: true
   updatedAt?: true
@@ -69,6 +84,9 @@ export type ActorMaxAggregateInputType = {
 export type ActorCountAggregateInputType = {
   id?: true
   name?: true
+  imageUrl?: true
+  imageThumbnailUrl?: true
+  imageAssetId?: true
   createdById?: true
   createdAt?: true
   updatedAt?: true
@@ -150,6 +168,9 @@ export type ActorGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type ActorGroupByOutputType = {
   id: string
   name: string
+  imageUrl: string | null
+  imageThumbnailUrl: string | null
+  imageAssetId: string | null
   createdById: string | null
   createdAt: Date
   updatedAt: Date
@@ -158,7 +179,7 @@ export type ActorGroupByOutputType = {
   _max: ActorMaxAggregateOutputType | null
 }
 
-type GetActorGroupByPayload<T extends ActorGroupByArgs> = Prisma.PrismaPromise<
+export type GetActorGroupByPayload<T extends ActorGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<ActorGroupByOutputType, T['by']> &
       {
@@ -179,9 +200,13 @@ export type ActorWhereInput = {
   NOT?: Prisma.ActorWhereInput | Prisma.ActorWhereInput[]
   id?: Prisma.StringFilter<"Actor"> | string
   name?: Prisma.StringFilter<"Actor"> | string
+  imageUrl?: Prisma.StringNullableFilter<"Actor"> | string | null
+  imageThumbnailUrl?: Prisma.StringNullableFilter<"Actor"> | string | null
+  imageAssetId?: Prisma.StringNullableFilter<"Actor"> | string | null
   createdById?: Prisma.StringNullableFilter<"Actor"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Actor"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Actor"> | Date | string
+  imageAsset?: Prisma.XOR<Prisma.MediaAssetNullableScalarRelationFilter, Prisma.MediaAssetWhereInput> | null
   createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   movies?: Prisma.MovieListRelationFilter
 }
@@ -189,29 +214,40 @@ export type ActorWhereInput = {
 export type ActorOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  imageThumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  imageAssetId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  imageAsset?: Prisma.MediaAssetOrderByWithRelationInput
   createdBy?: Prisma.UserOrderByWithRelationInput
   movies?: Prisma.MovieOrderByRelationAggregateInput
 }
 
 export type ActorWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  imageAssetId?: string
   AND?: Prisma.ActorWhereInput | Prisma.ActorWhereInput[]
   OR?: Prisma.ActorWhereInput[]
   NOT?: Prisma.ActorWhereInput | Prisma.ActorWhereInput[]
   name?: Prisma.StringFilter<"Actor"> | string
+  imageUrl?: Prisma.StringNullableFilter<"Actor"> | string | null
+  imageThumbnailUrl?: Prisma.StringNullableFilter<"Actor"> | string | null
   createdById?: Prisma.StringNullableFilter<"Actor"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Actor"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Actor"> | Date | string
+  imageAsset?: Prisma.XOR<Prisma.MediaAssetNullableScalarRelationFilter, Prisma.MediaAssetWhereInput> | null
   createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   movies?: Prisma.MovieListRelationFilter
-}, "id">
+}, "id" | "imageAssetId">
 
 export type ActorOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  imageThumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  imageAssetId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -226,6 +262,9 @@ export type ActorScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ActorScalarWhereWithAggregatesInput | Prisma.ActorScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Actor"> | string
   name?: Prisma.StringWithAggregatesFilter<"Actor"> | string
+  imageUrl?: Prisma.StringNullableWithAggregatesFilter<"Actor"> | string | null
+  imageThumbnailUrl?: Prisma.StringNullableWithAggregatesFilter<"Actor"> | string | null
+  imageAssetId?: Prisma.StringNullableWithAggregatesFilter<"Actor"> | string | null
   createdById?: Prisma.StringNullableWithAggregatesFilter<"Actor"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Actor"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Actor"> | Date | string
@@ -234,8 +273,11 @@ export type ActorScalarWhereWithAggregatesInput = {
 export type ActorCreateInput = {
   id?: string
   name: string
+  imageUrl?: string | null
+  imageThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  imageAsset?: Prisma.MediaAssetCreateNestedOneWithoutActorPhotoInput
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedActorsInput
   movies?: Prisma.MovieCreateNestedManyWithoutActorsInput
 }
@@ -243,6 +285,9 @@ export type ActorCreateInput = {
 export type ActorUncheckedCreateInput = {
   id?: string
   name: string
+  imageUrl?: string | null
+  imageThumbnailUrl?: string | null
+  imageAssetId?: string | null
   createdById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -252,8 +297,11 @@ export type ActorUncheckedCreateInput = {
 export type ActorUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  imageAsset?: Prisma.MediaAssetUpdateOneWithoutActorPhotoNestedInput
   createdBy?: Prisma.UserUpdateOneWithoutCreatedActorsNestedInput
   movies?: Prisma.MovieUpdateManyWithoutActorsNestedInput
 }
@@ -261,6 +309,9 @@ export type ActorUpdateInput = {
 export type ActorUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -270,6 +321,9 @@ export type ActorUncheckedUpdateInput = {
 export type ActorCreateManyInput = {
   id?: string
   name: string
+  imageUrl?: string | null
+  imageThumbnailUrl?: string | null
+  imageAssetId?: string | null
   createdById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -278,6 +332,8 @@ export type ActorCreateManyInput = {
 export type ActorUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -285,9 +341,17 @@ export type ActorUpdateManyMutationInput = {
 export type ActorUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ActorNullableScalarRelationFilter = {
+  is?: Prisma.ActorWhereInput | null
+  isNot?: Prisma.ActorWhereInput | null
 }
 
 export type ActorListRelationFilter = {
@@ -303,6 +367,9 @@ export type ActorOrderByRelationAggregateInput = {
 export type ActorCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrder
+  imageThumbnailUrl?: Prisma.SortOrder
+  imageAssetId?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -311,6 +378,9 @@ export type ActorCountOrderByAggregateInput = {
 export type ActorMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrder
+  imageThumbnailUrl?: Prisma.SortOrder
+  imageAssetId?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -319,9 +389,44 @@ export type ActorMaxOrderByAggregateInput = {
 export type ActorMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrder
+  imageThumbnailUrl?: Prisma.SortOrder
+  imageAssetId?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type ActorCreateNestedOneWithoutImageAssetInput = {
+  create?: Prisma.XOR<Prisma.ActorCreateWithoutImageAssetInput, Prisma.ActorUncheckedCreateWithoutImageAssetInput>
+  connectOrCreate?: Prisma.ActorCreateOrConnectWithoutImageAssetInput
+  connect?: Prisma.ActorWhereUniqueInput
+}
+
+export type ActorUncheckedCreateNestedOneWithoutImageAssetInput = {
+  create?: Prisma.XOR<Prisma.ActorCreateWithoutImageAssetInput, Prisma.ActorUncheckedCreateWithoutImageAssetInput>
+  connectOrCreate?: Prisma.ActorCreateOrConnectWithoutImageAssetInput
+  connect?: Prisma.ActorWhereUniqueInput
+}
+
+export type ActorUpdateOneWithoutImageAssetNestedInput = {
+  create?: Prisma.XOR<Prisma.ActorCreateWithoutImageAssetInput, Prisma.ActorUncheckedCreateWithoutImageAssetInput>
+  connectOrCreate?: Prisma.ActorCreateOrConnectWithoutImageAssetInput
+  upsert?: Prisma.ActorUpsertWithoutImageAssetInput
+  disconnect?: Prisma.ActorWhereInput | boolean
+  delete?: Prisma.ActorWhereInput | boolean
+  connect?: Prisma.ActorWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ActorUpdateToOneWithWhereWithoutImageAssetInput, Prisma.ActorUpdateWithoutImageAssetInput>, Prisma.ActorUncheckedUpdateWithoutImageAssetInput>
+}
+
+export type ActorUncheckedUpdateOneWithoutImageAssetNestedInput = {
+  create?: Prisma.XOR<Prisma.ActorCreateWithoutImageAssetInput, Prisma.ActorUncheckedCreateWithoutImageAssetInput>
+  connectOrCreate?: Prisma.ActorCreateOrConnectWithoutImageAssetInput
+  upsert?: Prisma.ActorUpsertWithoutImageAssetInput
+  disconnect?: Prisma.ActorWhereInput | boolean
+  delete?: Prisma.ActorWhereInput | boolean
+  connect?: Prisma.ActorWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ActorUpdateToOneWithWhereWithoutImageAssetInput, Prisma.ActorUpdateWithoutImageAssetInput>, Prisma.ActorUncheckedUpdateWithoutImageAssetInput>
 }
 
 export type ActorCreateNestedManyWithoutCreatedByInput = {
@@ -404,17 +509,83 @@ export type ActorUncheckedUpdateManyWithoutMoviesNestedInput = {
   deleteMany?: Prisma.ActorScalarWhereInput | Prisma.ActorScalarWhereInput[]
 }
 
+export type ActorCreateWithoutImageAssetInput = {
+  id?: string
+  name: string
+  imageUrl?: string | null
+  imageThumbnailUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  createdBy?: Prisma.UserCreateNestedOneWithoutCreatedActorsInput
+  movies?: Prisma.MovieCreateNestedManyWithoutActorsInput
+}
+
+export type ActorUncheckedCreateWithoutImageAssetInput = {
+  id?: string
+  name: string
+  imageUrl?: string | null
+  imageThumbnailUrl?: string | null
+  createdById?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  movies?: Prisma.MovieUncheckedCreateNestedManyWithoutActorsInput
+}
+
+export type ActorCreateOrConnectWithoutImageAssetInput = {
+  where: Prisma.ActorWhereUniqueInput
+  create: Prisma.XOR<Prisma.ActorCreateWithoutImageAssetInput, Prisma.ActorUncheckedCreateWithoutImageAssetInput>
+}
+
+export type ActorUpsertWithoutImageAssetInput = {
+  update: Prisma.XOR<Prisma.ActorUpdateWithoutImageAssetInput, Prisma.ActorUncheckedUpdateWithoutImageAssetInput>
+  create: Prisma.XOR<Prisma.ActorCreateWithoutImageAssetInput, Prisma.ActorUncheckedCreateWithoutImageAssetInput>
+  where?: Prisma.ActorWhereInput
+}
+
+export type ActorUpdateToOneWithWhereWithoutImageAssetInput = {
+  where?: Prisma.ActorWhereInput
+  data: Prisma.XOR<Prisma.ActorUpdateWithoutImageAssetInput, Prisma.ActorUncheckedUpdateWithoutImageAssetInput>
+}
+
+export type ActorUpdateWithoutImageAssetInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdBy?: Prisma.UserUpdateOneWithoutCreatedActorsNestedInput
+  movies?: Prisma.MovieUpdateManyWithoutActorsNestedInput
+}
+
+export type ActorUncheckedUpdateWithoutImageAssetInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  movies?: Prisma.MovieUncheckedUpdateManyWithoutActorsNestedInput
+}
+
 export type ActorCreateWithoutCreatedByInput = {
   id?: string
   name: string
+  imageUrl?: string | null
+  imageThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  imageAsset?: Prisma.MediaAssetCreateNestedOneWithoutActorPhotoInput
   movies?: Prisma.MovieCreateNestedManyWithoutActorsInput
 }
 
 export type ActorUncheckedCreateWithoutCreatedByInput = {
   id?: string
   name: string
+  imageUrl?: string | null
+  imageThumbnailUrl?: string | null
+  imageAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   movies?: Prisma.MovieUncheckedCreateNestedManyWithoutActorsInput
@@ -452,6 +623,9 @@ export type ActorScalarWhereInput = {
   NOT?: Prisma.ActorScalarWhereInput | Prisma.ActorScalarWhereInput[]
   id?: Prisma.StringFilter<"Actor"> | string
   name?: Prisma.StringFilter<"Actor"> | string
+  imageUrl?: Prisma.StringNullableFilter<"Actor"> | string | null
+  imageThumbnailUrl?: Prisma.StringNullableFilter<"Actor"> | string | null
+  imageAssetId?: Prisma.StringNullableFilter<"Actor"> | string | null
   createdById?: Prisma.StringNullableFilter<"Actor"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Actor"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Actor"> | Date | string
@@ -460,14 +634,20 @@ export type ActorScalarWhereInput = {
 export type ActorCreateWithoutMoviesInput = {
   id?: string
   name: string
+  imageUrl?: string | null
+  imageThumbnailUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  imageAsset?: Prisma.MediaAssetCreateNestedOneWithoutActorPhotoInput
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedActorsInput
 }
 
 export type ActorUncheckedCreateWithoutMoviesInput = {
   id?: string
   name: string
+  imageUrl?: string | null
+  imageThumbnailUrl?: string | null
+  imageAssetId?: string | null
   createdById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -497,6 +677,9 @@ export type ActorUpdateManyWithWhereWithoutMoviesInput = {
 export type ActorCreateManyCreatedByInput = {
   id?: string
   name: string
+  imageUrl?: string | null
+  imageThumbnailUrl?: string | null
+  imageAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -504,14 +687,20 @@ export type ActorCreateManyCreatedByInput = {
 export type ActorUpdateWithoutCreatedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  imageAsset?: Prisma.MediaAssetUpdateOneWithoutActorPhotoNestedInput
   movies?: Prisma.MovieUpdateManyWithoutActorsNestedInput
 }
 
 export type ActorUncheckedUpdateWithoutCreatedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   movies?: Prisma.MovieUncheckedUpdateManyWithoutActorsNestedInput
@@ -520,6 +709,9 @@ export type ActorUncheckedUpdateWithoutCreatedByInput = {
 export type ActorUncheckedUpdateManyWithoutCreatedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -527,14 +719,20 @@ export type ActorUncheckedUpdateManyWithoutCreatedByInput = {
 export type ActorUpdateWithoutMoviesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  imageAsset?: Prisma.MediaAssetUpdateOneWithoutActorPhotoNestedInput
   createdBy?: Prisma.UserUpdateOneWithoutCreatedActorsNestedInput
 }
 
 export type ActorUncheckedUpdateWithoutMoviesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -543,6 +741,9 @@ export type ActorUncheckedUpdateWithoutMoviesInput = {
 export type ActorUncheckedUpdateManyWithoutMoviesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -582,9 +783,13 @@ export type ActorCountOutputTypeCountMoviesArgs<ExtArgs extends runtime.Types.Ex
 export type ActorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  imageUrl?: boolean
+  imageThumbnailUrl?: boolean
+  imageAssetId?: boolean
   createdById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  imageAsset?: boolean | Prisma.Actor$imageAssetArgs<ExtArgs>
   createdBy?: boolean | Prisma.Actor$createdByArgs<ExtArgs>
   movies?: boolean | Prisma.Actor$moviesArgs<ExtArgs>
   _count?: boolean | Prisma.ActorCountOutputTypeDefaultArgs<ExtArgs>
@@ -593,51 +798,69 @@ export type ActorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type ActorSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  imageUrl?: boolean
+  imageThumbnailUrl?: boolean
+  imageAssetId?: boolean
   createdById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  imageAsset?: boolean | Prisma.Actor$imageAssetArgs<ExtArgs>
   createdBy?: boolean | Prisma.Actor$createdByArgs<ExtArgs>
 }, ExtArgs["result"]["actor"]>
 
 export type ActorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  imageUrl?: boolean
+  imageThumbnailUrl?: boolean
+  imageAssetId?: boolean
   createdById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  imageAsset?: boolean | Prisma.Actor$imageAssetArgs<ExtArgs>
   createdBy?: boolean | Prisma.Actor$createdByArgs<ExtArgs>
 }, ExtArgs["result"]["actor"]>
 
 export type ActorSelectScalar = {
   id?: boolean
   name?: boolean
+  imageUrl?: boolean
+  imageThumbnailUrl?: boolean
+  imageAssetId?: boolean
   createdById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ActorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "createdById" | "createdAt" | "updatedAt", ExtArgs["result"]["actor"]>
+export type ActorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "imageUrl" | "imageThumbnailUrl" | "imageAssetId" | "createdById" | "createdAt" | "updatedAt", ExtArgs["result"]["actor"]>
 export type ActorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  imageAsset?: boolean | Prisma.Actor$imageAssetArgs<ExtArgs>
   createdBy?: boolean | Prisma.Actor$createdByArgs<ExtArgs>
   movies?: boolean | Prisma.Actor$moviesArgs<ExtArgs>
   _count?: boolean | Prisma.ActorCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ActorIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  imageAsset?: boolean | Prisma.Actor$imageAssetArgs<ExtArgs>
   createdBy?: boolean | Prisma.Actor$createdByArgs<ExtArgs>
 }
 export type ActorIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  imageAsset?: boolean | Prisma.Actor$imageAssetArgs<ExtArgs>
   createdBy?: boolean | Prisma.Actor$createdByArgs<ExtArgs>
 }
 
 export type $ActorPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Actor"
   objects: {
+    imageAsset: Prisma.$MediaAssetPayload<ExtArgs> | null
     createdBy: Prisma.$UserPayload<ExtArgs> | null
     movies: Prisma.$MoviePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
+    imageUrl: string | null
+    imageThumbnailUrl: string | null
+    imageAssetId: string | null
     createdById: string | null
     createdAt: Date
     updatedAt: Date
@@ -1035,6 +1258,7 @@ readonly fields: ActorFieldRefs;
  */
 export interface Prisma__ActorClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  imageAsset<T extends Prisma.Actor$imageAssetArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Actor$imageAssetArgs<ExtArgs>>): Prisma.Prisma__MediaAssetClient<runtime.Types.Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   createdBy<T extends Prisma.Actor$createdByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Actor$createdByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   movies<T extends Prisma.Actor$moviesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Actor$moviesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MoviePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1068,6 +1292,9 @@ export interface Prisma__ActorClient<T, Null = never, ExtArgs extends runtime.Ty
 export interface ActorFieldRefs {
   readonly id: Prisma.FieldRef<"Actor", 'String'>
   readonly name: Prisma.FieldRef<"Actor", 'String'>
+  readonly imageUrl: Prisma.FieldRef<"Actor", 'String'>
+  readonly imageThumbnailUrl: Prisma.FieldRef<"Actor", 'String'>
+  readonly imageAssetId: Prisma.FieldRef<"Actor", 'String'>
   readonly createdById: Prisma.FieldRef<"Actor", 'String'>
   readonly createdAt: Prisma.FieldRef<"Actor", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Actor", 'DateTime'>
@@ -1267,6 +1494,11 @@ export type ActorFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Skip the first `n` Actors.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Actors.
+   */
   distinct?: Prisma.ActorScalarFieldEnum | Prisma.ActorScalarFieldEnum[]
 }
 
@@ -1464,6 +1696,25 @@ export type ActorDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Limit how many Actors to delete.
    */
   limit?: number
+}
+
+/**
+ * Actor.imageAsset
+ */
+export type Actor$imageAssetArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MediaAsset
+   */
+  select?: Prisma.MediaAssetSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MediaAsset
+   */
+  omit?: Prisma.MediaAssetOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MediaAssetInclude<ExtArgs> | null
+  where?: Prisma.MediaAssetWhereInput
 }
 
 /**

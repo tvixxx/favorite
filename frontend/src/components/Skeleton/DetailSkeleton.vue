@@ -106,7 +106,7 @@ const { layout = "preview" } = defineProps<{ layout?: "preview" | "page" }>();
     gap: 22px;
     align-items: start;
 
-    @media (max-width: 1080px) {
+    @include mediaMax(1080px) {
       grid-template-columns: 1fr;
     }
   }
@@ -136,7 +136,7 @@ const { layout = "preview" } = defineProps<{ layout?: "preview" | "page" }>();
   }
 
   &__side {
-    @media (max-width: 1080px) {
+    @include mediaMax(1080px) {
       order: -1;
     }
   }
@@ -160,7 +160,7 @@ const { layout = "preview" } = defineProps<{ layout?: "preview" | "page" }>();
     align-items: start;
     margin-bottom: 6px;
 
-    @media (max-width: 1080px) {
+    @include mediaMax(1080px) {
       grid-template-columns: 150px 1fr;
       grid-template-areas: "poster info" "poster rates";
       gap: 10px 22px;

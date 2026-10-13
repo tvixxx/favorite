@@ -36,9 +36,7 @@ const applyFavoriteScopeToStore = () => {
   });
 };
 
-const favoriteUserMovies = computed(() =>
-  userMoviesStore.favoriteUserMovies
-);
+const favoriteUserMovies = computed(() => userMoviesStore.favoriteUserMovies);
 
 // Переключатель типа (эталон): фильтруем уже загруженное избранное на клиенте
 type FavoriteKind = "all" | "movies" | "serials";
@@ -62,9 +60,7 @@ const setKind = (kind: FavoriteKind): void => {
 
 const shouldFetchFavorites = computed(
   () =>
-    !favoriteUserMovies.value.length &&
-    mainStore.isLoggedIn &&
-    !!userId.value
+    !favoriteUserMovies.value.length && mainStore.isLoggedIn && !!userId.value
 );
 
 const refetchFavorites = async () => {
@@ -136,12 +132,12 @@ const favoritesForView = computed(() => {
 const visibleFavorites = computed(() =>
   favoritesForView.value.slice(
     0,
-    userMoviesStore.currentPage * userMoviesStore.pageSize,
-  ),
+    userMoviesStore.currentPage * userMoviesStore.pageSize
+  )
 );
 
 const restCount = computed(
-  () => favoritesForView.value.length - visibleFavorites.value.length,
+  () => favoritesForView.value.length - visibleFavorites.value.length
 );
 
 const showMore = (): void => {
@@ -151,7 +147,7 @@ const showMore = (): void => {
 const totalFavorites = computed(() => favoritesForView.value.length);
 
 const favoritesSubtitle = computed(
-  () => `${pluralize(totalFavorites.value, PLURAL.title)} отмечено сердечком`,
+  () => `${pluralize(totalFavorites.value, PLURAL.title)} отмечено сердечком`
 );
 const hasFilteredResults = computed(() => favoritesForView.value.length > 0);
 
@@ -175,7 +171,8 @@ const favoritesEmptyState = computed(() => {
   if (activeKind.value !== "all" && favoriteUserMovies.value.length) {
     return {
       variant: "empty" as const,
-      icon: activeKind.value === "serials" ? "ph:monitor-play" : "ph:film-slate",
+      icon:
+        activeKind.value === "serials" ? "ph:monitor-play" : "ph:film-slate",
       title:
         activeKind.value === "serials"
           ? "Сериалов в избранном нет"
@@ -208,7 +205,7 @@ const favoritesEmptyState = computed(() => {
 const getPosterSrc = (item: UserMovie) => {
   return imageErrors.value.has(item.movieId)
     ? FALLBACK_IMAGE_URL
-    : item.movie.imageUrl || FALLBACK_IMAGE_URL;
+    : item.movie.imageThumbnailUrl || item.movie.imageUrl || FALLBACK_IMAGE_URL;
 };
 
 const handleImageError = (movieId: string) => {
@@ -301,7 +298,10 @@ onBeforeUnmount(() => {
 
       <PosterGridSkeleton v-else-if="showSkeleton" :count="12" />
 
-      <StateBlock v-else-if="!hasFilteredResults" v-bind="favoritesEmptyState" />
+      <StateBlock
+        v-else-if="!hasFilteredResults"
+        v-bind="favoritesEmptyState"
+      />
 
       <div v-else class="favorites__section">
         <div class="favorites__grid">
@@ -350,8 +350,6 @@ onBeforeUnmount(() => {
     margin-top: 2rem;
     width: 100%;
   }
-
-
 
   // Переключатель типа: активный — тёмная ink-пилюля (эталон)
   &__kinds {

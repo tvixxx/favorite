@@ -26,7 +26,7 @@ describe('Одинаковая завершённость сериала в пр
     const service = new LeaderboardService(
       prisma as unknown as PrismaService,
       {
-        getTopUnlockedBadges: jest.fn().mockResolvedValue([]),
+        getTopUnlockedBadgesForUsers: jest.fn().mockResolvedValue(new Map()),
       } as unknown as BadgeService,
     );
     const result = await service.getTopUsers(new LeaderboardQueryDto());
@@ -56,7 +56,7 @@ describe('Одинаковая завершённость сериала в пр
     const service = new LeaderboardService(
       prisma as unknown as PrismaService,
       {
-        getTopUnlockedBadges: jest.fn().mockResolvedValue([]),
+        getTopUnlockedBadgesForUsers: jest.fn().mockResolvedValue(new Map()),
       } as unknown as BadgeService,
     );
     const result = await service.getTopUsers(new LeaderboardQueryDto());

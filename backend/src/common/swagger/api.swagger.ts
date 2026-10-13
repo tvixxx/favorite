@@ -1,5 +1,5 @@
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import type { OpenAPIObject } from '@nestjs/swagger/dist/interfaces';
+import type { OpenAPIObject } from '@nestjs/swagger';
 import type { INestApplication } from '@nestjs/common';
 
 import { MovieModule } from '../../movie/movie.module';
@@ -20,6 +20,7 @@ import { BadgeModule } from '../../badge/badge.module';
 import { UserListModule } from '../../user-list/user-list.module';
 import { NotificationModule } from '../../notification/notification.module';
 import { FeedbackModule } from '../../feedback/feedback.module';
+import { MediaModule } from '../../media/media.module';
 
 const getSwaggerDocumentConfig = (): Omit<OpenAPIObject, 'paths'> => {
   const { title, description, version, contact } = SWAGGER_CONFIG_DATA;
@@ -54,6 +55,7 @@ const SWAGGER_DOCUMENT_INCLUDE_MODULES = [
   UserListModule,
   NotificationModule,
   FeedbackModule,
+  MediaModule,
 ];
 
 const getSwaggerDocument = (app: INestApplication): OpenAPIObject => {

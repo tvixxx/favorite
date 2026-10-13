@@ -5,6 +5,7 @@ import {
   Get,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Post,
   Put,
 } from '@nestjs/common';
@@ -38,6 +39,19 @@ export class ReviewController {
   @Post()
   public create(@Body() dto: CreateReviewDto, @Authorized() user: User) {
     return this.reviewService.create(dto, user.id);
+  }
+
+  @ApiOperation({
+    summary: 'Мой отзыв на фильм, независимо от страницы списка',
+  })
+  @ApiOkResponse({ type: ReviewResponse, description: 'Отзыв или null' })
+  @AuthProtected()
+  @Get('mine/:movieId')
+  public findMine(
+    @Param('movieId', new ParseUUIDPipe({ version: '4' })) movieId: string,
+    @Authorized() user: User,
+  ) {
+    return this.reviewService.findMine(movieId, user.id);
   }
 
   @ApiOperation({

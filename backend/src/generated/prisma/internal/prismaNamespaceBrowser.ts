@@ -51,6 +51,7 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
+  MediaAsset: 'MediaAsset',
   User: 'User',
   Movie: 'Movie',
   MoviePoster: 'MoviePoster',
@@ -82,6 +83,26 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+export const MediaAssetScalarFieldEnum = {
+  id: 'id',
+  ownerId: 'ownerId',
+  purpose: 'purpose',
+  status: 'status',
+  mainKey: 'mainKey',
+  thumbnailKey: 'thumbnailKey',
+  mimeType: 'mimeType',
+  byteSize: 'byteSize',
+  width: 'width',
+  height: 'height',
+  claimedAt: 'claimedAt',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MediaAssetScalarFieldEnum = (typeof MediaAssetScalarFieldEnum)[keyof typeof MediaAssetScalarFieldEnum]
+
+
 export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
@@ -89,6 +110,9 @@ export const UserScalarFieldEnum = {
   fullName: 'fullName',
   role: 'role',
   tags: 'tags',
+  avatarUrl: 'avatarUrl',
+  avatarThumbnailUrl: 'avatarThumbnailUrl',
+  avatarAssetId: 'avatarAssetId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -119,6 +143,8 @@ export type MovieScalarFieldEnum = (typeof MovieScalarFieldEnum)[keyof typeof Mo
 export const MoviePosterScalarFieldEnum = {
   id: 'id',
   url: 'url',
+  thumbnailUrl: 'thumbnailUrl',
+  assetId: 'assetId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -142,6 +168,9 @@ export type ReviewScalarFieldEnum = (typeof ReviewScalarFieldEnum)[keyof typeof 
 export const ActorScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  imageUrl: 'imageUrl',
+  imageThumbnailUrl: 'imageThumbnailUrl',
+  imageAssetId: 'imageAssetId',
   createdById: 'createdById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

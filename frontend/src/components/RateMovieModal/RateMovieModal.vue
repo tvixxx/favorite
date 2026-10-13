@@ -40,7 +40,7 @@ const { reviews } = reviewsStore;
 const userId = computed(() => mainStore.userData?.id || "");
 
 const myReview = computed(
-  () => reviews.value.find((r) => r.userId === userId.value) ?? null,
+  () => reviews.value.find((r) => r.userId === userId.value) ?? null
 );
 
 const rate = ref(0);
@@ -69,7 +69,7 @@ const save = async (): Promise<void> => {
 
   if (trimmed && trimmed.length < MIN_REVIEW_TEXT_LENGTH) {
     message.error(
-      `Минимальная длина отзыва — ${MIN_REVIEW_TEXT_LENGTH} символов`,
+      `Минимальная длина отзыва — ${MIN_REVIEW_TEXT_LENGTH} символов`
     );
 
     return;
@@ -78,9 +78,16 @@ const save = async (): Promise<void> => {
   isSaving.value = true;
 
   try {
-    const updated = await userMoviesStore.rateUserMovie(userId.value, props.movieId, rate.value, trimmed);
+    const updated = await userMoviesStore.rateUserMovie(
+      userId.value,
+      props.movieId,
+      rate.value,
+      trimmed
+    );
     emit("saved", updated);
-    void reviewsStore.fetchReviews(props.movieId, 100).catch(() => undefined);
+    void reviewsStore
+      .fetchReviews(props.movieId, 100, true)
+      .catch(() => undefined);
     message.success("Оценка сохранена");
     open.value = false;
   } catch {
@@ -145,6 +152,10 @@ const save = async (): Promise<void> => {
 <style lang="scss">
 /* Не scoped: содержимое BaseModal телепортируется в body */
 .rate-modal {
+  .modal__footer {
+    flex-wrap: wrap;
+  }
+
   // Пропорции кнопок футера как в эталоне
   .modal__footer .ant-btn {
     flex: 2;

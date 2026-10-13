@@ -14,9 +14,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ActorService } from './actor.service';
-import { CreateActorDto } from './dto/create-actor.dto';
+import { CreateActorDto, PatchActorDto } from './dto/create-actor.dto';
 import { AuthCatalogWrite, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
+import { queryInteger, queryString } from '../common/utils/query-value';
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 20;
@@ -41,20 +42,18 @@ export class ActorController {
   @ApiOperation({ summary: 'Список актёров' })
   @ApiOkResponse({ description: 'Страница' })
   public findAll(
-    @Query('q') q?: string,
-    @Query('limit') limitRaw?: string,
-    @Query('offset') offsetRaw?: string,
+    @Query('q') q?: unknown,
+    @Query('limit') limitRaw?: unknown,
+    @Query('offset') offsetRaw?: unknown,
   ) {
-    const parsedLimit = Number.parseInt(limitRaw ?? '', 10);
-    const parsedOffset = Number.parseInt(offsetRaw ?? '', 10);
-    const limit = Number.isFinite(parsedLimit)
-      ? Math.min(Math.max(parsedLimit, 1), MAX_LIMIT)
-      : DEFAULT_LIMIT;
-    const offset = Number.isFinite(parsedOffset)
-      ? Math.max(parsedOffset, 0)
-      : 0;
+    const limit = queryInteger(limitRaw, 'limit', DEFAULT_LIMIT, 1, MAX_LIMIT);
+    const offset = queryInteger(offsetRaw, 'offset', 0, 0, 2147483647);
 
-    return this.actorService.findMany({ q, limit, offset });
+    return this.actorService.findMany({
+      q: queryString(q, 'q'),
+      limit,
+      offset,
+    });
   }
 
   @Get(':id')
@@ -74,7 +73,7 @@ export class ActorController {
   @ApiNotFoundResponse()
   public patch(
     @Param('id') id: string,
-    @Body() dto: Partial<CreateActorDto>,
+    @Body() dto: PatchActorDto,
     @Authorized() user: User,
   ) {
     return this.actorService.patch(id, dto, user);

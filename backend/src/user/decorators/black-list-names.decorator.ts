@@ -1,8 +1,4 @@
-import {
-  registerDecorator,
-  type ValidationArguments,
-  type ValidationOptions,
-} from 'class-validator';
+import { registerDecorator, type ValidationOptions } from 'class-validator';
 
 export function BlackListNames(
   list: string[],
@@ -15,11 +11,11 @@ export function BlackListNames(
       propertyName,
       options: validationOptions,
       validator: {
-        validate(value: any, args?: ValidationArguments) {
+        validate(value: unknown) {
           return typeof value === 'string' && !hasForbiddenWord(value, list);
         },
-        defaultMessage(args?: ValidationArguments): string {
-          return `Название не может иметь такие слова как: ${list}`;
+        defaultMessage(): string {
+          return `Название не может иметь такие слова как: ${list.join(',')}`;
         },
       },
     });
@@ -29,11 +25,5 @@ export function BlackListNames(
 function hasForbiddenWord(text: string, forbiddenWords: string[]): boolean {
   const lowerText = text.toLowerCase();
 
-  return forbiddenWords.some(
-    (word) =>
-      lowerText.startsWith(word) ||
-      lowerText.endsWith(word) ||
-      lowerText.includes(`${word}`) ||
-      lowerText === word,
-  );
+  return forbiddenWords.some((word) => lowerText.includes(word));
 }

@@ -166,6 +166,7 @@ const onTouchEnd = (): void => {
 </template>
 
 <style lang="scss">
+@use "../../styles/media" as *;
 @use "@/styles/scrollbar" as *;
 
 .fsheet-scrim {
@@ -418,7 +419,7 @@ const onTouchEnd = (): void => {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@include mediaReducedMotion {
   .fsheet-enter-active,
   .fsheet-leave-active,
   .fsheet-enter-active .fsheet,

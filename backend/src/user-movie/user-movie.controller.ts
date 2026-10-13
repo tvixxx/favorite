@@ -30,6 +30,13 @@ import {
 } from '../common/utils/parse-query-filters';
 import { AuthProtected, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
+import {
+  queryBoolean,
+  queryDate,
+  queryEnum,
+  queryNumber,
+  queryString,
+} from '../common/utils/query-value';
 
 @ApiTags('User Movies')
 @Controller('users/:userId/movies')
@@ -70,14 +77,18 @@ export class UserMovieController {
     return this.userMovieService.findAllByUser(userId, {
       genres: parseGenreFilters(genres),
       countryCodes: parseCountryFilters(countryCode),
-      personalRateMin: personalRateMin ? Number(personalRateMin) : undefined,
-      personalRateMax: personalRateMax ? Number(personalRateMax) : undefined,
-      publishDateFrom,
-      publishDateTo,
-      isFavorite: isFavorite !== undefined ? isFavorite === 'true' : undefined,
-      seeLater: seeLater !== undefined ? seeLater === 'true' : undefined,
-      watchStatus: watchStatus ? (watchStatus as WatchStatus) : undefined,
-      isSerial: isSerial !== undefined ? isSerial === 'true' : undefined,
+      personalRateMin: queryNumber(personalRateMin, 'personalRateMin', 0, 10),
+      personalRateMax: queryNumber(personalRateMax, 'personalRateMax', 0, 10),
+      publishDateFrom: queryDate(publishDateFrom, 'publishDateFrom'),
+      publishDateTo: queryDate(publishDateTo, 'publishDateTo'),
+      isFavorite: queryBoolean(isFavorite, 'isFavorite'),
+      seeLater: queryBoolean(seeLater, 'seeLater'),
+      watchStatus: queryEnum(
+        watchStatus,
+        'watchStatus',
+        Object.values(WatchStatus),
+      ),
+      isSerial: queryBoolean(isSerial, 'isSerial'),
     });
   }
 
@@ -93,7 +104,7 @@ export class UserMovieController {
   public searchUserMovies(
     @Param('userId') userId: string,
     @Authorized() user: User,
-    @Query('q') query: string,
+    @Query('q') query: unknown,
     @Query('genres') genres?: string | string[],
     @Query('countryCode') countryCode?: string | string[],
     @Query('personalRateMin') personalRateMin?: string,
@@ -106,18 +117,26 @@ export class UserMovieController {
     @Query('isSerial') isSerial?: string,
   ) {
     this.ensureSelf(userId, user);
-    return this.userMovieService.searchUserMovies(userId, query, {
-      genres: parseGenreFilters(genres),
-      countryCodes: parseCountryFilters(countryCode),
-      personalRateMin: personalRateMin ? Number(personalRateMin) : undefined,
-      personalRateMax: personalRateMax ? Number(personalRateMax) : undefined,
-      publishDateFrom,
-      publishDateTo,
-      isFavorite: isFavorite !== undefined ? isFavorite === 'true' : undefined,
-      seeLater: seeLater !== undefined ? seeLater === 'true' : undefined,
-      watchStatus: watchStatus ? (watchStatus as WatchStatus) : undefined,
-      isSerial: isSerial !== undefined ? isSerial === 'true' : undefined,
-    });
+    return this.userMovieService.searchUserMovies(
+      userId,
+      queryString(query, 'q') ?? '',
+      {
+        genres: parseGenreFilters(genres),
+        countryCodes: parseCountryFilters(countryCode),
+        personalRateMin: queryNumber(personalRateMin, 'personalRateMin', 0, 10),
+        personalRateMax: queryNumber(personalRateMax, 'personalRateMax', 0, 10),
+        publishDateFrom: queryDate(publishDateFrom, 'publishDateFrom'),
+        publishDateTo: queryDate(publishDateTo, 'publishDateTo'),
+        isFavorite: queryBoolean(isFavorite, 'isFavorite'),
+        seeLater: queryBoolean(seeLater, 'seeLater'),
+        watchStatus: queryEnum(
+          watchStatus,
+          'watchStatus',
+          Object.values(WatchStatus),
+        ),
+        isSerial: queryBoolean(isSerial, 'isSerial'),
+      },
+    );
   }
 
   @ApiOperation({

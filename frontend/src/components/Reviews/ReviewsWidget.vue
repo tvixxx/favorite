@@ -13,6 +13,7 @@ import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { useMainStore } from "@/state/state";
 
 const { movieId } = defineProps<{ movieId: string }>();
+const emit = defineEmits<{ changed: [] }>();
 
 const mainStore = useMainStore();
 const currentUserId = computed(() => mainStore.userData?.id ?? null);
@@ -34,15 +35,22 @@ const reviewFormRef = ref<ReviewFormExpose | null>(null);
 
 const canEditReview = (review: Review) =>
   !!currentUserId.value && review.userId === currentUserId.value;
+const ownReview = computed(() => reviews.value.find(canEditReview));
 
 const startEdit = (review: Review) => {
-  if (isSaving.value) return;
+  if (isSaving.value) {
+    return;
+  }
+
   editingReview.value = review;
   isEditing.value = true;
 };
 
 const cancelEdit = () => {
-  if (isSaving.value) return;
+  if (isSaving.value) {
+    return;
+  }
+
   editingReview.value = null;
   isEditing.value = false;
 };
@@ -59,7 +67,7 @@ watch(
     editingReview.value = null;
     isEditing.value = false;
     try {
-      await fetchReviews(id);
+      await fetchReviews(id, 10, isLoggedIn.value);
     } catch {
       /* ignore */
     }
@@ -68,7 +76,14 @@ watch(
 );
 
 const handleSubmit = async (text: string, rate: number) => {
-  if (isSaving.value || !currentUserId.value) return;
+  if (
+    isSaving.value ||
+    !currentUserId.value ||
+    (!isEditing.value && ownReview.value)
+  ) {
+    return;
+  }
+
   text = text.trim();
   if (!text || text.length < MIN_REVIEW_TEXT_LENGTH) {
     message.error(
@@ -83,16 +98,24 @@ const handleSubmit = async (text: string, rate: number) => {
   try {
     if (isEditing.value && editingReview.value) {
       await updateReview(editingReview.value.id, { text, rate });
-      if (movieId !== submittedMovieId) return;
+      if (movieId !== submittedMovieId) {
+        return;
+      }
+
       message.success("Отзыв обновлён");
       editingReview.value = null;
       isEditing.value = false;
     } else {
       await createReview({ text, rate, movieId });
-      if (movieId !== submittedMovieId) return;
+      if (movieId !== submittedMovieId) {
+        return;
+      }
+
       message.success("Отзыв добавлен");
       reviewFormRef.value?.resetForm();
     }
+
+    emit("changed");
   } catch (error) {
     showErrorRequest(error);
   } finally {
@@ -101,10 +124,20 @@ const handleSubmit = async (text: string, rate: number) => {
 };
 
 const handleDelete = async (reviewId: string) => {
-  if (deletingIds.value.has(reviewId) || isSaving.value) return;
+  if (deletingIds.value.has(reviewId) || isSaving.value) {
+    return;
+  }
+
   deletingIds.value.add(reviewId);
+  const submittedMovieId = movieId;
+
   try {
     await deleteReview(reviewId);
+    if (movieId !== submittedMovieId) {
+      return;
+    }
+
+    emit("changed");
     message.success("Отзыв удалён");
 
     if (editingReview.value?.id === reviewId) {
@@ -122,11 +155,7 @@ const handleDelete = async (reviewId: string) => {
   <section class="reviews-widget">
     <div class="reviews-widget__header">
       <h3 class="reviews-widget__title">
-        <BaseIcon
-          name="ph:chats"
-          :width="22"
-          :height="22"
-        />
+        <BaseIcon name="ph:chats" :width="22" :height="22" />
         Отзывы
       </h3>
       <span v-if="isLoaded" class="reviews-widget__count">
@@ -147,7 +176,8 @@ const handleDelete = async (reviewId: string) => {
           label: 'Повторить',
           icon: 'ph:arrow-clockwise',
           kind: 'primary',
-          onClick: () => void fetchReviews(movieId).catch(() => {}),
+          onClick: () =>
+            void fetchReviews(movieId, 10, isLoggedIn).catch(() => {}),
         },
       ]"
     />
@@ -183,33 +213,41 @@ const handleDelete = async (reviewId: string) => {
       />
     </template>
 
-    <div v-if="isLoggedIn" class="reviews-widget__form-section">
-      <div class="reviews-widget__form-header">
-        <h4 class="reviews-widget__form-title">
-          {{ isEditing ? "Редактировать отзыв" : "Написать отзыв" }}
-        </h4>
-        <a-button
-          v-if="isEditing"
-          type="text"
-          class="reviews-widget__cancel-edit"
-          :disabled="isSaving"
-          @click="cancelEdit"
-        >
-          <BaseIcon name="ph:x" :width="16" :height="16" />
-          Отменить редактирование
-        </a-button>
-      </div>
+    <div
+      v-if="isLoggedIn && isLoaded && !isLoading"
+      class="reviews-widget__form-section"
+    >
+      <a-button v-if="ownReview && !isEditing" @click="startEdit(ownReview)">
+        Редактировать мой отзыв
+      </a-button>
+      <template v-else>
+        <div class="reviews-widget__form-header">
+          <h4 class="reviews-widget__form-title">
+            {{ isEditing ? "Редактировать отзыв" : "Написать отзыв" }}
+          </h4>
+          <a-button
+            v-if="isEditing"
+            type="text"
+            class="reviews-widget__cancel-edit"
+            :disabled="isSaving"
+            @click="cancelEdit"
+          >
+            <BaseIcon name="ph:x" :width="16" :height="16" />
+            Отменить редактирование
+          </a-button>
+        </div>
 
-      <ReviewForm
-        ref="reviewFormRef"
-        :key="editingReview?.id ?? 'new'"
-        :is-editing="isEditing"
-        :is-saving="isSaving"
-        :initial-text="editingReview?.text ?? ''"
-        :initial-rate="editingReview?.rate ?? 0"
-        @submit="handleSubmit"
-        @cancel="cancelEdit"
-      />
+        <ReviewForm
+          ref="reviewFormRef"
+          :key="editingReview?.id ?? 'new'"
+          :is-editing="isEditing"
+          :is-saving="isSaving"
+          :initial-text="editingReview?.text ?? ''"
+          :initial-rate="editingReview?.rate ?? 0"
+          @submit="handleSubmit"
+          @cancel="cancelEdit"
+        />
+      </template>
     </div>
   </section>
 </template>

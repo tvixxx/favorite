@@ -11,7 +11,7 @@
 
 ## Локальный запуск
 
-Нужны Node 22 и Docker.
+Нужны Node 22, Yarn Classic 1.22.22 и Docker. В обоих приложениях используем Yarn и `yarn.lock`. Проектные `.npmrc`/`.yarnrc` задают публичный registry, корпоративный VPN не требуется.
 
 ```bash
 # 1. база (отдельного compose для разработки нет — контейнер поднимается вручную)
@@ -20,13 +20,19 @@ docker run -d --name postgres -p 5433:5432 -v favorite-pg:/var/lib/postgresql \
   postgres:18-alpine
 
 # 2. бэкенд → http://localhost:3005, Swagger на /docs
-cd backend && npm install && npx prisma migrate deploy && npm run start:dev
+cd backend
+yarn install --frozen-lockfile
+yarn prisma generate
+yarn prisma migrate deploy
+yarn start:dev
 
 # 3. фронтенд → http://localhost:8080
-cd frontend && npm install && npm run dev
+cd frontend
+yarn install --frozen-lockfile
+yarn dev
 ```
 
-`frontend/.env` лежит в репозитории, а `backend/.env` — нет (в нём секреты). Создайте его:
+Команды frontend запускаются из корня репозитория в отдельном терминале. `backend/.env` создайте самостоятельно, не добавляйте его в Git:
 
 ```env
 NODE_ENV=development
@@ -37,23 +43,18 @@ JWT_REFRESH_TOKEN_TTL=7d
 DATABASE_URL=postgresql://root:123456@localhost:5433/favorites
 ```
 
-Все шесть переменных обязательны: бэкенд читает их через `getOrThrow` и без любой
-из них не стартует.
+Контракт дополнительных настроек, медиа и production описан в [deploy/README.md](deploy/README.md). Значения выше предназначены только для локальной разработки.
 
-⚠️ **`prisma migrate dev` и любой reset запускать нельзя.** У таблицы `movies`
-давнее расхождение схемы, и Prisma в ответ требует пересоздать базу — это потеря
-данных. Новые изменения применяются неразрушающе:
-`npx prisma db execute --file <sql>` + `npx prisma migrate resolve --applied <имя>`.
+**Не запускать reset для базы с данными.** У старой локальной базы было расхождение схемы `movies` с историей миграций. Обычный путь — `yarn prisma migrate deploy`. Если история существующей базы расходится, сначала проверить её состояние и применённый SQL. `yarn prisma migrate resolve --applied <имя>` допустим только после проверки, что весь SQL этой миграции действительно выполнен.
 
 ## Проверки перед сдачей работы
 
 ```bash
-cd frontend && npx eslint "src/**/*.{ts,vue}" && npx vitest run && npm run build
-cd backend  && npx nest build
+cd frontend && yarn lint && yarn test:unit --run && yarn build
+cd backend && yarn lint:check && yarn test --runInBand && yarn build
 ```
 
-Типы на сборке фронтенда **не проверяются**: `npm run build` — это только
-`vite build`, `vue-tsc` в проекте нет.
+Каждая строка выше запускается из корня проекта. `yarn build` фронтенда сначала проверяет типы через `vue-tsc` и `tsc`, затем собирает Vite/PWA. Для изолированной проверки Docker/nginx: `bash deploy/verify-local.sh`.
 
 ## Дизайн-система
 

@@ -34,6 +34,7 @@ function applyActorFilter(): void {
     });
   } else {
     const next = { ...moviesStore.filters };
+
     delete next.actorIds;
     moviesStore.setFilters(next);
   }
@@ -48,7 +49,7 @@ const totalMovies = computed(() => moviesStore.currentMoviesList.length);
 
 // Догрузка вместо страниц (спека new-9): порция = pageSize
 const restCount = computed(
-  () => totalMovies.value - moviesStore.visibleMovies.length,
+  () => totalMovies.value - moviesStore.visibleMovies.length
 );
 
 const showMore = (): void => {
@@ -100,7 +101,7 @@ const catalogEmptyState = computed(() => {
 const getPosterSrc = (item: Movie) => {
   return imageErrors.value.has(item.id)
     ? FALLBACK_IMAGE_URL
-    : item.imageUrl || FALLBACK_IMAGE_URL;
+    : item.imageThumbnailUrl || item.imageUrl || FALLBACK_IMAGE_URL;
 };
 
 const handleImageError = (movieId: string) => {
@@ -141,13 +142,14 @@ watch(
   async () => {
     applyActorFilter();
     moviesStore.setCurrentPage(1);
+
     try {
       await moviesStore.fetchMovies();
     } catch {
       message.error(ERROR_FETCH_MOVIES_TEXT);
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 onBeforeUnmount(() => {
@@ -330,5 +332,4 @@ async function resetCatalogFilters(): Promise<void> {
     margin-top: 1.25rem;
   }
 }
-
 </style>

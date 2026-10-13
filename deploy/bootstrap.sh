@@ -7,26 +7,7 @@
 #   ./bootstrap.sh cron       # только поставить бэкапы в cron
 set -euo pipefail
 
-DEPLOY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$DEPLOY_DIR"
-
-if [[ ! -f .env ]]; then
-  echo "Нет deploy/.env — скопируйте .env.example и заполните." >&2
-  exit 1
-fi
-
-set -a
-# shellcheck disable=SC1091
-source .env
-set +a
-
-: "${DOMAIN:?укажите DOMAIN в .env}"
-: "${POSTGRES_PASSWORD:?укажите POSTGRES_PASSWORD в .env}"
-: "${JWT_SECRET:?укажите JWT_SECRET в .env}"
-DATA_DIR="${DATA_DIR:-/srv/favorite/data}"
-BACKUP_DIR="${BACKUP_DIR:-/srv/favorite/backups}"
-
-step() { printf "\n\033[1m==> %s\033[0m\n" "$1"; }
+source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 install_packages() {
   step "Пакеты: docker, node, вспомогательное"
@@ -60,14 +41,15 @@ prepare_dirs() {
 }
 
 start_stack() {
-  step "Сборка и запуск (HTTP)"
-  docker compose up -d --build
+  require_media_config
+  step "Сборка образов"
+  docker compose build migrate
+  docker compose build backend
+  docker compose build web
+  docker compose up -d --wait --wait-timeout 120 postgres
+  start_application
+  check_application
   docker compose ps
-}
-
-run_migrations() {
-  step "Миграции Prisma"
-  docker compose exec -T backend npx prisma migrate deploy
 }
 
 obtain_certs() {
@@ -83,22 +65,21 @@ obtain_certs() {
     --agree-tos --no-eff-email --non-interactive
 
   step "Переключаю nginx на HTTPS"
-  envsubst '${DOMAIN}' < nginx/app-ssl.conf > nginx/app-ssl.generated.conf
-
-  # Меняем монтирование конфига на сгенерированный HTTPS-вариант
-  if ! grep -q "app-ssl.generated.conf" docker-compose.yml; then
-    sed -i 's|./nginx/app.conf:/etc/nginx/conf.d/default.conf|./nginx/app-ssl.generated.conf:/etc/nginx/conf.d/default.conf|' docker-compose.yml
-  fi
-
-  docker compose up -d web
+  mkdir -p .state
+  envsubst '${DOMAIN}' < nginx/app-ssl.conf > .state/nginx-ssl.conf
+  export NGINX_CONFIG="$DEPLOY_DIR/.state/nginx-ssl.conf"
+  docker compose up -d --force-recreate web
+  docker compose exec -T web nginx -t
+  check_application
   echo "Готово: https://$DOMAIN"
 }
 
 setup_cron() {
   step "Бэкапы в cron (каждый час) и продление сертификата (раз в неделю)"
 
-  local backup_cmd="cd $DEPLOY_DIR/../backend && PG_CONTAINER=${PG_CONTAINER:-favorite-postgres} BACKUP_DIR=$BACKUP_DIR PG_USER=$POSTGRES_USER PG_DB=$POSTGRES_DB S3_URI=${S3_URI:-} GPG_RECIPIENT=${GPG_RECIPIENT:-} HEALTHCHECK_URL=${HEALTHCHECK_URL:-} /usr/bin/node scripts/backup/db-backup.cjs >> /var/log/favorite-backup.log 2>&1"
-  local renew_cmd="docker run --rm -v $DATA_DIR/certbot/conf:/etc/letsencrypt -v $DATA_DIR/certbot/www:/var/www/certbot certbot/certbot renew --webroot -w /var/www/certbot --quiet && docker exec favorite-web nginx -s reload"
+  # В cron лежат только пути. Секреты читают wrappers из приватного .env.
+  local backup_cmd="/bin/bash '$DEPLOY_DIR/backup.sh' >> /var/log/favorite-backup.log 2>&1"
+  local renew_cmd="/bin/bash '$DEPLOY_DIR/renew-certs.sh'"
 
   # Пишем в отдельный файл, чтобы не затирать чужие задания
   cat > /etc/cron.d/favorite <<CRON
@@ -120,10 +101,9 @@ case "${1:-all}" in
     setup_firewall
     prepare_dirs
     start_stack
-    run_migrations
     echo
     echo "Стек поднят по HTTP. Дальше:"
-    echo "  1) проверьте http://$DOMAIN"
+    echo "  1) проверьте http://$DOMAIN/api/health (вход в аккаунт потребует HTTPS)"
     echo "  2) ./bootstrap.sh certs   — получить сертификат и включить HTTPS"
     echo "  3) ./bootstrap.sh cron    — поставить бэкапы в расписание"
     ;;

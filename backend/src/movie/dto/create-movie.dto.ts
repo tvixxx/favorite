@@ -8,11 +8,14 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  IsUrl,
+  MaxLength,
   ArrayMinSize,
   Max,
   Min,
   Matches,
   ValidateNested,
+  IsDateString,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
@@ -39,8 +42,8 @@ export class CreateMovieRequest {
     nullable: true,
   })
   @IsOptional()
-  @IsString()
-  publishDate?: string;
+  @IsDateString({ strict: true })
+  publishDate?: string | null;
 
   @ApiProperty({
     description: 'Ссылка на постер фильма',
@@ -49,8 +52,22 @@ export class CreateMovieRequest {
     nullable: true,
   })
   @IsOptional()
-  @IsString()
+  @MaxLength(2048)
+  @IsUrl({
+    protocols: ['http', 'https'],
+    require_protocol: true,
+    require_tld: false,
+  })
   imageUrl?: string;
+
+  @ApiPropertyOptional({
+    description: 'ID загруженного постера',
+    format: 'uuid',
+    nullable: true,
+  })
+  @IsOptional()
+  @IsUUID('4')
+  posterAssetId?: string | null;
 
   @ApiProperty({
     description: 'Описание фильма',
@@ -102,24 +119,28 @@ export class CreateMovieRequest {
 
   @ApiProperty({
     description: 'Количество сезонов',
+    minimum: 1,
+    maximum: 1000,
     example: '2',
     type: Number,
   })
   @IsInt()
   @IsOptional()
   @Min(1)
-  @Max(100)
+  @Max(1000)
   seasonCount?: number;
 
   @ApiProperty({
     description: 'Количество эпизодов',
+    minimum: 1,
+    maximum: 10000,
     example: '10',
     type: Number,
   })
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(100)
+  @Max(10000)
   episodeCount?: number;
 
   @ApiProperty({
