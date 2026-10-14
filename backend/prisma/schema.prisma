@@ -66,6 +66,7 @@ model User {
   role      UserRole @default(USER) @map("role")
   blockedAt DateTime? @map("blocked_at")
   blockedReason String? @map("blocked_reason")
+  authVersion Int @default(0) @map("auth_version")
   tags      Genre?
   avatarUrl String? @map("avatar_url")
   avatarThumbnailUrl String? @map("avatar_thumbnail_url")

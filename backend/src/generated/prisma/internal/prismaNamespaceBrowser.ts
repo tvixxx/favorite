@@ -114,6 +114,7 @@ export const UserScalarFieldEnum = {
   role: 'role',
   blockedAt: 'blockedAt',
   blockedReason: 'blockedReason',
+  authVersion: 'authVersion',
   tags: 'tags',
   avatarUrl: 'avatarUrl',
   avatarThumbnailUrl: 'avatarThumbnailUrl',

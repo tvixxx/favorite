@@ -218,4 +218,32 @@ describe('Доступ к чату и несколько вкладок', () => 
     ).toEqual({ error: 'Invalid conversation' });
     expect(created).toEqual([]);
   });
+
+  it('закрывает соединение при блокировке во время вступления в комнату', async () => {
+    const client = socket('blocked-during-join', 'valid-access');
+    client.join = jest.fn(() => {
+      auth.verifyAccessToken.mockRejectedValue(new Error('Blocked'));
+      return Promise.resolve();
+    });
+
+    await gateway.handleConnection(client);
+
+    expect(disconnected).toEqual(['blocked-during-join']);
+    expect(online.size).toBe(0);
+  });
+
+  it('отклоняет сообщения и отметку прочтения после блокировки открытой вкладки', async () => {
+    const client = socket('blocked-after-connect', 'valid-access');
+    await gateway.handleConnection(client);
+    auth.verifyAccessToken.mockRejectedValue(new Error('Blocked'));
+
+    await expect(
+      gateway.handleMessage({ receiverId: peerId, content: 'Привет' }, client),
+    ).resolves.toEqual({ error: 'Unauthorized' });
+    await expect(
+      gateway.handleMessageRead({ otherUserId: peerId }, client),
+    ).resolves.toEqual({ error: 'Unauthorized' });
+    expect(created).toEqual([]);
+    expect(disconnected).toContain(client.id);
+  });
 });

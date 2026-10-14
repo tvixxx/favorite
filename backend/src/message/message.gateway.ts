@@ -108,6 +108,9 @@ export class MessageGateway
       client.data.accessToken = token;
       await client.join(`user:${userId}`);
 
+      // Блокировка могла завершиться до вступления сокета в отключаемую комнату.
+      await this.authService.verifyAccessToken(token);
+
       if (!client.connected) {
         return;
       }

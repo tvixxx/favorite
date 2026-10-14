@@ -122,6 +122,7 @@ export class AdminService {
             ? {
                 blockedAt: dto.blocked ? new Date() : null,
                 blockedReason: dto.blocked ? dto.reason : null,
+                ...(dto.blocked ? { authVersion: { increment: 1 } } : {}),
               }
             : {}),
         },

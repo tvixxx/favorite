@@ -9,33 +9,40 @@
  *   node scripts/backup/db-restore.cjs backups/favorites-...dump --into favorites_new --yes
  *   node scripts/backup/db-restore.cjs backups/favorites-...dump --into favorites --yes
  */
-const fs = require("fs");
-const path = require("path");
-const { execFileSync } = require("child_process");
+const fs = require('fs');
+const path = require('path');
+const { execFileSync } = require('child_process');
+const { randomBytes } = require('node:crypto');
 
-const BACKEND_DIR = path.resolve(__dirname, "..", "..");
+const BACKEND_DIR = path.resolve(__dirname, '..', '..');
 
-const parsed = new URL(
-  fs
-    .readFileSync(path.join(BACKEND_DIR, ".env"), "utf8")
-    .match(/^DATABASE_URL="?([^"\n]+)"?/m)[1],
-);
+const parsed =
+  process.env.PG_USER && process.env.PG_DB
+    ? null
+    : new URL(
+        fs
+          .readFileSync(path.join(BACKEND_DIR, '.env'), 'utf8')
+          .match(/^DATABASE_URL="?([^"\n]+)"?/m)[1],
+      );
 
 const CONFIG = {
-  container: process.env.PG_CONTAINER ?? "postgres",
+  container: process.env.PG_CONTAINER ?? 'postgres',
   user: process.env.PG_USER ?? decodeURIComponent(parsed.username),
-  liveDb: process.env.PG_DB ?? parsed.pathname.replace(/^\//, ""),
-  dir: process.env.BACKUP_DIR ?? path.join(BACKEND_DIR, "backups"),
+  liveDb: process.env.PG_DB ?? parsed.pathname.replace(/^\//, ''),
+  dir: process.env.BACKUP_DIR ?? path.join(BACKEND_DIR, 'backups'),
 };
 
 const args = process.argv.slice(2);
-const dumpArg = args.find((a) => !a.startsWith("--"));
-const intoIndex = args.indexOf("--into");
-const target = intoIndex !== -1 ? args[intoIndex + 1] : `${CONFIG.liveDb}_restored`;
-const confirmed = args.includes("--yes");
+const dumpArg = args.find((a) => !a.startsWith('--'));
+const intoIndex = args.indexOf('--into');
+const target =
+  intoIndex !== -1 ? args[intoIndex + 1] : `${CONFIG.liveDb}_restored`;
+const confirmed = args.includes('--yes');
 
 if (!dumpArg) {
-  console.error("Укажите файл дампа. Пример: node scripts/backup/db-restore.cjs backups/favorites-....dump --into favorites_new --yes");
+  console.error(
+    'Укажите файл дампа. Пример: node scripts/backup/db-restore.cjs backups/favorites-....dump --into favorites_new --yes',
+  );
   process.exit(1);
 }
 
@@ -48,23 +55,23 @@ if (!fs.existsSync(dumpFile)) {
 
 const docker = (bin, extra, opts = {}) =>
   execFileSync(
-    CONFIG.container ? "docker" : bin,
-    CONFIG.container ? ["exec", "-i", CONFIG.container, bin, ...extra] : extra,
-    { encoding: "utf8", maxBuffer: 1024 * 1024 * 512, ...opts },
+    CONFIG.container ? 'docker' : bin,
+    CONFIG.container ? ['exec', '-i', CONFIG.container, bin, ...extra] : extra,
+    { encoding: 'utf8', maxBuffer: 1024 * 1024 * 512, ...opts },
   );
 
 const isLive = target === CONFIG.liveDb;
 
 console.log(`Дамп:        ${path.basename(dumpFile)}`);
-console.log(`Куда:        ${target}${isLive ? "  ← РАБОЧАЯ БАЗА" : ""}`);
-console.log(`Контейнер:   ${CONFIG.container || "(локальный postgres)"}`);
+console.log(`Куда:        ${target}${isLive ? '  ← РАБОЧАЯ БАЗА' : ''}`);
+console.log(`Контейнер:   ${CONFIG.container || '(локальный postgres)'}`);
 
 if (!confirmed) {
   console.log(
-    "\nЭто был предпросмотр. Добавьте --yes, чтобы выполнить." +
+    '\nЭто был предпросмотр. Добавьте --yes, чтобы выполнить.' +
       (isLive
-        ? "\nВНИМАНИЕ: цель — рабочая база. Текущие данные будут заменены содержимым дампа."
-        : ""),
+        ? '\nВНИМАНИЕ: цель — рабочая база. Текущие данные будут заменены содержимым дампа.'
+        : ''),
   );
   process.exit(0);
 }
@@ -72,56 +79,72 @@ if (!confirmed) {
 (async () => {
   // Страховка: что бы ни случилось дальше, текущее состояние сохранено
   if (isLive) {
-    const safety = path.join(CONFIG.dir, `${CONFIG.liveDb}-before-restore.dump`);
+    const safety = path.join(
+      CONFIG.dir,
+      `${CONFIG.liveDb}-before-restore-${randomBytes(8).toString('hex')}.dump`,
+    );
 
     fs.mkdirSync(CONFIG.dir, { recursive: true });
 
-    const out = fs.openSync(safety, "w");
+    const partial = `${safety}.partial`;
+    const out = fs.openSync(partial, 'wx', 0o600);
+    let complete = false;
 
     try {
-      docker("pg_dump", ["-U", CONFIG.user, "-d", CONFIG.liveDb, "-Fc"], {
-        stdio: ["ignore", out, "inherit"],
+      docker('pg_dump', ['-U', CONFIG.user, '-d', CONFIG.liveDb, '-Fc'], {
+        stdio: ['ignore', out, 'inherit'],
       });
+      complete = true;
     } finally {
       fs.closeSync(out);
+      if (!complete) fs.unlinkSync(partial);
     }
+    fs.renameSync(partial, safety);
 
     console.log(`Страховочный дамп: ${path.basename(safety)}`);
   }
 
   if (!isLive) {
-    docker("dropdb", ["-U", CONFIG.user, "--if-exists", target]);
-    docker("createdb", ["-U", CONFIG.user, target]);
+    docker('createdb', ['-U', CONFIG.user, target]);
   }
 
-  const input = fs.openSync(dumpFile, "r");
+  const input = fs.openSync(dumpFile, 'r');
 
   try {
     // --clean --if-exists нужен, когда разворачиваем поверх существующей базы
-    const restoreArgs = ["-U", CONFIG.user, "-d", target, "--no-owner"];
+    const restoreArgs = [
+      '-U',
+      CONFIG.user,
+      '-d',
+      target,
+      '--no-owner',
+      '--single-transaction',
+    ];
 
     if (isLive) {
-      restoreArgs.push("--clean", "--if-exists");
+      restoreArgs.push('--clean', '--if-exists');
     }
 
     execFileSync(
-      CONFIG.container ? "docker" : "pg_restore",
+      CONFIG.container ? 'docker' : 'pg_restore',
       CONFIG.container
-        ? ["exec", "-i", CONFIG.container, "pg_restore", ...restoreArgs]
+        ? ['exec', '-i', CONFIG.container, 'pg_restore', ...restoreArgs]
         : restoreArgs,
-      { stdio: [input, "inherit", "inherit"], maxBuffer: 1024 * 1024 * 512 },
+      { stdio: [input, 'inherit', 'inherit'], maxBuffer: 1024 * 1024 * 512 },
     );
   } finally {
     fs.closeSync(input);
   }
 
-  console.log(`\nГотово. База ${target} восстановлена из ${path.basename(dumpFile)}.`);
+  console.log(
+    `\nГотово. База ${target} восстановлена из ${path.basename(dumpFile)}.`,
+  );
   console.log(
     isLive
-      ? "Перезапустите backend — соединения в пуле смотрят на прежние объекты."
+      ? 'Перезапустите backend — соединения в пуле смотрят на прежние объекты.'
       : `Чтобы переключить приложение: поменяйте базу в DATABASE_URL на ${target}.`,
   );
 })().catch((error) => {
-  console.error("Восстановление не выполнено:", error.message);
+  console.error('Восстановление не выполнено:', error.message);
   process.exit(1);
 });

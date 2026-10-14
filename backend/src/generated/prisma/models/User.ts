@@ -20,8 +20,18 @@ export type UserModel = runtime.Types.Result.DefaultSelection<Prisma.$UserPayloa
 
 export type AggregateUser = {
   _count: UserCountAggregateOutputType | null
+  _avg: UserAvgAggregateOutputType | null
+  _sum: UserSumAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
+}
+
+export type UserAvgAggregateOutputType = {
+  authVersion: number | null
+}
+
+export type UserSumAggregateOutputType = {
+  authVersion: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -32,6 +42,7 @@ export type UserMinAggregateOutputType = {
   role: $Enums.UserRole | null
   blockedAt: Date | null
   blockedReason: string | null
+  authVersion: number | null
   tags: $Enums.Genre | null
   avatarUrl: string | null
   avatarThumbnailUrl: string | null
@@ -48,6 +59,7 @@ export type UserMaxAggregateOutputType = {
   role: $Enums.UserRole | null
   blockedAt: Date | null
   blockedReason: string | null
+  authVersion: number | null
   tags: $Enums.Genre | null
   avatarUrl: string | null
   avatarThumbnailUrl: string | null
@@ -64,6 +76,7 @@ export type UserCountAggregateOutputType = {
   role: number
   blockedAt: number
   blockedReason: number
+  authVersion: number
   tags: number
   avatarUrl: number
   avatarThumbnailUrl: number
@@ -74,6 +87,14 @@ export type UserCountAggregateOutputType = {
 }
 
 
+export type UserAvgAggregateInputType = {
+  authVersion?: true
+}
+
+export type UserSumAggregateInputType = {
+  authVersion?: true
+}
+
 export type UserMinAggregateInputType = {
   id?: true
   email?: true
@@ -82,6 +103,7 @@ export type UserMinAggregateInputType = {
   role?: true
   blockedAt?: true
   blockedReason?: true
+  authVersion?: true
   tags?: true
   avatarUrl?: true
   avatarThumbnailUrl?: true
@@ -98,6 +120,7 @@ export type UserMaxAggregateInputType = {
   role?: true
   blockedAt?: true
   blockedReason?: true
+  authVersion?: true
   tags?: true
   avatarUrl?: true
   avatarThumbnailUrl?: true
@@ -114,6 +137,7 @@ export type UserCountAggregateInputType = {
   role?: true
   blockedAt?: true
   blockedReason?: true
+  authVersion?: true
   tags?: true
   avatarUrl?: true
   avatarThumbnailUrl?: true
@@ -161,6 +185,18 @@ export type UserAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: UserAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: UserSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: UserMinAggregateInputType
@@ -191,6 +227,8 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   _count?: UserCountAggregateInputType | true
+  _avg?: UserAvgAggregateInputType
+  _sum?: UserSumAggregateInputType
   _min?: UserMinAggregateInputType
   _max?: UserMaxAggregateInputType
 }
@@ -203,6 +241,7 @@ export type UserGroupByOutputType = {
   role: $Enums.UserRole
   blockedAt: Date | null
   blockedReason: string | null
+  authVersion: number
   tags: $Enums.Genre | null
   avatarUrl: string | null
   avatarThumbnailUrl: string | null
@@ -210,6 +249,8 @@ export type UserGroupByOutputType = {
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
+  _avg: UserAvgAggregateOutputType | null
+  _sum: UserSumAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
 }
@@ -240,6 +281,7 @@ export type UserWhereInput = {
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   blockedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   blockedReason?: Prisma.StringNullableFilter<"User"> | string | null
+  authVersion?: Prisma.IntFilter<"User"> | number
   tags?: Prisma.EnumGenreNullableFilter<"User"> | $Enums.Genre | null
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
   avatarThumbnailUrl?: Prisma.StringNullableFilter<"User"> | string | null
@@ -273,6 +315,7 @@ export type UserOrderByWithRelationInput = {
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   blockedReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  authVersion?: Prisma.SortOrder
   tags?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarThumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -310,6 +353,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   blockedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   blockedReason?: Prisma.StringNullableFilter<"User"> | string | null
+  authVersion?: Prisma.IntFilter<"User"> | number
   tags?: Prisma.EnumGenreNullableFilter<"User"> | $Enums.Genre | null
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
   avatarThumbnailUrl?: Prisma.StringNullableFilter<"User"> | string | null
@@ -342,6 +386,7 @@ export type UserOrderByWithAggregationInput = {
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   blockedReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  authVersion?: Prisma.SortOrder
   tags?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarThumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -349,8 +394,10 @@ export type UserOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
+  _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
   _min?: Prisma.UserMinOrderByAggregateInput
+  _sum?: Prisma.UserSumOrderByAggregateInput
 }
 
 export type UserScalarWhereWithAggregatesInput = {
@@ -364,6 +411,7 @@ export type UserScalarWhereWithAggregatesInput = {
   role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
   blockedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   blockedReason?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  authVersion?: Prisma.IntWithAggregatesFilter<"User"> | number
   tags?: Prisma.EnumGenreNullableWithAggregatesFilter<"User"> | $Enums.Genre | null
   avatarUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   avatarThumbnailUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -380,6 +428,7 @@ export type UserCreateInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -412,6 +461,7 @@ export type UserUncheckedCreateInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -444,6 +494,7 @@ export type UserUpdateInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -476,6 +527,7 @@ export type UserUncheckedUpdateInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -508,6 +560,7 @@ export type UserCreateManyInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -524,6 +577,7 @@ export type UserUpdateManyMutationInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -539,6 +593,7 @@ export type UserUncheckedUpdateManyInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -560,12 +615,17 @@ export type UserCountOrderByAggregateInput = {
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrder
   blockedReason?: Prisma.SortOrder
+  authVersion?: Prisma.SortOrder
   tags?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   avatarThumbnailUrl?: Prisma.SortOrder
   avatarAssetId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type UserAvgOrderByAggregateInput = {
+  authVersion?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -576,6 +636,7 @@ export type UserMaxOrderByAggregateInput = {
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrder
   blockedReason?: Prisma.SortOrder
+  authVersion?: Prisma.SortOrder
   tags?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   avatarThumbnailUrl?: Prisma.SortOrder
@@ -592,12 +653,17 @@ export type UserMinOrderByAggregateInput = {
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrder
   blockedReason?: Prisma.SortOrder
+  authVersion?: Prisma.SortOrder
   tags?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   avatarThumbnailUrl?: Prisma.SortOrder
   avatarAssetId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type UserSumOrderByAggregateInput = {
+  authVersion?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -887,6 +953,7 @@ export type UserCreateWithoutUploadedMediaInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -918,6 +985,7 @@ export type UserUncheckedCreateWithoutUploadedMediaInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -954,6 +1022,7 @@ export type UserCreateWithoutAvatarAssetInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -985,6 +1054,7 @@ export type UserUncheckedCreateWithoutAvatarAssetInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1032,6 +1102,7 @@ export type UserUpdateWithoutUploadedMediaInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1063,6 +1134,7 @@ export type UserUncheckedUpdateWithoutUploadedMediaInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1105,6 +1177,7 @@ export type UserUpdateWithoutAvatarAssetInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1136,6 +1209,7 @@ export type UserUncheckedUpdateWithoutAvatarAssetInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1167,6 +1241,7 @@ export type UserCreateWithoutCreatedMoviesInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1198,6 +1273,7 @@ export type UserUncheckedCreateWithoutCreatedMoviesInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1245,6 +1321,7 @@ export type UserUpdateWithoutCreatedMoviesInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1276,6 +1353,7 @@ export type UserUncheckedUpdateWithoutCreatedMoviesInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1307,6 +1385,7 @@ export type UserCreateWithoutReviewsInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1338,6 +1417,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1385,6 +1465,7 @@ export type UserUpdateWithoutReviewsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1416,6 +1497,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1447,6 +1529,7 @@ export type UserCreateWithoutCreatedActorsInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1478,6 +1561,7 @@ export type UserUncheckedCreateWithoutCreatedActorsInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1525,6 +1609,7 @@ export type UserUpdateWithoutCreatedActorsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1556,6 +1641,7 @@ export type UserUncheckedUpdateWithoutCreatedActorsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1587,6 +1673,7 @@ export type UserCreateWithoutUserMoviesInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1618,6 +1705,7 @@ export type UserUncheckedCreateWithoutUserMoviesInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1665,6 +1753,7 @@ export type UserUpdateWithoutUserMoviesInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1696,6 +1785,7 @@ export type UserUncheckedUpdateWithoutUserMoviesInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1727,6 +1817,7 @@ export type UserCreateWithoutListsInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1758,6 +1849,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1805,6 +1897,7 @@ export type UserUpdateWithoutListsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1836,6 +1929,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1867,6 +1961,7 @@ export type UserCreateWithoutFriendshipsRequestedInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1898,6 +1993,7 @@ export type UserUncheckedCreateWithoutFriendshipsRequestedInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1934,6 +2030,7 @@ export type UserCreateWithoutFriendshipsReceivedInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -1965,6 +2062,7 @@ export type UserUncheckedCreateWithoutFriendshipsReceivedInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2012,6 +2110,7 @@ export type UserUpdateWithoutFriendshipsRequestedInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2043,6 +2142,7 @@ export type UserUncheckedUpdateWithoutFriendshipsRequestedInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2085,6 +2185,7 @@ export type UserUpdateWithoutFriendshipsReceivedInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2116,6 +2217,7 @@ export type UserUncheckedUpdateWithoutFriendshipsReceivedInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2147,6 +2249,7 @@ export type UserCreateWithoutSentMessagesInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2178,6 +2281,7 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2214,6 +2318,7 @@ export type UserCreateWithoutReceivedMessagesInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2245,6 +2350,7 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2292,6 +2398,7 @@ export type UserUpdateWithoutSentMessagesInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2323,6 +2430,7 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2365,6 +2473,7 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2396,6 +2505,7 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2427,6 +2537,7 @@ export type UserCreateWithoutStatusInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2458,6 +2569,7 @@ export type UserUncheckedCreateWithoutStatusInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2505,6 +2617,7 @@ export type UserUpdateWithoutStatusInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2536,6 +2649,7 @@ export type UserUncheckedUpdateWithoutStatusInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2567,6 +2681,7 @@ export type UserCreateWithoutNotificationsInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2598,6 +2713,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2645,6 +2761,7 @@ export type UserUpdateWithoutNotificationsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2676,6 +2793,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2707,6 +2825,7 @@ export type UserCreateWithoutFeedbacksInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2738,6 +2857,7 @@ export type UserUncheckedCreateWithoutFeedbacksInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2785,6 +2905,7 @@ export type UserUpdateWithoutFeedbacksInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2816,6 +2937,7 @@ export type UserUncheckedUpdateWithoutFeedbacksInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2847,6 +2969,7 @@ export type UserCreateWithoutReviewReportsInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2878,6 +3001,7 @@ export type UserUncheckedCreateWithoutReviewReportsInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -2925,6 +3049,7 @@ export type UserUpdateWithoutReviewReportsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2956,6 +3081,7 @@ export type UserUncheckedUpdateWithoutReviewReportsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2987,6 +3113,7 @@ export type UserCreateWithoutAdminActionsInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -3018,6 +3145,7 @@ export type UserUncheckedCreateWithoutAdminActionsInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -3065,6 +3193,7 @@ export type UserUpdateWithoutAdminActionsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3096,6 +3225,7 @@ export type UserUncheckedUpdateWithoutAdminActionsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3127,6 +3257,7 @@ export type UserCreateWithoutUsageEventsInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -3158,6 +3289,7 @@ export type UserUncheckedCreateWithoutUsageEventsInput = {
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
+  authVersion?: number
   tags?: $Enums.Genre | null
   avatarUrl?: string | null
   avatarThumbnailUrl?: string | null
@@ -3205,6 +3337,7 @@ export type UserUpdateWithoutUsageEventsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3236,6 +3369,7 @@ export type UserUncheckedUpdateWithoutUsageEventsInput = {
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
   tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3424,6 +3558,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   role?: boolean
   blockedAt?: boolean
   blockedReason?: boolean
+  authVersion?: boolean
   tags?: boolean
   avatarUrl?: boolean
   avatarThumbnailUrl?: boolean
@@ -3458,6 +3593,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   role?: boolean
   blockedAt?: boolean
   blockedReason?: boolean
+  authVersion?: boolean
   tags?: boolean
   avatarUrl?: boolean
   avatarThumbnailUrl?: boolean
@@ -3475,6 +3611,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   role?: boolean
   blockedAt?: boolean
   blockedReason?: boolean
+  authVersion?: boolean
   tags?: boolean
   avatarUrl?: boolean
   avatarThumbnailUrl?: boolean
@@ -3492,6 +3629,7 @@ export type UserSelectScalar = {
   role?: boolean
   blockedAt?: boolean
   blockedReason?: boolean
+  authVersion?: boolean
   tags?: boolean
   avatarUrl?: boolean
   avatarThumbnailUrl?: boolean
@@ -3500,7 +3638,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "fullName" | "role" | "blockedAt" | "blockedReason" | "tags" | "avatarUrl" | "avatarThumbnailUrl" | "avatarAssetId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "fullName" | "role" | "blockedAt" | "blockedReason" | "authVersion" | "tags" | "avatarUrl" | "avatarThumbnailUrl" | "avatarAssetId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   avatarAsset?: boolean | Prisma.User$avatarAssetArgs<ExtArgs>
   uploadedMedia?: boolean | Prisma.User$uploadedMediaArgs<ExtArgs>
@@ -3557,6 +3695,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     role: $Enums.UserRole
     blockedAt: Date | null
     blockedReason: string | null
+    authVersion: number
     tags: $Enums.Genre | null
     avatarUrl: string | null
     avatarThumbnailUrl: string | null
@@ -4010,6 +4149,7 @@ export interface UserFieldRefs {
   readonly role: Prisma.FieldRef<"User", 'UserRole'>
   readonly blockedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly blockedReason: Prisma.FieldRef<"User", 'String'>
+  readonly authVersion: Prisma.FieldRef<"User", 'Int'>
   readonly tags: Prisma.FieldRef<"User", 'Genre'>
   readonly avatarUrl: Prisma.FieldRef<"User", 'String'>
   readonly avatarThumbnailUrl: Prisma.FieldRef<"User", 'String'>

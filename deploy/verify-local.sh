@@ -29,12 +29,12 @@ cleanup() {
 trap cleanup EXIT
 cd "$project_dir"
 
-echo "1/7: синтаксис deploy-скриптов"
+echo "1/8: синтаксис deploy-скриптов"
 for script in deploy/*.sh; do
   bash -n "$script"
 done
 
-echo "2/7: Compose с отдельной тестовой конфигурацией"
+echo "2/8: Compose с отдельной тестовой конфигурацией"
 cat > "$work_dir/check.env" <<'CONFIG'
 DOMAIN=example.test
 POSTGRES_USER=qa
@@ -50,12 +50,12 @@ CONFIG
 
 docker compose --env-file "$work_dir/check.env" -f deploy/docker-compose.yml config --quiet
 
-echo "3/7: Linux amd64 образы"
+echo "3/8: Linux amd64 образы"
 docker build --platform linux/amd64 --target build -t "$migrate_image" backend
 docker build --platform linux/amd64 -t "$backend_image" backend
 docker build --platform linux/amd64 -t "$web_image" frontend
 
-echo "4/7: PNG и HEIC в worker runtime-образа, без Prisma CLI"
+echo "4/8: PNG и HEIC в worker runtime-образа, без Prisma CLI"
 docker run --rm --platform linux/amd64 --network none \
   -v "$project_dir/backend/src/media/fixtures/example.heic:/qa/example.heic:ro" \
   "$backend_image" node -e '
@@ -80,7 +80,7 @@ async function check() {
 }
 check().catch(error => { console.error(error.message); process.exitCode = 1; });'
 
-echo "5/7: миграции на отдельной пустой PostgreSQL 18"
+echo "5/8: миграции на отдельной пустой PostgreSQL 18"
 docker network create "$network" >/dev/null
 docker run -d --platform linux/amd64 --name "$postgres" --network "$network" --network-alias postgres \
   -e POSTGRES_USER=qa -e POSTGRES_PASSWORD=qa_local_only -e POSTGRES_DB=qa postgres:18-alpine >/dev/null
@@ -97,7 +97,51 @@ docker run --rm --platform linux/amd64 --network "$network" \
   -e DATABASE_URL=postgresql://qa:qa_local_only@postgres:5432/qa \
   "$migrate_image" yarn prisma migrate deploy
 
-echo "6/7: API и nginx в отдельной сети, порты хоста не публикуются"
+echo "6/8: backup → verify → restore на одноразовой PostgreSQL"
+docker exec "$postgres" psql -U qa -d qa -v ON_ERROR_STOP=1 -c \
+  "INSERT INTO users (id, email, password, \"fullName\", updated_at, role, auth_version)
+   VALUES ('qa-backup-user', 'backup@example.test', 'not-a-login-hash', 'QA restore', NOW(), 'ADMIN', 7)"
+docker exec "$postgres" createdb -U qa qa_verify
+docker exec "$postgres" psql -U qa -d qa_verify -v ON_ERROR_STOP=1 -c \
+  "CREATE TABLE sentinel (value INT); INSERT INTO sentinel VALUES (42)"
+
+export PG_CONTAINER="$postgres" PG_USER=qa PG_DB=qa BACKUP_DIR="$work_dir/backups"
+# Проверка не должна использовать настройки внешних хранилищ или мониторинга хоста.
+export S3_URI= GPG_RECIPIENT= HEALTHCHECK_URL=
+node backend/scripts/backup/db-backup.cjs
+for file in "$BACKUP_DIR"/qa-*.dump; do backup_file="$file"; done
+node backend/scripts/backup/db-verify.cjs "$backup_file"
+[[ "$(docker exec "$postgres" psql -U qa -d qa_verify -tAc 'SELECT value FROM sentinel')" == 42 ]]
+[[ "$(docker exec "$postgres" psql -U qa -d qa -tAc "SELECT count(*) FROM pg_database WHERE datname LIKE 'favourite_verify_%'")" == 0 ]]
+
+node backend/scripts/backup/db-restore.cjs "$backup_file" --into qa_restored
+[[ "$(docker exec "$postgres" psql -U qa -d qa -tAc "SELECT count(*) FROM pg_database WHERE datname = 'qa_restored'")" == 0 ]]
+node backend/scripts/backup/db-restore.cjs "$backup_file" --into qa_restored --yes
+restored_user="$(docker exec "$postgres" psql -U qa -d qa_restored -tAc "SELECT \"fullName\" || ':' || role || ':' || auth_version FROM users WHERE id = 'qa-backup-user'")"
+[[ "$restored_user" == 'QA restore:ADMIN:7' ]]
+source_migrations="$(docker exec "$postgres" psql -U qa -d qa -tAc 'SELECT count(*) FROM _prisma_migrations')"
+[[ "$(docker exec "$postgres" psql -U qa -d qa_restored -tAc 'SELECT count(*) FROM _prisma_migrations')" == "$source_migrations" ]]
+
+# Занятая новая цель сохраняет свои данные.
+echo "Проверка отказа: qa_verify уже существует, ошибка ожидается"
+if node backend/scripts/backup/db-restore.cjs "$backup_file" --into qa_verify --yes; then
+  echo "Restore unexpectedly replaced an existing database" >&2
+  exit 1
+fi
+[[ "$(docker exec "$postgres" psql -U qa -d qa_verify -tAc 'SELECT value FROM sentinel')" == 42 ]]
+
+# Зависимость, которой нет в дампе, вызывает ошибку DROP и полный откат restore.
+echo "Проверка отката: зависимость restore_guard, ошибка ожидается"
+docker exec "$postgres" psql -U qa -d qa_restored -v ON_ERROR_STOP=1 -c \
+  "UPDATE users SET \"fullName\" = 'Preserved'; CREATE TABLE restore_guard (user_id TEXT REFERENCES users(id))"
+if PG_DB=qa_restored node backend/scripts/backup/db-restore.cjs "$backup_file" --into qa_restored --yes; then
+  echo "Restore unexpectedly ignored a dependent table" >&2
+  exit 1
+fi
+[[ "$(docker exec "$postgres" psql -U qa -d qa_restored -tAc "SELECT \"fullName\" FROM users WHERE id = 'qa-backup-user'")" == Preserved ]]
+echo "FAVOURITE_BACKUP_RESTORE_OK"
+
+echo "7/8: API и nginx в отдельной сети, порты хоста не публикуются"
 docker run -d --platform linux/amd64 --name "$backend" --network "$network" --network-alias backend \
   --env-file "$work_dir/check.env" \
   -e DATABASE_URL=postgresql://qa:qa_local_only@postgres:5432/qa -e NODE_ENV=production -e PORT=3005 \
@@ -141,7 +185,7 @@ docker exec "$web" wget -q -T 5 -O- http://127.0.0.1/api/health
 docker exec "$web" sh -c 'wget -q -T 5 -O- http://127.0.0.1/ | grep -q "<div id=\"app\""'
 
 echo
-echo "7/7: HTTPS-конфигурация с одноразовым тестовым сертификатом"
+echo "8/8: HTTPS-конфигурация с одноразовым тестовым сертификатом"
 mkdir -p "$work_dir/certs/live/example.test"
 openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj /CN=example.test \
   -keyout "$work_dir/certs/live/example.test/privkey.pem" \

@@ -154,6 +154,16 @@ export class UserService {
     try {
       await this.prismaService.$transaction(async (tx) => {
         await lockResource(tx, 'admin:user-access');
+        if (actorId) {
+          const actor = await tx.user.findFirst({
+            where: { id: actorId, role: 'ADMIN', blockedAt: null },
+            select: { id: true },
+          });
+
+          if (!actor) {
+            throw new ForbiddenException('Права администратора изменились');
+          }
+        }
         await lockResource(tx, `user:${id}`);
         const target = await tx.user.findUnique({
           where: { id },
