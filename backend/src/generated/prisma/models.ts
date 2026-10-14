@@ -10,6 +10,7 @@
  */
 export type * from './models/MediaAsset.js'
 export type * from './models/User.js'
+export type * from './models/PasswordReset.js'
 export type * from './models/Movie.js'
 export type * from './models/MoviePoster.js'
 export type * from './models/Review.js'

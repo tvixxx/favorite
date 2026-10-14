@@ -8,10 +8,19 @@ import {
   Length,
   MaxLength,
   Matches,
+  IsUUID,
 } from 'class-validator';
 import { FeedbackType } from '../../generated/prisma/enums';
 
 export class CreateFeedbackDto {
+  @ApiProperty({
+    required: false,
+    description: 'ID собственной загрузки скриншота',
+  })
+  @IsOptional()
+  @IsUUID('4')
+  screenshotAssetId?: string;
+
   @ApiProperty({
     enum: FeedbackType,
     description: 'Тип обращения',

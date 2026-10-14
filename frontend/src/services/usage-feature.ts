@@ -28,7 +28,7 @@ export function usageFeature(
     return "MOVIE_VIEW";
   }
 
-  if (method === "POST" && /\/users\/[^/]+\/movies$/.test(path)) {
+  if (method === "POST" && /\/users\/[^/]+\/movies(?:\/import)?$/.test(path)) {
     return "COLLECTION_ADD";
   }
 

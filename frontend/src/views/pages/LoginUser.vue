@@ -3,6 +3,9 @@ import { ref } from "vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import RegisterForm from "@/components/Login/RegisterForm.vue";
 import SigninForm from "@/components/Login/SigninForm.vue";
+import ResetPasswordForm from "@/components/Login/ResetPasswordForm.vue";
+
+defineProps<{ reset?: boolean }>();
 
 /**
  * Экран входа/регистрации (эталон): логотип, карточка 400px и сегмент-переключатель
@@ -26,7 +29,7 @@ const mode = ref<AuthMode>("login");
       <p class="auth-page__tagline">Ваша личная медиатека</p>
 
       <div class="auth-page__card">
-        <div class="auth-tabs" role="tablist">
+        <div v-if="!reset" class="auth-tabs" role="tablist">
           <button
             type="button"
             role="tab"
@@ -49,7 +52,8 @@ const mode = ref<AuthMode>("login");
           </button>
         </div>
 
-        <RegisterForm v-if="mode === 'register'" />
+        <ResetPasswordForm v-if="reset" />
+        <RegisterForm v-else-if="mode === 'register'" />
         <SigninForm v-else />
       </div>
     </div>

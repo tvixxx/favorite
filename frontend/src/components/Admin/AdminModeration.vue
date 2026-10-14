@@ -5,18 +5,21 @@ import {
   Empty as AEmpty,
   Table as ATable,
   Tag as ATag,
-  Spin as ASpin,
   RadioGroup as ARadioGroup,
   RadioButton as ARadioButton,
   message,
 } from "ant-design-vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
+import ProtectedImage from "@/components/ImagePicker/ProtectedImage.vue";
 import api from "@/services/api";
 import { friendlyRequestError } from "@/utils/friendlyError";
 import { useAdminPage } from "@/composable/useAdminPage";
 import { useAdminQueryParam } from "@/composable/useAdminQueryParam";
 import AdminDateFilters from "./AdminDateFilters.vue";
-import { type AdminReview, type AdminFeedback, dateLabel } from "./admin.types";
+import AdminDataRegion from "./AdminDataRegion.vue";
+import { type AdminReview, type AdminFeedback } from "./admin.types";
+import {useDateTime} from '@/composable/useDateTime';
+const {dateLabel}=useDateTime();
 
 const tab = useAdminQueryParam("moderation", "reviews", undefined, [
   "reviews",
@@ -232,7 +235,10 @@ async function saveStatus(): Promise<void> {
           <a-button @click="reviews.load()">Повторить</a-button>
         </template>
       </a-alert>
-      <a-spin :spinning="reviews.loading.value">
+      <AdminDataRegion
+        v-if="!reviews.error.value || reviews.items.value.length"
+        :loading="reviews.loading.value"
+      >
         <article
           v-for="review in reviews.items.value"
           :key="review.id"
@@ -255,7 +261,7 @@ async function saveStatus(): Promise<void> {
           v-if="!reviews.items.value.length && !reviews.loading.value"
           description="В этой категории отзывов нет"
         />
-      </a-spin>
+      </AdminDataRegion>
       <a-pagination
         v-if="reviews.total.value > 20"
         :current="reviews.page.value"
@@ -309,61 +315,69 @@ async function saveStatus(): Promise<void> {
           <a-button @click="feedback.load()">Повторить</a-button>
         </template>
       </a-alert>
-      <a-table
-        class="admin-desktop"
-        :columns="columns"
-        :data-source="feedback.items.value"
-        row-key="id"
-        :pagination="false"
+      <AdminDataRegion
+        v-if="!feedback.error.value || feedback.items.value.length"
         :loading="feedback.loading.value"
       >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'type'">{{
-            record.type === "BUG"
-              ? "Ошибка"
-              : record.type === "IDEA"
-              ? "Идея"
-              : "Другое"
-          }}</template>
-          <template v-else-if="column.key === 'message'">
-            <p class="admin-excerpt">{{ record.message }}</p>
-          </template>
-          <template v-else-if="column.key === 'author'">{{
-            record.user?.fullName ?? "Пользователь удалён"
-          }}</template>
-          <template v-else-if="column.key === 'status'">{{
-            statusOptions.find((option) => option.value === record.status)
-              ?.label
-          }}</template>
-          <template v-else-if="column.key === 'date'">{{
-            dateLabel(record.createdAt)
-          }}</template>
-          <template v-else-if="column.key === 'actions'">
-            <a-button @click="showFeedback(record.id)">Открыть</a-button>
-          </template>
-        </template>
-      </a-table>
-      <div class="admin-mobile">
-        <article
-          v-for="item in feedback.items.value"
-          :key="item.id"
-          class="admin-row"
+        <a-table
+          class="admin-desktop"
+          :columns="columns"
+          :data-source="feedback.items.value"
+          row-key="id"
+          :pagination="false"
+          :locale="{ emptyText: 'Обращений пока нет' }"
         >
-          <a-tag>{{
-            statusOptions.find((option) => option.value === item.status)?.label
-          }}</a-tag>
-          <p class="admin-excerpt">{{ item.message }}</p>
-          <p class="admin-muted">
-            {{ item.user?.fullName ?? "Пользователь удалён" }} ·
-            {{ dateLabel(item.createdAt) }}
-          </p>
-          <a-button @click="showFeedback(item.id)">Открыть обращение</a-button>
-        </article>
-        <a-empty
-          v-if="!feedback.items.value.length && !feedback.loading.value"
-          description="Обращений пока нет"
-        />
-      </div>
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'type'">{{
+              record.type === "BUG"
+                ? "Ошибка"
+                : record.type === "IDEA"
+                ? "Идея"
+                : "Другое"
+            }}</template>
+            <template v-else-if="column.key === 'message'">
+              <p class="admin-excerpt">{{ record.message }}</p>
+            </template>
+            <template v-else-if="column.key === 'author'">{{
+              record.user?.fullName ?? "Пользователь удалён"
+            }}</template>
+            <template v-else-if="column.key === 'status'">{{
+              statusOptions.find((option) => option.value === record.status)
+                ?.label
+            }}</template>
+            <template v-else-if="column.key === 'date'">{{
+              dateLabel(record.createdAt)
+            }}</template>
+            <template v-else-if="column.key === 'actions'">
+              <a-button @click="showFeedback(record.id)">Открыть</a-button>
+            </template>
+          </template>
+        </a-table>
+        <div class="admin-mobile">
+          <article
+            v-for="item in feedback.items.value"
+            :key="item.id"
+            class="admin-row"
+          >
+            <a-tag>{{
+              statusOptions.find((option) => option.value === item.status)
+                ?.label
+            }}</a-tag>
+            <p class="admin-excerpt">{{ item.message }}</p>
+            <p class="admin-muted">
+              {{ item.user?.fullName ?? "Пользователь удалён" }} ·
+              {{ dateLabel(item.createdAt) }}
+            </p>
+            <a-button @click="showFeedback(item.id)"
+              >Открыть обращение</a-button
+            >
+          </article>
+          <a-empty
+            v-if="!feedback.items.value.length && !feedback.loading.value"
+            description="Обращений пока нет"
+          />
+        </div>
+      </AdminDataRegion>
       <a-pagination
         v-if="feedback.total.value > 20"
         :current="feedback.page.value"
@@ -441,6 +455,7 @@ async function saveStatus(): Promise<void> {
           {{ dateLabel(selectedFeedback.createdAt) }}
         </p>
         <p class="admin-text">{{ selectedFeedback.message }}</p>
+        <ProtectedImage v-if="selectedFeedback.screenshotAssetId" :asset-id="selectedFeedback.screenshotAssetId" />
         <dl class="admin-facts">
           <dt>Email для ответа</dt>
           <dd>{{ selectedFeedback.email ?? "Не указан" }}</dd>

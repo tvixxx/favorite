@@ -24,6 +24,8 @@ describe("События использования без содержимог�
 
   it("различает сохранение оценки и добавление в коллекцию", () => {
     expect(usageFeature("/users/user/movies", "POST")).toBe("COLLECTION_ADD");
+    expect(usageFeature("/users/user/movies/import", "POST")).toBe("COLLECTION_ADD");
+    expect(usageFeature("/users/user/movies/import/check", "POST")).toBeNull();
     expect(usageFeature("/users/user/movies/movie/rating", "PATCH")).toBe(
       "RATING"
     );

@@ -37,10 +37,25 @@ export interface AdminFeedback {
   pageUrl: string | null;
   viewport: string | null;
   userAgent: string | null;
+  screenshotAssetId?: string | null;
   status: "NEW" | "IN_PROGRESS" | "DONE";
   createdAt: string;
   user: { fullName: string } | null;
 }
 
-export const dateLabel = (date: string): string =>
-  new Date(date).toLocaleDateString("ru-RU");
+export interface AdminEngagementData {
+  activity: {
+    dau: number;
+    wau: number;
+    mau: number;
+    complete: { day: boolean; week: boolean; month: boolean };
+  };
+  funnel: { registered: number; collected: number; rated: number };
+  retention: {
+    week: string;
+    registered: number;
+    returned: number | null;
+    percent: number | null;
+    state: "empty" | "complete" | "collecting" | "insufficient";
+  }[];
+}

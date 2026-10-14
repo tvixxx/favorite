@@ -1,20 +1,18 @@
 <script lang="ts" setup>
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { reactive, ref } from "vue";
 import { useMainStore } from "@/state/state";
 import { message } from "ant-design-vue";
 import type { Rule } from "ant-design-vue/es/form";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import BaseModal from "@/components/BaseModal/BaseModal.vue";
-import { SUPPORT_EMAIL } from "@/constants";
+import PasswordRecoveryModal from "./PasswordRecoveryModal.vue";
 import { EMAIL_REGEX } from "@/constants";
 import { ERROR_LOGIN_TEXT, SUCCESS_LOGIN_TEXT } from "@/state/constants";
 
 const store = useMainStore();
 const router = useRouter();
 
-// Восстановления пароля на бэкенде нет — отправляем в поддержку
-const isResetOpen = ref(false);
+const isResetOpen = ref(useRoute().query.recover === "1");
 
 interface FormState {
   email: string;
@@ -100,31 +98,5 @@ const onFinish = async (values: FormState): Promise<void> => {
     </a-form-item>
   </a-form>
 
-  <BaseModal v-model="isResetOpen" layout="form">
-    <template #title>Забыли пароль?</template>
-    <template #body>
-      <p class="auth-reset__text">
-        Восстановление пока настраиваем. Напишите на
-        <a :href="`mailto:${SUPPORT_EMAIL}`">{{ SUPPORT_EMAIL }}</a> — вернём
-        доступ вручную.
-      </p>
-    </template>
-    <template #footer>
-      <a-button type="primary" @click="isResetOpen = false">Понятно</a-button>
-    </template>
-  </BaseModal>
+  <PasswordRecoveryModal v-if="isResetOpen" v-model="isResetOpen" :email="formState.email" />
 </template>
-
-<style lang="scss" scoped>
-.auth-reset__text {
-  margin: 0;
-  padding: 4px 0 8px;
-  font-size: 15px;
-  line-height: 22px;
-  color: var(--fv-color-text-secondary);
-
-  a {
-    color: var(--fv-color-link);
-  }
-}
-</style>

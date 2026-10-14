@@ -29,8 +29,8 @@ export class AdminController {
   ) {}
 
   @Get('users')
-  public users(@Query() query: UsersQueryDto) {
-    return this.service.users(query);
+  public users(@Query() query: UsersQueryDto, @Authorized() user: User) {
+    return this.service.users(query, user.timezone);
   }
 
   @Patch('users/:id')
@@ -43,8 +43,8 @@ export class AdminController {
   }
 
   @Get('movies')
-  public movies(@Query() query: CatalogQueryDto) {
-    return this.service.movies(query);
+  public movies(@Query() query: CatalogQueryDto, @Authorized() user: User) {
+    return this.service.movies(query, user.timezone);
   }
 
   @Get('reviews')
@@ -84,8 +84,11 @@ export class AdminController {
   }
 
   @Get('overview')
-  public overview(@Query('days') days?: unknown) {
-    return this.analytics.overview(queryInteger(days, 'days', 30, 1, 90));
+  public overview(@Query('days') days: unknown, @Authorized() user: User) {
+    return this.analytics.overview(
+      queryInteger(days, 'days', 30, 1, 90),
+      user.timezone,
+    );
   }
 
   private page(q: unknown, limit: unknown, offset: unknown) {

@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import dayjs, { type Dayjs } from "dayjs";
+import type { Dayjs } from "dayjs";
+import {releaseMonthBound} from '@/utils/releaseDate';
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { isSuccessStatus } from "@/utils";
 import { createRequestGuard } from "@/utils/requestGuard";
@@ -78,14 +79,14 @@ export const useLeaderboardMoviesStore = defineStore(
       if (publishDateRange.value?.[0]) {
         params.set(
           "publishDateFrom",
-          dayjs(publishDateRange.value[0]).startOf("month").toISOString(),
+          releaseMonthBound(publishDateRange.value[0],'from'),
         );
       }
 
       if (publishDateRange.value?.[1]) {
         params.set(
           "publishDateTo",
-          dayjs(publishDateRange.value[1]).endOf("month").toISOString(),
+          releaseMonthBound(publishDateRange.value[1],'to'),
         );
       }
 

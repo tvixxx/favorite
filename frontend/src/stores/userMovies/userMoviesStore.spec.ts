@@ -15,11 +15,11 @@ describe("Конкурентные запросы коллекции", () => {
   it("оставляет результат последнего поискового запроса при обратном порядке ответов", async () => {
     let finishFirst!: (data: unknown) => void;
     mocks.fetch.mockReturnValueOnce(new Promise((resolve) => { finishFirst = (data) => resolve({ status: 200, data }); }));
-    mocks.fetch.mockResolvedValueOnce({ status: 200, data: [row("new")] });
+    mocks.fetch.mockResolvedValueOnce({ status: 200, data: {items: [row("new")], total: 1} });
     const store = useUserMoviesStore();
     const first = store.searchUserMovies("user-id", "old");
     await store.searchUserMovies("user-id", "new");
-    finishFirst([row("old")]);
+    finishFirst({items: [row("old")], total: 1});
     await first;
     await vi.runAllTimersAsync();
     expect(store.searchResults.map((item) => item.movieId)).toEqual(["new"]);
@@ -58,7 +58,7 @@ describe("Конкурентные запросы коллекции", () => {
   });
 
   it("убирает из кеша тайтл, который сервер больше не находит в коллекции", async () => {
-    mocks.fetch.mockResolvedValueOnce({ status: 200, data: [row("gone")] });
+    mocks.fetch.mockResolvedValueOnce({ status: 200, data: {items: [row("gone")], total: 1} });
     mocks.fetch.mockRejectedValueOnce(new AxiosError("Not found", undefined, undefined, undefined, { status: 404, statusText: "Not found", data: {}, headers: {}, config: { headers: new AxiosHeaders() } }));
     const store = useUserMoviesStore();
     await store.fetchUserMovies("user-id");
@@ -77,5 +77,14 @@ describe("Конкурентные запросы коллекции", () => {
     finish([row("old")]);
     await pending;
     expect(store.searchResults).toEqual([]);
+  });
+  it('обновляет сохранённую статистику после добавления тайтла', async () => {
+    mocks.fetch.mockResolvedValueOnce({status:200,data:{totalMovies:200}})
+      .mockResolvedValueOnce({status:201,data:row('new')})
+      .mockResolvedValueOnce({status:200,data:{totalMovies:201}});
+    const store=useUserMoviesStore();
+    await store.fetchUserMoviesStats('user-id');
+    await store.addUserMovie('user-id','new',{});
+    expect(store.stats?.totalMovies).toBe(201);
   });
 });

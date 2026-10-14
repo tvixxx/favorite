@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import dayjs, { type Dayjs } from "dayjs";
+import {releaseMonthBound,releaseDateInput} from '@/utils/releaseDate';
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import FiltersSheet from "@/components/MoviesFiltersPanel/FiltersSheet.vue";
@@ -67,10 +68,10 @@ const selectedCountries = computed<string[]>({
 });
 const publishDateRange = computed<[Dayjs, Dayjs] | null>({
   get: (): [Dayjs, Dayjs] | null => props.filters.publishDateFrom && props.filters.publishDateTo
-    ? [dayjs(props.filters.publishDateFrom), dayjs(props.filters.publishDateTo)] : null,
+    ? [releaseDateInput(props.filters.publishDateFrom), releaseDateInput(props.filters.publishDateTo)] : null,
   set: (range) => updateFilters({
-    publishDateFrom: range?.[0] ? range[0].startOf("month").toISOString() : undefined,
-    publishDateTo: range?.[1] ? range[1].endOf("month").toISOString() : undefined,
+    publishDateFrom: range?.[0] ? releaseMonthBound(range[0],'from') : undefined,
+    publishDateTo: range?.[1] ? releaseMonthBound(range[1],'to') : undefined,
   }),
 });
 const rateRange = computed<[number, number]>({
@@ -140,7 +141,7 @@ const togglePreset = (key: PresetKey): void => {
 
   publishDateRange.value = isActive
     ? null
-    : [dayjs(`${FRESH_FROM_YEAR}-01-01`), dayjs()];
+    : [dayjs(`${FRESH_FROM_YEAR}-01-01`), releaseDateInput(new Date().toISOString())];
 };
 
 const countryLabel = (code: string): string =>

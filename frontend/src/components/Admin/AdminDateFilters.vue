@@ -2,6 +2,8 @@
 import { useId } from "vue";
 import ruRU from "ant-design-vue/es/date-picker/locale/ru_RU";
 import "dayjs/locale/ru";
+import {useDateTime} from '@/composable/useDateTime';
+const {timezone}=useDateTime();
 
 const from = defineModel<string>("from", { required: true });
 const to = defineModel<string>("to", { required: true });
@@ -11,7 +13,7 @@ const id = useId();
 <template>
   <div class="admin-filters admin-date-filters">
     <label :for="`${id}-from`"
-      >С даты (UTC+4)<a-date-picker
+      >С даты ({{timezone}})<a-date-picker
         :id="`${id}-from`"
         v-model:value="from"
         value-format="YYYY-MM-DD"

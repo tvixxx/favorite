@@ -14,6 +14,9 @@ jest.mock('@aws-sdk/client-s3', () => ({
   DeleteObjectCommand: class {
     constructor(public input: unknown) {}
   },
+  GetObjectCommand: class {
+    constructor(public input: unknown) {}
+  },
 }));
 
 describe('Хранение изображения', () => {
@@ -100,5 +103,61 @@ describe('Хранение изображения', () => {
           new ConfigService({ NODE_ENV: 'production', MEDIA_STORAGE: 'local' }),
         ),
     ).toThrow();
+  });
+
+  it('изолирует вложения в закрытом бакете, не выдаёт публичную ссылку и читает через S3', async () => {
+    const storage = new ImageStorage(
+      new ConfigService({
+        NODE_ENV: 'production',
+        MEDIA_STORAGE: 's3',
+        MEDIA_PUBLIC_BASE_URL: 'https://media.example.test',
+        MEDIA_S3_ENDPOINT: 'https://storage.example.test',
+        MEDIA_S3_BUCKET: 'public-fixture',
+        MEDIA_S3_PRIVATE_BUCKET: 'private-fixture',
+        MEDIA_S3_ACCESS_KEY: 'fixture',
+        MEDIA_S3_SECRET_KEY: 'fixture',
+      }),
+    );
+    const privateKey =
+      'feedback/11111111-1111-4111-8111-111111111111/full.webp';
+    await storage.put(privateKey, Buffer.from('fixture'));
+    expect(send.mock.calls[0][0].input).toMatchObject({
+      Bucket: 'private-fixture',
+      CacheControl: 'private, no-store',
+    });
+    expect(() => storage.publicUrl(privateKey)).toThrow();
+    send.mockResolvedValueOnce({
+      Body: {
+        transformToByteArray: () => Promise.resolve(Buffer.from('fixture')),
+      },
+    });
+    expect(await storage.readPrivate(privateKey)).toEqual(
+      Buffer.from('fixture'),
+    );
+    expect(send.mock.calls[1][0].input).toMatchObject({
+      Bucket: 'private-fixture',
+      Key: privateKey,
+    });
+  });
+  it('без отдельного закрытого бакета отклоняет вложение до отправки в S3', async () => {
+    const storage = new ImageStorage(
+      new ConfigService({
+        NODE_ENV: 'production',
+        MEDIA_STORAGE: 's3',
+        MEDIA_PUBLIC_BASE_URL: 'https://media.example.test',
+        MEDIA_S3_ENDPOINT: 'https://storage.example.test',
+        MEDIA_S3_BUCKET: 'public-fixture',
+        MEDIA_S3_PRIVATE_BUCKET: 'public-fixture',
+        MEDIA_S3_ACCESS_KEY: 'fixture',
+        MEDIA_S3_SECRET_KEY: 'fixture',
+      }),
+    );
+    await expect(
+      storage.put(
+        'feedback/11111111-1111-4111-8111-111111111111/full.webp',
+        Buffer.from('fixture'),
+      ),
+    ).rejects.toMatchObject({ status: 503 });
+    expect(send).not.toHaveBeenCalled();
   });
 });

@@ -24,6 +24,8 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   const userMovies = ref<UserMovie[]>([]);
   const isLoaded = ref<boolean>(false);
   const isLoading = ref(false);
+  const isLoadingMore = ref(false);
+  const totalCount = ref(0);
   const isError = ref<string | null>(null);
 
   // Search
@@ -56,7 +58,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   // Computed
   const currentList = computed(() => {
     // Текстовый поиск хранится отдельно: пока в сторе есть q — показываем searchResults.
-    // Иначе список из GET /users/:id/movies (в т.ч. при фильтрах без поиска).
+    // Иначе загруженные страницы коллекции, включая фильтры без поиска.
     if (searchQuery.value.trim()) {
       return searchResults.value;
     }
@@ -65,16 +67,14 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   });
 
   // Догрузка: показываем все порции до текущей включительно («Показать ещё»)
-  const visibleUserMovies = computed(() =>
-    currentList.value.slice(0, currentPage.value * pageSize.value),
-  );
+  const visibleUserMovies = computed(() => currentList.value);
 
   const hasMoreUserMovies = computed(
-    () => visibleUserMovies.value.length < currentList.value.length,
+    () => currentList.value.length < totalCount.value,
   );
 
   const totalPages = computed(() => {
-    return Math.ceil(currentList.value.length / pageSize.value);
+    return Math.ceil(totalCount.value / pageSize.value);
   });
 
   const favoriteUserMovies = computed(() =>
@@ -110,8 +110,9 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     isError.value = errorText;
   };
 
-  const setUserMovies = (items: UserMovie[]): void => {
+  const setUserMovies = (items: UserMovie[], total = items.length): void => {
     userMovies.value = items;
+    totalCount.value = total;
     isLoaded.value = true;
   };
 
@@ -140,30 +141,37 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     searchQuery.value = "";
     searchResults.value = [];
     isSearching.value = false;
+    isLoadingMore.value = false;
   };
 
   // API calls
-  const fetchUserMovies = async (userId: string) => {
+  const requestPage = async (userId: string, query: string, append = false): Promise<void> => {
     if (!userId?.trim()) {
       return;
     }
 
     const isCurrent = queryRequests.begin();
-    isSearching.value = false;
-    setLoading(true);
-    setError(null);
+    searchQuery.value = query;
+    isSearching.value = !!query;
+    isLoadingMore.value = append;
+    if (!append) {
+      setLoading(true);
+      setError(null);
+    }
 
     const start = Date.now();
 
     try {
-      const params = buildUserSearchParams(filters.value);
+      const params = buildUserSearchParams(filters.value, query || undefined);
+      params.set("limit", String(pageSize.value));
+      params.set("offset", String(append ? currentList.value.length : 0));
 
       const queryString = params.toString();
-      const endpoint = `/users/${userId}/movies${
+      const endpoint = `/users/${userId}/movies/page${
         queryString ? `?${queryString}` : ""
       }`;
 
-      const { data, status } = await useFetch<UserMovieApiResponse[]>(
+      const { data, status } = await useFetch<{items: UserMovieApiResponse[]; total: number}>(
         endpoint,
         {
           method: FETCH_METHOD.get,
@@ -171,65 +179,34 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       );
       if (!isCurrent()) return;
 
-      if (status !== 200) {
+      if (status !== 200 || !Array.isArray(data.items) || !Number.isSafeInteger(data.total) || data.total < 0) {
         throw new Error("Ошибка загрузки фильмов");
       }
 
-      setUserMovies(mapUserMoviesFromApi(data));
-    } catch (err) {
-      if (!isCurrent()) return;
-      setError("Ошибка загрузки фильмов");
-      throw err;
-    } finally {
-      setTimeout(() => {
-        if (isCurrent()) setLoading(false);
-      }, getDefaultLoaderDelayTime(start));
-    }
-  };
+      const incoming = mapUserMoviesFromApi(data.items);
+      const loadedIds = new Set(currentList.value.map(row => row.movieId));
+      if (append && (data.total !== totalCount.value || incoming.some(row => loadedIds.has(row.movieId)))) {
+        await requestPage(userId, query);
 
-  const searchUserMovies = async (userId: string, query: string) => {
-    if (!userId?.trim()) {
-      return;
-    }
-
-    const q = query.trim();
-    if (!q) {
-      clearSearch();
-
-      return fetchUserMovies(userId);
-    }
-
-    searchQuery.value = q;
-    const isCurrent = queryRequests.begin();
-    isSearching.value = true;
-    setLoading(true);
-    setError(null);
-
-    const start = Date.now();
-
-    try {
-      const params = buildUserSearchParams(filters.value, q);
-
-      const endpoint = `/users/${userId}/movies/search?${params.toString()}`;
-
-      const { data, status } = await useFetch<UserMovieApiResponse[]>(
-        endpoint,
-        {
-          method: FETCH_METHOD.get,
-        },
-      );
-      if (!isCurrent()) return;
-
-      if (status !== 200) {
-        throw new Error("Ошибка поиска");
+        return;
       }
 
-      searchResults.value = mapUserMoviesFromApi(data);
+      if ((!incoming.length && data.total > (append ? currentList.value.length : 0)) || new Set(incoming.map(row => row.movieId)).size !== incoming.length) {
+        throw new Error("Некорректная страница коллекции");
+      }
+
+      const items = append ? [...currentList.value, ...incoming] : incoming;
+      if (query) searchResults.value = items;
+      else setUserMovies(items, data.total);
+      totalCount.value = data.total;
+      currentPage.value = append ? currentPage.value + 1 : 1;
+      isLoaded.value = true;
     } catch (err) {
       if (!isCurrent()) return;
-      setError("Ошибка поиска");
+      if (!append) setError("Ошибка загрузки фильмов");
       throw err;
     } finally {
+      if (isCurrent()) isLoadingMore.value = false;
       setTimeout(() => {
         if (isCurrent()) {
           setLoading(false);
@@ -237,6 +214,14 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
         }
       }, getDefaultLoaderDelayTime(start));
     }
+  };
+
+  const fetchUserMovies = (userId: string): Promise<void> => requestPage(userId, "");
+  const searchUserMovies = (userId: string, query: string): Promise<void> => requestPage(userId, query.trim());
+  const loadMore = async (userId: string): Promise<void> => {
+    if (isLoadingMore.value || isLoading.value || !isLoaded.value || !hasMoreUserMovies.value) return;
+
+    return requestPage(userId, searchQuery.value.trim(), true);
   };
 
   const fetchUserMoviesStats = async (userId: string) => {
@@ -305,6 +290,21 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     }
   };
 
+  const refreshDerivedData = async (userId: string): Promise<void> => {
+    statsRequests.invalidate();
+    analyticsRequests.invalidate();
+    stats.value = null;
+    analytics.value = null;
+    await fetchUserMoviesStats(userId).catch(() => undefined);
+  };
+
+  const refreshAfterImport = async (userId: string): Promise<void> => {
+    await Promise.allSettled([
+      requestPage(userId, searchQuery.value.trim()),
+      refreshDerivedData(userId),
+    ]);
+  };
+
   const addUserMovie = async (
     userId: string,
     movieId: string,
@@ -329,7 +329,14 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
     if (response?.data && isSuccessStatus(response.status)) {
       const userMovie = mapUserMovieFromApi(response.data);
-      userMovies.value = [...userMovies.value.filter((item) => item.movieId !== movieId), userMovie];
+      if (isLoaded.value) {
+        await requestPage(userId, searchQuery.value.trim()).catch(() => undefined);
+      } else {
+        queryRequests.invalidate();
+        userMovies.value = [userMovie, ...userMovies.value.filter((item) => item.movieId !== movieId)];
+      }
+
+      await refreshDerivedData(userId);
 
       return userMovie;
     } else {
@@ -366,6 +373,11 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       searchResults.value = searchResults.value.map((um) =>
         um.movieId === movieId ? updatedUserMovie : um,
       );
+      if (isLoaded.value && (hasActiveFilters.value || searchQuery.value)) {
+        await requestPage(userId, searchQuery.value.trim()).catch(() => undefined);
+      }
+
+      await refreshDerivedData(userId);
 
       return updatedUserMovie;
     } else {
@@ -380,9 +392,14 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     });
     if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
     if (!isSuccessStatus(response.status)) throw new Error("Не удалось сохранить оценку");
+    analyticsRequests.invalidate();
+    analytics.value = null;
     const updated = mapUserMovieFromApi(response.data);
     userMovies.value = userMovies.value.map((item) => item.movieId === movieId ? updated : item);
     searchResults.value = searchResults.value.map((item) => item.movieId === movieId ? updated : item);
+    if (isLoaded.value && (hasActiveFilters.value || searchQuery.value)) {
+      await requestPage(userId, searchQuery.value.trim()).catch(() => undefined);
+    }
 
     return updated;
   };
@@ -418,8 +435,6 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
       if (userMovies.value.some((um) => um.movieId === mapped.movieId)) {
         userMovies.value = userMovies.value.map((item) => item.movieId === mapped.movieId ? mapped : item);
-      } else {
-        userMovies.value.push(mapped);
       }
 
       return mapped;
@@ -437,11 +452,13 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
   function forgetMissingMovie(movieId: string): void {
     queryRequests.invalidate();
+    if (currentList.value.some(item => item.movieId === movieId)) totalCount.value = Math.max(0, totalCount.value - 1);
     userMovies.value = userMovies.value.filter((item) => item.movieId !== movieId);
     searchResults.value = searchResults.value.filter((item) => item.movieId !== movieId);
     isLoaded.value = false;
     setLoading(false);
     isSearching.value = false;
+    isLoadingMore.value = false;
     stats.value = null;
     analytics.value = null;
   }
@@ -461,15 +478,16 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
 
     if (isSuccessStatus(response.status)) {
+      const wasVisible = currentList.value.some((item) => item.movieId === movieId);
       userMovies.value = userMovies.value.filter(
         (um) => um.movieId !== movieId,
       );
       searchResults.value = searchResults.value.filter(
         (um) => um.movieId !== movieId,
       );
+      if (wasVisible) totalCount.value = Math.max(0, totalCount.value - 1);
       useUserListsStore().resetSession();
-      analytics.value = null;
-      await fetchUserMoviesStats(userId).catch(() => undefined);
+      await refreshDerivedData(userId);
     } else {
       throw new Error("Не удалось удалить фильм");
     }
@@ -490,6 +508,8 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     userMovies.value = [];
     isLoaded.value = false;
     isLoading.value = false;
+    isLoadingMore.value = false;
+    totalCount.value = 0;
     isError.value = null;
     searchResults.value = [];
     searchQuery.value = "";
@@ -510,6 +530,8 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     userMovies,
     isLoaded,
     isLoading,
+    isLoadingMore,
+    totalCount,
     isError,
     searchResults,
     searchQuery,
@@ -542,9 +564,11 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     setFilters,
     clearSearch,
     fetchUserMovies,
+    loadMore,
     searchUserMovies,
     fetchUserMoviesStats,
     fetchUserMoviesAnalytics,
+    refreshAfterImport,
     addUserMovie,
     updateUserMovie,
     rateUserMovie,

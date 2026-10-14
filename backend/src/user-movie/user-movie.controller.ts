@@ -11,6 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { UserMovieService } from './user-movie.service';
+import { CollectionQueryDto } from './dto/collection-query.dto';
 import {
   CreateUserMovieBodyDto,
   UpdateUserMovieDto,
@@ -47,6 +48,18 @@ export class UserMovieController {
     if (paramUserId !== user.id) {
       throw new ForbiddenException();
     }
+  }
+
+  @AuthProtected()
+  @Get('page')
+  @ApiOperation({ summary: 'Страница личной коллекции с поиском и фильтрами' })
+  public page(
+    @Param('userId') userId: string,
+    @Authorized() user: User,
+    @Query() query: CollectionQueryDto,
+  ) {
+    this.ensureSelf(userId, user);
+    return this.userMovieService.pageByUser(userId, query);
   }
 
   @ApiOperation({

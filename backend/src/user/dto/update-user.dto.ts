@@ -8,12 +8,20 @@ import {
   IsUUID,
   MaxLength,
   Matches,
+  IsTimeZone,
+  ValidateIf,
 } from 'class-validator';
 import { Genre } from '../../generated/prisma/enums';
 import { PartialType } from '@nestjs/mapped-types';
 import { Transform } from 'class-transformer';
 
 export class UpdateUserDto {
+  @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
+  @IsString()
+  @MaxLength(80)
+  @IsTimeZone()
+  timezone?: string;
+
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,
   )

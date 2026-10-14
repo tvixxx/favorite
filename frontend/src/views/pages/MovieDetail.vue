@@ -7,7 +7,8 @@ import { message } from "ant-design-vue";
 
 import { useMainStore } from "@/state/state";
 import { useUserListsStore, useUserMoviesStore } from "@/stores";
-import { formatDate, formatYear, PLURAL, pluralize } from "@/utils";
+import { formatYear, PLURAL, pluralize } from "@/utils";
+import {useDateTime} from '@/composable/useDateTime';
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import {
   DEFAULT_LIST_COLOR,
@@ -42,6 +43,7 @@ import CatalogMoviePreviewModal from "@/components/Catalog/CatalogMoviePreviewMo
 import type { UserListDetail, UserListSummary } from "@/stores/userLists/types";
 
 const mainStore = useMainStore();
+const {formatDate,formatInstant,dateKey}=useDateTime();
 const userMoviesStore = useUserMoviesStore();
 const userListsStore = useUserListsStore();
 const router = useRouter();
@@ -243,7 +245,7 @@ onBeforeUnmount(() => {
   currentUserMovie.value = null;
 });
 
-watch(catalogPreviewOpen, (open) => {
+watch(catalogPreviewOpen, async (open) => {
   const id = catalogPreviewId.value;
 
   if (open || !id || id !== currentMovieId.value) {
@@ -251,19 +253,22 @@ watch(catalogPreviewOpen, (open) => {
   }
 
   catalogPreviewId.value = null;
-  const own = userMoviesStore.userMovies.find((item) => item.movieId === id);
-
-  if (own) {
-    currentUserMovie.value = own;
-    void loadDetail();
-  } else {
-    const actorId = route.query.libActor;
-
-    void router.replace(
-      typeof actorId === "string"
-        ? `/library/actors/${actorId}`
-        : "/library/catalog"
-    );
+  const isCurrent = detailRequests.begin();
+  isLoading.value = true;
+  try {
+    const own = await userMoviesStore.fetchUserMovieById(userId.value, id);
+    if (!isCurrent()) return;
+    if (own) {
+      currentUserMovie.value = own;
+      void loadSimilar(id);
+    } else {
+      const actorId = route.query.libActor;
+      void router.replace(typeof actorId === "string" ? `/library/actors/${actorId}` : "/library/catalog");
+    }
+  } catch {
+    if (isCurrent()) isError.value = "Не удалось проверить коллекцию";
+  } finally {
+    if (isCurrent()) isLoading.value = false;
   }
 });
 
@@ -374,9 +379,9 @@ const formatChipDate = (raw: string): string => {
     return "";
   }
 
-  const sameYear = date.getFullYear() === new Date().getFullYear();
+  const sameYear = dateKey(date)?.slice(0,4) === dateKey(new Date())?.slice(0,4);
 
-  return date.toLocaleDateString("ru-RU", {
+  return formatInstant(date, {
     day: "numeric",
     month: "long",
     ...(sameYear ? {} : { year: "numeric" }),

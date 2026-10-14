@@ -8,12 +8,16 @@ import {
 import { useAdminPage } from "@/composable/useAdminPage";
 import { useAdminQueryParam } from "@/composable/useAdminQueryParam";
 import AdminDateFilters from "./AdminDateFilters.vue";
+import AdminDataRegion from "./AdminDataRegion.vue";
 import CatalogEditor from "./CatalogEditor.vue";
+import CatalogQuality from "./CatalogQuality.vue";
 import ConfirmDialog from "@/components/ConfirmDialog/ConfirmDialog.vue";
 import api from "@/services/api";
 import { message } from "ant-design-vue";
 import { friendlyRequestError } from "@/utils/friendlyError";
-import { type AdminMovie, dateLabel } from "./admin.types";
+import { type AdminMovie } from "./admin.types";
+import {useDateTime} from '@/composable/useDateTime';
+const {dateLabel}=useDateTime();
 const q = useAdminQueryParam("movies_q", "", "movies_page");
 const kind = useAdminQueryParam("movies_kind", "", "movies_page", [
   "",
@@ -48,6 +52,14 @@ const { items, total, page, loading, error, quality, load } =
     "movies_page"
   );
 const editorOpen = ref(false);
+const catalogRevision = ref(0);
+const diagnosticFilters = computed(() => ({
+  q: q.value,
+  kind: kind.value,
+  author: author.value,
+  from: from.value,
+  to: to.value,
+}));
 const movieId = ref<string | null>(null);
 const removing = ref<AdminMovie | null>(null);
 const deleting = ref(false);
@@ -74,6 +86,7 @@ async function remove(): Promise<void> {
   try {
     await api.delete(`/movies/${removing.value.id}`);
     removing.value = null;
+    catalogRevision.value += 1;
     await load(
       items.value.length === 1 && page.value > 1 ? page.value - 1 : page.value
     );
@@ -104,6 +117,11 @@ function edit(id: string | null): void {
   movieId.value = id;
   editorOpen.value = true;
 }
+
+function saved(): void {
+  catalogRevision.value += 1;
+  void load();
+}
 </script>
 <template>
   <section class="admin-panel">
@@ -133,6 +151,11 @@ function edit(id: string | null): void {
       удаляются.
     </p>
   </section>
+  <CatalogQuality
+    :filters="diagnosticFilters"
+    :revision="catalogRevision"
+    @edit="edit"
+  />
   <section class="admin-panel">
     <div class="admin-toolbar">
       <h2>Каталог · {{ total }}</h2>
@@ -171,55 +194,57 @@ function edit(id: string | null): void {
         <a-button @click="load()">Повторить</a-button>
       </template>
     </a-alert>
-    <a-table
-      class="admin-desktop"
-      :columns="columns"
-      :data-source="items"
-      row-key="id"
-      :loading="loading"
-      :pagination="false"
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'title'">
-          <b>{{ record.title }}</b>
-          <p class="admin-muted">
-            {{ record.isSerial ? "Сериал" : "Фильм" }}
-          </p>
+    <AdminDataRegion v-if="!error || items.length" :loading="loading">
+      <a-table
+        class="admin-desktop"
+        :columns="columns"
+        :data-source="items"
+        row-key="id"
+        :locale="{ emptyText: 'Тайтлы не найдены' }"
+        :pagination="false"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'title'">
+            <b>{{ record.title }}</b>
+            <p class="admin-muted">
+              {{ record.isSerial ? "Сериал" : "Фильм" }}
+            </p>
+          </template>
+          <template v-else-if="column.key === 'author'">{{
+            record.createdBy?.fullName ?? "Общий каталог"
+          }}</template>
+          <template v-else-if="column.key === 'date'">{{
+            dateLabel(record.createdAt)
+          }}</template>
+          <template v-else-if="column.key === 'count'">{{
+            record._count.userMovies
+          }}</template>
+          <template v-else-if="column.key === 'actions'">
+            <a-button @click="edit(record.id)">Редактировать</a-button>
+            <a-button type="text" danger @click="requestDelete(record.id)"
+              >Удалить</a-button
+            >
+          </template>
         </template>
-        <template v-else-if="column.key === 'author'">{{
-          record.createdBy?.fullName ?? "Общий каталог"
-        }}</template>
-        <template v-else-if="column.key === 'date'">{{
-          dateLabel(record.createdAt)
-        }}</template>
-        <template v-else-if="column.key === 'count'">{{
-          record._count.userMovies
-        }}</template>
-        <template v-else-if="column.key === 'actions'">
-          <a-button @click="edit(record.id)">Редактировать</a-button>
-          <a-button type="text" danger @click="requestDelete(record.id)"
+      </a-table>
+      <div class="admin-mobile">
+        <article v-for="movie in items" :key="movie.id" class="admin-row">
+          <h3>{{ movie.title }}</h3>
+          <p class="admin-muted">
+            {{ movie.isSerial ? "Сериал" : "Фильм" }} ·
+            {{ dateLabel(movie.createdAt) }}
+          </p>
+          <a-button @click="edit(movie.id)">Редактировать</a-button>
+          <a-button type="text" danger @click="requestDelete(movie.id)"
             >Удалить</a-button
           >
-        </template>
-      </template>
-    </a-table>
-    <div class="admin-mobile">
-      <article v-for="movie in items" :key="movie.id" class="admin-row">
-        <h3>{{ movie.title }}</h3>
-        <p class="admin-muted">
-          {{ movie.isSerial ? "Сериал" : "Фильм" }} ·
-          {{ dateLabel(movie.createdAt) }}
-        </p>
-        <a-button @click="edit(movie.id)">Редактировать</a-button>
-        <a-button type="text" danger @click="requestDelete(movie.id)"
-          >Удалить</a-button
-        >
-      </article>
-      <a-empty
-        v-if="!items.length && !loading"
-        description="Тайтлы не найдены"
-      />
-    </div>
+        </article>
+        <a-empty
+          v-if="!items.length && !loading"
+          description="Тайтлы не найдены"
+        />
+      </div>
+    </AdminDataRegion>
     <a-pagination
       v-if="total > 20"
       :current="page"
@@ -230,7 +255,7 @@ function edit(id: string | null): void {
       @change="load"
     />
   </section>
-  <CatalogEditor v-model="editorOpen" :movie-id="movieId" @saved="load()" />
+  <CatalogEditor v-model="editorOpen" :movie-id="movieId" @saved="saved" />
   <ConfirmDialog
     v-model="deleteOpen"
     :title="`Удалить «${removing?.title ?? ''}»?`"

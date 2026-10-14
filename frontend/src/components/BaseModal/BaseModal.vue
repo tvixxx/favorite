@@ -330,6 +330,7 @@ const handleConfirm = () => {
 
 .modal {
   background: var(--fv-color-bg-primary);
+  color: var(--fv-color-text-primary);
   border-radius: var(--fv-radius-lg);
   max-width: min(90vw, 500px);
   max-height: min(90vh, 640px);
@@ -610,6 +611,7 @@ const handleConfirm = () => {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .modal--detail .modal__body {

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -23,6 +24,7 @@ import { UserMovieService } from '../user-movie/user-movie.service';
 import { MediaService } from '../media/media.service';
 import { queryInteger } from '../common/utils/query-value';
 import { lockResource } from '../common/utils/transaction-lock';
+import { invalidateDataCache } from '../common/utils/data-revision';
 
 interface MovieFilters {
   genres?: Genre[];
@@ -277,6 +279,7 @@ class MovieService {
       return movie;
     });
 
+    invalidateDataCache(this.prismaService);
     return { ...created, averageRating: null };
   }
 
@@ -500,7 +503,7 @@ class MovieService {
       episodeCount,
     } = dto;
 
-    return this.prismaService.$transaction(async (tx) => {
+    const result = await this.prismaService.$transaction(async (tx) => {
       await lockResource(tx, `movie:${id}`);
       const movie = await tx.movie.findUnique({
         where: { id },
@@ -572,6 +575,8 @@ class MovieService {
 
       return true;
     });
+    invalidateDataCache(this.prismaService);
+    return result;
   }
 
   public async patch(
@@ -579,7 +584,7 @@ class MovieService {
     dto: PatchMovieDto,
     user: CatalogUser,
   ): Promise<boolean> {
-    return this.prismaService.$transaction(async (tx) => {
+    const result = await this.prismaService.$transaction(async (tx) => {
       await lockResource(tx, `movie:${id}`);
       const movie = await tx.movie.findUnique({
         where: { id },
@@ -701,6 +706,8 @@ class MovieService {
 
       return true;
     });
+    invalidateDataCache(this.prismaService);
+    return result;
   }
 
   private async assertTypeChangeAllowed(
@@ -828,6 +835,7 @@ class MovieService {
         await this.auditCatalogChange(tx, user, id, 'MOVIE_DELETE');
       });
 
+      invalidateDataCache(this.prismaService);
       return id;
     } catch (error: unknown) {
       if (
@@ -861,6 +869,28 @@ class MovieService {
       allSerials,
       allSeeLater,
     };
+  }
+
+  public async suggestions(userId: string, query = '', limit = 10) {
+    const q = query.trim();
+    if (q.length > 200) throw new BadRequestException('Максимум 200 символов');
+    if (q.length < 2) return [];
+    const movies = await this.prismaService.movie.findMany({
+      where: { title: { contains: q, mode: 'insensitive' } },
+      take: limit,
+      orderBy: [{ title: 'asc' }, { id: 'asc' }],
+      select: {
+        id: true,
+        title: true,
+        isSerial: true,
+        publishDate: true,
+        userMovies: { where: { userId }, take: 1, select: { id: true } },
+      },
+    });
+    return movies.map(({ userMovies, ...movie }) => ({
+      ...movie,
+      inCollection: userMovies.length > 0,
+    }));
   }
 
   public async search(

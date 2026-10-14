@@ -5,6 +5,11 @@ export const MEDIA_POLICIES = {
     thumbnailSize: 360,
   },
   USER_AVATAR: { maxBytes: 5 * 1024 * 1024, mainSize: 512, thumbnailSize: 128 },
+  FEEDBACK_SCREENSHOT: {
+    maxBytes: 5 * 1024 * 1024,
+    mainSize: 1600,
+    thumbnailSize: 360,
+  },
   ACTOR_PHOTO: {
     maxBytes: 10 * 1024 * 1024,
     mainSize: 1200,

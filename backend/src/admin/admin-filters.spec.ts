@@ -17,16 +17,19 @@ describe('Серверная фильтрация пользователей', (
       {} as never,
     );
 
-    await service.users({
-      q: 'анна',
-      role: 'USER',
-      state: 'blocked',
-      from: '2026-10-01',
-      to: '2026-10-13',
-      sort: 'oldest',
-      limit: 20,
-      offset: 40,
-    });
+    await service.users(
+      {
+        q: 'анна',
+        role: 'USER',
+        state: 'blocked',
+        from: '2026-10-01',
+        to: '2026-10-13',
+        sort: 'oldest',
+        limit: 20,
+        offset: 40,
+      },
+      'Europe/Samara',
+    );
     const query = findMany.mock.calls[0][0];
 
     expect(query.where).toMatchObject({

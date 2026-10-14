@@ -30,6 +30,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { MediaModule } from './media/media.module';
 import { HealthController } from './health/health.controller';
 import { AdminModule } from './admin/admin.module';
+import { PasswordRecoveryModule } from './password-recovery/password-recovery.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { AdminModule } from './admin/admin.module';
     ReviewModule,
     ActorModule,
     AuthModule,
+    PasswordRecoveryModule,
     UserMovieModule,
     BadgeModule,
     FriendshipModule,

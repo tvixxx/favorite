@@ -44,7 +44,7 @@ function forceLogoutAndRedirectToLogin(): void {
 function isAuthMutation(config: InternalAxiosRequestConfig): boolean {
   const path = (config.url ?? "").split("?")[0];
 
-  return /\/auth\/(login|register|refresh|logout)\/?$/.test(path);
+  return /\/auth\/(login|register|refresh|logout|password\/(request|reset))\/?$/.test(path);
 }
 
 type SessionRequestConfig = InternalAxiosRequestConfig & {

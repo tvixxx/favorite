@@ -11,10 +11,13 @@ import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import { useAdminPage } from "@/composable/useAdminPage";
 import { useAdminQueryParam } from "@/composable/useAdminQueryParam";
 import AdminDateFilters from "./AdminDateFilters.vue";
+import AdminDataRegion from "./AdminDataRegion.vue";
 import { useMainStore } from "@/state/state";
 import api from "@/services/api";
 import { friendlyRequestError } from "@/utils/friendlyError";
-import { type AdminUser, dateLabel } from "./admin.types";
+import { type AdminUser } from "./admin.types";
+import {useDateTime} from '@/composable/useDateTime';
+const {dateLabel}=useDateTime();
 
 const q = useAdminQueryParam("users_q", "", "users_page");
 const role = useAdminQueryParam("users_role", "", "users_page", [
@@ -162,50 +165,52 @@ async function changeAccess(action: "block" | "role" = "block"): Promise<void> {
         <a-button @click="load()">Повторить</a-button>
       </template>
     </a-alert>
-    <a-table
-      class="admin-desktop"
-      :data-source="items"
-      :columns="columns"
-      row-key="id"
-      :loading="loading"
-      :pagination="false"
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'name'">
-          <b>{{ record.fullName }}</b>
-          <div class="admin-muted">{{ record.email }}</div>
+    <AdminDataRegion v-if="!error || items.length" :loading="loading">
+      <a-table
+        class="admin-desktop"
+        :data-source="items"
+        :columns="columns"
+        row-key="id"
+        :locale="{ emptyText: 'Пользователи не найдены' }"
+        :pagination="false"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'name'">
+            <b>{{ record.fullName }}</b>
+            <div class="admin-muted">{{ record.email }}</div>
+          </template>
+          <template v-else-if="column.key === 'date'">{{
+            dateLabel(record.createdAt)
+          }}</template>
+          <template v-else-if="column.key === 'count'">{{
+            record._count.userMovies
+          }}</template>
+          <template v-else-if="column.key === 'access'">
+            <a-tag :color="record.blockedAt ? 'orange' : 'blue'">{{
+              record.blockedAt ? "Ограничен" : record.role
+            }}</a-tag>
+          </template>
+          <template v-else-if="column.key === 'actions'">
+            <a-button @click="show(record.id)">Открыть</a-button>
+          </template>
         </template>
-        <template v-else-if="column.key === 'date'">{{
-          dateLabel(record.createdAt)
-        }}</template>
-        <template v-else-if="column.key === 'count'">{{
-          record._count.userMovies
-        }}</template>
-        <template v-else-if="column.key === 'access'">
-          <a-tag :color="record.blockedAt ? 'orange' : 'blue'">{{
-            record.blockedAt ? "Ограничен" : record.role
-          }}</a-tag>
-        </template>
-        <template v-else-if="column.key === 'actions'">
-          <a-button @click="show(record.id)">Открыть</a-button>
-        </template>
-      </template>
-    </a-table>
-    <div class="admin-mobile">
-      <article v-for="user in items" :key="user.id" class="admin-row">
-        <b>{{ user.fullName }}</b>
-        <p class="admin-muted">{{ user.email }}</p>
-        <p>
-          {{ dateLabel(user.createdAt) }} · {{ user._count.userMovies }} в
-          коллекции
-        </p>
-        <a-button @click="show(user.id)">Открыть пользователя</a-button>
-      </article>
-      <a-empty
-        v-if="!items.length && !loading"
-        description="Пользователи не найдены"
-      />
-    </div>
+      </a-table>
+      <div class="admin-mobile">
+        <article v-for="user in items" :key="user.id" class="admin-row">
+          <b>{{ user.fullName }}</b>
+          <p class="admin-muted">{{ user.email }}</p>
+          <p>
+            {{ dateLabel(user.createdAt) }} · {{ user._count.userMovies }} в
+            коллекции
+          </p>
+          <a-button @click="show(user.id)">Открыть пользователя</a-button>
+        </article>
+        <a-empty
+          v-if="!items.length && !loading"
+          description="Пользователи не найдены"
+        />
+      </div>
+    </AdminDataRegion>
     <a-pagination
       v-if="total > 20"
       :current="page"

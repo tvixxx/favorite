@@ -140,6 +140,7 @@ export class AuthService {
         blockedAt: true,
         authVersion: true,
         tags: true,
+        timezone: true,
         avatarUrl: true,
         avatarThumbnailUrl: true,
         avatarAssetId: true,

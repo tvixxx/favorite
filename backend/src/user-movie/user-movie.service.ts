@@ -13,6 +13,8 @@ import {
 import type { UserMovie, Prisma } from '../generated/prisma/client';
 import { Genre, WatchStatus } from '../generated/prisma/enums';
 import { lockResource } from '../common/utils/transaction-lock';
+import { invalidateDataCache } from '../common/utils/data-revision';
+import type { CollectionQueryDto } from './dto/collection-query.dto';
 
 interface UserMovieFilters {
   genres?: Genre[];
@@ -329,6 +331,40 @@ export class UserMovieService {
     } as UserMovie;
   }
 
+  public async pageByUser(
+    userId: string,
+    query: CollectionQueryDto,
+  ): Promise<{
+    items: UserMovie[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const { q, limit, offset, countryCode, ...filters } = query;
+    const where = this.buildWhereClause(userId, {
+      ...filters,
+      countryCodes: countryCode,
+    });
+    if (q) {
+      const title = { title: { contains: q, mode: 'insensitive' as const } };
+      where.movie = where.movie ? { AND: [where.movie, title] } : title;
+    }
+    const [items, total] = await this.prismaService.$transaction(
+      [
+        this.prismaService.userMovie.findMany({
+          where,
+          take: limit,
+          skip: offset,
+          orderBy: [{ addedAt: 'desc' }, { id: 'asc' }],
+          include: { movie: { include: { poster: true, actors: true } } },
+        }),
+        this.prismaService.userMovie.count({ where }),
+      ],
+      { isolationLevel: 'RepeatableRead' },
+    );
+    return { items, total, limit, offset };
+  }
+
   public async findAllByUser(
     userId: string,
     filters: UserMovieFilters = {},
@@ -519,9 +555,11 @@ export class UserMovieService {
     prisma: Prisma.TransactionClient = this.prismaService,
   ): Promise<UserMovie> {
     if (prisma === this.prismaService) {
-      return this.prismaService.$transaction((tx) =>
+      const result = await this.prismaService.$transaction((tx) =>
         this.create(userId, dto, tx),
       );
+      invalidateDataCache(this.prismaService);
+      return result;
     }
 
     const { movieId, ...data } = dto;
@@ -590,9 +628,11 @@ export class UserMovieService {
     prisma: Prisma.TransactionClient = this.prismaService,
   ): Promise<UserMovie> {
     if (prisma === this.prismaService) {
-      return this.prismaService.$transaction((tx) =>
+      const result = await this.prismaService.$transaction((tx) =>
         this.update(userId, movieId, dto, tx),
       );
+      invalidateDataCache(this.prismaService);
+      return result;
     }
 
     await lockResource(prisma, `movie:${movieId}`);
@@ -660,7 +700,7 @@ export class UserMovieService {
       throw new BadRequestException('Минимальная длина отзыва — 10 символов');
     }
 
-    return this.prismaService.$transaction(async (tx) => {
+    const result = await this.prismaService.$transaction(async (tx) => {
       await lockResource(tx, `collection:${userId}:${movieId}`);
       const where = { userId_movieId: { userId, movieId } };
       const current = await tx.userMovie.findUnique({ where });
@@ -700,6 +740,8 @@ export class UserMovieService {
         movie: { ...updated.movie, averageRating: avg._avg.rate },
       };
     });
+    invalidateDataCache(this.prismaService);
+    return result;
   }
 
   public async delete(userId: string, movieId: string): Promise<string> {
@@ -719,6 +761,7 @@ export class UserMovieService {
         });
       });
 
+      invalidateDataCache(this.prismaService);
       return movieId;
     } catch (error: unknown) {
       if (
@@ -777,11 +820,9 @@ export class UserMovieService {
   }
 
   public async getUserAnalytics(userId: string): Promise<UserMovieAnalytics> {
-    const since7 = new Date();
-    since7.setDate(since7.getDate() - 7);
+    const since7 = new Date(Date.now() - 7 * 86_400_000);
 
-    const since = new Date();
-    since.setDate(since.getDate() - 30);
+    const since = new Date(Date.now() - 30 * 86_400_000);
 
     const [
       totalTitles,

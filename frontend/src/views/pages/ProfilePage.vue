@@ -20,6 +20,7 @@ import { useNotificationPrefs } from "@/composable/useNotificationPrefs";
 import { avatarGradient } from "@/composable/useAvatarGradient";
 import ImagePicker from "@/components/ImagePicker/ImagePicker.vue";
 import type { ImageSelection } from "@/services/media";
+import TimezoneSelect from "@/components/TimezoneSelect/TimezoneSelect.vue";
 
 const store = useMainStore();
 const router = useRouter();
@@ -33,7 +34,7 @@ const showAnalyticsSkeleton = useMinLoading(
 
 const isModalVisible = ref(false);
 const isSaving = ref(false);
-const editForm = ref({ fullName: "" });
+const editForm = ref({ fullName: "", timezone:"UTC" });
 const editAvatar = ref<ImageSelection | null>(null);
 const avatarUploading = ref(false);
 
@@ -160,6 +161,7 @@ const saveProfile = async () => {
   try {
     await store.updateProfile({
       fullName: name,
+      timezone: editForm.value.timezone,
       avatarAssetId: editAvatar.value?.assetId ?? null,
       avatarUrl: editAvatar.value?.assetId
         ? undefined
@@ -176,6 +178,7 @@ const saveProfile = async () => {
 
 const showEditDisplayNameModal = () => {
   editForm.value.fullName = fullName.value;
+  editForm.value.timezone = user.value?.timezone ?? 'UTC';
   editAvatar.value = user.value?.avatarUrl
     ? {
         url: user.value.avatarUrl,
@@ -244,6 +247,7 @@ onMounted(async () => {
                 />
                 {{ user.email }}
               </span>
+              <span class="profile-hero__meta-item">Часовой пояс: {{ user.timezone ?? 'UTC' }}</span>
               <span
                 class="profile-hero__meta-item profile-hero__meta-item--muted"
               >
@@ -547,10 +551,12 @@ onMounted(async () => {
         </div>
 
         <div class="settings-modal__fields">
+          <TimezoneSelect v-model="editForm.timezone" :disabled="isSaving" />
           <label class="settings-modal__field">
             <span class="settings-modal__label">Имя</span>
             <a-input
               v-model:value="editForm.fullName"
+              :disabled="isSaving"
               size="large"
             >
               <template #prefix>

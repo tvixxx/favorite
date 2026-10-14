@@ -1,6 +1,7 @@
 export interface UserData {
   email: string;
   fullName: string;
+  timezone?: string;
   id: string;
   role?: "USER" | "ADMIN";
   avatarUrl?: string | null;
@@ -31,6 +32,7 @@ export interface UserProfileResponse {
   id: string;
   email: string;
   fullName: string;
+  timezone?: string;
   fullname?: string;
   name?: string;
   role?: "USER" | "ADMIN";

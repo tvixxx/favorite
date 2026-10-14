@@ -1,6 +1,7 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { describe, expect, it, vi } from "vitest";
 import AdminOverview from "./AdminOverview.vue";
+import {createPinia} from 'pinia';
 
 const mocks = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock("@/services/api", () => ({ default: { get: mocks.get } }));
@@ -31,6 +32,7 @@ describe("Регистрации в обзоре администратора", 
     });
     const wrapper = mount(AdminOverview, {
       global: {
+        plugins:[createPinia()],
         stubs: {
           BaseModal: {
             props: ["modelValue"],

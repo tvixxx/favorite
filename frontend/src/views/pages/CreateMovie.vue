@@ -364,6 +364,7 @@ const addNewMovie = async () => {
                     v-model:value="formData.publishDate"
                     size="large"
                     picker="year"
+                    value-format="YYYY-MM-DD"
                     style="width: 100%"
                     placeholder="Выберите дату"
                   />

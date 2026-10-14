@@ -34,6 +34,7 @@ function profileData(profile: UserProfileResponse): UserData {
     email: profile.email,
     fullName: profile.fullName || profile.fullname || profile.name || "",
     role: profile.role,
+    timezone: profile.timezone ?? "UTC",
     avatarUrl: profile.avatarUrl ?? null,
     avatarThumbnailUrl: profile.avatarThumbnailUrl ?? null,
     avatarAssetId: profile.avatarAssetId ?? null,
@@ -79,6 +80,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
 
   async function updateProfile(payload: {
     fullName?: string;
+    timezone?: string;
     avatarUrl?: string | null;
     avatarAssetId?: string | null;
   }): Promise<void> {
@@ -108,7 +110,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
       userDataRaw.value = userObj;
       state.value.user.data = userObj;
     } else {
-      throw new Error("Не удалось изменить имя");
+      throw new Error("Не удалось сохранить профиль");
     }
   }
 

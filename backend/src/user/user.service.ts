@@ -11,11 +11,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MediaService } from '../media/media.service';
 import type { Prisma } from '../generated/prisma/client';
 import { lockResource } from '../common/utils/transaction-lock';
+import { invalidateDataCache } from '../common/utils/data-revision';
+import { ZonedCalendar } from '../common/utils/timezone';
 
 const publicUserSelect = {
   id: true,
   email: true,
   fullName: true,
+  timezone: true,
   role: true,
   tags: true,
   createdAt: true,
@@ -96,7 +99,7 @@ export class UserService {
     dto: Partial<UpdateUserDto>,
     options?: { allowTags?: boolean; actorId?: string },
   ) {
-    return this.prismaService.$transaction(async (tx) => {
+    const result = await this.prismaService.$transaction(async (tx) => {
       await lockResource(tx, `user:${id}`);
       const current = await tx.user.findUnique({
         where: { id },
@@ -108,6 +111,8 @@ export class UserService {
       }
 
       const data: Prisma.UserUpdateInput = { fullName: dto.fullName };
+      if (dto.timezone !== undefined)
+        data.timezone = new ZonedCalendar(dto.timezone).zone;
 
       if (options?.allowTags && dto.tags !== undefined) {
         data.tags = dto.tags;
@@ -142,6 +147,8 @@ export class UserService {
 
       return tx.user.update({ where: { id }, data, select: publicUserSelect });
     });
+    invalidateDataCache(this.prismaService);
+    return result;
   }
 
   public async delete(id: string, actorId?: string) {
@@ -190,6 +197,7 @@ export class UserService {
         await this.media.release(tx, deleted.avatarAssetId);
       });
 
+      invalidateDataCache(this.prismaService);
       return id;
     } catch (error: unknown) {
       const code = (error as { code?: string }).code;

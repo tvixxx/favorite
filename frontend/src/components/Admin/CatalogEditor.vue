@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { Alert as AAlert, Spin as ASpin, message } from "ant-design-vue";
+import { Alert as AAlert, message } from "ant-design-vue";
+import AdminDataRegion from "./AdminDataRegion.vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import ImagePicker from "@/components/ImagePicker/ImagePicker.vue";
 import api from "@/services/api";
@@ -205,7 +206,7 @@ async function save(): Promise<void> {
       movieId ? "Редактировать тайтл" : "Добавить тайтл"
     }}</template>
     <template #body>
-      <a-spin :spinning="loading">
+      <AdminDataRegion :loading="loading">
         <a-alert v-if="error" type="error" :message="error" />
         <a-form layout="vertical" :disabled="saving || loading">
           <a-form-item label="Название" required>
@@ -306,13 +307,13 @@ async function save(): Promise<void> {
             сохраняются.
           </p>
         </a-form>
-      </a-spin>
+      </AdminDataRegion>
     </template>
     <template #footer>
       <a-button :disabled="saving" @click="open = false">Отмена</a-button>
       <a-button
         type="primary"
-        :disabled="!valid || !!error"
+        :disabled="loading || !valid || !!error"
         :loading="saving"
         @click="save"
         >{{ movieId ? "Сохранить" : "Добавить" }}</a-button

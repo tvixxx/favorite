@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { WatchStatus } from '../generated/prisma/enums';
 import { TtlCache } from '../common/utils/ttl-cache';
+import { dataRevision } from '../common/utils/data-revision';
 import {
   BadgeService,
   type LeaderboardBadgePreview,
@@ -54,151 +53,10 @@ export interface LeaderboardTopMoviesResponseDto {
   offset: number;
 }
 
-interface UserAggRow {
-  userId: string;
-  displayName: string;
-  registeredAt: Date;
-  filmsCount: number;
-  serialsTotal: number;
-  serialsCompleted: number;
-}
-
-function pickSortValue(row: UserAggRow, sortBy: LeaderboardSortBy): number {
-  switch (sortBy) {
-    case LeaderboardSortBy.REGISTERED_AT:
-      return row.registeredAt.getTime();
-    case LeaderboardSortBy.FILMS:
-      return row.filmsCount;
-    case LeaderboardSortBy.SERIALS_COMPLETED:
-      return row.serialsCompleted;
-    case LeaderboardSortBy.SERIALS_TOTAL:
-      return row.serialsTotal;
-    case LeaderboardSortBy.TOTAL_SCORE:
-    default:
-      return row.filmsCount + row.serialsCompleted;
-  }
-}
-
-function compareRows(
-  a: UserAggRow,
-  b: UserAggRow,
-  sortBy: LeaderboardSortBy,
-  sortOrder: LeaderboardSortOrder,
-): number {
-  const va = pickSortValue(a, sortBy);
-  const vb = pickSortValue(b, sortBy);
-  const primary = va === vb ? 0 : va < vb ? -1 : 1;
-  const directed = sortOrder === LeaderboardSortOrder.DESC ? -primary : primary;
-
-  if (directed !== 0) {
-    return directed;
-  }
-
-  return a.userId.localeCompare(b.userId);
-}
-
-interface MovieAggRow {
-  movieId: string;
-  title: string;
-  isSerial: boolean;
-  publishDate: Date | null;
-  posterUrl: string | null;
-  avgPersonal: number | null;
-  ratingsCount: number;
-  /** Для фильтра и сортировки по «среднему»: без оценок = 0 */
-  effectiveAvg: number;
-}
-
-function buildTopMoviesMovieWhere(
-  query: LeaderboardTopMoviesQueryDto,
-): Prisma.MovieWhereInput {
-  const and: Prisma.MovieWhereInput[] = [];
-
-  if (query.genres?.length) {
-    and.push({ genres: { hasSome: query.genres } });
-  }
-
-  if (query.countryCodes?.length) {
-    and.push({ countryCodes: { hasSome: query.countryCodes } });
-  }
-
-  if (query.publishDateFrom || query.publishDateTo) {
-    const publishDate: Prisma.DateTimeNullableFilter = {};
-    if (query.publishDateFrom) {
-      publishDate.gte = new Date(query.publishDateFrom);
-    }
-    if (query.publishDateTo) {
-      publishDate.lte = new Date(query.publishDateTo);
-    }
-    and.push({ publishDate });
-  }
-
-  if (query.actorIds?.length) {
-    and.push({
-      actors: { some: { id: { in: query.actorIds } } },
-    });
-  }
-
-  if (!and.length) {
-    return {};
-  }
-
-  return and.length === 1 ? and[0] : { AND: and };
-}
-
-function pickMovieSortValue(
-  row: MovieAggRow,
-  sortBy: LeaderboardMovieSortBy,
-): number | string {
-  switch (sortBy) {
-    case LeaderboardMovieSortBy.RATINGS_COUNT:
-      return row.ratingsCount;
-    case LeaderboardMovieSortBy.TITLE:
-      return row.title.toLowerCase();
-    case LeaderboardMovieSortBy.PUBLISH_DATE:
-      return row.publishDate?.getTime() ?? 0;
-    case LeaderboardMovieSortBy.AVG_PERSONAL_RATE:
-    default:
-      return row.effectiveAvg;
-  }
-}
-
-function compareMovieRows(
-  a: MovieAggRow,
-  b: MovieAggRow,
-  sortBy: LeaderboardMovieSortBy,
-  sortOrder: LeaderboardMovieSortOrder,
-): number {
-  const va = pickMovieSortValue(a, sortBy);
-  const vb = pickMovieSortValue(b, sortBy);
-
-  let primary: number;
-  if (typeof va === 'string' && typeof vb === 'string') {
-    primary = va.localeCompare(vb, 'ru');
-  } else if (typeof va === 'number' && typeof vb === 'number') {
-    primary = va === vb ? 0 : va < vb ? -1 : 1;
-  } else {
-    primary = String(va).localeCompare(String(vb), 'ru');
-  }
-
-  const directed =
-    sortOrder === LeaderboardMovieSortOrder.DESC ? -primary : primary;
-
-  if (directed !== 0) {
-    return directed;
-  }
-
-  return a.movieId.localeCompare(b.movieId);
-}
-
-// Рейтинг меняется медленно → короткий TTL снимает и полное сканирование
-// user_movies, и N+1 по бейджам для всех одновременных зрителей.
 const LEADERBOARD_TTL_MS = 30_000;
 
 @Injectable()
 export class LeaderboardService {
-  // Агрегация по всем user_movies не зависит от sort/offset — кэшируем отдельно
-  private readonly aggCache = new TtlCache<UserAggRow[]>(LEADERBOARD_TTL_MS);
   private readonly topUsersCache = new TtlCache<LeaderboardTopUsersResponseDto>(
     LEADERBOARD_TTL_MS,
   );
@@ -210,77 +68,16 @@ export class LeaderboardService {
     private readonly badgeService: BadgeService,
   ) {}
 
-  /**
-   * Считает рейтинг через Prisma Client: загружаем связи user + movie и агрегируем в памяти.
-   * При очень большом числе записей `user_movies` имеет смысл вынести агрегацию в SQL/материализованное представление.
-   */
-  private async buildAggregatedRows(): Promise<UserAggRow[]> {
-    const rows = await this.prismaService.userMovie.findMany({
-      select: {
-        userId: true,
-        watchStatus: true,
-        user: {
-          select: {
-            id: true,
-            fullName: true,
-            createdAt: true,
-          },
-        },
-        movie: {
-          select: {
-            isSerial: true,
-            seasonCount: true,
-            episodeCount: true,
-          },
-        },
-      },
-    });
-
-    const map = new Map<string, UserAggRow>();
-
-    for (const um of rows) {
-      const userId = um.userId;
-      let agg = map.get(userId);
-
-      if (!agg) {
-        agg = {
-          userId,
-          displayName: um.user.fullName,
-          registeredAt: um.user.createdAt,
-          filmsCount: 0,
-          serialsTotal: 0,
-          serialsCompleted: 0,
-        };
-        map.set(userId, agg);
-      }
-
-      if (!um.movie.isSerial) {
-        agg.filmsCount += 1;
-        continue;
-      }
-
-      agg.serialsTotal += 1;
-
-      if (um.watchStatus === WatchStatus.COMPLETED) {
-        agg.serialsCompleted += 1;
-      }
-    }
-
-    return [...map.values()];
-  }
-
-  public async getTopUsers(
+  public getTopUsers(
     query: LeaderboardQueryDto,
   ): Promise<LeaderboardTopUsersResponseDto> {
     const limit = Math.min(Math.max(query.limit ?? 20, 1), 20);
     const offset = Math.max(query.offset ?? 0, 0);
     const sortBy = query.sortBy ?? LeaderboardSortBy.TOTAL_SCORE;
     const sortOrder = query.sortOrder ?? LeaderboardSortOrder.DESC;
-
-    const key = `${sortBy}|${sortOrder}|${offset}|${limit}`;
-
-    return this.topUsersCache.wrap(key, () =>
-      this.computeTopUsers(limit, offset, sortBy, sortOrder),
+    return this.topUsersCache.wrap(
+      `${dataRevision(this.prismaService)}|${sortBy}|${sortOrder}|${offset}|${limit}`,
+      () => this.computeTopUsers(limit, offset, sortBy, sortOrder),
     );
   }
 
@@ -290,66 +87,64 @@ export class LeaderboardService {
     sortBy: LeaderboardSortBy,
     sortOrder: LeaderboardSortOrder,
   ): Promise<LeaderboardTopUsersResponseDto> {
-    // Агрегация шарится из кэша — копируем перед sort (мутирующий) во избежание гонок
-    const aggregated = await this.aggCache.wrap('all', () =>
-      this.buildAggregatedRows(),
-    );
-    const sorted = [...aggregated].sort((a, b) =>
-      compareRows(a, b, sortBy, sortOrder),
-    );
-
-    const total = sorted.length;
-    const pageRows = sorted.slice(offset, offset + limit);
-    const badgesByUser = await this.badgeService.getTopUnlockedBadgesForUsers(
-      pageRows.map((row) => row.userId),
+    // Одна команда даёт страницу и total из одного снимка БД, включая пустую страницу.
+    const [result] = await this.prismaService.$queryRaw<
+      Array<{
+        items: Omit<LeaderboardUserItemDto, 'badges'>[];
+        total: number;
+      }>
+    >`
+      WITH aggregated AS (
+        SELECT u.id AS "userId", u."fullName" AS "displayName", u.created_at AS "registeredAt",
+          count(*) FILTER (WHERE NOT m.is_serial)::int AS "filmsCount",
+          count(*) FILTER (WHERE m.is_serial)::int AS "serialsTotal",
+          count(*) FILTER (WHERE m.is_serial AND um.watch_status = 'COMPLETED')::int AS "serialsCompleted"
+        FROM user_movies um JOIN users u ON u.id = um.user_id JOIN movies m ON m.id = um.movie_id
+        GROUP BY u.id
+      ), scored AS (
+        SELECT *, "filmsCount" + "serialsCompleted" AS "totalScore",
+          CASE ${sortBy}::text
+            WHEN 'registeredAt' THEN extract(epoch FROM "registeredAt")
+            WHEN 'films' THEN "filmsCount"
+            WHEN 'serialsCompleted' THEN "serialsCompleted"
+            WHEN 'serialsTotal' THEN "serialsTotal"
+            ELSE "filmsCount" + "serialsCompleted"
+          END AS sort_value
+        FROM aggregated
+      ), page AS (
+        SELECT "userId", "displayName", "registeredAt" AT TIME ZONE 'UTC' AS "registeredAt", "filmsCount", "serialsTotal", "serialsCompleted", "totalScore",
+          row_number() OVER (ORDER BY
+            CASE WHEN ${sortOrder}::text = 'asc' THEN sort_value END ASC,
+            CASE WHEN ${sortOrder}::text = 'desc' THEN sort_value END DESC, "userId" ASC)::int AS rank
+        FROM scored
+        ORDER BY rank LIMIT ${limit} OFFSET ${offset}
+      )
+      SELECT (SELECT count(*)::int FROM scored) AS total,
+        COALESCE((SELECT jsonb_agg(to_jsonb(page) ORDER BY rank) FROM page), '[]'::jsonb) AS items
+    `;
+    const badges = await this.badgeService.getTopUnlockedBadgesForUsers(
+      result.items.map((row) => row.userId),
       6,
     );
-
-    const items: LeaderboardUserItemDto[] = pageRows.map((row, index) => {
-      return {
-        rank: offset + index + 1,
-        userId: row.userId,
-        displayName: row.displayName,
-        registeredAt: row.registeredAt.toISOString(),
-        filmsCount: row.filmsCount,
-        serialsTotal: row.serialsTotal,
-        serialsCompleted: row.serialsCompleted,
-        totalScore: row.filmsCount + row.serialsCompleted,
-        badges: badgesByUser.get(row.userId) ?? [],
-      };
-    });
-
     return {
-      items,
-      total,
+      items: result.items.map((row) => ({
+        ...row,
+        registeredAt: new Date(row.registeredAt).toISOString(),
+        badges: badges.get(row.userId) ?? [],
+      })),
+      total: result.total,
       limit,
       offset,
     };
   }
 
-  /**
-   * Топ фильмов/сериалов по среднему personal_rate среди user_movies.
-   * Фильмы без ни одной оценки считаются с effectiveAvg = 0 (учитываются при диапазоне с 0).
-   * При большом каталоге имеет смысл вынести агрегацию в SQL.
-   */
-  public async getTopMovies(
+  public getTopMovies(
     query: LeaderboardTopMoviesQueryDto,
   ): Promise<LeaderboardTopMoviesResponseDto> {
-    const key = JSON.stringify({
-      s: query.sortBy ?? null,
-      o: query.sortOrder ?? null,
-      off: query.offset ?? 0,
-      lim: query.limit ?? 20,
-      rmin: query.personalRateMin ?? null,
-      rmax: query.personalRateMax ?? null,
-      g: query.genres ?? null,
-      c: query.countryCodes ?? null,
-      a: query.actorIds ?? null,
-      pf: query.publishDateFrom ?? null,
-      pt: query.publishDateTo ?? null,
-    });
-
-    return this.topMoviesCache.wrap(key, () => this.computeTopMovies(query));
+    return this.topMoviesCache.wrap(
+      `${dataRevision(this.prismaService)}|${JSON.stringify(query)}`,
+      () => this.computeTopMovies(query),
+    );
   }
 
   private async computeTopMovies(
@@ -359,94 +154,71 @@ export class LeaderboardService {
     const offset = Math.max(query.offset ?? 0, 0);
     const sortBy = query.sortBy ?? LeaderboardMovieSortBy.AVG_PERSONAL_RATE;
     const sortOrder = query.sortOrder ?? LeaderboardMovieSortOrder.DESC;
-
-    let rateMin = query.personalRateMin ?? 0;
-    let rateMax = query.personalRateMax ?? 10;
-    if (rateMin > rateMax) {
-      [rateMin, rateMax] = [rateMax, rateMin];
-    }
-
-    const where = buildTopMoviesMovieWhere(query);
-
-    const movies = await this.prismaService.movie.findMany({
-      where,
-      select: {
-        id: true,
-        title: true,
-        isSerial: true,
-        publishDate: true,
-        poster: { select: { url: true } },
-      },
-    });
-
-    if (!movies.length) {
-      return { items: [], total: 0, limit, offset };
-    }
-
-    const movieIds = movies.map((m) => m.id);
-
-    const grouped = await this.prismaService.userMovie.groupBy({
-      by: ['movieId'],
-      where: {
-        movieId: { in: movieIds },
-        personalRate: { not: null },
-      },
-      _avg: { personalRate: true },
-      _count: { _all: true },
-    });
-
-    const statMap = new Map(
-      grouped.map((g) => [
-        g.movieId,
-        {
-          avg: g._avg.personalRate != null ? Number(g._avg.personalRate) : null,
-          count: g._count._all,
-        },
-      ]),
+    const rateMin = Math.min(
+      query.personalRateMin ?? 0,
+      query.personalRateMax ?? 10,
     );
-
-    const rows: MovieAggRow[] = movies.map((m) => {
-      const s = statMap.get(m.id);
-      const avgPersonal = s?.avg ?? null;
-      const ratingsCount = s?.count ?? 0;
-      const effectiveAvg =
-        avgPersonal !== null && !Number.isNaN(avgPersonal) ? avgPersonal : 0;
-
-      return {
-        movieId: m.id,
-        title: m.title,
-        isSerial: m.isSerial,
-        publishDate: m.publishDate,
-        posterUrl: m.poster?.url ?? null,
-        avgPersonal: avgPersonal,
-        ratingsCount,
-        effectiveAvg,
-      };
-    });
-
-    const filtered = rows.filter(
-      (r) => r.effectiveAvg >= rateMin && r.effectiveAvg <= rateMax,
+    const rateMax = Math.max(
+      query.personalRateMin ?? 0,
+      query.personalRateMax ?? 10,
     );
-
-    filtered.sort((a, b) => compareMovieRows(a, b, sortBy, sortOrder));
-
-    const total = filtered.length;
-    const pageRows = filtered.slice(offset, offset + limit);
-
-    const items: LeaderboardMovieItemDto[] = pageRows.map((row, index) => ({
-      rank: offset + index + 1,
-      movieId: row.movieId,
-      title: row.title,
-      isSerial: row.isSerial,
-      publishDate: row.publishDate?.toISOString() ?? null,
-      posterUrl: row.posterUrl,
-      avgPersonalRate: row.avgPersonal,
-      ratingsCount: row.ratingsCount,
-    }));
-
+    const genres = (query.genres ?? []).map((genre) =>
+      genre === 'Sci_fi' ? 'Sci-fi' : genre,
+    );
+    const countries = query.countryCodes ?? [];
+    const actors = query.actorIds ?? [];
+    const from = query.publishDateFrom ? new Date(query.publishDateFrom) : null;
+    const to = query.publishDateTo ? new Date(query.publishDateTo) : null;
+    const [result] = await this.prismaService.$queryRaw<
+      Array<{
+        items: LeaderboardMovieItemDto[];
+        total: number;
+      }>
+    >`
+      WITH aggregated AS (
+        SELECT m.id AS "movieId", m.title, m.is_serial AS "isSerial", m.publish_date AS "publishDate",
+          p.url AS "posterUrl", avg(um.personal_rate)::float8 AS "avgPersonalRate",
+          count(um.personal_rate)::int AS "ratingsCount"
+        FROM movies m LEFT JOIN movie_posters p ON p.id = m.poster_id
+          LEFT JOIN user_movies um ON um.movie_id = m.id AND um.personal_rate IS NOT NULL
+        WHERE (${genres.length} = 0 OR m.genres::text[] && ${genres}::text[])
+          AND (${countries.length} = 0 OR m.country_codes::text[] && ${countries}::text[])
+          AND (${from}::timestamp IS NULL OR m.publish_date >= ${from})
+          AND (${to}::timestamp IS NULL OR m.publish_date <= ${to})
+          AND (${actors.length} = 0 OR EXISTS (
+            SELECT 1 FROM "_movie_actors" ma WHERE ma."B" = m.id AND ma."A" = ANY(${actors}::text[])
+          ))
+        GROUP BY m.id, p.url
+      ), filtered AS (
+        SELECT *, CASE ${sortBy}::text
+          WHEN 'ratingsCount' THEN "ratingsCount"
+          WHEN 'publishDate' THEN coalesce(extract(epoch FROM "publishDate"), 0)
+          ELSE coalesce("avgPersonalRate", 0)
+        END AS sort_value
+        FROM aggregated
+        WHERE coalesce("avgPersonalRate", 0) BETWEEN ${rateMin} AND ${rateMax}
+      ), page AS (
+        SELECT "movieId", title, "isSerial", "publishDate" AT TIME ZONE 'UTC' AS "publishDate", "posterUrl", "avgPersonalRate", "ratingsCount",
+          row_number() OVER (ORDER BY
+            CASE WHEN ${sortBy}::text = 'title' AND ${sortOrder}::text = 'asc' THEN lower(title) END COLLATE "ru-x-icu" ASC,
+            CASE WHEN ${sortBy}::text = 'title' AND ${sortOrder}::text = 'desc' THEN lower(title) END COLLATE "ru-x-icu" DESC,
+            CASE WHEN ${sortBy}::text <> 'title' AND ${sortOrder}::text = 'asc' THEN sort_value END ASC,
+            CASE WHEN ${sortBy}::text <> 'title' AND ${sortOrder}::text = 'desc' THEN sort_value END DESC,
+            "movieId" ASC)::int AS rank
+        FROM filtered
+        ORDER BY rank LIMIT ${limit} OFFSET ${offset}
+      )
+      SELECT (SELECT count(*)::int FROM filtered) AS total,
+        COALESCE((SELECT jsonb_agg(to_jsonb(page) ORDER BY rank) FROM page), '[]'::jsonb) AS items
+    `;
     return {
-      items,
-      total,
+      items: result.items.map((row) => ({
+        ...row,
+        publishDate: row.publishDate
+          ? new Date(row.publishDate).toISOString()
+          : null,
+      })),
+      total: result.total,
       limit,
       offset,
     };

@@ -113,6 +113,20 @@ export class MovieController {
     });
   }
 
+  @Get('suggestions')
+  @AuthProtected()
+  public suggestions(
+    @Authorized() user: User,
+    @Query('q') q?: unknown,
+    @Query('limit') limit?: unknown,
+  ) {
+    return this.movieService.suggestions(
+      user.id,
+      queryString(q, 'q'),
+      queryInteger(limit, 'limit', 10, 1, 25),
+    );
+  }
+
   @ApiOperation({
     summary: 'Поиск фильмов',
     description: 'Поиск по названию и/или жанру',

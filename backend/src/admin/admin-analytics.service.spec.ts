@@ -22,13 +22,13 @@ describe('Учёт использования', () => {
     } as unknown as PrismaService);
 
     try {
-      const result = await service.overview(7);
+      const result = await service.overview(7, 'Europe/Samara');
 
       expect(result.since).toBe('2026-10-07T20:00:00.000Z');
       expect(result.until).toBe('2026-10-13T21:30:00.000Z');
       expect(result.returning).toBeNull();
       expect(result.inactive).toBeNull();
-      await service.overview(7);
+      await service.overview(7, 'Europe/Samara');
       expect(count).toHaveBeenCalledTimes(5);
     } finally {
       jest.useRealTimers();

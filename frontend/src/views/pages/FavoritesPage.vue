@@ -31,14 +31,15 @@ const userId = computed(() => mainStore.userData?.id || "");
 /** Запросы со страницы избранного всегда ограничиваются isFavorite=true */
 const applyFavoriteScopeToStore = () => {
   userMoviesStore.setFilters({
-    ...userMoviesStore.filters,
+    ...localFilters.value,
     isFavorite: true,
+    ...(activeKind.value !== "all" ? {isSerial: activeKind.value === "serials"} : {}),
   });
 };
 
 const favoriteUserMovies = computed(() => userMoviesStore.favoriteUserMovies);
 
-// Переключатель типа (эталон): фильтруем уже загруженное избранное на клиенте
+// Тип входит в серверный фильтр, поэтому total учитывает все страницы.
 type FavoriteKind = "all" | "movies" | "serials";
 
 const KIND_TABS: { key: FavoriteKind; label: string }[] = [
@@ -56,11 +57,12 @@ const setKind = (kind: FavoriteKind): void => {
 
   activeKind.value = kind;
   userMoviesStore.setCurrentPage(1);
+  void refetchFavorites().catch(() => message.error("Ошибка загрузки избранного"));
 };
 
 const shouldFetchFavorites = computed(
   () =>
-    !favoriteUserMovies.value.length && mainStore.isLoggedIn && !!userId.value
+    !userMoviesStore.isLoaded && mainStore.isLoggedIn && !!userId.value
 );
 
 const refetchFavorites = async () => {
@@ -69,13 +71,14 @@ const refetchFavorites = async () => {
   }
 
   applyFavoriteScopeToStore();
-  await userMoviesStore.fetchUserMovies(userId.value);
+  if (searchQuery.value.trim()) await userMoviesStore.searchUserMovies(userId.value, searchQuery.value);
+  else await userMoviesStore.fetchUserMovies(userId.value);
 };
 
 const handleFiltersUpdate = async (filters: UserMoviesFilters) => {
   localFilters.value = filters;
   userMoviesStore.setCurrentPage(1);
-  userMoviesStore.setFilters({ ...filters, isFavorite: true });
+  applyFavoriteScopeToStore();
 
   if (!userId.value) {
     return;
@@ -129,22 +132,21 @@ const favoritesForView = computed(() => {
   return source.filter((um) => um.movie.isSerial === wantSerial);
 });
 
-const visibleFavorites = computed(() =>
-  favoritesForView.value.slice(
-    0,
-    userMoviesStore.currentPage * userMoviesStore.pageSize
-  )
-);
+const visibleFavorites = computed(() => favoritesForView.value);
 
 const restCount = computed(
-  () => favoritesForView.value.length - visibleFavorites.value.length
+  () => Math.max(0, userMoviesStore.totalCount - visibleFavorites.value.length)
 );
 
-const showMore = (): void => {
-  userMoviesStore.setCurrentPage(userMoviesStore.currentPage + 1);
+const showMore = async (): Promise<void> => {
+  try {
+    await userMoviesStore.loadMore(userId.value);
+  } catch {
+    message.error("Не удалось загрузить следующую порцию");
+  }
 };
 
-const totalFavorites = computed(() => favoritesForView.value.length);
+const totalFavorites = computed(() => userMoviesStore.totalCount);
 
 const favoritesSubtitle = computed(
   () => `${pluralize(totalFavorites.value, PLURAL.title)} отмечено сердечком`
@@ -168,7 +170,7 @@ const favoritesEmptyState = computed(() => {
   }
 
   // Если избранное есть, но отфильтровано по типу — это не «пусто», а «нет такого типа»
-  if (activeKind.value !== "all" && favoriteUserMovies.value.length) {
+  if (activeKind.value !== "all") {
     return {
       variant: "empty" as const,
       icon:
@@ -280,7 +282,7 @@ onBeforeUnmount(() => {
         :show-status="false"
         search-placeholder="Поиск по избранному"
         :search-handler="handleSearch"
-        :result-count="userMoviesStore.currentList.length"
+        :result-count="userMoviesStore.totalCount"
         @update:filters="handleFiltersUpdate"
       />
       <StateBlock
@@ -320,7 +322,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-if="restCount > 0" class="favorites__more">
-          <a-button size="large" @click="showMore">
+          <a-button size="large" :loading="userMoviesStore.isLoadingMore" @click="showMore">
             Показать ещё
             <span class="favorites__more-count">{{ restCount }}</span>
           </a-button>

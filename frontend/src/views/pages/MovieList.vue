@@ -22,11 +22,13 @@ import CollectionFiltersBar from "@/components/MoviesFiltersPanel/CollectionFilt
 import { FETCH_METHOD, useFetch, useEscapeKey } from "@/composable";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
 import ConfirmDialog from "@/components/ConfirmDialog/ConfirmDialog.vue";
+import CollectionImportModal from "@/components/CollectionImport/CollectionImportModal.vue";
 
 const router = useRouter();
 const route = useRoute();
 const userMoviesStore = useUserMoviesStore();
 const mainStore = useMainStore();
+const importOpen = ref(false);
 
 interface QuickAddOption {
   value: string;
@@ -37,6 +39,8 @@ interface QuickAddOption {
 const QUICK_ADD_MIN_QUERY_LENGTH = 2;
 const QUICK_ADD_DEBOUNCE_MS = 280;
 const QUICK_ADD_OPTIONS_LIMIT = 10;
+type QuickAddMovie = Pick<MovieApiResponse, "id" | "title" | "isSerial" | "publishDate"> & {inCollection: boolean};
+let quickAddRequest = 0;
 
 const imageErrors = ref<Set<string>>(new Set());
 const quickAddQuery = ref("");
@@ -47,20 +51,21 @@ const quickAddFabRoot = ref<HTMLElement | null>(null);
 let quickAddDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const userId = computed(() => mainStore.userData?.id || "");
-const totalMovies = computed(() => userMoviesStore.currentList.length);
+const totalMovies = computed(() => userMoviesStore.totalCount);
 
 // Догрузка вместо страниц (спека new-9): порция = pageSize
 const restCount = computed(
   () => totalMovies.value - userMoviesStore.visibleUserMovies.length
 );
 
-const showMore = (): void => {
-  userMoviesStore.setCurrentPage(userMoviesStore.currentPage + 1);
+const showMore = async (): Promise<void> => {
+  try {
+    await userMoviesStore.loadMore(userId.value);
+  } catch {
+    message.error("Не удалось загрузить следующую порцию");
+  }
 };
 
-const userMovieIds = computed(() => {
-  return new Set(userMoviesStore.userMovies.map((item) => item.movieId));
-});
 const showSkeleton = useMinLoading(() => userMoviesStore.isLoading);
 
 const shouldFetchMovies = computed(
@@ -291,6 +296,7 @@ const goToMovie = (item: UserMovie) => {
 };
 
 const resetQuickAddState = () => {
+  quickAddRequest++;
   quickAddQuery.value = "";
   quickAddOptions.value = [];
   isQuickAddLoading.value = false;
@@ -306,6 +312,7 @@ const openQuickAddPanel = () => {
 };
 
 const closeQuickAddPanel = () => {
+  resetQuickAddState();
   isQuickAddPanelOpen.value = false;
 };
 
@@ -321,7 +328,7 @@ const toggleQuickAddPanel = () => {
 };
 
 const buildQuickAddOptionLabel = (
-  movie: MovieApiResponse,
+  movie: QuickAddMovie,
   isExisting: boolean
 ) => {
   const mediaType = movie.isSerial ? "сериал" : "фильм";
@@ -334,6 +341,7 @@ const buildQuickAddOptionLabel = (
 };
 
 const fetchQuickAddOptions = async (query: string) => {
+  const request = ++quickAddRequest;
   const q = query.trim();
 
   if (!q || q.length < QUICK_ADD_MIN_QUERY_LENGTH) {
@@ -346,8 +354,8 @@ const fetchQuickAddOptions = async (query: string) => {
   isQuickAddLoading.value = true;
 
   try {
-    const endpoint = `/movies/search?q=${encodeURIComponent(q)}`;
-    const { data, status } = await useFetch<MovieApiResponse[]>(endpoint, {
+    const endpoint = `/movies/suggestions?q=${encodeURIComponent(q)}&limit=${QUICK_ADD_OPTIONS_LIMIT}`;
+    const { data, status } = await useFetch<QuickAddMovie[]>(endpoint, {
       method: FETCH_METHOD.get,
     });
 
@@ -355,8 +363,9 @@ const fetchQuickAddOptions = async (query: string) => {
       throw new Error("Не удалось загрузить подсказки");
     }
 
-    const prepared = data.slice(0, QUICK_ADD_OPTIONS_LIMIT).map((movie) => {
-      const isExisting = userMovieIds.value.has(movie.id);
+    if (request !== quickAddRequest) return;
+    const prepared = data.map((movie) => {
+      const isExisting = movie.inCollection;
 
       return {
         value: movie.id,
@@ -367,14 +376,16 @@ const fetchQuickAddOptions = async (query: string) => {
 
     quickAddOptions.value = prepared;
   } catch {
-    quickAddOptions.value = [];
+    if (request === quickAddRequest) quickAddOptions.value = [];
   } finally {
-    isQuickAddLoading.value = false;
+    if (request === quickAddRequest) isQuickAddLoading.value = false;
   }
 };
 
 const handleQuickAddSearch = (value: string) => {
+  quickAddRequest++;
   quickAddQuery.value = value;
+  quickAddOptions.value = [];
 
   if (quickAddDebounceTimer) {
     clearTimeout(quickAddDebounceTimer);
@@ -393,6 +404,7 @@ const handleQuickAddSearch = (value: string) => {
   quickAddDebounceTimer = setTimeout(() => {
     void fetchQuickAddOptions(value);
   }, QUICK_ADD_DEBOUNCE_MS);
+  isQuickAddLoading.value = true;
 };
 
 const handleQuickAddSelect = async (movieId: string) => {
@@ -492,6 +504,7 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+  resetQuickAddState();
   window.removeEventListener("mousedown", onGlobalPointerDown);
   window.removeEventListener("keydown", onGlobalKeydown);
 
@@ -538,6 +551,7 @@ watch(
         :result-count="totalMovies"
         @update:filters="handleFiltersUpdate"
       />
+      <div class="movie-list__import"><a-button @click="importOpen = true">Импорт коллекции</a-button></div>
       <StateBlock
         v-if="userMoviesStore.isError"
         v-bind="STATE_PRESETS.collectionError"
@@ -579,7 +593,7 @@ watch(
         v-if="showPaginator && userMoviesStore.hasMoreUserMovies"
         class="movie-list__more"
       >
-        <a-button size="large" @click="showMore">
+        <a-button size="large" :loading="userMoviesStore.isLoadingMore" @click="showMore">
           Показать ещё
           <span class="movie-list__more-count">{{ restCount }}</span>
         </a-button>
@@ -593,6 +607,7 @@ watch(
       :loading="isRemoving"
       @confirm="confirmRemoval"
     />
+    <CollectionImportModal v-if="importOpen" v-model="importOpen" @imported="userMoviesStore.refreshAfterImport(userId)" />
 
     <div ref="quickAddFabRoot" class="quick-add-fab" data-tour="tour-quick-add">
       <Transition name="quick-add-fab-panel">
@@ -611,6 +626,7 @@ watch(
             v-model:value="quickAddQuery"
             :options="quickAddOptions"
             :filter-option="false"
+            :get-popup-container="(trigger: HTMLElement) => trigger.parentElement ?? trigger"
             placement="topLeft"
             :not-found-content="
               quickAddQuery.trim().length >= QUICK_ADD_MIN_QUERY_LENGTH &&
@@ -658,6 +674,7 @@ watch(
 @use "@/styles/antd-overrides" as *;
 
 .movie-list {
+  &__import { display: flex; justify-content: flex-end; margin: 12px 0 20px; }
   width: 100%;
   display: flex;
   flex-direction: column;

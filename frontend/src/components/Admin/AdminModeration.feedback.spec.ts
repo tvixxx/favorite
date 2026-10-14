@@ -2,6 +2,7 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AdminModeration from "./AdminModeration.vue";
+import {createPinia} from 'pinia';
 
 const api = vi.hoisted(() => ({ get: vi.fn(), patch: vi.fn() }));
 vi.mock("@/services/api", () => ({ default: api }));
@@ -30,7 +31,7 @@ async function render() {
   await router.push("/admin?moderation=feedback");
   const wrapper = mount(AdminModeration, {
     global: {
-      plugins: [router],
+      plugins: [router,createPinia()],
       stubs: {
         BaseModal: {
           props: ["modelValue"],

@@ -7,6 +7,9 @@ import { useMediaQuery } from "@vueuse/core";
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
+import ImagePicker from "@/components/ImagePicker/ImagePicker.vue";
+import type { ImageSelection } from "@/services/media";
+import { EMAIL_REGEX } from "@/constants";
 import { useMainStore } from "@/state/state";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { FEEDBACK_ENDPOINT, SUPPORT_EMAIL } from "@/constants";
@@ -61,6 +64,8 @@ const text = ref("");
 const email = ref("");
 const isSending = ref(false);
 const sendError = ref<string | null>(null);
+const screenshot = ref<ImageSelection | null>(null);
+const uploading = ref(false);
 
 // Страница, с которой пришли — уходит вместе с обращением
 const fromUrl = ref("");
@@ -69,12 +74,22 @@ onMounted(() => {
   email.value = mainStore.userData?.email ?? "";
 
   const previous = router.options.history.state.back;
-  fromUrl.value = typeof previous === "string" ? previous : "/feedback";
+  fromUrl.value =
+    typeof previous === "string"
+      ? new URL(previous, window.location.origin).pathname
+      : "/feedback";
 });
 
 const messageLength = computed(() => text.value.trim().length);
+const emailValid = computed(() => !email.value.trim() || (EMAIL_REGEX.test(email.value.trim()) && email.value.trim().length <= 254));
 const canSend = computed(
-  () => messageLength.value >= MESSAGE_MIN && !isSending.value,
+  () =>
+    messageLength.value >= MESSAGE_MIN &&
+    messageLength.value <= MESSAGE_MAX &&
+    !isSending.value &&
+    !uploading.value &&
+    (!screenshot.value || !!screenshot.value.assetId) &&
+    emailValid.value
 );
 
 const goBack = (): void => {
@@ -84,6 +99,7 @@ const goBack = (): void => {
 const resetForm = (): void => {
   type.value = "IDEA";
   text.value = "";
+  screenshot.value = null;
 };
 
 const submit = async (): Promise<void> => {
@@ -108,6 +124,7 @@ const submit = async (): Promise<void> => {
         pageUrl: fromUrl.value,
         userAgent: navigator.userAgent,
         viewport: `${window.innerWidth}x${window.innerHeight}`,
+        screenshotAssetId: screenshot.value?.assetId ?? undefined,
       },
     });
 
@@ -162,7 +179,11 @@ const submit = async (): Promise<void> => {
           </p>
 
           <span class="feedback-label">О чём расскажете?</span>
-          <div class="feedback-types" role="radiogroup" aria-label="Тип обращения">
+          <div
+            class="feedback-types"
+            role="radiogroup"
+            aria-label="Тип обращения"
+          >
             <button
               v-for="item in FEEDBACK_TYPES"
               :key="item.value"
@@ -174,6 +195,7 @@ const submit = async (): Promise<void> => {
                 { 'feedback-type--on': type === item.value },
               ]"
               :aria-checked="type === item.value"
+              :disabled="isSending"
               @click="type = item.value"
             >
               <BaseIcon :name="item.icon" :width="23" :height="23" />
@@ -188,19 +210,27 @@ const submit = async (): Promise<void> => {
             placeholder="Опишите идею или проблему — что происходит, чего ждали и как это можно улучшить."
             :rows="isMobile ? 4 : 5"
             :maxlength="MESSAGE_MAX"
+            :disabled="isSending"
           />
           <div class="feedback-page__counter">
             {{ messageLength }} / {{ MESSAGE_MAX }}
           </div>
 
-          <!-- Вложения: в проекте пока нет хранилища файлов -->
-          <div class="feedback-attach" aria-disabled="true">
-            <BaseIcon name="ph:paperclip" :width="20" :height="20" />
-            <span class="feedback-attach__text">
-              Прикрепить скриншот
-              <span class="feedback-attach__hint">— скоро</span>
-            </span>
-          </div>
+          <span class="feedback-label"
+            >Скриншот
+            <span class="feedback-label__optional">— необязательно</span></span
+          >
+          <ImagePicker
+            v-model="screenshot"
+            purpose="FEEDBACK_SCREENSHOT"
+            label="Скриншот"
+            :disabled="isSending"
+            @busy="uploading = $event"
+          />
+          <p class="feedback-page__context">
+            Скриншот виден вам и администратору. Проверьте, что на нём нет
+            паролей и другой лишней личной информации.
+          </p>
 
           <span class="feedback-label">
             E-mail для ответа
@@ -211,15 +241,21 @@ const submit = async (): Promise<void> => {
             class="feedback-page__email"
             placeholder="name@mail.ru"
             type="email"
+            :maxlength="254"
+            :disabled="isSending"
+            :aria-invalid="!emailValid"
+            aria-describedby="feedback-email-error"
           >
             <template #prefix>
               <BaseIcon name="ph:envelope-simple" :width="18" :height="18" />
             </template>
           </a-input>
+          <p v-if="!emailValid" id="feedback-email-error" role="alert">Введите корректный email или оставьте поле пустым.</p>
 
           <p class="feedback-page__context">
             <BaseIcon name="ph:info" :width="16" :height="16" />
-            К сообщению приложим страницу, с которой вы пишете, и данные браузера
+            К сообщению приложим страницу, с которой вы пишете, и данные
+            браузера
           </p>
 
           <StateBlock
@@ -476,8 +512,7 @@ const submit = async (): Promise<void> => {
   font-weight: 500;
   color: var(--fv-color-text-secondary);
   cursor: pointer;
-  transition:
-    border-color var(--fv-motion-fast) var(--fv-ease),
+  transition: border-color var(--fv-motion-fast) var(--fv-ease),
     background var(--fv-motion-fast) var(--fv-ease),
     color var(--fv-motion-fast) var(--fv-ease);
 

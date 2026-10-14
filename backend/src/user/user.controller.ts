@@ -26,6 +26,7 @@ import type { User } from '../generated/prisma/client';
 import { queryString } from '../common/utils/query-value';
 import { BadRequestException } from '@nestjs/common';
 import { isEmail } from 'class-validator';
+import { TIMEZONES } from '../common/utils/timezone';
 
 @ApiTags('Users')
 @Controller('users')
@@ -124,5 +125,17 @@ export class UserController {
   @ApiForbiddenResponse()
   public delete(@Param('id') id: string, @Authorized() user: User) {
     return this.userService.delete(id, user.id);
+  }
+}
+
+@ApiTags('Users')
+@Controller('timezones')
+export class TimezoneController {
+  @Get()
+  @ApiOperation({
+    summary: 'Поддерживаемые часовые пояса IANA. По умолчанию UTC',
+  })
+  public list() {
+    return TIMEZONES;
   }
 }

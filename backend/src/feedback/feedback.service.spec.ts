@@ -1,12 +1,16 @@
 import { FeedbackService } from './feedback.service';
 import type { PrismaService } from '../prisma/prisma.service';
+import type { MediaService } from '../media/media.service';
 jest.mock('../prisma/prisma.service', () => ({ PrismaService: class {} }));
 
 describe('Административная очередь обращений', () => {
   it('возвращает 404 для отсутствующего обращения', async () => {
-    const service = new FeedbackService({
-      feedback: { findUnique: jest.fn().mockResolvedValue(null) },
-    } as unknown as PrismaService);
+    const service = new FeedbackService(
+      {
+        feedback: { findUnique: jest.fn().mockResolvedValue(null) },
+      } as unknown as PrismaService,
+      {} as MediaService,
+    );
 
     await expect(
       service.updateStatus('missing', 'DONE', 'admin'),
@@ -21,14 +25,18 @@ describe('Административная очередь обращений', (
     });
     const create = jest.fn().mockResolvedValue({});
     const tx = { feedback: { update }, adminAuditLog: { create } };
-    const service = new FeedbackService({
-      feedback: {
-        findUnique: jest
-          .fn()
-          .mockResolvedValue({ id: 'feedback', status: 'NEW' }),
-      },
-      $transaction: (work: (client: typeof tx) => Promise<unknown>) => work(tx),
-    } as unknown as PrismaService);
+    const service = new FeedbackService(
+      {
+        feedback: {
+          findUnique: jest
+            .fn()
+            .mockResolvedValue({ id: 'feedback', status: 'NEW' }),
+        },
+        $transaction: (work: (client: typeof tx) => Promise<unknown>) =>
+          work(tx),
+      } as unknown as PrismaService,
+      {} as MediaService,
+    );
 
     expect(
       await service.updateStatus('feedback', 'DONE', 'admin'),

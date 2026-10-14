@@ -2,12 +2,16 @@
 import { computed, onMounted, onScopeDispose, ref, watch } from "vue";
 import {
   Alert as AAlert,
-  Spin as ASpin,
   RadioGroup as ARadioGroup,
   RadioButton as ARadioButton,
 } from "ant-design-vue";
 import api from "@/services/api";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
+import AdminDataRegion from "./AdminDataRegion.vue";
+import AdminEngagement from "./AdminEngagement.vue";
+import type { AdminEngagementData } from "./admin.types";
+import {useDateTime} from '@/composable/useDateTime';
+const {formatDate}=useDateTime();
 
 interface Overview {
   users: number;
@@ -25,6 +29,7 @@ interface Overview {
   registrations: { day: string; count: number }[];
   features: { feature: string; users: number; actions: number }[];
   heatmap: { day: number; hour: number; users: number }[];
+  engagement?: AdminEngagementData;
 }
 const days = ref(30);
 const data = ref<Overview | null>(null);
@@ -116,7 +121,7 @@ watch(days, () => void load());
         <a-button @click="load">Повторить</a-button>
       </template>
     </a-alert>
-    <a-spin :spinning="loading">
+    <AdminDataRegion v-if="!error || data" :loading="loading">
       <template v-if="data">
         <div class="admin-metrics">
           <div>
@@ -162,7 +167,7 @@ watch(days, () => void load());
               >
             </div>
             <p class="admin-muted">
-              За {{ days }} дней · сохранившиеся аккаунты · UTC+4
+              За {{ days }} дней · сохранившиеся аккаунты · {{data.timezone}}
             </p>
             <div
               v-if="data.registrations.length"
@@ -227,10 +232,11 @@ watch(days, () => void load());
             </p>
           </section>
         </div>
+        <AdminEngagement v-if="data.engagement" :data="data.engagement" :days="days" :timezone="data.timezone" />
         <section v-if="data.startedAt" class="admin-heat-section">
           <h3>Активность по времени</h3>
           <p class="admin-muted">
-            Уникальные пользователи · день недели × час · UTC+4
+            Уникальные пользователи · день недели × час · {{data.timezone}}
           </p>
           <div
             class="admin-heat-scroll"
@@ -278,12 +284,12 @@ watch(days, () => void load());
           </p>
           <p class="admin-muted">
             История доступна с
-            {{ new Date(data.startedAt).toLocaleDateString("ru-RU") }}. До этой
+            {{ formatDate(data.startedAt) }}. До этой
             даты данных нет.
           </p>
         </section>
       </template>
-    </a-spin>
+    </AdminDataRegion>
   </section>
   <BaseModal
     v-model="registrationsOpen"
@@ -302,13 +308,13 @@ watch(days, () => void load());
         <a-radio-button :value="90">90 дней</a-radio-button>
       </a-radio-group>
       <a-alert v-if="error" :message="error" type="error" />
-      <a-spin :spinning="loading">
+      <AdminDataRegion v-if="!error || data" :loading="loading">
         <template v-if="data">
           <p class="admin-registration-total">
             Всего за период: <b>{{ registrationTotal }}</b>
           </p>
           <p class="admin-muted">
-            Сохранившиеся аккаунты · UTC+4. Текущий день ещё не завершён.
+            Сохранившиеся аккаунты · {{data.timezone}}. Текущий день ещё не завершён.
           </p>
           <div
             class="admin-registration-list"
@@ -337,7 +343,7 @@ watch(days, () => void load());
             Человек за день. Дни без регистраций не перечислены.
           </p>
         </template>
-      </a-spin>
+      </AdminDataRegion>
     </template>
     <template #footer>
       <a-button @click="registrationsOpen = false">Закрыть</a-button>

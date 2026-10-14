@@ -20,17 +20,17 @@ export async function fetchUserCollectionSuggestions(
     return [];
   }
 
-  const params = new URLSearchParams({ q });
-  const { data, status } = await useFetch<UserMovieApiResponse[]>(
-    `/users/${userId}/movies/search?${params.toString()}`,
+  const params = new URLSearchParams({ q, limit: String(Math.min(Math.max(limit, 1), 25)), offset: "0" });
+  const { data, status } = await useFetch<{items: UserMovieApiResponse[]}>(
+    `/users/${userId}/movies/page?${params.toString()}`,
     { method: FETCH_METHOD.get },
   );
 
-  if (status !== 200 || !Array.isArray(data)) {
+  if (status !== 200 || !Array.isArray(data?.items)) {
     return [];
   }
 
-  return mapUserMoviesFromApi(data).slice(0, limit);
+  return mapUserMoviesFromApi(data.items);
 }
 
 /** Точное совпадение строки «title» с карточкой в коллекции (после поиска). */

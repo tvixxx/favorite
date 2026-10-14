@@ -15,6 +15,8 @@ import type { NotificationDto } from "@/stores/notifications/types";
 import { currentTheme, setTheme, themes, type Theme } from "@/composable";
 import { createOnboardingDriver } from "@/onboarding/createOnboardingDriver";
 import { setOnboardingDone } from "@/composable/useOnboarding";
+import {useDateTime} from '@/composable/useDateTime';
+const {formatInstant}=useDateTime();
 
 const router = useRouter();
 const route = useRoute();
@@ -367,7 +369,7 @@ const handleMarkAllRead = async () => {
                 >
                   <span class="notif-panel__text">{{ summary(n) }}</span>
                   <span class="notif-panel__time">{{
-                    new Date(n.createdAt).toLocaleString("ru-RU", {
+                    formatInstant(n.createdAt, {
                       day: "2-digit",
                       month: "2-digit",
                       hour: "2-digit",

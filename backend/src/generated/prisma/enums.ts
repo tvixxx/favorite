@@ -20,7 +20,8 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 export const MediaPurpose = {
   MOVIE_POSTER: 'MOVIE_POSTER',
   USER_AVATAR: 'USER_AVATAR',
-  ACTOR_PHOTO: 'ACTOR_PHOTO'
+  ACTOR_PHOTO: 'ACTOR_PHOTO',
+  FEEDBACK_SCREENSHOT: 'FEEDBACK_SCREENSHOT'
 } as const
 
 export type MediaPurpose = (typeof MediaPurpose)[keyof typeof MediaPurpose]

@@ -57,7 +57,7 @@ const isAuthLoaded = computed(() => store.user.isAuthLoaded);
 // Гостевые экраны (вход/регистрация) — без шапки и таб-бара, даже если
 // состояние авторизации ещё «догоняет»
 const isGuestRoute = computed(() =>
-  route.matched.some((record) => record.meta.guest),
+  route.matched.some((record) => record.meta.guest || record.meta.authScreen),
 );
 
 const showNavMenu = computed(
@@ -127,7 +127,7 @@ useHotThemeKeys();
     <PwaStatus />
 
     <OnboardingModal
-      v-if="store.userData?.id"
+      v-if="store.userData?.id && !isGuestRoute"
       v-model:open="onboardingOpen"
       :user-id="store.userData.id"
     />
@@ -211,5 +211,7 @@ body {
   #app:has(.cm-footer) {
     padding-bottom: 0;
   }
+
+  #app:has(.auth-page) { padding-bottom: 0; }
 }
 </style>

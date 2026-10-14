@@ -36,7 +36,7 @@ export class AdminService {
     private readonly gateway: MessageGateway,
   ) {}
 
-  public async users(query: UsersQueryDto) {
+  public async users(query: UsersQueryDto, timezone = 'UTC') {
     const where: Prisma.UserWhereInput = query.q
       ? {
           OR: [
@@ -46,7 +46,7 @@ export class AdminService {
         }
       : {};
     where.role = query.role;
-    where.createdAt = createdAtRange(query);
+    where.createdAt = createdAtRange(query, timezone);
     if (query.state) {
       where.blockedAt = query.state === 'blocked' ? { not: null } : null;
     }
@@ -147,7 +147,7 @@ export class AdminService {
     }
   }
 
-  public async movies(query: CatalogQueryDto) {
+  public async movies(query: CatalogQueryDto, timezone = 'UTC') {
     const base: Prisma.MovieWhereInput = {
       ...(query.q ? { title: { contains: query.q, mode: 'insensitive' } } : {}),
       ...(query.kind ? { isSerial: query.kind === 'serial' } : {}),
@@ -158,7 +158,7 @@ export class AdminService {
             },
           }
         : {}),
-      createdAt: createdAtRange(query),
+      createdAt: createdAtRange(query, timezone),
     };
     const missing: Record<string, Prisma.MovieWhereInput> = {
       poster: { OR: [{ poster: null }, { poster: { url: '' } }] },

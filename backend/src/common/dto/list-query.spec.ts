@@ -8,9 +8,24 @@ import {
 
 describe('Фильтры административных списков', () => {
   it('включает целиком выбранный день в часовом поясе панели', () => {
-    expect(createdAtRange({ from: '2026-10-13', to: '2026-10-13' })).toEqual({
+    expect(
+      createdAtRange({ from: '2026-10-13', to: '2026-10-13' }, 'Europe/Samara'),
+    ).toEqual({
       gte: new Date('2026-10-12T20:00:00Z'),
       lt: new Date('2026-10-13T20:00:00Z'),
+    });
+  });
+
+  it('по умолчанию использует UTC, а для DST включает фактический календарный день', () => {
+    expect(createdAtRange({ from: '2026-10-13', to: '2026-10-13' })).toEqual({
+      gte: new Date('2026-10-13T00:00:00Z'),
+      lt: new Date('2026-10-14T00:00:00Z'),
+    });
+    expect(
+      createdAtRange({ from: '2024-03-31', to: '2024-03-31' }, 'Europe/Berlin'),
+    ).toEqual({
+      gte: new Date('2024-03-30T23:00:00Z'),
+      lt: new Date('2024-03-31T22:00:00Z'),
     });
   });
 

@@ -14,12 +14,14 @@ import { useMinLoading } from "@/components/Skeleton/useMinLoading";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import { avatarGradient, avatarLetter } from "@/composable/useAvatarGradient";
+import {useDateTime} from '@/composable/useDateTime';
 
 const route = useRoute();
 const router = useRouter();
 const chatStore = useChatStore();
 const userStatusStore = useUserStatusStore();
 const mainStore = useMainStore();
+const {formatInstant}=useDateTime();
 
 const showConversationsSkeleton = useMinLoading(() => chatStore.isLoading);
 
@@ -115,12 +117,12 @@ const formatTime = (dateString: string) => {
   const hours = Math.floor(diff / (1000 * 60 * 60));
 
   if (hours < 24) {
-    return date.toLocaleTimeString("ru-RU", {
+    return formatInstant(date, {
       hour: "2-digit",
       minute: "2-digit",
     });
   } else {
-    return date.toLocaleDateString("ru-RU", {
+    return formatInstant(date, {
       day: "2-digit",
       month: "2-digit",
     });

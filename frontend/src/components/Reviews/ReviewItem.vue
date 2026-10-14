@@ -4,6 +4,8 @@ import { computed, ref } from "vue";
 import { Menu as AMenu, MenuItem as AMenuItem } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import ConfirmDialog from "@/components/ConfirmDialog/ConfirmDialog.vue";
+import {useDateTime} from '@/composable/useDateTime';
+const {formatInstant,dateKey}=useDateTime();
 
 const props = withDefaults(
   defineProps<{
@@ -62,7 +64,9 @@ const timeLabel = computed(() => {
     return `${hours} ч назад`;
   }
 
-  const days = Math.floor(hours / 24);
+  const currentDay=dateKey(new Date());
+  const createdDay=dateKey(raw);
+  const days = currentDay&&createdDay ? Math.round((Date.parse(currentDay+'T00:00:00Z')-Date.parse(createdDay+'T00:00:00Z'))/86400000) : Math.floor(hours/24);
 
   if (days === 1) {
     return "вчера";
@@ -72,7 +76,7 @@ const timeLabel = computed(() => {
     return `${days} дн назад`;
   }
 
-  return new Date(raw).toLocaleDateString("ru-RU", {
+  return formatInstant(raw, {
     day: "numeric",
     month: "long",
   });

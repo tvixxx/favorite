@@ -300,6 +300,7 @@ export type MediaAssetWhereInput = {
   poster?: Prisma.XOR<Prisma.MoviePosterNullableScalarRelationFilter, Prisma.MoviePosterWhereInput> | null
   avatar?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   actorPhoto?: Prisma.XOR<Prisma.ActorNullableScalarRelationFilter, Prisma.ActorWhereInput> | null
+  feedback?: Prisma.XOR<Prisma.FeedbackNullableScalarRelationFilter, Prisma.FeedbackWhereInput> | null
 }
 
 export type MediaAssetOrderByWithRelationInput = {
@@ -321,6 +322,7 @@ export type MediaAssetOrderByWithRelationInput = {
   poster?: Prisma.MoviePosterOrderByWithRelationInput
   avatar?: Prisma.UserOrderByWithRelationInput
   actorPhoto?: Prisma.ActorOrderByWithRelationInput
+  feedback?: Prisma.FeedbackOrderByWithRelationInput
 }
 
 export type MediaAssetWhereUniqueInput = Prisma.AtLeast<{
@@ -345,6 +347,7 @@ export type MediaAssetWhereUniqueInput = Prisma.AtLeast<{
   poster?: Prisma.XOR<Prisma.MoviePosterNullableScalarRelationFilter, Prisma.MoviePosterWhereInput> | null
   avatar?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   actorPhoto?: Prisma.XOR<Prisma.ActorNullableScalarRelationFilter, Prisma.ActorWhereInput> | null
+  feedback?: Prisma.XOR<Prisma.FeedbackNullableScalarRelationFilter, Prisma.FeedbackWhereInput> | null
 }, "id">
 
 export type MediaAssetOrderByWithAggregationInput = {
@@ -407,6 +410,7 @@ export type MediaAssetCreateInput = {
   poster?: Prisma.MoviePosterCreateNestedOneWithoutAssetInput
   avatar?: Prisma.UserCreateNestedOneWithoutAvatarAssetInput
   actorPhoto?: Prisma.ActorCreateNestedOneWithoutImageAssetInput
+  feedback?: Prisma.FeedbackCreateNestedOneWithoutScreenshotInput
 }
 
 export type MediaAssetUncheckedCreateInput = {
@@ -427,6 +431,7 @@ export type MediaAssetUncheckedCreateInput = {
   poster?: Prisma.MoviePosterUncheckedCreateNestedOneWithoutAssetInput
   avatar?: Prisma.UserUncheckedCreateNestedOneWithoutAvatarAssetInput
   actorPhoto?: Prisma.ActorUncheckedCreateNestedOneWithoutImageAssetInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedOneWithoutScreenshotInput
 }
 
 export type MediaAssetUpdateInput = {
@@ -447,6 +452,7 @@ export type MediaAssetUpdateInput = {
   poster?: Prisma.MoviePosterUpdateOneWithoutAssetNestedInput
   avatar?: Prisma.UserUpdateOneWithoutAvatarAssetNestedInput
   actorPhoto?: Prisma.ActorUpdateOneWithoutImageAssetNestedInput
+  feedback?: Prisma.FeedbackUpdateOneWithoutScreenshotNestedInput
 }
 
 export type MediaAssetUncheckedUpdateInput = {
@@ -467,6 +473,7 @@ export type MediaAssetUncheckedUpdateInput = {
   poster?: Prisma.MoviePosterUncheckedUpdateOneWithoutAssetNestedInput
   avatar?: Prisma.UserUncheckedUpdateOneWithoutAvatarAssetNestedInput
   actorPhoto?: Prisma.ActorUncheckedUpdateOneWithoutImageAssetNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateOneWithoutScreenshotNestedInput
 }
 
 export type MediaAssetCreateManyInput = {
@@ -719,6 +726,22 @@ export type MediaAssetUpdateOneWithoutActorPhotoNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.MediaAssetUpdateToOneWithWhereWithoutActorPhotoInput, Prisma.MediaAssetUpdateWithoutActorPhotoInput>, Prisma.MediaAssetUncheckedUpdateWithoutActorPhotoInput>
 }
 
+export type MediaAssetCreateNestedOneWithoutFeedbackInput = {
+  create?: Prisma.XOR<Prisma.MediaAssetCreateWithoutFeedbackInput, Prisma.MediaAssetUncheckedCreateWithoutFeedbackInput>
+  connectOrCreate?: Prisma.MediaAssetCreateOrConnectWithoutFeedbackInput
+  connect?: Prisma.MediaAssetWhereUniqueInput
+}
+
+export type MediaAssetUpdateOneWithoutFeedbackNestedInput = {
+  create?: Prisma.XOR<Prisma.MediaAssetCreateWithoutFeedbackInput, Prisma.MediaAssetUncheckedCreateWithoutFeedbackInput>
+  connectOrCreate?: Prisma.MediaAssetCreateOrConnectWithoutFeedbackInput
+  upsert?: Prisma.MediaAssetUpsertWithoutFeedbackInput
+  disconnect?: Prisma.MediaAssetWhereInput | boolean
+  delete?: Prisma.MediaAssetWhereInput | boolean
+  connect?: Prisma.MediaAssetWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MediaAssetUpdateToOneWithWhereWithoutFeedbackInput, Prisma.MediaAssetUpdateWithoutFeedbackInput>, Prisma.MediaAssetUncheckedUpdateWithoutFeedbackInput>
+}
+
 export type MediaAssetCreateWithoutAvatarInput = {
   id?: string
   purpose: $Enums.MediaPurpose
@@ -736,6 +759,7 @@ export type MediaAssetCreateWithoutAvatarInput = {
   owner?: Prisma.UserCreateNestedOneWithoutUploadedMediaInput
   poster?: Prisma.MoviePosterCreateNestedOneWithoutAssetInput
   actorPhoto?: Prisma.ActorCreateNestedOneWithoutImageAssetInput
+  feedback?: Prisma.FeedbackCreateNestedOneWithoutScreenshotInput
 }
 
 export type MediaAssetUncheckedCreateWithoutAvatarInput = {
@@ -755,6 +779,7 @@ export type MediaAssetUncheckedCreateWithoutAvatarInput = {
   updatedAt?: Date | string
   poster?: Prisma.MoviePosterUncheckedCreateNestedOneWithoutAssetInput
   actorPhoto?: Prisma.ActorUncheckedCreateNestedOneWithoutImageAssetInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedOneWithoutScreenshotInput
 }
 
 export type MediaAssetCreateOrConnectWithoutAvatarInput = {
@@ -779,6 +804,7 @@ export type MediaAssetCreateWithoutOwnerInput = {
   poster?: Prisma.MoviePosterCreateNestedOneWithoutAssetInput
   avatar?: Prisma.UserCreateNestedOneWithoutAvatarAssetInput
   actorPhoto?: Prisma.ActorCreateNestedOneWithoutImageAssetInput
+  feedback?: Prisma.FeedbackCreateNestedOneWithoutScreenshotInput
 }
 
 export type MediaAssetUncheckedCreateWithoutOwnerInput = {
@@ -798,6 +824,7 @@ export type MediaAssetUncheckedCreateWithoutOwnerInput = {
   poster?: Prisma.MoviePosterUncheckedCreateNestedOneWithoutAssetInput
   avatar?: Prisma.UserUncheckedCreateNestedOneWithoutAvatarAssetInput
   actorPhoto?: Prisma.ActorUncheckedCreateNestedOneWithoutImageAssetInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedOneWithoutScreenshotInput
 }
 
 export type MediaAssetCreateOrConnectWithoutOwnerInput = {
@@ -838,6 +865,7 @@ export type MediaAssetUpdateWithoutAvatarInput = {
   owner?: Prisma.UserUpdateOneWithoutUploadedMediaNestedInput
   poster?: Prisma.MoviePosterUpdateOneWithoutAssetNestedInput
   actorPhoto?: Prisma.ActorUpdateOneWithoutImageAssetNestedInput
+  feedback?: Prisma.FeedbackUpdateOneWithoutScreenshotNestedInput
 }
 
 export type MediaAssetUncheckedUpdateWithoutAvatarInput = {
@@ -857,6 +885,7 @@ export type MediaAssetUncheckedUpdateWithoutAvatarInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   poster?: Prisma.MoviePosterUncheckedUpdateOneWithoutAssetNestedInput
   actorPhoto?: Prisma.ActorUncheckedUpdateOneWithoutImageAssetNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateOneWithoutScreenshotNestedInput
 }
 
 export type MediaAssetUpsertWithWhereUniqueWithoutOwnerInput = {
@@ -912,6 +941,7 @@ export type MediaAssetCreateWithoutPosterInput = {
   owner?: Prisma.UserCreateNestedOneWithoutUploadedMediaInput
   avatar?: Prisma.UserCreateNestedOneWithoutAvatarAssetInput
   actorPhoto?: Prisma.ActorCreateNestedOneWithoutImageAssetInput
+  feedback?: Prisma.FeedbackCreateNestedOneWithoutScreenshotInput
 }
 
 export type MediaAssetUncheckedCreateWithoutPosterInput = {
@@ -931,6 +961,7 @@ export type MediaAssetUncheckedCreateWithoutPosterInput = {
   updatedAt?: Date | string
   avatar?: Prisma.UserUncheckedCreateNestedOneWithoutAvatarAssetInput
   actorPhoto?: Prisma.ActorUncheckedCreateNestedOneWithoutImageAssetInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedOneWithoutScreenshotInput
 }
 
 export type MediaAssetCreateOrConnectWithoutPosterInput = {
@@ -966,6 +997,7 @@ export type MediaAssetUpdateWithoutPosterInput = {
   owner?: Prisma.UserUpdateOneWithoutUploadedMediaNestedInput
   avatar?: Prisma.UserUpdateOneWithoutAvatarAssetNestedInput
   actorPhoto?: Prisma.ActorUpdateOneWithoutImageAssetNestedInput
+  feedback?: Prisma.FeedbackUpdateOneWithoutScreenshotNestedInput
 }
 
 export type MediaAssetUncheckedUpdateWithoutPosterInput = {
@@ -985,6 +1017,7 @@ export type MediaAssetUncheckedUpdateWithoutPosterInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   avatar?: Prisma.UserUncheckedUpdateOneWithoutAvatarAssetNestedInput
   actorPhoto?: Prisma.ActorUncheckedUpdateOneWithoutImageAssetNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateOneWithoutScreenshotNestedInput
 }
 
 export type MediaAssetCreateWithoutActorPhotoInput = {
@@ -1004,6 +1037,7 @@ export type MediaAssetCreateWithoutActorPhotoInput = {
   owner?: Prisma.UserCreateNestedOneWithoutUploadedMediaInput
   poster?: Prisma.MoviePosterCreateNestedOneWithoutAssetInput
   avatar?: Prisma.UserCreateNestedOneWithoutAvatarAssetInput
+  feedback?: Prisma.FeedbackCreateNestedOneWithoutScreenshotInput
 }
 
 export type MediaAssetUncheckedCreateWithoutActorPhotoInput = {
@@ -1023,6 +1057,7 @@ export type MediaAssetUncheckedCreateWithoutActorPhotoInput = {
   updatedAt?: Date | string
   poster?: Prisma.MoviePosterUncheckedCreateNestedOneWithoutAssetInput
   avatar?: Prisma.UserUncheckedCreateNestedOneWithoutAvatarAssetInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedOneWithoutScreenshotInput
 }
 
 export type MediaAssetCreateOrConnectWithoutActorPhotoInput = {
@@ -1058,6 +1093,7 @@ export type MediaAssetUpdateWithoutActorPhotoInput = {
   owner?: Prisma.UserUpdateOneWithoutUploadedMediaNestedInput
   poster?: Prisma.MoviePosterUpdateOneWithoutAssetNestedInput
   avatar?: Prisma.UserUpdateOneWithoutAvatarAssetNestedInput
+  feedback?: Prisma.FeedbackUpdateOneWithoutScreenshotNestedInput
 }
 
 export type MediaAssetUncheckedUpdateWithoutActorPhotoInput = {
@@ -1077,6 +1113,103 @@ export type MediaAssetUncheckedUpdateWithoutActorPhotoInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   poster?: Prisma.MoviePosterUncheckedUpdateOneWithoutAssetNestedInput
   avatar?: Prisma.UserUncheckedUpdateOneWithoutAvatarAssetNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateOneWithoutScreenshotNestedInput
+}
+
+export type MediaAssetCreateWithoutFeedbackInput = {
+  id?: string
+  purpose: $Enums.MediaPurpose
+  status?: $Enums.MediaStatus
+  mainKey?: string
+  thumbnailKey?: string
+  mimeType?: string
+  byteSize: number
+  width?: number
+  height?: number
+  claimedAt?: Date | string | null
+  expiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  owner?: Prisma.UserCreateNestedOneWithoutUploadedMediaInput
+  poster?: Prisma.MoviePosterCreateNestedOneWithoutAssetInput
+  avatar?: Prisma.UserCreateNestedOneWithoutAvatarAssetInput
+  actorPhoto?: Prisma.ActorCreateNestedOneWithoutImageAssetInput
+}
+
+export type MediaAssetUncheckedCreateWithoutFeedbackInput = {
+  id?: string
+  ownerId?: string | null
+  purpose: $Enums.MediaPurpose
+  status?: $Enums.MediaStatus
+  mainKey?: string
+  thumbnailKey?: string
+  mimeType?: string
+  byteSize: number
+  width?: number
+  height?: number
+  claimedAt?: Date | string | null
+  expiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  poster?: Prisma.MoviePosterUncheckedCreateNestedOneWithoutAssetInput
+  avatar?: Prisma.UserUncheckedCreateNestedOneWithoutAvatarAssetInput
+  actorPhoto?: Prisma.ActorUncheckedCreateNestedOneWithoutImageAssetInput
+}
+
+export type MediaAssetCreateOrConnectWithoutFeedbackInput = {
+  where: Prisma.MediaAssetWhereUniqueInput
+  create: Prisma.XOR<Prisma.MediaAssetCreateWithoutFeedbackInput, Prisma.MediaAssetUncheckedCreateWithoutFeedbackInput>
+}
+
+export type MediaAssetUpsertWithoutFeedbackInput = {
+  update: Prisma.XOR<Prisma.MediaAssetUpdateWithoutFeedbackInput, Prisma.MediaAssetUncheckedUpdateWithoutFeedbackInput>
+  create: Prisma.XOR<Prisma.MediaAssetCreateWithoutFeedbackInput, Prisma.MediaAssetUncheckedCreateWithoutFeedbackInput>
+  where?: Prisma.MediaAssetWhereInput
+}
+
+export type MediaAssetUpdateToOneWithWhereWithoutFeedbackInput = {
+  where?: Prisma.MediaAssetWhereInput
+  data: Prisma.XOR<Prisma.MediaAssetUpdateWithoutFeedbackInput, Prisma.MediaAssetUncheckedUpdateWithoutFeedbackInput>
+}
+
+export type MediaAssetUpdateWithoutFeedbackInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  purpose?: Prisma.EnumMediaPurposeFieldUpdateOperationsInput | $Enums.MediaPurpose
+  status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus
+  mainKey?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailKey?: Prisma.StringFieldUpdateOperationsInput | string
+  mimeType?: Prisma.StringFieldUpdateOperationsInput | string
+  byteSize?: Prisma.IntFieldUpdateOperationsInput | number
+  width?: Prisma.IntFieldUpdateOperationsInput | number
+  height?: Prisma.IntFieldUpdateOperationsInput | number
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  owner?: Prisma.UserUpdateOneWithoutUploadedMediaNestedInput
+  poster?: Prisma.MoviePosterUpdateOneWithoutAssetNestedInput
+  avatar?: Prisma.UserUpdateOneWithoutAvatarAssetNestedInput
+  actorPhoto?: Prisma.ActorUpdateOneWithoutImageAssetNestedInput
+}
+
+export type MediaAssetUncheckedUpdateWithoutFeedbackInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  purpose?: Prisma.EnumMediaPurposeFieldUpdateOperationsInput | $Enums.MediaPurpose
+  status?: Prisma.EnumMediaStatusFieldUpdateOperationsInput | $Enums.MediaStatus
+  mainKey?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailKey?: Prisma.StringFieldUpdateOperationsInput | string
+  mimeType?: Prisma.StringFieldUpdateOperationsInput | string
+  byteSize?: Prisma.IntFieldUpdateOperationsInput | number
+  width?: Prisma.IntFieldUpdateOperationsInput | number
+  height?: Prisma.IntFieldUpdateOperationsInput | number
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  poster?: Prisma.MoviePosterUncheckedUpdateOneWithoutAssetNestedInput
+  avatar?: Prisma.UserUncheckedUpdateOneWithoutAvatarAssetNestedInput
+  actorPhoto?: Prisma.ActorUncheckedUpdateOneWithoutImageAssetNestedInput
 }
 
 export type MediaAssetCreateManyOwnerInput = {
@@ -1112,6 +1245,7 @@ export type MediaAssetUpdateWithoutOwnerInput = {
   poster?: Prisma.MoviePosterUpdateOneWithoutAssetNestedInput
   avatar?: Prisma.UserUpdateOneWithoutAvatarAssetNestedInput
   actorPhoto?: Prisma.ActorUpdateOneWithoutImageAssetNestedInput
+  feedback?: Prisma.FeedbackUpdateOneWithoutScreenshotNestedInput
 }
 
 export type MediaAssetUncheckedUpdateWithoutOwnerInput = {
@@ -1131,6 +1265,7 @@ export type MediaAssetUncheckedUpdateWithoutOwnerInput = {
   poster?: Prisma.MoviePosterUncheckedUpdateOneWithoutAssetNestedInput
   avatar?: Prisma.UserUncheckedUpdateOneWithoutAvatarAssetNestedInput
   actorPhoto?: Prisma.ActorUncheckedUpdateOneWithoutImageAssetNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateOneWithoutScreenshotNestedInput
 }
 
 export type MediaAssetUncheckedUpdateManyWithoutOwnerInput = {
@@ -1170,6 +1305,7 @@ export type MediaAssetSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   poster?: boolean | Prisma.MediaAsset$posterArgs<ExtArgs>
   avatar?: boolean | Prisma.MediaAsset$avatarArgs<ExtArgs>
   actorPhoto?: boolean | Prisma.MediaAsset$actorPhotoArgs<ExtArgs>
+  feedback?: boolean | Prisma.MediaAsset$feedbackArgs<ExtArgs>
 }, ExtArgs["result"]["mediaAsset"]>
 
 export type MediaAssetSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1231,6 +1367,7 @@ export type MediaAssetInclude<ExtArgs extends runtime.Types.Extensions.InternalA
   poster?: boolean | Prisma.MediaAsset$posterArgs<ExtArgs>
   avatar?: boolean | Prisma.MediaAsset$avatarArgs<ExtArgs>
   actorPhoto?: boolean | Prisma.MediaAsset$actorPhotoArgs<ExtArgs>
+  feedback?: boolean | Prisma.MediaAsset$feedbackArgs<ExtArgs>
 }
 export type MediaAssetIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   owner?: boolean | Prisma.MediaAsset$ownerArgs<ExtArgs>
@@ -1246,6 +1383,7 @@ export type $MediaAssetPayload<ExtArgs extends runtime.Types.Extensions.Internal
     poster: Prisma.$MoviePosterPayload<ExtArgs> | null
     avatar: Prisma.$UserPayload<ExtArgs> | null
     actorPhoto: Prisma.$ActorPayload<ExtArgs> | null
+    feedback: Prisma.$FeedbackPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1660,6 +1798,7 @@ export interface Prisma__MediaAssetClient<T, Null = never, ExtArgs extends runti
   poster<T extends Prisma.MediaAsset$posterArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MediaAsset$posterArgs<ExtArgs>>): Prisma.Prisma__MoviePosterClient<runtime.Types.Result.GetResult<Prisma.$MoviePosterPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   avatar<T extends Prisma.MediaAsset$avatarArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MediaAsset$avatarArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   actorPhoto<T extends Prisma.MediaAsset$actorPhotoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MediaAsset$actorPhotoArgs<ExtArgs>>): Prisma.Prisma__ActorClient<runtime.Types.Result.GetResult<Prisma.$ActorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  feedback<T extends Prisma.MediaAsset$feedbackArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MediaAsset$feedbackArgs<ExtArgs>>): Prisma.Prisma__FeedbackClient<runtime.Types.Result.GetResult<Prisma.$FeedbackPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2177,6 +2316,25 @@ export type MediaAsset$actorPhotoArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   include?: Prisma.ActorInclude<ExtArgs> | null
   where?: Prisma.ActorWhereInput
+}
+
+/**
+ * MediaAsset.feedback
+ */
+export type MediaAsset$feedbackArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Feedback
+   */
+  select?: Prisma.FeedbackSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Feedback
+   */
+  omit?: Prisma.FeedbackOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FeedbackInclude<ExtArgs> | null
+  where?: Prisma.FeedbackWhereInput
 }
 
 /**

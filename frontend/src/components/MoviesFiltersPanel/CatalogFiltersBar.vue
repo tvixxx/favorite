@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import dayjs, { type Dayjs } from "dayjs";
+import {releaseMonthBound,releaseDateInput} from '@/utils/releaseDate';
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import FiltersSheet from "@/components/MoviesFiltersPanel/FiltersSheet.vue";
@@ -37,10 +38,10 @@ const selectedCountries = computed<string[]>({
 });
 const publishDateRange = computed<[Dayjs, Dayjs] | null>({
   get: (): [Dayjs, Dayjs] | null => moviesStore.filters.publishDateFrom && moviesStore.filters.publishDateTo
-    ? [dayjs(moviesStore.filters.publishDateFrom), dayjs(moviesStore.filters.publishDateTo)] : null,
+    ? [releaseDateInput(moviesStore.filters.publishDateFrom), releaseDateInput(moviesStore.filters.publishDateTo)] : null,
   set: (range) => updateFilters({
-    publishDateFrom: range?.[0] ? range[0].startOf("month").toISOString() : undefined,
-    publishDateTo: range?.[1] ? range[1].endOf("month").toISOString() : undefined,
+    publishDateFrom: range?.[0] ? releaseMonthBound(range[0],'from') : undefined,
+    publishDateTo: range?.[1] ? releaseMonthBound(range[1],'to') : undefined,
   }),
 });
 const isDrawerOpen = ref(false);

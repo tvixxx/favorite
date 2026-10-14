@@ -16,7 +16,7 @@ const mainStore = useMainStore();
 const userMoviesStore = useUserMoviesStore();
 const actorsStore = useActorsStore();
 
-const { currentList } = storeToRefs(userMoviesStore);
+const { totalCount } = storeToRefs(userMoviesStore);
 
 const userId = computed(() => mainStore.userData?.id || "");
 const isCollection = computed(() => route.name === "library-collection");
@@ -83,7 +83,7 @@ const heroMeta = computed((): LibraryHeroMeta | undefined => {
 });
 
 const collectionCount = computed(
-  () => userMoviesStore.stats?.totalMovies ?? currentList.value.length,
+  () => userMoviesStore.stats?.totalMovies ?? totalCount.value,
 );
 
 const heroSubtitle = computed(() => {

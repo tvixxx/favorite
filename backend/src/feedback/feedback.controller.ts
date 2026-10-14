@@ -54,8 +54,11 @@ export class FeedbackController {
   @ApiOkResponse({ description: 'Список обращений' })
   @AdminOnly()
   @Get()
-  public async findAll(@Query() query: FeedbackQueryDto) {
-    return this.feedbackService.findAll(query);
+  public async findAll(
+    @Query() query: FeedbackQueryDto,
+    @Authorized() user: User,
+  ) {
+    return this.feedbackService.findAll(query, user.timezone);
   }
 
   @ApiOperation({

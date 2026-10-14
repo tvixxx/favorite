@@ -51,4 +51,23 @@ describe("Открытие общего тайтла по прямой ссыл�
     expect(wrapper.get('[data-test="catalog-preview"]').text()).toBe("second-id");
     wrapper.unmount();
   });
+
+  it("после закрытия предпросмотра открывает добавленный тайтл, даже если его нет в загруженной странице", async () => {
+    mocks.fetch.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 'link', movieId: 'catalog-id', userId: 'user-id', watchStatus: 'NOT_STARTED',
+      movie: { id: 'catalog-id', title: 'Добавленный тайтл', genres: [], countryCodes: [], actors: [], isSerial: false },
+    });
+    const wrapper = mount(MovieDetail, { global: { stubs: {
+      CatalogMoviePreviewModal: { props: ['modelValue', 'movieId'], emits: ['update:modelValue'], template: '<button v-if="modelValue" data-test="close-preview" @click="$emit(\'update:modelValue\', false)">Закрыть</button>' },
+      BaseModal: true, StateBlock: true, DetailSkeleton: true, ReviewsWidget: true,
+      RateMovieModal: true, BaseIcon: true, MovieShareButton: true, WatchStatusSelect: true,
+      'a-button': true, 'a-input-number': true, 'a-input': true,
+    } } });
+    await flushPromises();
+    await wrapper.get('[data-test="close-preview"]').trigger('click');
+    await flushPromises();
+    expect(mocks.fetch).toHaveBeenCalledTimes(2);
+    expect(wrapper.text()).toContain('Добавленный тайтл');
+    wrapper.unmount();
+  });
 });

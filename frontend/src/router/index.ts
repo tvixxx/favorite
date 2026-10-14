@@ -35,6 +35,13 @@ const routes: Array<RouteRecordRaw> = [
     },
   },
   {
+    path: "/reset-password",
+    name: "reset-password",
+    component: () => import("@/views/pages/LoginUser.vue"),
+    props: { reset: true },
+    meta: { authScreen: true, hideMobileTabBar: true },
+  },
+  {
     path: "/create",
     name: "create",
     component: () => import("@/views/pages/CreateMovie.vue"),
@@ -194,13 +201,17 @@ const routes: Array<RouteRecordRaw> = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-  scrollBehavior(to, _from, savedPosition) {
+  scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition;
     }
 
-    if (to.hash) {
+    if (to.hash && to.name !== "reset-password") {
       return { el: to.hash, behavior: "smooth" };
+    }
+
+    if (to.name === 'admin' && from.name === 'admin' && to.query.tab === from.query.tab) {
+      return false;
     }
 
     return { top: 0, left: 0 };

@@ -43,6 +43,25 @@ const profile = {
 };
 
 describe("Жизненный цикл авторизации", () => {
+  it("применяет общий UTC и сохраняет выбранный пояс после успешного обновления профиля", async () => {
+    mocks.fetch
+      .mockResolvedValueOnce({ status: 200, data: profile })
+      .mockResolvedValueOnce({
+        status: 200,
+        data: { ...profile, timezone: "Europe/Berlin" },
+      });
+    const store = useMainStore();
+    await store.fetchUser();
+    expect(store.userData?.timezone).toBe("UTC");
+    const revision = store.sessionRevision;
+    await store.updateProfile({ timezone: "Europe/Berlin" });
+    expect(store.userData?.timezone).toBe("Europe/Berlin");
+    expect(store.userDataRaw?.timezone).toBe("Europe/Berlin");
+    expect(store.sessionRevision).toBe(revision);
+    expect(mocks.fetch.mock.calls[1][1].data).toEqual({
+      timezone: "Europe/Berlin",
+    });
+  });
   beforeEach(() => {
     localStorage.clear();
     setActivePinia(createPinia());
@@ -118,6 +137,7 @@ describe("Жизненный цикл авторизации", () => {
     });
     expect(store.userData).toEqual({
       ...profile,
+      timezone: "UTC",
       avatarUrl: null,
       avatarThumbnailUrl: null,
       avatarAssetId: null,

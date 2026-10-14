@@ -11,6 +11,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { ZonedCalendar } from '../utils/timezone';
 
 export class ListQueryDto {
   @IsOptional()
@@ -83,10 +84,13 @@ export class FeedbackQueryDto extends ListQueryDto {
   type?: 'BUG' | 'IDEA' | 'OTHER';
 }
 
-export function createdAtRange(query: {
-  from?: string;
-  to?: string;
-}): { gte?: Date; lt?: Date } | undefined {
+export function createdAtRange(
+  query: {
+    from?: string;
+    to?: string;
+  },
+  timezone = 'UTC',
+): { gte?: Date; lt?: Date } | undefined {
   if (query.from && query.to && query.from > query.to) {
     throw new BadRequestException('Начало периода позже окончания');
   }
@@ -95,13 +99,12 @@ export function createdAtRange(query: {
     return undefined;
   }
 
+  const calendar = new ZonedCalendar(timezone);
   return {
-    ...(query.from ? { gte: new Date(`${query.from}T00:00:00+04:00`) } : {}),
+    ...(query.from ? { gte: calendar.startOfDay(query.from) } : {}),
     ...(query.to
       ? {
-          lt: new Date(
-            new Date(`${query.to}T00:00:00+04:00`).getTime() + 86_400_000,
-          ),
+          lt: calendar.startOfDay(calendar.addDays(query.to, 1)),
         }
       : {}),
   };

@@ -7,6 +7,7 @@ import {
   type FeedbackQueryDto,
 } from '../common/dto/list-query.dto';
 import { FeedbackStatus } from '../generated/prisma/enums';
+import { MediaService } from '../media/media.service';
 
 export interface FeedbackListResponse {
   items: Feedback[];
@@ -17,7 +18,10 @@ export interface FeedbackListResponse {
 
 @Injectable()
 export class FeedbackService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly media: MediaService,
+  ) {}
 
   /**
    * Создаёт обращение. `userId` приходит из токена — тело запроса им управлять
@@ -27,30 +31,41 @@ export class FeedbackService {
     userId: string,
     dto: CreateFeedbackDto,
   ): Promise<{ id: string }> {
-    const created = await this.prismaService.feedback.create({
-      data: {
-        userId,
-        type: dto.type,
-        message: dto.message.trim(),
-        email: dto.email?.trim() || null,
-        pageUrl: dto.pageUrl ?? null,
-        userAgent: dto.userAgent ?? null,
-        viewport: dto.viewport ?? null,
-      },
-      select: { id: true },
-    });
+    return this.prismaService.$transaction(async (tx) => {
+      if (dto.screenshotAssetId)
+        await this.media.claim(
+          tx,
+          dto.screenshotAssetId,
+          userId,
+          'FEEDBACK_SCREENSHOT',
+        );
+      const created = await tx.feedback.create({
+        data: {
+          userId,
+          type: dto.type,
+          message: dto.message.trim(),
+          email: dto.email?.trim() || null,
+          pageUrl: dto.pageUrl ?? null,
+          userAgent: dto.userAgent ?? null,
+          viewport: dto.viewport ?? null,
+          screenshotAssetId: dto.screenshotAssetId ?? null,
+        },
+        select: { id: true },
+      });
 
-    return created;
+      return created;
+    });
   }
 
   /** Список для администратора: свежие сверху, с фильтром по статусу. */
   public async findAll(
     params: FeedbackQueryDto,
+    timezone = 'UTC',
   ): Promise<FeedbackListResponse> {
     const where: Prisma.FeedbackWhereInput = {
       status: params.status,
       type: params.type,
-      createdAt: createdAtRange(params),
+      createdAt: createdAtRange(params, timezone),
       ...(params.q
         ? {
             OR: [

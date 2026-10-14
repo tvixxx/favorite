@@ -53,6 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   MediaAsset: 'MediaAsset',
   User: 'User',
+  PasswordReset: 'PasswordReset',
   Movie: 'Movie',
   MoviePoster: 'MoviePoster',
   Review: 'Review',
@@ -111,6 +112,7 @@ export const UserScalarFieldEnum = {
   email: 'email',
   password: 'password',
   fullName: 'fullName',
+  timezone: 'timezone',
   role: 'role',
   blockedAt: 'blockedAt',
   blockedReason: 'blockedReason',
@@ -124,6 +126,17 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const PasswordResetScalarFieldEnum = {
+  userId: 'userId',
+  tokenHash: 'tokenHash',
+  authVersion: 'authVersion',
+  createdAt: 'createdAt',
+  expiresAt: 'expiresAt'
+} as const
+
+export type PasswordResetScalarFieldEnum = (typeof PasswordResetScalarFieldEnum)[keyof typeof PasswordResetScalarFieldEnum]
 
 
 export const MovieScalarFieldEnum = {
@@ -294,6 +307,7 @@ export const FeedbackScalarFieldEnum = {
   pageUrl: 'pageUrl',
   userAgent: 'userAgent',
   viewport: 'viewport',
+  screenshotAssetId: 'screenshotAssetId',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

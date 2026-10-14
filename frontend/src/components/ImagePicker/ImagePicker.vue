@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import ProtectedImage from "./ProtectedImage.vue";
 import { useMainStore } from "@/state/state";
 import { friendlyRequestError, getRequestStatus } from "@/utils/friendlyError";
 import { getApiResponseMessage } from "@/services/api";
@@ -45,7 +46,8 @@ const lastValid = ref<ImageSelection | null>(props.modelValue);
 let generation = 0;
 let controller: AbortController | null = null;
 let temporaryId: string | null = null;
-const maxMb = computed(() => (props.purpose === "USER_AVATAR" ? 5 : 10));
+const privateImage = computed(() => props.purpose === "FEEDBACK_SCREENSHOT");
+const maxMb = computed(() => (props.purpose === "USER_AVATAR" || privateImage.value ? 5 : 10));
 const preview = computed(
   () =>
     localPreview.value ||
@@ -284,6 +286,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="image-picker">
     <div
+      v-if="!privateImage"
       class="image-picker__methods"
       role="group"
       :aria-label="`${label}: способ выбора`"
@@ -351,10 +354,11 @@ onBeforeUnmount(() => {
     <div
       v-if="showPreview && preview"
       class="image-picker__preview"
-      :class="{ 'image-picker__preview--avatar': purpose === 'USER_AVATAR' }"
+      :class="{ 'image-picker__preview--avatar': purpose === 'USER_AVATAR', 'image-picker__preview--screenshot': privateImage }"
     >
+      <ProtectedImage v-if="privateImage && modelValue?.assetId && !localPreview" :asset-id="modelValue.assetId" />
       <img
-        v-if="!previewFailed"
+        v-else-if="!previewFailed"
         :src="preview"
         :alt="`${label}: предпросмотр`"
         @error="previewFailed = true"
@@ -523,6 +527,12 @@ onBeforeUnmount(() => {
   }
   &__preview--avatar {
     aspect-ratio: 1;
+  }
+  &__preview--screenshot {
+    width: min(100%, 480px);
+    aspect-ratio: auto;
+    min-height: 80px;
+    :deep(img) { width: 100%; height: auto; max-height: 320px; }
   }
   &__preview img {
     width: 100%;
