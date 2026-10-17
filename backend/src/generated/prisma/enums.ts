@@ -37,6 +37,16 @@ export const MediaStatus = {
 export type MediaStatus = (typeof MediaStatus)[keyof typeof MediaStatus]
 
 
+export const ContentKind = {
+  GENERAL: 'GENERAL',
+  ANIME: 'ANIME',
+  ANIMATION: 'ANIMATION',
+  TV_SHOW: 'TV_SHOW'
+} as const
+
+export type ContentKind = (typeof ContentKind)[keyof typeof ContentKind]
+
+
 export const WatchStatus = {
   NOT_STARTED: 'NOT_STARTED',
   WATCHING: 'WATCHING',

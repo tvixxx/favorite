@@ -66,6 +66,12 @@ model User {
   password  String
   fullName  String
   timezone  String @default("UTC")
+  quickAddEnabled Boolean @default(true) @map("quick_add_enabled")
+  watchTonightEnabled Boolean @default(false) @map("watch_tonight_enabled")
+  collectionFilesEnabled Boolean @default(false) @map("collection_files_enabled")
+  notifyNewMessages Boolean @default(true) @map("notify_new_messages")
+  notifyFriendRequests Boolean @default(true) @map("notify_friend_requests")
+  notifyRecommendations Boolean @default(false) @map("notify_recommendations")
   role      UserRole @default(USER) @map("role")
   blockedAt DateTime? @map("blocked_at")
   blockedReason String? @map("blocked_reason")
@@ -110,6 +116,15 @@ model PasswordReset {
   @@map("password_resets")
 }
 
+enum ContentKind {
+  GENERAL
+  ANIME
+  ANIMATION
+  TV_SHOW
+
+  @@map("enum_content_kind")
+}
+
 model Movie {
   id              String    @id @default(uuid())
   title           String
@@ -119,6 +134,7 @@ model Movie {
   genres          Genre[]
   publishDate     DateTime? @map("publish_date")
   isSerial        Boolean   @default(false) @map("is_serial")
+  contentKind     ContentKind? @map("content_kind")
   seasonCount     Int?      @map("season_count")
   episodeCount    Int?      @map("episode_count")
   posterId        String?   @unique @map("poster_id")
@@ -134,7 +150,7 @@ model Movie {
   createdBy  User?         @relation("created_movies", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([publishDate, title])
-  @@unique([titleNormalized])
+  @@index([titleNormalized])
   @@map("movies")
 }
 
@@ -154,6 +170,7 @@ model MoviePoster {
 model Review {
   id        String   @id @default(uuid())
   text      String
+  isSpoiler Boolean @default(false) @map("is_spoiler")
   rate      Int      @default(0)
   hiddenAt DateTime? @map("hidden_at")
   moderationReason String? @map("moderation_reason")

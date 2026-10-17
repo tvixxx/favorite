@@ -18,6 +18,8 @@ import {
   GenreLabels,
 } from "@/components/Genres/constants/genres.constants";
 import { PRODUCTION_COUNTRIES } from "@/constants/countries/production-countries";
+import ContentKindFilter from "@/components/ContentType/ContentKindFilter.vue";
+import { contentKindOptions } from "@/utils/content-kind";
 
 const props = withDefaults(
   defineProps<{
@@ -86,6 +88,7 @@ const rateActive = computed(
 
 const advancedCount = computed(() => {
   let n = 0;
+  if (props.filters.contentKind) n += 1;
   if (selectedGenres.value.length) n += 1;
   if (selectedCountries.value.length) n += 1;
   if (publishDateRange.value) n += 1;
@@ -156,6 +159,8 @@ const activeTags = computed<FilterTag[]>(() => {
   selectedCountries.value.forEach((code) => {
     tags.push({ key: `country:${code}`, label: countryLabel(code) });
   });
+  const category = contentKindOptions.find(option => option.value === props.filters.contentKind);
+  if (category) tags.push({ key: "contentKind", label: category.label });
 
   const [from, to] = publishDateRange.value ?? [];
 
@@ -178,6 +183,7 @@ const activeTags = computed<FilterTag[]>(() => {
 
 const removeTag = (key: string): void => {
   const [type, value] = key.split(":");
+  if (type === "contentKind") updateFilters({ contentKind: undefined });
 
   if (type === "genre") {
     selectedGenres.value = selectedGenres.value.filter((g) => g !== value);
@@ -208,7 +214,7 @@ const setStatus = (key: StatusKey): void => {
 };
 
 const resetAdvanced = (): void => {
-  updateFilters({ genres: undefined, countryCodes: undefined, publishDateFrom: undefined, publishDateTo: undefined, personalRateMin: undefined, personalRateMax: undefined });
+  updateFilters({ contentKind: undefined, genres: undefined, countryCodes: undefined, publishDateFrom: undefined, publishDateTo: undefined, personalRateMin: undefined, personalRateMax: undefined });
 };
 
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
@@ -295,6 +301,7 @@ const onSearchEnter = (): void => {
       @reset="resetAdvanced"
     >
       <GenreFilter v-model="selectedGenres" />
+      <ContentKindFilter :content-kind="props.filters.contentKind" @change="updateFilters" />
       <CountryFilter v-model="selectedCountries" />
       <PeriodChips v-model="publishDateRange" />
 

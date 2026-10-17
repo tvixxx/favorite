@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { Review } from "@/stores";
+import ReviewText from "./ReviewText.vue";
 import { computed, ref } from "vue";
 import { Menu as AMenu, MenuItem as AMenuItem } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
@@ -140,7 +141,12 @@ const confirmDelete = (): void => {
       </div>
     </div>
 
-    <p class="review-item__text">{{ review.text }}</p>
+    <ReviewText
+      class="review-item__text"
+      :review-id="review.id"
+      :text="review.text"
+      :is-spoiler="review.isSpoiler"
+    />
 
     <p class="review-item__author">
       {{ authorLabel }}<template v-if="timeLabel"> · {{ timeLabel }}</template>
@@ -190,6 +196,7 @@ const confirmDelete = (): void => {
 
   &__header {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 12px;
     margin-bottom: 10px;

@@ -58,6 +58,7 @@ describe('Права на общие и пользовательские фил�
       movie: {
         findUnique: jest.fn(() => Promise.resolve(movie)),
         findFirst: jest.fn().mockResolvedValue(null),
+        findMany: jest.fn().mockResolvedValue([]),
         update: jest.fn(({ data }: { data: Prisma.MovieUpdateInput }) =>
           Promise.resolve(Object.assign(movie, data)),
         ),

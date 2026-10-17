@@ -1,8 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
-import { WatchStatus } from '../generated/prisma/enums';
+import { isISO8601 } from 'class-validator';
+import { ContentKind, WatchStatus } from '../generated/prisma/enums';
 
 export const MAX_IMPORT_BYTES = 32 * 1024;
 export const MAX_IMPORT_ROWS = 200;
+export const MAX_SNAPSHOT_BYTES = 2 * 1024 * 1024;
+export const MAX_SNAPSHOT_ROWS = 1000;
 const fields = [
   'title',
   'isSerial',
@@ -11,16 +14,42 @@ const fields = [
   'isFavorite',
   'seeLater',
   'personalRate',
+  'contentKind',
 ];
 const required = ['title', 'isSerial', 'watchStatus'];
+export const snapshotFields = [
+  ...fields,
+  'currentSeason',
+  'currentEpisode',
+  'addedAt',
+  'lastWatchedAt',
+  'startedAt',
+  'completedAt',
+  'droppedAt',
+];
+const dateFields = [
+  'addedAt',
+  'lastWatchedAt',
+  'startedAt',
+  'completedAt',
+  'droppedAt',
+];
 export interface CollectionEntry {
   title: string;
   isSerial: boolean;
-  year?: number;
+  year?: number | null;
+  contentKind?: ContentKind | null;
   watchStatus: WatchStatus;
   isFavorite: boolean;
   seeLater: boolean;
-  personalRate: number;
+  personalRate: number | null;
+  currentSeason?: number | null;
+  currentEpisode?: number | null;
+  addedAt?: string;
+  lastWatchedAt?: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  droppedAt?: string | null;
 }
 function invalid(message: string): never {
   throw new BadRequestException(message);
@@ -55,8 +84,8 @@ function csvRows(content: string): string[][] {
         rows.push(row);
         row = [];
         if (ch === '\r' && content[i + 1] === '\n') i++;
-        if (rows.length > MAX_IMPORT_ROWS + 1)
-          invalid(`Не более ${MAX_IMPORT_ROWS} записей за один импорт`);
+        if (rows.length > MAX_SNAPSHOT_ROWS + 1)
+          invalid(`Не более ${MAX_SNAPSHOT_ROWS} записей за один импорт`);
       }
     } else if (ch === '"' && cell === '' && !closed) quoted = true;
     else if (ch === '"' || closed)
@@ -70,40 +99,151 @@ function csvRows(content: string): string[][] {
   }
   return rows;
 }
-function csvObjects(content: string): unknown[] {
+function csvObjects(content: string): { version: number; rows: unknown[] } {
   const [header, ...rows] = csvRows(content);
+  const version = header?.includes('formatVersion') ? 2 : 1;
+  const allowed = version === 2 ? ['formatVersion', ...snapshotFields] : fields;
+  const mandatory = version === 2 ? allowed : required;
   if (
     !header ||
     new Set(header).size !== header.length ||
-    header.some((key) => !fields.includes(key)) ||
-    required.some((key) => !header.includes(key))
+    header.some((key) => !allowed.includes(key)) ||
+    mandatory.some((key) => !header.includes(key))
   )
     invalid(
       'CSV: ожидаются уникальные заголовки title,isSerial,watchStatus и разрешённые необязательные поля',
     );
-  return rows.map((values, index) => {
-    if (values.length !== header.length)
-      invalid(`Запись ${index + 1}: число колонок отличается от заголовка`);
-    return Object.fromEntries(
-      header.flatMap<[string, string | number | boolean]>((key, column) => {
-        const value = values[column];
-        if (value === '' && !required.includes(key)) return [];
-        if (['isSerial', 'isFavorite', 'seeLater'].includes(key)) {
-          if (value !== 'true' && value !== 'false')
-            invalid(
-              `Запись ${index + 1}: ${key} принимает только true или false`,
-            );
-          return [[key, value === 'true']];
-        }
-        if (['year', 'personalRate'].includes(key)) {
-          if (!/^\d+$/.test(value))
-            invalid(`Запись ${index + 1}: ${key} должно быть целым числом`);
-          return [[key, Number(value)]];
-        }
-        return [[key, value]];
-      }),
-    );
-  });
+  return {
+    version,
+    rows: rows.map((values, index) => {
+      if (values.length !== header.length)
+        invalid(`Запись ${index + 1}: число колонок отличается от заголовка`);
+      return Object.fromEntries(
+        header.flatMap<[string, string | number | boolean | null]>(
+          (key, column) => {
+            const value = values[column];
+            if (key === 'formatVersion') {
+              if (value !== '2')
+                invalid(`Запись ${index + 1}: неверная версия CSV`);
+              return [];
+            }
+            if (version === 2 && key === 'title') {
+              if (!value.startsWith("'"))
+                invalid(
+                  `Запись ${index + 1}: title в CSV v2 должен начинаться с защитного апострофа`,
+                );
+              return [[key, value.slice(1)]];
+            }
+            if (
+              version === 2 &&
+              value === '' &&
+              ![
+                'title',
+                'isSerial',
+                'watchStatus',
+                'isFavorite',
+                'seeLater',
+                'addedAt',
+              ].includes(key)
+            )
+              return [[key, null]];
+            if (value === '' && !required.includes(key)) return [];
+            if (['isSerial', 'isFavorite', 'seeLater'].includes(key)) {
+              if (value !== 'true' && value !== 'false')
+                invalid(
+                  `Запись ${index + 1}: ${key} принимает только true или false`,
+                );
+              return [[key, value === 'true']];
+            }
+            if (
+              [
+                'year',
+                'personalRate',
+                'currentSeason',
+                'currentEpisode',
+              ].includes(key)
+            ) {
+              if (!/^\d+$/.test(value))
+                invalid(`Запись ${index + 1}: ${key} должно быть целым числом`);
+              return [[key, Number(value)]];
+            }
+            return [[key, value]];
+          },
+        ),
+      );
+    }),
+  };
+}
+
+function timestamp(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    isISO8601(value, { strict: true, strictSeparator: true }) &&
+    /T.*(?:Z|[+-]\d{2}:\d{2})$/.test(value) &&
+    Number.isFinite(Date.parse(value))
+  );
+}
+
+function snapshot(
+  row: Record<string, unknown>,
+  index: number,
+): CollectionEntry {
+  const fail = (key: string): never =>
+    invalid(`Запись ${index + 1}: проверьте поле ${key}`);
+  if (
+    Object.keys(row).some((key) => !snapshotFields.includes(key)) ||
+    snapshotFields.some(
+      (key) => !Object.prototype.hasOwnProperty.call(row, key),
+    )
+  )
+    fail('структура');
+  if (
+    typeof row.title !== 'string' ||
+    !row.title.trim() ||
+    row.title.length > 300 ||
+    [...row.title].some(
+      (character) =>
+        character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127,
+    )
+  )
+    fail('title');
+  for (const key of ['isSerial', 'isFavorite', 'seeLater'])
+    if (typeof row[key] !== 'boolean') fail(key);
+  if (!Object.values(WatchStatus).includes(row.watchStatus as WatchStatus))
+    fail('watchStatus');
+  if (
+    row.contentKind !== null &&
+    !Object.values(ContentKind).includes(row.contentKind as ContentKind)
+  )
+    fail('contentKind');
+  for (const [key, min, max] of [
+    ['year', 1, 9999],
+    ['personalRate', 0, 10],
+    ['currentSeason', 0, 2147483647],
+    ['currentEpisode', 0, 2147483647],
+  ] as const) {
+    const value = row[key];
+    if (
+      value !== null &&
+      (typeof value !== 'number' ||
+        !Number.isInteger(value) ||
+        value < min ||
+        value > max)
+    )
+      fail(key);
+  }
+  if (
+    !row.isSerial &&
+    (Number(row.currentSeason) > 0 || Number(row.currentEpisode) > 0)
+  )
+    fail('прогресс доступен только сериалам');
+  const normalized = { ...row };
+  for (const key of dateFields) {
+    if (row[key] === null && key !== 'addedAt') continue;
+    if (!timestamp(row[key])) fail(key);
+    normalized[key] = new Date(row[key] as string).toISOString();
+  }
+  return normalized as unknown as CollectionEntry;
 }
 
 export function parseCollectionFile(
@@ -112,11 +252,12 @@ export function parseCollectionFile(
 ): CollectionEntry[] {
   if (
     typeof content !== 'string' ||
-    Buffer.byteLength(content, 'utf8') > MAX_IMPORT_BYTES
+    Buffer.byteLength(content, 'utf8') > MAX_SNAPSHOT_BYTES
   )
-    invalid('Файл должен быть текстовым и не больше 32 КБ');
+    invalid('Файл должен быть текстовым и не больше 2 МиБ');
   const text = content.replace(/^\ufeff/, '');
   let rows: unknown;
+  let version = 1;
   if (format === 'json') {
     let data: unknown;
     try {
@@ -126,16 +267,37 @@ export function parseCollectionFile(
     }
     if (
       !object(data) ||
-      data.version !== 1 ||
-      Object.keys(data).some((key) => !['version', 'movies'].includes(key))
+      ![1, 2].includes(data.version as number) ||
+      Object.keys(data).some(
+        (key) =>
+          !(
+            data.version === 2
+              ? ['version', 'movies', 'exportedAt']
+              : ['version', 'movies']
+          ).includes(key),
+      )
     )
-      invalid('Ожидается JSON {version:1,movies:[...]}');
+      invalid('Ожидается JSON версии 1 или 2 с массивом movies');
+    version = data.version as number;
+    if (data.exportedAt !== undefined && !timestamp(data.exportedAt))
+      invalid('Неверная дата exportedAt');
     rows = data.movies;
-  } else if (format === 'csv') rows = csvObjects(text);
+  } else if (format === 'csv') ({ version, rows } = csvObjects(text));
   else invalid('Поддерживаются только CSV и JSON');
-  if (!Array.isArray(rows) || !rows.length || rows.length > MAX_IMPORT_ROWS)
-    invalid(`Файл должен содержать от 1 до ${MAX_IMPORT_ROWS} записей`);
+  const limit = version === 2 ? MAX_SNAPSHOT_ROWS : MAX_IMPORT_ROWS;
+  if (version === 1 && Buffer.byteLength(content, 'utf8') > MAX_IMPORT_BYTES)
+    invalid('Файл версии 1 должен быть не больше 32 КБ');
+  if (
+    !Array.isArray(rows) ||
+    (version === 1 && !rows.length) ||
+    rows.length > limit
+  )
+    invalid(`Файл должен содержать не более ${limit} записей`);
   return rows.map((row: unknown, index) => {
+    if (version === 2) {
+      if (!object(row)) invalid(`Запись ${index + 1}: неверная структура`);
+      return snapshot(row, index);
+    }
     const fail = (field: string): never =>
       invalid(`Запись ${index + 1}: проверьте поле ${field}`);
     if (!object(row) || Object.keys(row).some((key) => !fields.includes(key)))
@@ -151,6 +313,11 @@ export function parseCollectionFile(
     )
       fail('title');
     if (typeof row.isSerial !== 'boolean') fail('isSerial');
+    if (
+      row.contentKind !== undefined &&
+      !Object.values(ContentKind).includes(row.contentKind as ContentKind)
+    )
+      fail('contentKind');
     if (!Object.values(WatchStatus).includes(row.watchStatus as WatchStatus))
       fail('watchStatus');
     if (
@@ -173,10 +340,46 @@ export function parseCollectionFile(
       title: (row.title as string).trim(),
       isSerial: row.isSerial as boolean,
       year: row.year as number | undefined,
+      ...(row.contentKind !== undefined
+        ? { contentKind: row.contentKind as ContentKind }
+        : {}),
       watchStatus: row.watchStatus as WatchStatus,
       isFavorite: (row.isFavorite as boolean | undefined) ?? false,
       seeLater: (row.seeLater as boolean | undefined) ?? false,
       personalRate: (row.personalRate as number | undefined) ?? 0,
     };
   });
+}
+
+export function serializeCollectionFile(
+  format: 'json' | 'csv',
+  movies: CollectionEntry[],
+  exportedAt: string,
+): string {
+  const json = JSON.stringify({ version: 2, exportedAt, movies }, null, 2);
+  parseCollectionFile('json', json);
+  if (format === 'json') return json;
+  const quote = (value: string | number | boolean | null | undefined): string =>
+    '"' + String(value ?? '').replaceAll('"', '""') + '"';
+  const csv =
+    '\ufeff' +
+    ['formatVersion', ...snapshotFields].map(quote).join(',') +
+    '\r\n' +
+    movies
+      .map((movie) =>
+        [
+          '2',
+          ...snapshotFields.map((key) =>
+            key === 'title'
+              ? "'" + movie.title
+              : movie[key as keyof CollectionEntry],
+          ),
+        ]
+          .map(quote)
+          .join(','),
+      )
+      .join('\r\n') +
+    '\r\n';
+  parseCollectionFile('csv', csv);
+  return csv;
 }

@@ -46,9 +46,26 @@ export default defineConfig(({ command }) => ({
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         // Админка загружается при открытии, без предварительной загрузки для всех пользователей.
-        globIgnores: ["**/AdminPage-*.{js,css}"],
+        globIgnores: [
+          "**/AdminPage-*.{js,css}",
+          "**/pdfmake.min-*.js",
+          "**/collectionPdf-*.js",
+        ],
         clientsClaim: true,
         runtimeCaching: [
+          {
+            urlPattern: ({ url, sameOrigin }) =>
+              sameOrigin &&
+              /^\/assets\/(?:pdfmake\.min|collectionPdf|fv-sans-(?:regular|bold))-[^/]+\.(?:js|woff)$/.test(
+                url.pathname
+              ),
+            handler: "CacheFirst",
+            options: {
+              cacheName: "collection-pdf-assets",
+              cacheableResponse: { statuses: [200] },
+              expiration: { maxEntries: 8, maxAgeSeconds: 30 * 24 * 60 * 60 },
+            },
+          },
           {
             urlPattern: ({ url, sameOrigin }) =>
               sameOrigin &&

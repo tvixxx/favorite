@@ -34,10 +34,13 @@ import {
   Authorized,
 } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
+import { ContentKind } from '../generated/prisma/enums';
 import {
   queryDate,
   queryInteger,
   queryString,
+  queryBoolean,
+  queryEnum,
 } from '../common/utils/query-value';
 
 @ApiTags('Movies')
@@ -72,9 +75,17 @@ export class MovieController {
     @Query('actorIds') actorIds?: string | string[],
     @Query('limit') limit?: unknown,
     @Query('offset') offset?: unknown,
+    @Query('contentKind') contentKind?: unknown,
+    @Query('isSerial') isSerial?: unknown,
   ): ReturnType<MovieService['findPage']> {
     return this.movieService.findPage(
       {
+        contentKind: queryEnum(
+          contentKind,
+          'contentKind',
+          Object.values(ContentKind),
+        ),
+        isSerial: queryBoolean(isSerial, 'isSerial'),
         genres: parseGenreFilters(genres),
         countryCodes: parseCountryFilters(countryCode),
         publishDateFrom: queryDate(publishDateFrom, 'publishDateFrom'),
@@ -103,8 +114,16 @@ export class MovieController {
     @Query('publishDateFrom') publishDateFrom?: string,
     @Query('publishDateTo') publishDateTo?: string,
     @Query('actorIds') actorIds?: string | string[],
+    @Query('contentKind') contentKind?: unknown,
+    @Query('isSerial') isSerial?: unknown,
   ) {
     return this.movieService.findAll({
+      contentKind: queryEnum(
+        contentKind,
+        'contentKind',
+        Object.values(ContentKind),
+      ),
+      isSerial: queryBoolean(isSerial, 'isSerial'),
       genres: parseGenreFilters(genres),
       countryCodes: parseCountryFilters(countryCode),
       publishDateFrom: queryDate(publishDateFrom, 'publishDateFrom'),
@@ -127,6 +146,14 @@ export class MovieController {
     );
   }
 
+  @Get('title-candidates')
+  @AuthProtected()
+  public titleCandidates(
+    @Query('title') title?: unknown,
+  ): ReturnType<MovieService['titleCandidates']> {
+    return this.movieService.titleCandidates(queryString(title, 'title') ?? '');
+  }
+
   @ApiOperation({
     summary: 'Поиск фильмов',
     description: 'Поиск по названию и/или жанру',
@@ -146,8 +173,16 @@ export class MovieController {
     @Query('publishDateFrom') publishDateFrom?: string,
     @Query('publishDateTo') publishDateTo?: string,
     @Query('actorIds') actorIds?: string | string[],
+    @Query('contentKind') contentKind?: unknown,
+    @Query('isSerial') isSerial?: unknown,
   ) {
     return this.movieService.search(queryString(query, 'q'), {
+      contentKind: queryEnum(
+        contentKind,
+        'contentKind',
+        Object.values(ContentKind),
+      ),
+      isSerial: queryBoolean(isSerial, 'isSerial'),
       genres: parseGenreFilters(genres),
       countryCodes: parseCountryFilters(countryCode),
       publishDateFrom: queryDate(publishDateFrom, 'publishDateFrom'),

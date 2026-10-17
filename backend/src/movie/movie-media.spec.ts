@@ -6,8 +6,12 @@ jest.mock('../prisma/prisma.service', () => ({ PrismaService: class {} }));
 describe('Создание фильма с загруженным постером', () => {
   it('привязывает медиа внутри транзакции создания фильма', async () => {
     const tx = {
+      $executeRaw: jest.fn().mockResolvedValue(1),
       actor: { findMany: jest.fn().mockResolvedValue([]) },
-      movie: { create: jest.fn().mockResolvedValue({ id: 'movie-id' }) },
+      movie: {
+        findMany: jest.fn().mockResolvedValue([]),
+        create: jest.fn().mockResolvedValue({ id: 'movie-id' }),
+      },
     };
     const prisma = {
       movie: { findFirst: jest.fn().mockResolvedValue(null) },

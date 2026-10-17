@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  HttpCode,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthOriginGuard } from '../common/guards/auth-origin.guard';
@@ -10,6 +18,12 @@ import { RecoveryRequestDto, ResetPasswordDto } from './password-recovery.dto';
 @UseGuards(AuthOriginGuard)
 export class PasswordRecoveryController {
   constructor(private readonly service: PasswordRecoveryService) {}
+
+  @Get('capabilities')
+  @Header('Cache-Control', 'no-store')
+  public capabilities(): { passwordRecovery: boolean } {
+    return { passwordRecovery: this.service.isAvailable() };
+  }
 
   @Post('request')
   @HttpCode(202)

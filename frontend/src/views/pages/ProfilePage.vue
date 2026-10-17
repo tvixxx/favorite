@@ -16,7 +16,7 @@ import SettingBlock from "@/components/ProfileSettings/components/SettingBlock/S
 import { message } from "ant-design-vue";
 import { GenreLabels } from "@/components/Genres/constants/genres.constants";
 import { useBadgesStore, useUserMoviesStore } from "@/stores";
-import { useNotificationPrefs } from "@/composable/useNotificationPrefs";
+import PersonalSettings from "@/components/PersonalSettings/PersonalSettings.vue";
 import { avatarGradient } from "@/composable/useAvatarGradient";
 import ImagePicker from "@/components/ImagePicker/ImagePicker.vue";
 import type { ImageSelection } from "@/services/media";
@@ -38,11 +38,6 @@ const editForm = ref({ fullName: "", timezone:"UTC" });
 const editAvatar = ref<ImageSelection | null>(null);
 const avatarUploading = ref(false);
 
-const {
-  newMessages: notifyNewMessages,
-  friendRequests: notifyFriendRequests,
-  recommendations: notifyRecommendations,
-} = useNotificationPrefs();
 const achievementsView = ref<"unlocked" | "locked">("unlocked");
 
 const user = computed<UserData | null>(() => store.userData ?? null);
@@ -144,7 +139,7 @@ const goToLogin = () => {
 };
 
 const saveProfile = async () => {
-  if (isSaving.value || avatarUploading.value) {
+  if (isSaving.value || avatarUploading.value || store.isUpdatingProfile) {
     return;
   }
 
@@ -264,10 +259,13 @@ onMounted(async () => {
           <button
             type="button"
             class="profile-hero__settings"
+            data-tour="profile-settings"
+            aria-label="Настройки"
+            title="Настройки профиля"
             @click="showEditDisplayNameModal"
           >
             <BaseIcon name="ph:gear" class="profile-hero__settings-icon" />
-            Настройки
+            <span class="profile-hero__settings-label">Настройки</span>
           </button>
         </section>
 
@@ -521,7 +519,7 @@ onMounted(async () => {
     </div>
   </div>
 
-  <BaseModal v-model="isModalVisible" layout="form">
+  <BaseModal v-model="isModalVisible" layout="form" class="profile-settings-modal">
     <template #title>Настройки</template>
 
     <template #body>
@@ -575,23 +573,7 @@ onMounted(async () => {
           </label>
         </div>
 
-        <div class="settings-modal__notifs-group">
-          <p class="settings-modal__section">Уведомления</p>
-          <div class="settings-modal__notifs">
-            <div class="settings-modal__notif-row">
-              <span>Новые сообщения</span>
-              <a-switch v-model:checked="notifyNewMessages" />
-            </div>
-            <div class="settings-modal__notif-row">
-              <span>Запросы в друзья</span>
-              <a-switch v-model:checked="notifyFriendRequests" />
-            </div>
-            <div class="settings-modal__notif-row">
-              <span>Рекомендации от друзей</span>
-              <a-switch v-model:checked="notifyRecommendations" />
-            </div>
-          </div>
-        </div>
+        <PersonalSettings />
       </div>
     </template>
 
@@ -604,7 +586,7 @@ onMounted(async () => {
         type="primary"
         html-type="button"
         :loading="isSaving"
-        :disabled="avatarUploading"
+        :disabled="avatarUploading || store.isUpdatingProfile"
         @click="saveProfile"
       >
         Сохранить
@@ -670,40 +652,6 @@ onMounted(async () => {
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--fv-color-text-secondary);
-  }
-
-  &__notifs-group {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  &__section {
-    margin: 0;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--fv-color-text-secondary);
-  }
-
-  &__notifs {
-    background: var(--fv-color-bg-secondary);
-    border-radius: 16px;
-    padding: 4px 16px;
-  }
-
-  &__notif-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 13px 0;
-    font-size: 0.95rem;
-    color: var(--fv-color-text-primary);
-    border-bottom: 1px solid var(--fv-color-border);
-
-    &:last-child {
-      border-bottom: none;
-    }
   }
 
   &__logout {
@@ -783,6 +731,7 @@ onMounted(async () => {
 }
 
 .profile-hero {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 24px;
@@ -817,6 +766,10 @@ onMounted(async () => {
   &__info {
     flex: 1;
     min-width: 0;
+
+    @include mediaMax(640px) {
+      width: 100%;
+    }
   }
 
   &__eyebrow {
@@ -836,6 +789,7 @@ onMounted(async () => {
     font-weight: 500;
     line-height: 1.1;
     color: var(--fv-color-text-primary);
+    overflow-wrap: anywhere;
     cursor: pointer;
   }
 
@@ -844,9 +798,15 @@ onMounted(async () => {
     flex-wrap: wrap;
     gap: 8px 16px;
     margin-top: 8px;
+
+    @include mediaMax(640px) {
+      justify-content: center;
+    }
   }
 
   &__meta-item {
+    min-width: 0;
+    max-width: 100%;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -876,6 +836,7 @@ onMounted(async () => {
     align-self: flex-start;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     height: 44px;
     padding: 0 20px;
@@ -895,6 +856,25 @@ onMounted(async () => {
         var(--fv-color-text-primary) 8%,
         var(--fv-color-bg-secondary)
       );
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--fv-color-accent);
+      outline-offset: 3px;
+    }
+
+    @include mediaMax(640px) {
+      position: absolute;
+      top: var(--fv-space-16);
+      right: var(--fv-space-16);
+      width: 44px;
+      padding: 0;
+    }
+  }
+
+  &__settings-label {
+    @include mediaMax(640px) {
+      display: none;
     }
   }
 

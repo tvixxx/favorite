@@ -20,6 +20,7 @@ describe('Создание фильма вместе с личной запис�
       $executeRaw: jest.fn().mockResolvedValue(1),
       movie: {
         findFirst: jest.fn().mockResolvedValue(null),
+        findMany: jest.fn().mockResolvedValue([]),
         findUnique: jest.fn(() => Promise.resolve(movies[0])),
         create: jest.fn(({ data }: { data: Prisma.MovieCreateInput }) => {
           const movie = { id: 'movie-id', ...data };

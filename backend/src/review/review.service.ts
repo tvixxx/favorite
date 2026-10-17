@@ -66,6 +66,7 @@ export class ReviewService {
         data: {
           text,
           rate,
+          isSpoiler: dto.isSpoiler ?? false,
           user: {
             connect: {
               id: userId,
@@ -82,7 +83,6 @@ export class ReviewService {
             select: {
               id: true,
               fullName: true,
-              email: true,
             },
           },
         },
@@ -98,7 +98,6 @@ export class ReviewService {
           select: {
             id: true,
             fullName: true,
-            email: true,
           },
         },
       },
@@ -142,13 +141,13 @@ export class ReviewService {
       data: {
         text,
         rate,
+        ...(dto.isSpoiler !== undefined ? { isSpoiler: dto.isSpoiler } : {}),
       },
       include: {
         user: {
           select: {
             id: true,
             fullName: true,
-            email: true,
           },
         },
       },

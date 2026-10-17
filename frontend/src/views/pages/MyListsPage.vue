@@ -627,6 +627,7 @@ onMounted(() => {
               <MovieCard
                 v-for="item in currentListItems"
                 :key="item.id"
+                :movie-id="item.movieId"
                 :poster-src="getPosterSrc(item)"
                 :title="movieCardTitle(item.movie)"
                 :meta="movieCardMeta(item.movie)"

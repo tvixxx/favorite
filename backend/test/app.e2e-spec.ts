@@ -26,4 +26,21 @@ describe('AppController (e2e)', () => {
       .expect(200)
       .expect({ message: 'Hello World!1' });
   });
+
+  it.each(['form', 'json'])(
+    'не отражает HTML через демонстрационный POST /: %s',
+    (format) => {
+      const title = '<img src=x onerror=alert(1)>';
+
+      return request(app.getHttpServer())
+        .post('/')
+        .type(format)
+        .send({ title })
+        .expect('Content-Type', /json/)
+        .expect(404)
+        .expect((response) => {
+          expect(response.text).not.toContain(title);
+        });
+    },
+  );
 });

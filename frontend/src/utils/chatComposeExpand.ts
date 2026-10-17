@@ -30,7 +30,8 @@ export function alignChipsToQuotedTitles(
 
   while ((m = re.exec(text)) !== null) {
     const title = m[1];
-    const chip = dedupedPool.find((c) => c.title === title);
+    const matches = dedupedPool.filter((c) => c.title === title);
+    const chip = matches.length === 1 ? matches[0] : undefined;
 
     if (chip && !seenMovieIds.has(chip.movieId)) {
       result.push(chip);
@@ -50,15 +51,18 @@ export function expandMessageWithMovieUrls(
   router: Router
 ): string {
   const byTitle = new Map<string, MovieChip>();
+  const ambiguousTitles = new Set<string>();
 
   for (const c of dedupeMovieChipsById(chips)) {
     if (!byTitle.has(c.title)) {
       byTitle.set(c.title, c);
+    } else {
+      ambiguousTitles.add(c.title);
     }
   }
 
   return text.replace(/«([^»]+)»/g, (full, titleInner: string) => {
-    const chip = byTitle.get(titleInner);
+    const chip = ambiguousTitles.has(titleInner) ? undefined : byTitle.get(titleInner);
 
     if (!chip) {
       return full;

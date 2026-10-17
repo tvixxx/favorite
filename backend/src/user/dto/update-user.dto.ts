@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -16,6 +17,30 @@ import { PartialType } from '@nestjs/mapped-types';
 import { Transform } from 'class-transformer';
 
 export class UpdateUserDto {
+  @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
+  @IsBoolean()
+  quickAddEnabled?: boolean;
+
+  @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
+  @IsBoolean()
+  watchTonightEnabled?: boolean;
+
+  @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
+  @IsBoolean()
+  collectionFilesEnabled?: boolean;
+
+  @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
+  @IsBoolean()
+  notifyNewMessages?: boolean;
+
+  @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
+  @IsBoolean()
+  notifyFriendRequests?: boolean;
+
+  @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
+  @IsBoolean()
+  notifyRecommendations?: boolean;
+
   @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
   @IsString()
   @MaxLength(80)

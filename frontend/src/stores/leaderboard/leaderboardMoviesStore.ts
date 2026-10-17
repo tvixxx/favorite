@@ -6,6 +6,7 @@ import { FETCH_METHOD, useFetch } from "@/composable";
 import { isSuccessStatus } from "@/utils";
 import { createRequestGuard } from "@/utils/requestGuard";
 import type { Genre } from "@/components/Genres/constants/genres.constants";
+import type { ContentKind } from "@/utils/content-kind";
 
 export type LeaderboardMovieSortBy =
   | "avgPersonalRate"
@@ -16,6 +17,7 @@ export type LeaderboardMovieSortBy =
 export type LeaderboardMovieSortOrder = "asc" | "desc";
 
 export interface LeaderboardMovieRow {
+  contentKind?: ContentKind | null;
   rank: number;
   movieId: string;
   title: string;

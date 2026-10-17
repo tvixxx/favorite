@@ -1,13 +1,14 @@
 import { createPinia, disposePinia, getActivePinia, setActivePinia } from "pinia";
-import { computed, nextTick } from "vue";
+import { computed, nextTick, reactive } from "vue";
 import { mount, flushPromises } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import MovieList from "./MovieList.vue";
 import { useUserMoviesStore } from "@/stores/userMovies/userMoviesStore";
 
 const mocks = vi.hoisted(() => ({ fetch: vi.fn() }));
+const main = reactive({ isLoggedIn: true, userData: { id: "user-id", quickAddEnabled: true, watchTonightEnabled: false } });
 vi.mock("vue-router", () => ({ useRoute: () => ({ query: {} }), useRouter: () => ({ push: vi.fn() }) }));
-vi.mock("@/state/state", () => ({ useMainStore: () => ({ isLoggedIn: true, userData: { id: "user-id" } }) }));
+vi.mock("@/state/state", () => ({ useMainStore: () => main }));
 vi.mock("@/composable", () => ({ useFetch: mocks.fetch, useEscapeKey: vi.fn(), FETCH_METHOD: { get: "GET", post: "POST", delete: "DELETE" } }));
 vi.mock("@/constants", async (importOriginal) => ({ ...await importOriginal<object>(), getDefaultLoaderDelayTime: () => 0 }));
 vi.mock("@/components/Skeleton/useMinLoading", () => ({ useMinLoading: (get: () => boolean) => computed(get) }));
@@ -22,6 +23,8 @@ const row = (id: string) => ({
 describe("Загрузка коллекции после прямого открытия детали", () => {
   let wrapper: ReturnType<typeof mount>;
   beforeEach(() => {
+    main.userData.quickAddEnabled = true;
+    main.userData.watchTonightEnabled = false;
     vi.useFakeTimers();
     setActivePinia(createPinia());
     mocks.fetch.mockReset();
@@ -33,6 +36,24 @@ describe("Загрузка коллекции после прямого откр
     wrapper?.unmount();
     disposePinia(getActivePinia()!);
     vi.useRealTimers();
+  });
+
+  it("показывает только включённые плавающие инструменты и убирает их без пустой панели", async () => {
+    wrapper = mount(MovieList, { global: { stubs: {
+      MovieCard: true, BaseIcon: true, PosterGridSkeleton: true, StateBlock: true, CollectionFiltersBar: true, WatchTonightModal: true,
+      "a-auto-complete": true, "a-button": true, "a-input": true,
+    } } });
+    await flushPromises();
+    expect(wrapper.find('[aria-label="Быстрый ввод"]').exists()).toBe(true);
+    expect(wrapper.find('[aria-label="Что посмотреть сегодня?"]').exists()).toBe(false);
+    main.userData.quickAddEnabled = false;
+    main.userData.watchTonightEnabled = true;
+    await nextTick();
+    expect(wrapper.find('[aria-label="Быстрый ввод"]').exists()).toBe(false);
+    expect(wrapper.find('[aria-label="Что посмотреть сегодня?"]').exists()).toBe(true);
+    main.userData.watchTonightEnabled = false;
+    await nextTick();
+    expect(wrapper.find('.quick-add-fab').exists()).toBe(false);
   });
 
   it("показывает всю коллекцию, даже если кеш уже содержит одну детальную запись", async () => {

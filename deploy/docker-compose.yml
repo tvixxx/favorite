@@ -79,7 +79,8 @@ services:
       # оставляем ровно свой origin, без звёздочки
       CORS_ORIGINS: https://${DOMAIN}
       FRONTEND_ORIGIN: https://${DOMAIN}
-      # Пустой SMTP_HOST отключает отправку писем восстановления.
+      # Восстановление включается отдельно после настройки и проверки почты.
+      PASSWORD_RECOVERY_ENABLED: ${PASSWORD_RECOVERY_ENABLED:-false}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_SECURE: ${SMTP_SECURE:-false}

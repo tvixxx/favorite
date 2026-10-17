@@ -28,6 +28,16 @@ const publicUserSelect = {
   avatarAssetId: true,
 } as const;
 
+const profileUserSelect = {
+  ...publicUserSelect,
+  quickAddEnabled: true,
+  watchTonightEnabled: true,
+  collectionFilesEnabled: true,
+  notifyNewMessages: true,
+  notifyFriendRequests: true,
+  notifyRecommendations: true,
+} as const;
+
 @Injectable()
 export class UserService {
   constructor(
@@ -110,7 +120,15 @@ export class UserService {
         throw new NotFoundException('Пользователь не найден');
       }
 
-      const data: Prisma.UserUpdateInput = { fullName: dto.fullName };
+      const data: Prisma.UserUpdateInput = {
+        fullName: dto.fullName,
+        quickAddEnabled: dto.quickAddEnabled,
+        watchTonightEnabled: dto.watchTonightEnabled,
+        collectionFilesEnabled: dto.collectionFilesEnabled,
+        notifyNewMessages: dto.notifyNewMessages,
+        notifyFriendRequests: dto.notifyFriendRequests,
+        notifyRecommendations: dto.notifyRecommendations,
+      };
       if (dto.timezone !== undefined)
         data.timezone = new ZonedCalendar(dto.timezone).zone;
 
@@ -135,7 +153,7 @@ export class UserService {
         const updated = await tx.user.update({
           where: { id },
           data,
-          select: publicUserSelect,
+          select: profileUserSelect,
         });
 
         if (current.avatarAssetId !== selected.assetId) {
@@ -145,7 +163,7 @@ export class UserService {
         return updated;
       }
 
-      return tx.user.update({ where: { id }, data, select: publicUserSelect });
+      return tx.user.update({ where: { id }, data, select: profileUserSelect });
     });
     invalidateDataCache(this.prismaService);
     return result;

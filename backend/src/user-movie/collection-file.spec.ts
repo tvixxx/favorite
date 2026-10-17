@@ -26,7 +26,7 @@ describe('Формат импорта коллекции', () => {
     });
   });
   it.each([
-    { version: 2, movies: [movie] },
+    { version: 3, movies: [movie] },
     { version: 1, movies: [{ ...movie, userId: 'someone' }] },
     { version: 1, movies: [{ ...movie, isSerial: 'false' }] },
     { version: 1, movies: [{ ...movie, personalRate: 11 }] },

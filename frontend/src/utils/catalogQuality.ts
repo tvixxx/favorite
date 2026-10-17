@@ -6,6 +6,7 @@ export interface CatalogRecord {
   countryCodes: readonly string[];
   publishDate: string | null;
   isSerial: boolean;
+  contentKind?: import("./content-kind").ContentKind | null;
   seasonCount?: number | null;
   episodeCount?: number | null;
   poster: { url: string; assetId?: string | null } | null;
@@ -29,6 +30,7 @@ export const catalogIssueLabels = {
 export type CatalogIssue = keyof typeof catalogIssueLabels;
 export type PosterCheck = "loaded" | "unavailable" | "timeout";
 export interface CatalogSummary {
+  contentKind?: import("./content-kind").ContentKind | null;
   id: string;
   title: string;
   year: number | null;
@@ -63,6 +65,7 @@ export function diagnoseCatalog(
       id: movie.id,
       title: movie.title,
       isSerial: movie.isSerial,
+      ...(movie.contentKind ? { contentKind: movie.contentKind } : {}),
       year:
         movie.publishDate && Number.isFinite(Date.parse(movie.publishDate))
           ? new Date(movie.publishDate).getUTCFullYear()

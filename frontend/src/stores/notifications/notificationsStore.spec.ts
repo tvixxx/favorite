@@ -1,6 +1,7 @@
 import { createPinia, disposePinia, getActivePinia, setActivePinia } from "pinia";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useNotificationsStore } from "./notificationsStore";
+import { useMainStore } from "@/state/state";
 
 const mocks = vi.hoisted(() => ({ fetch: vi.fn() }));
 vi.mock("@/composable", () => ({ useFetch: mocks.fetch, FETCH_METHOD: { get: "GET" } }));
@@ -12,8 +13,9 @@ const rows = [
 describe("Видимость уведомлений при первоначальной загрузке", () => {
   beforeEach(() => {
     localStorage.clear();
-    localStorage.setItem("fv-notify-new-messages", "false");
+    localStorage.setItem("fv-notify-new-messages", "true");
     setActivePinia(createPinia());
+    useMainStore().state.user.data = { id: "user-id", fullName: "Тест", email: "test@example.test", notifyNewMessages: false, notifyFriendRequests: true };
     mocks.fetch.mockImplementation(async (url: string) => {
       const types = new URL(url, "http://localhost").searchParams.getAll("types");
       const visible = types.length ? rows.filter((row) => types.includes(row.type)) : rows;
@@ -31,7 +33,7 @@ describe("Видимость уведомлений при первоначал�
   });
 
   it("оставляет пустой список и нулевой счётчик при отключении всех типов", async () => {
-    localStorage.setItem("fv-notify-friend-requests", "false");
+    useMainStore().state.user.data!.notifyFriendRequests = false;
     const store = useNotificationsStore();
     await store.hydrate("user-id");
     expect(store.items).toEqual([]);

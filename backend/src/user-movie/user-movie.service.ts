@@ -11,12 +11,15 @@ import {
   RateUserMovieDto,
 } from './dto';
 import type { UserMovie, Prisma } from '../generated/prisma/client';
-import { Genre, WatchStatus } from '../generated/prisma/enums';
+import { ContentKind, Genre, WatchStatus } from '../generated/prisma/enums';
 import { lockResource } from '../common/utils/transaction-lock';
 import { invalidateDataCache } from '../common/utils/data-revision';
 import type { CollectionQueryDto } from './dto/collection-query.dto';
+import type { CollectionExportQueryDto } from './collection-export.dto';
+import { MAX_SNAPSHOT_ROWS, serializeCollectionFile } from './collection-file';
 
 interface UserMovieFilters {
+  contentKind?: ContentKind;
   genres?: Genre[];
   countryCodes?: string[];
   personalRateMin?: number;
@@ -340,15 +343,8 @@ export class UserMovieService {
     limit: number;
     offset: number;
   }> {
-    const { q, limit, offset, countryCode, ...filters } = query;
-    const where = this.buildWhereClause(userId, {
-      ...filters,
-      countryCodes: countryCode,
-    });
-    if (q) {
-      const title = { title: { contains: q, mode: 'insensitive' as const } };
-      where.movie = where.movie ? { AND: [where.movie, title] } : title;
-    }
+    const { limit, offset } = query;
+    const where = this.collectionWhere(userId, query);
     const [items, total] = await this.prismaService.$transaction(
       [
         this.prismaService.userMovie.findMany({
@@ -363,6 +359,110 @@ export class UserMovieService {
       { isolationLevel: 'RepeatableRead' },
     );
     return { items, total, limit, offset };
+  }
+
+  private collectionWhere(
+    userId: string,
+    query: CollectionQueryDto,
+  ): Prisma.UserMovieWhereInput {
+    const { q, countryCode, ...filters } = query;
+    const where = this.buildWhereClause(userId, {
+      ...filters,
+      countryCodes: countryCode,
+    });
+    if (q) {
+      const title = { title: { contains: q, mode: 'insensitive' as const } };
+      where.movie = where.movie ? { AND: [where.movie, title] } : title;
+    }
+    return where;
+  }
+
+  public async exportCollection(
+    userId: string,
+    query: CollectionExportQueryDto,
+  ) {
+    const where =
+      query.scope === 'filtered'
+        ? this.collectionWhere(userId, query)
+        : {
+            userId,
+            ...(query.scope === 'completed'
+              ? { watchStatus: WatchStatus.COMPLETED }
+              : {}),
+          };
+    const rows = await this.prismaService.userMovie.findMany({
+      where,
+      take: MAX_SNAPSHOT_ROWS + 1,
+      orderBy: [{ addedAt: 'desc' }, { id: 'asc' }],
+      select: {
+        watchStatus: true,
+        isFavorite: true,
+        seeLater: true,
+        personalRate: true,
+        currentSeason: true,
+        currentEpisode: true,
+        addedAt: true,
+        startedAt: true,
+        completedAt: true,
+        lastWatchedAt: true,
+        droppedAt: true,
+        movie: {
+          select: {
+            title: true,
+            publishDate: true,
+            contentKind: true,
+            isSerial: true,
+            ...(query.format === 'pdf'
+              ? { poster: { select: { url: true, thumbnailUrl: true } } }
+              : {}),
+          },
+        },
+      },
+    });
+    if (rows.length > MAX_SNAPSHOT_ROWS)
+      throw new BadRequestException(
+        `Выгрузка поддерживает до ${MAX_SNAPSHOT_ROWS} тайтлов. Уточните фильтры.`,
+      );
+    const exportedAt = new Date().toISOString();
+    const movies = rows.map((row) => ({
+      title: row.movie.title,
+      year: row.movie.publishDate?.getUTCFullYear() ?? null,
+      isSerial: row.movie.isSerial,
+      contentKind: row.movie.contentKind,
+      watchStatus: row.watchStatus,
+      isFavorite: row.isFavorite,
+      seeLater: row.seeLater,
+      personalRate: row.personalRate,
+      currentSeason: row.currentSeason,
+      currentEpisode: row.currentEpisode,
+      addedAt: row.addedAt.toISOString(),
+      startedAt: row.startedAt?.toISOString() ?? null,
+      completedAt: row.completedAt?.toISOString() ?? null,
+      lastWatchedAt: row.lastWatchedAt?.toISOString() ?? null,
+      droppedAt: row.droppedAt?.toISOString() ?? null,
+    }));
+    if (query.format === 'pdf')
+      return {
+        exportedAt,
+        movies: movies.map((movie, index) => ({
+          title: movie.title,
+          year: movie.year,
+          isSerial: movie.isSerial,
+          contentKind: movie.contentKind,
+          watchStatus: movie.watchStatus,
+          personalRate: movie.personalRate,
+          completedAt: movie.completedAt,
+          posterUrl:
+            rows[index].movie.poster?.thumbnailUrl ||
+            rows[index].movie.poster?.url ||
+            null,
+        })),
+      };
+    return {
+      exportedAt,
+      count: movies.length,
+      content: serializeCollectionFile(query.format, movies, exportedAt),
+    };
   }
 
   public async findAllByUser(
@@ -433,6 +533,8 @@ export class UserMovieService {
     filters: UserMovieFilters,
   ): Prisma.MovieWhereInput | undefined {
     const parts: Prisma.MovieWhereInput[] = [];
+    if (filters.contentKind !== undefined)
+      parts.push({ contentKind: filters.contentKind });
 
     if (filters.genres?.length) {
       parts.push({
@@ -722,11 +824,23 @@ export class UserMovieService {
       if (ownReview) {
         await tx.review.update({
           where: { id: ownReview.id },
-          data: { rate: dto.personalRate, text: text || ownReview.text },
+          data: {
+            rate: dto.personalRate,
+            text: text || ownReview.text,
+            ...(text && dto.isSpoiler !== undefined
+              ? { isSpoiler: dto.isSpoiler }
+              : {}),
+          },
         });
       } else if (text) {
         await tx.review.create({
-          data: { userId, movieId, rate: dto.personalRate, text },
+          data: {
+            userId,
+            movieId,
+            rate: dto.personalRate,
+            text,
+            isSpoiler: dto.isSpoiler ?? false,
+          },
         });
       }
 

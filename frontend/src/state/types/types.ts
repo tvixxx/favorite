@@ -1,4 +1,6 @@
-export interface UserData {
+import type { UserPreferences } from "@/utils/userPreferences";
+
+export interface UserData extends Partial<UserPreferences> {
   email: string;
   fullName: string;
   timezone?: string;
@@ -28,7 +30,7 @@ export interface AuthResponse {
 }
 
 // Ответ от auth/@me и users/:id
-export interface UserProfileResponse {
+export interface UserProfileResponse extends Partial<UserPreferences> {
   id: string;
   email: string;
   fullName: string;

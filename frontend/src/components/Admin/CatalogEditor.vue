@@ -4,7 +4,7 @@ import { Alert as AAlert, message } from "ant-design-vue";
 import AdminDataRegion from "./AdminDataRegion.vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import ImagePicker from "@/components/ImagePicker/ImagePicker.vue";
-import api from "@/services/api";
+import api, { getApiResponseMessage } from "@/services/api";
 import { friendlyRequestError } from "@/utils/friendlyError";
 import {
   Genre,
@@ -14,6 +14,9 @@ import { PRODUCTION_COUNTRIES } from "@/constants/countries/production-countries
 import type { MovieApiResponse } from "@/stores/movies/types";
 import type { ImageSelection } from "@/services/media";
 import { catalogPublishDate } from "./catalog-editor.utils";
+import ContentTypePicker from "@/components/ContentType/ContentTypePicker.vue";
+import TitleCandidates from "@/components/ContentType/TitleCandidates.vue";
+import type { ContentKind, ContentSelection } from "@/utils/content-kind";
 
 const open = defineModel<boolean>({ required: true });
 const props = defineProps<{ movieId: string | null }>();
@@ -24,7 +27,13 @@ const genres = ref<Genre[]>([]);
 const countries = ref<string[]>([]);
 const actorIds = ref<string[]>([]);
 const actors = ref<{ id: string; name: string }[]>([]);
-const isSerial = ref(false);
+const isSerial = ref<boolean | null>(null);
+const contentKind = ref<ContentKind | null>(null);
+const distinctReason = ref("");
+const contentSelection = computed<ContentSelection>({
+  get: () => ({ contentKind: contentKind.value, isSerial: isSerial.value }),
+  set: (value) => { contentKind.value = value.contentKind; isSerial.value = value.isSerial; },
+});
 const year = ref<number | null>(null);
 const originalDate = ref<string | null>(null);
 const expectedUpdatedAt = ref<string>();
@@ -59,6 +68,9 @@ const valid = computed(
     description.value.trim() &&
     genres.value.length &&
     countries.value.length &&
+    isSerial.value !== null &&
+    (props.movieId || contentKind.value) &&
+    (!distinctReason.value.trim() || distinctReason.value.trim().length >= 10) &&
     !loading.value &&
     !uploading.value
 );
@@ -102,7 +114,9 @@ watch(open, async (visible) => {
   countries.value = [];
   actorIds.value = [];
   actors.value = [];
-  isSerial.value = false;
+  isSerial.value = null;
+  contentKind.value = null;
+  distinctReason.value = "";
   year.value = null;
   originalDate.value = null;
   expectedUpdatedAt.value = undefined;
@@ -131,6 +145,7 @@ watch(open, async (visible) => {
       actors.value = data.actors ?? [];
       actorIds.value = actors.value.map((actor) => actor.id);
       isSerial.value = data.isSerial;
+      contentKind.value = data.contentKind ?? null;
       year.value = data.publishDate
         ? new Date(data.publishDate).getUTCFullYear()
         : null;
@@ -169,6 +184,8 @@ async function save(): Promise<void> {
     countryCodes: countries.value,
     actorIds: actorIds.value,
     isSerial: isSerial.value,
+    ...(contentKind.value ? { contentKind: contentKind.value } : {}),
+    ...(distinctReason.value.trim() ? { distinctReason: distinctReason.value.trim() } : {}),
     publishDate: catalogPublishDate(year.value, originalDate.value),
     ...(id ? { expectedUpdatedAt: expectedUpdatedAt.value } : {}),
     seasonCount: isSerial.value ? seasonCount.value ?? undefined : undefined,
@@ -189,7 +206,7 @@ async function save(): Promise<void> {
     message.success(id ? "Тайтл обновлён" : "Тайтл добавлен в каталог");
   } catch (err) {
     message.error(
-      friendlyRequestError(err, { fallback: "Не удалось сохранить тайтл" })
+      getApiResponseMessage(err) ?? friendlyRequestError(err, { fallback: "Не удалось сохранить тайтл" })
     );
   } finally {
     saving.value = false;
@@ -253,25 +270,9 @@ async function save(): Promise<void> {
               @search="searchActors"
             />
           </a-form-item>
-          <a-form-item label="Тип">
-            <div class="catalog-type" role="group" aria-label="Тип тайтла">
-              <button
-                type="button"
-                :aria-pressed="!isSerial"
-                :disabled="saving || loading"
-                @click="isSerial = false"
-              >
-                Фильм
-              </button>
-              <button
-                type="button"
-                :aria-pressed="isSerial"
-                :disabled="saving || loading"
-                @click="isSerial = true"
-              >
-                Сериал
-              </button>
-            </div>
+          <a-form-item label="Тип" :required="!movieId">
+            <ContentTypePicker v-model="contentSelection" :legacy="!!movieId" :disabled="saving || loading" />
+            <TitleCandidates :title="title" :exclude-id="movieId" :disabled="saving" />
           </a-form-item>
           <div
             class="catalog-editor__numbers"
@@ -293,7 +294,7 @@ async function save(): Promise<void> {
                 :precision="0"
               />
             </a-form-item>
-            <a-form-item v-if="isSerial" label="Эпизодов">
+            <a-form-item v-if="isSerial" :label="contentKind === 'TV_SHOW' ? 'Выпусков' : 'Эпизодов'">
               <a-input-number
                 v-model:value="episodeCount"
                 :min="1"
@@ -302,6 +303,13 @@ async function save(): Promise<void> {
               />
             </a-form-item>
           </div>
+          <details class="catalog-editor__distinction">
+            <summary>Подтвердить, что это другая запись</summary>
+            <a-form-item label="Пояснение администратора">
+              <a-textarea v-model:value="distinctReason" :rows="3" :maxlength="500" placeholder="Чем отличаются произведения: режиссёр, оригинальное название или другие проверенные сведения. Минимум 10 символов." />
+            </a-form-item>
+            <p class="admin-muted">Позволяет сохранить отдельную карточку при совпадении названия, формата и года. Пояснение останется в журнале действий.</p>
+          </details>
           <p class="admin-muted">
             Изменяется общий каталог. Личные оценки и прогресс пользователей
             сохраняются.
@@ -341,43 +349,9 @@ async function save(): Promise<void> {
   }
 }
 
-.catalog-type {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  width: 100%;
+.catalog-editor__distinction { margin: 16px 0; overflow-wrap: anywhere; }
+.catalog-editor__distinction summary { cursor: pointer; min-height: 44px; padding: 10px 0; color: var(--fv-color-text-primary); }
 
-  button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 44px;
-    padding: 8px 16px;
-    border: 1px solid var(--fv-color-border);
-    border-radius: 999px;
-    background: var(--fv-color-bg-primary);
-    color: var(--fv-color-text-primary);
-    font: inherit;
-    font-weight: 500;
-    cursor: pointer;
-
-    &[aria-pressed="true"] {
-      border-color: var(--fv-color-text-primary);
-      background: var(--fv-color-text-primary);
-      color: var(--fv-color-bg-primary);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--fv-color-accent);
-      outline-offset: 2px;
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  }
-}
 </style>
 
 <style lang="scss">

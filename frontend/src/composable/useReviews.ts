@@ -6,6 +6,7 @@ import { FETCH_METHOD, useFetch } from "@/composable/useFetch";
 import { isSuccessStatus } from "@/utils";
 
 interface UpdateReviewPayload {
+  isSpoiler?: boolean;
   text: string;
   rate: number;
 }

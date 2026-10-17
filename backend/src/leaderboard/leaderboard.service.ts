@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { ContentKind } from '../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { TtlCache } from '../common/utils/ttl-cache';
 import { dataRevision } from '../common/utils/data-revision';
@@ -35,6 +36,7 @@ export interface LeaderboardTopUsersResponseDto {
 }
 
 export interface LeaderboardMovieItemDto {
+  contentKind?: ContentKind | null;
   rank: number;
   movieId: string;
   title: string;
@@ -176,7 +178,7 @@ export class LeaderboardService {
       }>
     >`
       WITH aggregated AS (
-        SELECT m.id AS "movieId", m.title, m.is_serial AS "isSerial", m.publish_date AS "publishDate",
+        SELECT m.id AS "movieId", m.title, m.is_serial AS "isSerial", m.content_kind AS "contentKind", m.publish_date AS "publishDate",
           p.url AS "posterUrl", avg(um.personal_rate)::float8 AS "avgPersonalRate",
           count(um.personal_rate)::int AS "ratingsCount"
         FROM movies m LEFT JOIN movie_posters p ON p.id = m.poster_id
@@ -198,7 +200,7 @@ export class LeaderboardService {
         FROM aggregated
         WHERE coalesce("avgPersonalRate", 0) BETWEEN ${rateMin} AND ${rateMax}
       ), page AS (
-        SELECT "movieId", title, "isSerial", "publishDate" AT TIME ZONE 'UTC' AS "publishDate", "posterUrl", "avgPersonalRate", "ratingsCount",
+        SELECT "movieId", title, "isSerial", "contentKind", "publishDate" AT TIME ZONE 'UTC' AS "publishDate", "posterUrl", "avgPersonalRate", "ratingsCount",
           row_number() OVER (ORDER BY
             CASE WHEN ${sortBy}::text = 'title' AND ${sortOrder}::text = 'asc' THEN lower(title) END COLLATE "ru-x-icu" ASC,
             CASE WHEN ${sortBy}::text = 'title' AND ${sortOrder}::text = 'desc' THEN lower(title) END COLLATE "ru-x-icu" DESC,

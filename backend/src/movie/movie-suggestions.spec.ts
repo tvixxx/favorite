@@ -11,6 +11,7 @@ describe('Ограниченные подсказки каталога', () => {
         id: 'one',
         title: 'Первый',
         isSerial: false,
+        contentKind: 'ANIME',
         publishDate: null,
         userMovies: [{ id: 'link' }],
       },
@@ -32,6 +33,7 @@ describe('Ограниченные подсказки каталога', () => {
         id: 'one',
         title: 'Первый',
         isSerial: false,
+        contentKind: 'ANIME',
         publishDate: null,
         inCollection: true,
       },
@@ -51,6 +53,7 @@ describe('Ограниченные подсказки каталога', () => {
           id: true,
           title: true,
           isSerial: true,
+          contentKind: true,
           publishDate: true,
           userMovies: {
             where: { userId: 'owner' },

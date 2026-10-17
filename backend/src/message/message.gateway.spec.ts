@@ -246,4 +246,25 @@ describe('Доступ к чату и несколько вкладок', () => 
     expect(created).toEqual([]);
     expect(disconnected).toContain(client.id);
   });
+
+  it('отключает сокет по сроку токена и отменяет ожидание при обычном закрытии', async () => {
+    jest.useFakeTimers();
+    try {
+      auth.verifyAccessToken.mockResolvedValue({
+        id: 'user-id',
+        accessTokenExpiresAt: Date.now() + 1000,
+      });
+      const closed = socket('closed', 'valid-access');
+      const idle = socket('idle', 'valid-access');
+      await gateway.handleConnection(closed);
+      await gateway.handleConnection(idle);
+      await gateway.handleDisconnect(closed);
+
+      await jest.advanceTimersByTimeAsync(1000);
+
+      expect(disconnected).toEqual(['idle']);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });

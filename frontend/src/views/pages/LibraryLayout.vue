@@ -1,14 +1,22 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { RouterView, useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 
+import CollectionImportModal from "@/components/CollectionImport/CollectionImportModal.vue";
+import CollectionExportModal from "@/components/CollectionExport/CollectionExportModal.vue";
+import {
+  Dropdown as ADropdown,
+  Menu as AMenu,
+  MenuItem as AMenuItem,
+} from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { LIBRARY_NAV_ITEMS } from "@/constants/libraryNav";
 import type { LibraryHeroMeta } from "@/router/libraryHeroMeta";
 import { useMainStore } from "@/state/state";
 import { useActorsStore, useUserMoviesStore } from "@/stores";
 import { PLURAL, pluralize } from "@/utils";
+import { getUserPreference } from "@/utils/userPreferences";
 
 const route = useRoute();
 const router = useRouter();
@@ -20,6 +28,22 @@ const { totalCount } = storeToRefs(userMoviesStore);
 
 const userId = computed(() => mainStore.userData?.id || "");
 const isCollection = computed(() => route.name === "library-collection");
+const importOpen = ref(false);
+const exportOpen = ref(false);
+const filesButton = ref<HTMLButtonElement | null>(null);
+const showCollectionFiles = computed(() => getUserPreference(mainStore.userData, "collectionFilesEnabled"));
+watch(showCollectionFiles, (visible) => {
+  if (!visible) {
+    importOpen.value = false;
+    exportOpen.value = false;
+  }
+});
+watch(isCollection, (value) => {
+  if (!value) {
+    importOpen.value = false;
+    exportOpen.value = false;
+  }
+});
 const isActors = computed(() => route.name === "library-actors");
 const isLists = computed(() => route.name === "library-lists");
 
@@ -55,7 +79,7 @@ watch(
       actorsStore.clearDetailActor();
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 const heroMeta = computed((): LibraryHeroMeta | undefined => {
@@ -83,7 +107,7 @@ const heroMeta = computed((): LibraryHeroMeta | undefined => {
 });
 
 const collectionCount = computed(
-  () => userMoviesStore.stats?.totalMovies ?? totalCount.value,
+  () => userMoviesStore.stats?.totalMovies ?? totalCount.value
 );
 
 const heroSubtitle = computed(() => {
@@ -194,9 +218,60 @@ function isLibraryNavActive(to: string): boolean {
           >
             {{ item.label }}
           </RouterLink>
-
+        </nav>
+        <div
+          v-if="isCollection"
+          class="library-actions"
+          :class="{ 'library-actions--without-files': !showCollectionFiles }"
+          role="group"
+          aria-label="Действия с коллекцией"
+        >
+          <ADropdown
+            v-if="showCollectionFiles"
+            :trigger="['click']"
+            overlay-class-name="collection-files-menu"
+          >
+            <button
+              ref="filesButton"
+              type="button"
+              class="library-actions__import"
+              aria-label="Файлы коллекции"
+            >
+              <BaseIcon name="ph:folder" :width="18" :height="18" />
+              <span class="library-actions__desktop-label">Файлы</span>
+              <span class="library-actions__mobile-label"
+                >Импорт и экспорт</span
+              >
+              <BaseIcon name="ph:caret-down" :width="14" :height="14" />
+            </button>
+            <template #overlay
+              ><AMenu>
+                <AMenuItem
+                  key="import"
+                  @click="
+                    filesButton?.focus();
+                    importOpen = true;
+                  "
+                  ><BaseIcon name="ph:upload-simple" :width="18" :height="18" />
+                  Импорт коллекции</AMenuItem
+                >
+                <AMenuItem
+                  key="export"
+                  @click="
+                    filesButton?.focus();
+                    exportOpen = true;
+                  "
+                  ><BaseIcon
+                    name="ph:download-simple"
+                    :width="18"
+                    :height="18"
+                  />
+                  Скачать коллекцию</AMenuItem
+                >
+              </AMenu></template
+            >
+          </ADropdown>
           <button
-            v-if="isCollection"
             type="button"
             class="library-subnav__add"
             @click="router.push('/create')"
@@ -204,8 +279,15 @@ function isLibraryNavActive(to: string): boolean {
             <BaseIcon name="ph:plus-bold" :width="18" :height="18" />
             Добавить
           </button>
-        </nav>
+        </div>
       </div>
+
+      <CollectionImportModal
+        v-if="isCollection && showCollectionFiles"
+        v-model="importOpen"
+        @imported="userMoviesStore.refreshAfterImport(userId)"
+      />
+      <CollectionExportModal v-if="isCollection && showCollectionFiles" v-model="exportOpen" />
 
       <main class="library-app-layout__main">
         <RouterView />
@@ -253,7 +335,8 @@ function isLibraryNavActive(to: string): boolean {
     border-radius: var(--fv-radius-lg);
     background: var(--fv-color-bg-primary);
     box-shadow: var(--fv-shadow-card);
-    border: 1px solid color-mix(in srgb, var(--fv-color-border) 55%, transparent);
+    border: 1px solid
+      color-mix(in srgb, var(--fv-color-border) 55%, transparent);
 
     @include mediaMax(640px) {
       flex-direction: column;
@@ -402,15 +485,77 @@ function isLibraryNavActive(to: string): boolean {
 
 .library-subnav-wrap {
   @include pageContentContainer;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  @include mediaMax(960px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+.library-actions__mobile-label {
+  display: none;
+}
+.library-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  @include mediaMax(960px) {
+    justify-content: flex-end;
+  }
+  @include mediaMax(768px) {
+    &--without-files { display: none; }
+    &__import {
+      width: 100%;
+    }
+    &__desktop-label {
+      display: none;
+    }
+    &__mobile-label {
+      display: inline;
+    }
+  }
+}
+.library-actions__import {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--fv-color-border);
+  border-radius: var(--fv-radius-sm);
+  background: var(--fv-color-bg-primary);
+  color: var(--fv-color-text-primary);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  &:hover {
+    background: var(--fv-color-bg-secondary);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--fv-color-accent);
+    outline-offset: 3px;
+  }
+  @include mediaMax(400px) {
+    padding: 0 12px;
+  }
 }
 
 /* Подразделы медиатеки — строка чипов (эталон): активный = тёмная ink-плашка */
 .library-subnav {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.5rem;
   width: 100%;
+  @include mediaMax(960px) {
+    flex: none;
+  }
 
   // Мобилка: чипы в один ряд с горизонтальным скроллом (без переноса, эталон)
   @include mediaMax(768px) {
@@ -433,8 +578,7 @@ function isLibraryNavActive(to: string): boolean {
     font-size: 0.9rem;
     font-weight: 500;
     text-decoration: none;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       color var(--fv-motion-fast) var(--fv-ease),
       border-color var(--fv-motion-fast) var(--fv-ease);
 
@@ -478,6 +622,21 @@ function isLibraryNavActive(to: string): boolean {
     @include mediaMax(768px) {
       display: none;
     }
+  }
+}
+</style>
+
+<style lang="scss">
+.collection-files-menu {
+  min-width: 220px;
+  max-width: calc(100vw - 32px);
+  .ant-dropdown-menu-item {
+    white-space: nowrap;
+  }
+  .ant-dropdown-menu-title-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
 }
 </style>

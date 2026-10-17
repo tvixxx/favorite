@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { message } from "ant-design-vue";
+import { Checkbox as ACheckbox, message } from "ant-design-vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { useUserMoviesStore } from "@/stores";
@@ -8,6 +8,7 @@ import type { UserMovie } from "@/stores";
 import { useMainStore } from "@/state/state";
 import { useReviews } from "@/composable/useReviews";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
+import MoviePoster from "@/components/MoviePoster/MoviePoster.vue";
 
 /**
  * Модалка «Ваша оценка» (эталон): звёзды + необязательный отзыв.
@@ -45,6 +46,7 @@ const myReview = computed(
 
 const rate = ref(0);
 const text = ref("");
+const isSpoiler = ref(false);
 const isSaving = ref(false);
 
 // При каждом открытии подтягиваем актуальные значения
@@ -55,6 +57,7 @@ watch(open, (isOpen) => {
 
   rate.value = props.personalRate ?? 0;
   text.value = myReview.value?.text ?? "";
+  isSpoiler.value = myReview.value?.isSpoiler ?? false;
 });
 
 const poster = computed(() => props.posterUrl || FALLBACK_IMAGE_URL);
@@ -82,7 +85,8 @@ const save = async (): Promise<void> => {
       userId.value,
       props.movieId,
       rate.value,
-      trimmed
+      trimmed,
+      trimmed ? isSpoiler.value : undefined
     );
     emit("saved", updated);
     void reviewsStore
@@ -104,7 +108,7 @@ const save = async (): Promise<void> => {
 
     <template #body>
       <div class="rate-modal__movie">
-        <img class="rate-modal__poster" :src="poster" :alt="title" />
+        <MoviePoster class="rate-modal__poster" :src="poster" :seed="movieId" :title="title" :alt="title" />
         <div class="rate-modal__movie-info">
           <span class="rate-modal__movie-title">{{ title }}</span>
           <span class="rate-modal__movie-meta">{{ year }} · {{ kind }}</span>
@@ -130,6 +134,13 @@ const save = async (): Promise<void> => {
         :maxlength="500"
         show-count
       />
+      <ACheckbox
+        v-model:checked="isSpoiler"
+        class="rate-modal__spoiler"
+        :disabled="isSaving || !text.trim()"
+      >
+        Содержит спойлеры
+      </ACheckbox>
     </template>
 
     <template #footer>
@@ -152,6 +163,10 @@ const save = async (): Promise<void> => {
 <style lang="scss">
 /* Не scoped: содержимое BaseModal телепортируется в body */
 .rate-modal {
+  &__spoiler {
+    margin-block: 20px;
+  }
+
   .modal__footer {
     flex-wrap: wrap;
   }

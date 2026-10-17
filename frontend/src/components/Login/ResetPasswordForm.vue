@@ -10,10 +10,12 @@ import { useMainStore } from "@/state/state";
 import { friendlyRequestError } from "@/utils/friendlyError";
 import { createRequestGuard } from "@/utils/requestGuard";
 import PasswordRecoveryModal from "./PasswordRecoveryModal.vue";
+import { usePasswordRecoveryAvailability } from "@/composable/usePasswordRecoveryAvailability";
 
 const route = useRoute();
 const router = useRouter();
 const store = useMainStore();
+const { enabled: passwordRecoveryEnabled, checking, failed, load } = usePasswordRecoveryAvailability();
 const token = computed(() => {
   const params = new URLSearchParams(route.hash.slice(1));
   const value = params.get("token") ?? "";
@@ -48,7 +50,7 @@ onBeforeUnmount(() => {
   confirmation.value = "";
 });
 async function submit() {
-  if (busy.value || done.value || !token.value) return;
+  if (busy.value || done.value || !token.value || !passwordRecoveryEnabled.value) return;
   if (
     password.value.length < 6 ||
     password.value.length > 128 ||
@@ -98,7 +100,13 @@ async function submit() {
 <template>
   <section class="password-reset">
     <h1>Новый пароль</h1>
-    <template v-if="done"
+    <p v-if="checking" role="status">Проверяем доступность восстановления…</p>
+    <template v-else-if="!passwordRecoveryEnabled">
+      <p role="alert">Восстановление пароля сейчас недоступно.</p>
+      <AButton v-if="failed" @click="load">Повторить проверку</AButton>
+      <RouterLink to="/login">Перейти ко входу</RouterLink>
+    </template>
+    <template v-else-if="done"
       ><p role="status">Пароль изменён. Войдите с новым паролем.</p>
       <RouterLink to="/login">Перейти ко входу</RouterLink></template
     >
@@ -149,7 +157,7 @@ async function submit() {
       >
     </form>
   </section>
-  <PasswordRecoveryModal v-if="recoveryOpen" v-model="recoveryOpen" email="" />
+  <PasswordRecoveryModal v-if="recoveryOpen && passwordRecoveryEnabled" v-model="recoveryOpen" email="" />
 </template>
 
 <style scoped lang="scss">

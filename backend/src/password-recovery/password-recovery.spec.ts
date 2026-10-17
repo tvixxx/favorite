@@ -17,6 +17,7 @@ jest.mock('nodemailer', () => ({
 
 const config = (extra: Record<string, unknown> = {}) =>
   new ConfigService({
+    PASSWORD_RECOVERY_ENABLED: 'true',
     SMTP_HOST: 'smtp.example.test',
     SMTP_PORT: '587',
     SMTP_FROM: 'favorite@example.test',
@@ -28,6 +29,51 @@ const config = (extra: Record<string, unknown> = {}) =>
   });
 
 describe('Безопасные границы восстановления пароля', () => {
+  beforeEach(() => jest.clearAllMocks());
+  it.each([undefined, 'false'])(
+    'отключает запрос и расходование старой ссылки при флаге %s',
+    async (flag) => {
+      const findUnique = jest.fn();
+      const service = new PasswordRecoveryService(
+        { user: { findUnique }, passwordReset: { findUnique } } as never,
+        {} as never,
+        config({ PASSWORD_RECOVERY_ENABLED: flag }),
+      );
+
+      expect(() => service.request('known@example.test')).toThrow(
+        ServiceUnavailableException,
+      );
+      expect(() => service.request('missing@example.test')).toThrow(
+        ServiceUnavailableException,
+      );
+      await expect(
+        service.reset('a'.repeat(64), 'new-password-123'),
+      ).rejects.toThrow(ServiceUnavailableException);
+      expect(findUnique).not.toHaveBeenCalled();
+      expect(nodemailer.createTransport).not.toHaveBeenCalled();
+      await service.onModuleDestroy();
+    },
+  );
+  it('отклоняет ошибочное значение флага и включение без SMTP', () => {
+    for (const flag of ['yes', '1', 'TRUE']) {
+      expect(
+        () =>
+          new PasswordRecoveryService(
+            {} as never,
+            {} as never,
+            config({ PASSWORD_RECOVERY_ENABLED: flag }),
+          ),
+      ).toThrow('PASSWORD_RECOVERY_ENABLED');
+    }
+    expect(
+      () =>
+        new PasswordRecoveryService(
+          {} as never,
+          {} as never,
+          config({ SMTP_HOST: '' }),
+        ),
+    ).toThrow('SMTP_HOST');
+  });
   it('не ищет аккаунт до возврата одинакового ответа на запрос', async () => {
     const prisma = { user: { findUnique: jest.fn().mockResolvedValue(null) } };
     const service = new PasswordRecoveryService(
@@ -84,11 +130,11 @@ describe('Безопасные границы восстановления па�
         ),
     ).toThrow();
   });
-  it('не обещает отправку письма без настроенного SMTP', () => {
+  it('не требует SMTP для явно выключенного восстановления', () => {
     const service = new PasswordRecoveryService(
       {} as never,
       {} as never,
-      config({ SMTP_HOST: '' }),
+      config({ PASSWORD_RECOVERY_ENABLED: 'false', SMTP_HOST: '' }),
     );
     expect(() => service.request('user@example.test')).toThrow(
       ServiceUnavailableException,

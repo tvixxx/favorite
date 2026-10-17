@@ -29,7 +29,11 @@ import type { SelectProps } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
 import ImagePicker from "@/components/ImagePicker/ImagePicker.vue";
+import MoviePoster from "@/components/MoviePoster/MoviePoster.vue";
 import type { ImageSelection } from "@/services/media";
+import ContentTypePicker from "@/components/ContentType/ContentTypePicker.vue";
+import TitleCandidates from "@/components/ContentType/TitleCandidates.vue";
+import { type ContentKind, type ContentSelection } from "@/utils/content-kind";
 
 const { navigateBack } = useNavigateBack();
 const moviesStore = useMoviesStore();
@@ -42,14 +46,6 @@ const isActorResolving = ref(false);
 const isSubmitting = ref(false);
 const posterSelection = ref<ImageSelection | null>(null);
 const posterUploading = ref(false);
-const posterPreviewFailed = ref(false);
-
-watch(
-  () => posterSelection.value?.thumbnailUrl || posterSelection.value?.url,
-  () => {
-    posterPreviewFailed.value = false;
-  }
-);
 let actorSelectionRevision = 0;
 
 onBeforeUnmount(() => {
@@ -100,7 +96,8 @@ interface CreateMovieForm {
   countryCodes: string[];
   genres: Genre[];
   seeLater: boolean;
-  isSerial: boolean;
+  isSerial: boolean | null;
+  contentKind: ContentKind | null;
   seasonCount?: number;
   episodeCount?: number;
   currentSeason?: number;
@@ -115,10 +112,11 @@ const formData = reactive<CreateMovieForm>({
   title: "",
   publishDate: "",
   description: "",
-  countryCodes: ["US"],
-  genres: [Genre.ACTION],
+  countryCodes: [],
+  genres: [],
   seeLater: false,
-  isSerial: false,
+  isSerial: null,
+  contentKind: null,
   seasonCount: undefined,
   episodeCount: undefined,
   currentSeason: undefined,
@@ -129,6 +127,28 @@ const formData = reactive<CreateMovieForm>({
   actorIds: [],
 });
 const formRef = ref<FormInstance | null>(null);
+const typeError = ref("");
+const contentSelection = computed<ContentSelection>({
+  get: () => ({ contentKind: formData.contentKind, isSerial: formData.isSerial }),
+  set: (value) => {
+    formData.contentKind = value.contentKind;
+    formData.isSerial = value.isSerial;
+    typeError.value = "";
+  },
+});
+
+async function addExisting(movieId: string): Promise<void> {
+  if (isSubmitting.value || !userId.value) return;
+  isSubmitting.value = true;
+  try {
+    await userMoviesStore.addUserMovie(userId.value, movieId, {});
+    message.success("Добавлено в коллекцию. Введённая форма сохранена.");
+  } catch (error) {
+    showErrorRequest(error);
+  } finally {
+    isSubmitting.value = false;
+  }
+}
 
 watch(posterSelection, (selection) => {
   formData.imageUrl = selection?.url ?? "";
@@ -197,6 +217,12 @@ const addNewMovie = async () => {
     return;
   }
 
+  if (!formData.contentKind || formData.isSerial === null) {
+    typeError.value = !formData.contentKind ? "Выберите, что добавляете" : "Уточните формат";
+
+    return;
+  }
+
   isSubmitting.value = true;
   const { title } = formData;
 
@@ -210,9 +236,10 @@ const addNewMovie = async () => {
         ? new Date(formData.publishDate).toISOString()
         : null,
       actorIds: formData.actorIds,
-      imageUrl: posterSelection.value?.assetId ? undefined : formData.imageUrl,
+      imageUrl: posterSelection.value?.assetId ? undefined : formData.imageUrl || undefined,
       posterAssetId: posterSelection.value?.assetId ?? undefined,
       isSerial: formData.isSerial,
+      contentKind: formData.contentKind,
       seasonCount: formData.isSerial ? formData.seasonCount : undefined,
       episodeCount: formData.isSerial ? formData.episodeCount : undefined,
       collection: {
@@ -241,11 +268,14 @@ const addNewMovie = async () => {
     formRef?.value?.resetFields();
     posterSelection.value = null;
     formData.actorIds = [];
-    formData.countryCodes = ["US"];
+    formData.countryCodes = [];
+    formData.genres = [];
     formData.personalRate = 0;
     formData.isFavorite = false;
     formData.seeLater = false;
-    formData.isSerial = false;
+    formData.isSerial = null;
+    formData.contentKind = null;
+    typeError.value = "";
     formData.seasonCount = undefined;
     formData.episodeCount = undefined;
     formData.currentSeason = undefined;
@@ -277,8 +307,8 @@ const addNewMovie = async () => {
       />
 
       <div class="create-movie__card">
-        <p class="create-movie__eyebrow">Создание</p>
-        <h1 class="create-movie__title">Добавить фильм или сериал</h1>
+
+        <h1 class="create-movie__title">Добавить в коллекцию</h1>
 
         <a-form
           ref="formRef"
@@ -293,13 +323,13 @@ const addNewMovie = async () => {
             <!-- ЛЕВО: поля -->
             <div class="cm-fields">
               <a-form-item
-                label="Название фильма/сериала"
+                label="Название"
                 name="title"
                 :rules="[
                   {
                     required: true,
                     whitespace: true,
-                    message: 'Введите название фильма',
+                    message: 'Введите название',
                   },
                 ]"
               >
@@ -313,12 +343,7 @@ const addNewMovie = async () => {
               <a-form-item
                 label="Постер"
                 name="imageUrl"
-                :rules="[
-                  {
-                    required: true,
-                    message: 'Выберите изображение или вставьте ссылку',
-                  },
-                ]"
+                extra="Необязательно. Без изображения появится иллюстрированная обложка."
               >
                 <ImagePicker
                   v-model="posterSelection"
@@ -395,7 +420,7 @@ const addNewMovie = async () => {
                     :filter-option="filterCountryOption"
                     :max-tag-count="3"
                     :options="countrySelectOptions"
-                    placeholder="Страны съёмок / ко-продукция"
+                    placeholder="Страны производства"
                     size="large"
                     allow-clear
                   />
@@ -440,25 +465,10 @@ const addNewMovie = async () => {
                 </div>
               </a-form-item>
 
-              <a-form-item label="Тип">
-                <div class="cm-pills" role="group">
-                  <button
-                    type="button"
-                    class="cm-pill"
-                    :class="{ 'cm-pill--on': !formData.isSerial }"
-                    @click="formData.isSerial = false"
-                  >
-                    Фильм
-                  </button>
-                  <button
-                    type="button"
-                    class="cm-pill"
-                    :class="{ 'cm-pill--on': formData.isSerial }"
-                    @click="formData.isSerial = true"
-                  >
-                    Сериал
-                  </button>
-                </div>
+              <a-form-item label="Что добавляем?" required>
+                <ContentTypePicker v-model="contentSelection" :disabled="isSubmitting" />
+                <p v-if="typeError" class="cm-type-error" role="alert">{{ typeError }}</p>
+                <TitleCandidates :title="formData.title" :disabled="isSubmitting" can-add @choose="addExisting" />
               </a-form-item>
 
               <div class="cm-toggles">
@@ -481,7 +491,7 @@ const addNewMovie = async () => {
                   />
                 </a-form-item>
 
-                <a-form-item label="Количество эпизодов" name="episodeCount">
+                <a-form-item :label="formData.contentKind === 'TV_SHOW' ? 'Количество выпусков' : 'Количество эпизодов'" name="episodeCount">
                   <a-input-number
                     v-model:value="formData.episodeCount"
                     :min="1"
@@ -495,21 +505,17 @@ const addNewMovie = async () => {
               </div>
 
               <div
-                v-if="
-                  formData.isSerial &&
-                  (formData.seasonCount || formData.episodeCount)
-                "
+                v-if="formData.isSerial"
                 class="cm-row2"
               >
                 <a-form-item
-                  v-if="formData.seasonCount"
                   label="На каком сезоне остановились"
                   name="currentSeason"
                 >
                   <a-input-number
                     v-model:value="formData.currentSeason"
                     :min="1"
-                    :max="formData.seasonCount"
+                      :max="formData.seasonCount || undefined"
                     :precision="0"
                     size="large"
                     placeholder="Например: 2"
@@ -518,14 +524,13 @@ const addNewMovie = async () => {
                 </a-form-item>
 
                 <a-form-item
-                  v-if="formData.episodeCount"
-                  label="На какой серии остановились"
+                    :label="formData.contentKind === 'TV_SHOW' ? 'На каком выпуске остановились' : 'На какой серии остановились'"
                   name="currentEpisode"
                 >
                   <a-input-number
                     v-model:value="formData.currentEpisode"
                     :min="1"
-                    :max="formData.episodeCount"
+                      :max="formData.episodeCount || undefined"
                     :precision="0"
                     size="large"
                     placeholder="Например: 5"
@@ -541,14 +546,14 @@ const addNewMovie = async () => {
                   {
                     required: true,
                     whitespace: true,
-                    message: 'Введите описание фильма',
+                    message: 'Добавьте описание',
                   },
                 ]"
               >
                 <a-textarea
                   v-model:value="formData.description"
                   :rows="4"
-                  placeholder="Кратко или детальное описание фильма"
+                  placeholder="Кратко о сюжете или содержании"
                   :maxlength="500"
                   :show-count="true"
                 />
@@ -557,34 +562,15 @@ const addNewMovie = async () => {
 
             <!-- ПРАВО (десктоп) / превью сверху (мобайл): постер + оценка -->
             <div class="cm-side">
-              <div
-                class="cm-poster"
-                :class="{
-                  'cm-poster--empty': !formData.imageUrl || posterPreviewFailed,
-                }"
-              >
-                <img
-                  v-if="formData.imageUrl && !posterPreviewFailed"
+              <div class="cm-poster">
+                <MoviePoster
                   :src="posterSelection?.thumbnailUrl || formData.imageUrl"
+                  :seed="formData.title || 'new-title'"
+                  :title="formData.title || 'Новый тайтл'"
+                  :meta="formData.publishDate || ''"
                   alt="Предпросмотр постера"
                   class="cm-poster__img"
-                  @error="posterPreviewFailed = true"
                 />
-                <span v-else class="cm-poster__ph">
-                  <BaseIcon
-                    class="cm-poster__ph-icon"
-                    name="ph:image"
-                    :width="24"
-                    :height="24"
-                  />
-                  <span class="cm-poster__ph-text">{{
-                    posterUploading
-                      ? "Готовим постер…"
-                      : posterPreviewFailed
-                      ? "Не удалось открыть изображение"
-                      : "Постер"
-                  }}</span>
-                </span>
                 <span class="cm-poster__badge">
                   {{ formData.personalRate || "?" }}/10
                 </span>
@@ -627,6 +613,8 @@ const addNewMovie = async () => {
 @use "../../styles/media" as *;
 @use "@/styles/layout" as *;
 
+.cm-type-error { margin: 8px 0 0; color: var(--fv-color-negative); }
+
 .create-movie {
   @include pageShell(2rem);
 
@@ -664,16 +652,6 @@ const addNewMovie = async () => {
     @include mediaTablet {
       padding: 32px;
     }
-  }
-
-  &__eyebrow {
-    margin: 0 0 6px;
-    font-family: var(--fv-font-display);
-    font-size: var(--fv-text-p4-size);
-    font-weight: 700;
-    letter-spacing: var(--fv-ls-caps);
-    text-transform: uppercase;
-    color: var(--fv-color-text-tertiary);
   }
 
   &__title {
@@ -831,53 +809,11 @@ const addNewMovie = async () => {
     margin: 0 auto;
   }
 
-  &--empty {
-    background: var(--fv-color-bg-secondary);
-    border: 1.5px dashed var(--fv-color-border);
-
-    @include mediaDesktopXS {
-      border: none;
-      background: linear-gradient(160deg, #c4cad6, #8b95a7);
-    }
-  }
-
   &__img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
-  }
-
-  &__ph {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    color: var(--fv-color-text-tertiary);
-
-    @include mediaDesktopXS {
-      gap: 0;
-      color: rgba(255, 255, 255, 0.8);
-    }
-  }
-
-  &__ph-icon {
-    @include mediaDesktopXS {
-      display: none;
-    }
-  }
-
-  &__ph-text {
-    font-family: var(--fv-font-display);
-    font-weight: 700;
-    font-size: 11px;
-
-    @include mediaDesktopXS {
-      font-size: 26px;
-    }
   }
 
   &__badge {

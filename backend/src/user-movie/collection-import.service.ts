@@ -16,6 +16,7 @@ import { parseCollectionFile, type CollectionEntry } from './collection-file';
 import type {
   CheckCollectionImportDto,
   CommitCollectionImportDto,
+  CollectionMatchDto,
 } from './collection-import.dto';
 
 type ImportUser = { id: string };
@@ -38,7 +39,14 @@ export class CollectionImportService {
     userId: string,
     entries: CollectionEntry[],
     tx: Prisma.TransactionClient = this.prisma,
+    matches: CollectionMatchDto[] = [],
   ) {
+    if (
+      new Set(matches.map((match) => match.row)).size !== matches.length ||
+      matches.some((match) => match.row < 1 || match.row > entries.length)
+    ) {
+      throw new BadRequestException('Некорректное сопоставление строк импорта');
+    }
     const catalog = await tx.movie.findMany({
       where: {
         titleNormalized: {
@@ -50,13 +58,13 @@ export class CollectionImportService {
         title: true,
         titleNormalized: true,
         isSerial: true,
+        contentKind: true,
         publishDate: true,
+        countryCodes: true,
         updatedAt: true,
       },
+      orderBy: { id: 'asc' },
     });
-    const byTitle = new Map(
-      catalog.map((movie) => [movie.titleNormalized, movie]),
-    );
     const existing = new Set(
       (
         await tx.userMovie.findMany({
@@ -67,16 +75,30 @@ export class CollectionImportService {
     );
     const seen = new Set<string>();
     const rows = entries.map((entry, index) => {
-      const movie = byTitle.get(normalizeMovieTitle(entry.title));
+      const candidates = catalog.filter(
+        (movie) =>
+          movie.titleNormalized === normalizeMovieTitle(entry.title) &&
+          movie.isSerial === entry.isSerial &&
+          (entry.year === undefined ||
+            (movie.publishDate?.getUTCFullYear() ?? null) === entry.year) &&
+          (entry.contentKind === undefined ||
+            movie.contentKind === entry.contentKind),
+      );
+      const selected = matches.find((match) => match.row === index + 1);
+      const movie = selected
+        ? candidates.find((candidate) => candidate.id === selected.movieId)
+        : candidates.length === 1
+          ? candidates[0]
+          : undefined;
       let issue = '';
-      if (!movie) issue = 'Тайтл не найден. Сначала добавьте его в каталог.';
-      else if (movie.isSerial !== entry.isSerial)
-        issue = 'Тип отличается от каталога';
-      else if (
-        entry.year !== undefined &&
-        movie.publishDate?.getUTCFullYear() !== entry.year
-      )
-        issue = 'Год отличается от каталога';
+      if (selected && !movie)
+        issue =
+          'Выбранная карточка не соответствует строке файла. Проверьте сопоставление.';
+      else if (candidates.length > 1 && !movie)
+        issue = 'Найдено несколько произведений. Выберите нужную карточку.';
+      else if (!movie)
+        issue =
+          'Тайтл с указанным форматом, годом и категорией не найден. Уточните данные или сначала добавьте его в каталог.';
       else if (seen.has(movie.id)) issue = 'Дубликат тайтла внутри файла';
       if (movie) seen.add(movie.id);
       return {
@@ -89,14 +111,19 @@ export class CollectionImportService {
         personalRate: entry.personalRate,
         status: issue ? 'error' : existing.has(movie!.id) ? 'exists' : 'ready',
         issue,
+        candidates: candidates.map((candidate) => ({
+          id: candidate.id,
+          title: candidate.title,
+          isSerial: candidate.isSerial,
+          contentKind: candidate.contentKind,
+          year: candidate.publishDate?.getUTCFullYear() ?? null,
+          countryCodes: candidate.countryCodes,
+        })),
       };
     });
     const fingerprint = digest(
       JSON.stringify(
-        entries.map((entry) => {
-          const movie = byTitle.get(normalizeMovieTitle(entry.title));
-          return movie ? [movie.id, movie.updatedAt.toISOString()] : null;
-        }),
+        catalog.map((movie) => [movie.id, movie.updatedAt.toISOString()]),
       ),
     );
     return {
@@ -118,6 +145,8 @@ export class CollectionImportService {
     const preview = await this.preview(
       user.id,
       parseCollectionFile(dto.format, dto.content),
+      this.prisma,
+      dto.matches,
     );
     const { fingerprint, ...result } = preview;
     const proof = preview.valid
@@ -126,7 +155,13 @@ export class CollectionImportService {
             type: 'collection-import',
             userId: user.id,
             authVersion: account.authVersion,
-            digest: digest(dto.format + '\n' + dto.content),
+            digest: digest(
+              dto.format +
+                '\n' +
+                dto.content +
+                '\n' +
+                JSON.stringify(dto.matches ?? []),
+            ),
             fingerprint,
           },
           { expiresIn: '10m', algorithm: 'HS256' },
@@ -148,12 +183,20 @@ export class CollectionImportService {
     if (
       proof.type !== 'collection-import' ||
       proof.userId !== user.id ||
-      proof.digest !== digest(dto.format + '\n' + dto.content) ||
+      proof.digest !==
+        digest(
+          dto.format +
+            '\n' +
+            dto.content +
+            '\n' +
+            JSON.stringify(dto.matches ?? []),
+        ) ||
       typeof proof.fingerprint !== 'string'
     )
       throw stale();
     const result = await this.prisma.$transaction(
       async (tx) => {
+        await lockResource(tx, 'catalog:identity');
         await lockResource(tx, `user:${user.id}`);
         const account = await tx.user.findUnique({
           where: { id: user.id },
@@ -165,7 +208,7 @@ export class CollectionImportService {
           proof.authVersion !== account.authVersion
         )
           throw stale();
-        const initial = await this.preview(user.id, entries, tx);
+        const initial = await this.preview(user.id, entries, tx, dto.matches);
         const ids = [
           ...new Set(
             initial.rows.flatMap((row) => (row.movieId ? [row.movieId] : [])),
@@ -174,7 +217,7 @@ export class CollectionImportService {
         for (const id of ids) await lockResource(tx, `movie:${id}`);
         for (const id of ids)
           await lockResource(tx, `collection:${user.id}:${id}`);
-        const current = await this.preview(user.id, entries, tx);
+        const current = await this.preview(user.id, entries, tx, dto.matches);
         if (!current.valid)
           throw new BadRequestException(
             'В файле есть ошибки. Проверьте его ещё раз.',
@@ -186,17 +229,41 @@ export class CollectionImportService {
         )) {
           if (row.status === 'exists') continue;
           const entry = entries[row.row - 1];
-          await this.movies.create(
-            user.id,
-            {
-              movieId: row.movieId!,
-              watchStatus: entry.watchStatus,
-              isFavorite: entry.isFavorite,
-              seeLater: entry.seeLater,
-              personalRate: entry.personalRate,
-            },
-            tx,
-          );
+          if (entry.addedAt !== undefined) {
+            await tx.userMovie.create({
+              data: {
+                userId: user.id,
+                movieId: row.movieId!,
+                watchStatus: entry.watchStatus,
+                isFavorite: entry.isFavorite,
+                seeLater: entry.seeLater,
+                personalRate: entry.personalRate,
+                currentSeason: entry.currentSeason,
+                currentEpisode: entry.currentEpisode,
+                addedAt: new Date(entry.addedAt),
+                startedAt: entry.startedAt ? new Date(entry.startedAt) : null,
+                completedAt: entry.completedAt
+                  ? new Date(entry.completedAt)
+                  : null,
+                lastWatchedAt: entry.lastWatchedAt
+                  ? new Date(entry.lastWatchedAt)
+                  : null,
+                droppedAt: entry.droppedAt ? new Date(entry.droppedAt) : null,
+              },
+            });
+          } else {
+            await this.movies.create(
+              user.id,
+              {
+                movieId: row.movieId!,
+                watchStatus: entry.watchStatus,
+                isFavorite: entry.isFavorite,
+                seeLater: entry.seeLater,
+                personalRate: entry.personalRate ?? 0,
+              },
+              tx,
+            );
+          }
           added++;
         }
         return { added, skipped: current.existing };

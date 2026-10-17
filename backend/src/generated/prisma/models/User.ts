@@ -40,6 +40,12 @@ export type UserMinAggregateOutputType = {
   password: string | null
   fullName: string | null
   timezone: string | null
+  quickAddEnabled: boolean | null
+  watchTonightEnabled: boolean | null
+  collectionFilesEnabled: boolean | null
+  notifyNewMessages: boolean | null
+  notifyFriendRequests: boolean | null
+  notifyRecommendations: boolean | null
   role: $Enums.UserRole | null
   blockedAt: Date | null
   blockedReason: string | null
@@ -58,6 +64,12 @@ export type UserMaxAggregateOutputType = {
   password: string | null
   fullName: string | null
   timezone: string | null
+  quickAddEnabled: boolean | null
+  watchTonightEnabled: boolean | null
+  collectionFilesEnabled: boolean | null
+  notifyNewMessages: boolean | null
+  notifyFriendRequests: boolean | null
+  notifyRecommendations: boolean | null
   role: $Enums.UserRole | null
   blockedAt: Date | null
   blockedReason: string | null
@@ -76,6 +88,12 @@ export type UserCountAggregateOutputType = {
   password: number
   fullName: number
   timezone: number
+  quickAddEnabled: number
+  watchTonightEnabled: number
+  collectionFilesEnabled: number
+  notifyNewMessages: number
+  notifyFriendRequests: number
+  notifyRecommendations: number
   role: number
   blockedAt: number
   blockedReason: number
@@ -104,6 +122,12 @@ export type UserMinAggregateInputType = {
   password?: true
   fullName?: true
   timezone?: true
+  quickAddEnabled?: true
+  watchTonightEnabled?: true
+  collectionFilesEnabled?: true
+  notifyNewMessages?: true
+  notifyFriendRequests?: true
+  notifyRecommendations?: true
   role?: true
   blockedAt?: true
   blockedReason?: true
@@ -122,6 +146,12 @@ export type UserMaxAggregateInputType = {
   password?: true
   fullName?: true
   timezone?: true
+  quickAddEnabled?: true
+  watchTonightEnabled?: true
+  collectionFilesEnabled?: true
+  notifyNewMessages?: true
+  notifyFriendRequests?: true
+  notifyRecommendations?: true
   role?: true
   blockedAt?: true
   blockedReason?: true
@@ -140,6 +170,12 @@ export type UserCountAggregateInputType = {
   password?: true
   fullName?: true
   timezone?: true
+  quickAddEnabled?: true
+  watchTonightEnabled?: true
+  collectionFilesEnabled?: true
+  notifyNewMessages?: true
+  notifyFriendRequests?: true
+  notifyRecommendations?: true
   role?: true
   blockedAt?: true
   blockedReason?: true
@@ -245,6 +281,12 @@ export type UserGroupByOutputType = {
   password: string
   fullName: string
   timezone: string
+  quickAddEnabled: boolean
+  watchTonightEnabled: boolean
+  collectionFilesEnabled: boolean
+  notifyNewMessages: boolean
+  notifyFriendRequests: boolean
+  notifyRecommendations: boolean
   role: $Enums.UserRole
   blockedAt: Date | null
   blockedReason: string | null
@@ -286,6 +328,12 @@ export type UserWhereInput = {
   password?: Prisma.StringFilter<"User"> | string
   fullName?: Prisma.StringFilter<"User"> | string
   timezone?: Prisma.StringFilter<"User"> | string
+  quickAddEnabled?: Prisma.BoolFilter<"User"> | boolean
+  watchTonightEnabled?: Prisma.BoolFilter<"User"> | boolean
+  collectionFilesEnabled?: Prisma.BoolFilter<"User"> | boolean
+  notifyNewMessages?: Prisma.BoolFilter<"User"> | boolean
+  notifyFriendRequests?: Prisma.BoolFilter<"User"> | boolean
+  notifyRecommendations?: Prisma.BoolFilter<"User"> | boolean
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   blockedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   blockedReason?: Prisma.StringNullableFilter<"User"> | string | null
@@ -322,6 +370,12 @@ export type UserOrderByWithRelationInput = {
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
+  quickAddEnabled?: Prisma.SortOrder
+  watchTonightEnabled?: Prisma.SortOrder
+  collectionFilesEnabled?: Prisma.SortOrder
+  notifyNewMessages?: Prisma.SortOrder
+  notifyFriendRequests?: Prisma.SortOrder
+  notifyRecommendations?: Prisma.SortOrder
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   blockedReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -362,6 +416,12 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   password?: Prisma.StringFilter<"User"> | string
   fullName?: Prisma.StringFilter<"User"> | string
   timezone?: Prisma.StringFilter<"User"> | string
+  quickAddEnabled?: Prisma.BoolFilter<"User"> | boolean
+  watchTonightEnabled?: Prisma.BoolFilter<"User"> | boolean
+  collectionFilesEnabled?: Prisma.BoolFilter<"User"> | boolean
+  notifyNewMessages?: Prisma.BoolFilter<"User"> | boolean
+  notifyFriendRequests?: Prisma.BoolFilter<"User"> | boolean
+  notifyRecommendations?: Prisma.BoolFilter<"User"> | boolean
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   blockedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   blockedReason?: Prisma.StringNullableFilter<"User"> | string | null
@@ -397,6 +457,12 @@ export type UserOrderByWithAggregationInput = {
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
+  quickAddEnabled?: Prisma.SortOrder
+  watchTonightEnabled?: Prisma.SortOrder
+  collectionFilesEnabled?: Prisma.SortOrder
+  notifyNewMessages?: Prisma.SortOrder
+  notifyFriendRequests?: Prisma.SortOrder
+  notifyRecommendations?: Prisma.SortOrder
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   blockedReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -423,6 +489,12 @@ export type UserScalarWhereWithAggregatesInput = {
   password?: Prisma.StringWithAggregatesFilter<"User"> | string
   fullName?: Prisma.StringWithAggregatesFilter<"User"> | string
   timezone?: Prisma.StringWithAggregatesFilter<"User"> | string
+  quickAddEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  watchTonightEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  collectionFilesEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  notifyNewMessages?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  notifyFriendRequests?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  notifyRecommendations?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
   blockedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   blockedReason?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -441,6 +513,12 @@ export type UserCreateInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -476,6 +554,12 @@ export type UserUncheckedCreateInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -511,6 +595,12 @@ export type UserUpdateInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -546,6 +636,12 @@ export type UserUncheckedUpdateInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -581,6 +677,12 @@ export type UserCreateManyInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -599,6 +701,12 @@ export type UserUpdateManyMutationInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -616,6 +724,12 @@ export type UserUncheckedUpdateManyInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -639,6 +753,12 @@ export type UserCountOrderByAggregateInput = {
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
+  quickAddEnabled?: Prisma.SortOrder
+  watchTonightEnabled?: Prisma.SortOrder
+  collectionFilesEnabled?: Prisma.SortOrder
+  notifyNewMessages?: Prisma.SortOrder
+  notifyFriendRequests?: Prisma.SortOrder
+  notifyRecommendations?: Prisma.SortOrder
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrder
   blockedReason?: Prisma.SortOrder
@@ -661,6 +781,12 @@ export type UserMaxOrderByAggregateInput = {
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
+  quickAddEnabled?: Prisma.SortOrder
+  watchTonightEnabled?: Prisma.SortOrder
+  collectionFilesEnabled?: Prisma.SortOrder
+  notifyNewMessages?: Prisma.SortOrder
+  notifyFriendRequests?: Prisma.SortOrder
+  notifyRecommendations?: Prisma.SortOrder
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrder
   blockedReason?: Prisma.SortOrder
@@ -679,6 +805,12 @@ export type UserMinOrderByAggregateInput = {
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
+  quickAddEnabled?: Prisma.SortOrder
+  watchTonightEnabled?: Prisma.SortOrder
+  collectionFilesEnabled?: Prisma.SortOrder
+  notifyNewMessages?: Prisma.SortOrder
+  notifyFriendRequests?: Prisma.SortOrder
+  notifyRecommendations?: Prisma.SortOrder
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrder
   blockedReason?: Prisma.SortOrder
@@ -746,6 +878,10 @@ export type UserUncheckedUpdateOneWithoutAvatarAssetNestedInput = {
   delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAvatarAssetInput, Prisma.UserUpdateWithoutAvatarAssetInput>, Prisma.UserUncheckedUpdateWithoutAvatarAssetInput>
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
 }
 
 export type EnumUserRoleFieldUpdateOperationsInput = {
@@ -994,6 +1130,12 @@ export type UserCreateWithoutUploadedMediaInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1028,6 +1170,12 @@ export type UserUncheckedCreateWithoutUploadedMediaInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1067,6 +1215,12 @@ export type UserCreateWithoutAvatarAssetInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1101,6 +1255,12 @@ export type UserUncheckedCreateWithoutAvatarAssetInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1151,6 +1311,12 @@ export type UserUpdateWithoutUploadedMediaInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1185,6 +1351,12 @@ export type UserUncheckedUpdateWithoutUploadedMediaInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1230,6 +1402,12 @@ export type UserUpdateWithoutAvatarAssetInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1264,6 +1442,12 @@ export type UserUncheckedUpdateWithoutAvatarAssetInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1298,6 +1482,12 @@ export type UserCreateWithoutPasswordResetInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1332,6 +1522,12 @@ export type UserUncheckedCreateWithoutPasswordResetInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1382,6 +1578,12 @@ export type UserUpdateWithoutPasswordResetInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1416,6 +1618,12 @@ export type UserUncheckedUpdateWithoutPasswordResetInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1450,6 +1658,12 @@ export type UserCreateWithoutCreatedMoviesInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1484,6 +1698,12 @@ export type UserUncheckedCreateWithoutCreatedMoviesInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1534,6 +1754,12 @@ export type UserUpdateWithoutCreatedMoviesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1568,6 +1794,12 @@ export type UserUncheckedUpdateWithoutCreatedMoviesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1602,6 +1834,12 @@ export type UserCreateWithoutReviewsInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1636,6 +1874,12 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1686,6 +1930,12 @@ export type UserUpdateWithoutReviewsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1720,6 +1970,12 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1754,6 +2010,12 @@ export type UserCreateWithoutCreatedActorsInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1788,6 +2050,12 @@ export type UserUncheckedCreateWithoutCreatedActorsInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1838,6 +2106,12 @@ export type UserUpdateWithoutCreatedActorsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1872,6 +2146,12 @@ export type UserUncheckedUpdateWithoutCreatedActorsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1906,6 +2186,12 @@ export type UserCreateWithoutUserMoviesInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1940,6 +2226,12 @@ export type UserUncheckedCreateWithoutUserMoviesInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1990,6 +2282,12 @@ export type UserUpdateWithoutUserMoviesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2024,6 +2322,12 @@ export type UserUncheckedUpdateWithoutUserMoviesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2058,6 +2362,12 @@ export type UserCreateWithoutListsInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2092,6 +2402,12 @@ export type UserUncheckedCreateWithoutListsInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2142,6 +2458,12 @@ export type UserUpdateWithoutListsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2176,6 +2498,12 @@ export type UserUncheckedUpdateWithoutListsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2210,6 +2538,12 @@ export type UserCreateWithoutFriendshipsRequestedInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2244,6 +2578,12 @@ export type UserUncheckedCreateWithoutFriendshipsRequestedInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2283,6 +2623,12 @@ export type UserCreateWithoutFriendshipsReceivedInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2317,6 +2663,12 @@ export type UserUncheckedCreateWithoutFriendshipsReceivedInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2367,6 +2719,12 @@ export type UserUpdateWithoutFriendshipsRequestedInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2401,6 +2759,12 @@ export type UserUncheckedUpdateWithoutFriendshipsRequestedInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2446,6 +2810,12 @@ export type UserUpdateWithoutFriendshipsReceivedInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2480,6 +2850,12 @@ export type UserUncheckedUpdateWithoutFriendshipsReceivedInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2514,6 +2890,12 @@ export type UserCreateWithoutSentMessagesInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2548,6 +2930,12 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2587,6 +2975,12 @@ export type UserCreateWithoutReceivedMessagesInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2621,6 +3015,12 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2671,6 +3071,12 @@ export type UserUpdateWithoutSentMessagesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2705,6 +3111,12 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2750,6 +3162,12 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2784,6 +3202,12 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2818,6 +3242,12 @@ export type UserCreateWithoutStatusInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2852,6 +3282,12 @@ export type UserUncheckedCreateWithoutStatusInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2902,6 +3338,12 @@ export type UserUpdateWithoutStatusInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2936,6 +3378,12 @@ export type UserUncheckedUpdateWithoutStatusInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2970,6 +3418,12 @@ export type UserCreateWithoutNotificationsInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3004,6 +3458,12 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3054,6 +3514,12 @@ export type UserUpdateWithoutNotificationsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3088,6 +3554,12 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3122,6 +3594,12 @@ export type UserCreateWithoutFeedbacksInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3156,6 +3634,12 @@ export type UserUncheckedCreateWithoutFeedbacksInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3206,6 +3690,12 @@ export type UserUpdateWithoutFeedbacksInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3240,6 +3730,12 @@ export type UserUncheckedUpdateWithoutFeedbacksInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3274,6 +3770,12 @@ export type UserCreateWithoutReviewReportsInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3308,6 +3810,12 @@ export type UserUncheckedCreateWithoutReviewReportsInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3358,6 +3866,12 @@ export type UserUpdateWithoutReviewReportsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3392,6 +3906,12 @@ export type UserUncheckedUpdateWithoutReviewReportsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3426,6 +3946,12 @@ export type UserCreateWithoutAdminActionsInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3460,6 +3986,12 @@ export type UserUncheckedCreateWithoutAdminActionsInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3510,6 +4042,12 @@ export type UserUpdateWithoutAdminActionsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3544,6 +4082,12 @@ export type UserUncheckedUpdateWithoutAdminActionsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3578,6 +4122,12 @@ export type UserCreateWithoutUsageEventsInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3612,6 +4162,12 @@ export type UserUncheckedCreateWithoutUsageEventsInput = {
   password: string
   fullName: string
   timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3662,6 +4218,12 @@ export type UserUpdateWithoutUsageEventsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3696,6 +4258,12 @@ export type UserUncheckedUpdateWithoutUsageEventsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3887,6 +4455,12 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   password?: boolean
   fullName?: boolean
   timezone?: boolean
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: boolean
   blockedAt?: boolean
   blockedReason?: boolean
@@ -3924,6 +4498,12 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   password?: boolean
   fullName?: boolean
   timezone?: boolean
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: boolean
   blockedAt?: boolean
   blockedReason?: boolean
@@ -3943,6 +4523,12 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   password?: boolean
   fullName?: boolean
   timezone?: boolean
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: boolean
   blockedAt?: boolean
   blockedReason?: boolean
@@ -3962,6 +4548,12 @@ export type UserSelectScalar = {
   password?: boolean
   fullName?: boolean
   timezone?: boolean
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
   role?: boolean
   blockedAt?: boolean
   blockedReason?: boolean
@@ -3974,7 +4566,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "fullName" | "timezone" | "role" | "blockedAt" | "blockedReason" | "authVersion" | "tags" | "avatarUrl" | "avatarThumbnailUrl" | "avatarAssetId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "fullName" | "timezone" | "quickAddEnabled" | "watchTonightEnabled" | "collectionFilesEnabled" | "notifyNewMessages" | "notifyFriendRequests" | "notifyRecommendations" | "role" | "blockedAt" | "blockedReason" | "authVersion" | "tags" | "avatarUrl" | "avatarThumbnailUrl" | "avatarAssetId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   avatarAsset?: boolean | Prisma.User$avatarAssetArgs<ExtArgs>
   uploadedMedia?: boolean | Prisma.User$uploadedMediaArgs<ExtArgs>
@@ -4031,6 +4623,12 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     password: string
     fullName: string
     timezone: string
+    quickAddEnabled: boolean
+    watchTonightEnabled: boolean
+    collectionFilesEnabled: boolean
+    notifyNewMessages: boolean
+    notifyFriendRequests: boolean
+    notifyRecommendations: boolean
     role: $Enums.UserRole
     blockedAt: Date | null
     blockedReason: string | null
@@ -4487,6 +5085,12 @@ export interface UserFieldRefs {
   readonly password: Prisma.FieldRef<"User", 'String'>
   readonly fullName: Prisma.FieldRef<"User", 'String'>
   readonly timezone: Prisma.FieldRef<"User", 'String'>
+  readonly quickAddEnabled: Prisma.FieldRef<"User", 'Boolean'>
+  readonly watchTonightEnabled: Prisma.FieldRef<"User", 'Boolean'>
+  readonly collectionFilesEnabled: Prisma.FieldRef<"User", 'Boolean'>
+  readonly notifyNewMessages: Prisma.FieldRef<"User", 'Boolean'>
+  readonly notifyFriendRequests: Prisma.FieldRef<"User", 'Boolean'>
+  readonly notifyRecommendations: Prisma.FieldRef<"User", 'Boolean'>
   readonly role: Prisma.FieldRef<"User", 'UserRole'>
   readonly blockedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly blockedReason: Prisma.FieldRef<"User", 'String'>

@@ -10,6 +10,7 @@ import {
   Tag as ATag,
 } from "ant-design-vue";
 import { useCatalogQuality } from "@/composable/useCatalogQuality";
+import { contentTypeLabel } from "@/utils/content-kind";
 import { catalogIssueLabels, type CatalogIssue } from "@/utils/catalogQuality";
 import {useDateTime} from '@/composable/useDateTime';
 const {formatInstant,timezone}=useDateTime();
@@ -147,7 +148,7 @@ watch(() => props.revision, reset);
           <div class="catalog-quality__content">
             <h3>{{ movie.title }}</h3>
             <p class="admin-muted">
-              {{ movie.isSerial ? "Сериал" : "Фильм" }} ·
+              {{ contentTypeLabel(movie) }} ·
               {{ movie.year ?? "Год не указан" }}
             </p>
             <div class="catalog-quality__tags">

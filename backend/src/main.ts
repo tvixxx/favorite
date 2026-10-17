@@ -8,6 +8,7 @@ import { AppModule } from './app.module';
 import { LoggerMiddlewareFn } from './common/middlewares';
 import { initSwaggerDocs } from './common/swagger';
 import { parseCorsOrigins } from './common/utils/cors-policy';
+import { configureCollectionImportBody } from './user-movie/collection-import-body';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -27,6 +28,7 @@ async function bootstrap() {
   }
 
   app.use(cookieParser());
+  configureCollectionImportBody(app);
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,

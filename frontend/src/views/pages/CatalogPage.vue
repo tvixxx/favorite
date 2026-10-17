@@ -228,6 +228,7 @@ async function resetCatalogFilters(): Promise<void> {
         <MovieCard
           v-for="item in moviesStore.visibleMovies"
           :key="item.id"
+          :movie-id="item.id"
           :poster-src="getPosterSrc(item)"
           :title="movieCardTitle(item)"
           :meta="movieCardMeta(item)"

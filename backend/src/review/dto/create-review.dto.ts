@@ -1,6 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsNotEmpty,
+  IsBoolean,
+  ValidateIf,
   IsInt,
   IsString,
   IsUUID,
@@ -11,6 +13,14 @@ import {
 } from 'class-validator';
 
 export class CreateReviewDto {
+  @ApiPropertyOptional({
+    description: 'Отзыв содержит спойлеры',
+    type: Boolean,
+  })
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  isSpoiler?: boolean;
+
   @ApiProperty({
     description: 'Текст отзыва',
     example: 'Какой-то отзыв для примера',

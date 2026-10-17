@@ -2,8 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { probePoster } from "./catalogQuality";
 
 const images: FakeImage[] = [];
+const imageRequests: { url: string; referrerPolicy: string }[] = [];
 class FakeImage {
-  src = "";
+  private source = "";
+  public get src(): string { return this.source; }
+  public set src(url: string) {
+    this.source = url;
+    imageRequests.push({ url, referrerPolicy: this.referrerPolicy });
+  }
   naturalWidth = 32;
   referrerPolicy = "";
   onload: (() => void) | null = null;
@@ -15,6 +21,7 @@ class FakeImage {
 describe("Доступность внешнего постера в браузере", () => {
   beforeEach(() => {
     images.length = 0;
+    imageRequests.length = 0;
     vi.useFakeTimers();
     vi.stubGlobal("Image", FakeImage);
   });
@@ -30,6 +37,19 @@ describe("Доступность внешнего постера в браузе
     images[0].onload?.();
     await expect(result).resolves.toBe("loaded");
     expect(vi.getTimerCount()).toBe(0);
+  });
+  it("начинает загрузку внешнего постера без передачи адреса страницы", async () => {
+    const result = probePoster(
+      "https://images.example.test/private-page-poster.webp",
+      new AbortController().signal
+    );
+
+    expect(imageRequests).toEqual([{
+      url: "https://images.example.test/private-page-poster.webp",
+      referrerPolicy: "no-referrer",
+    }]);
+    images[0].onload?.();
+    await expect(result).resolves.toBe("loaded");
   });
   it("отличает ошибку изображения от истечения времени ожидания", async () => {
     const result = probePoster(

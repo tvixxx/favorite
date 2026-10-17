@@ -10,6 +10,7 @@ import { useUserListsStore, useUserMoviesStore } from "@/stores";
 import { formatYear, PLURAL, pluralize } from "@/utils";
 import {useDateTime} from '@/composable/useDateTime';
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
+import MoviePoster from "@/components/MoviePoster/MoviePoster.vue";
 import {
   DEFAULT_LIST_COLOR,
   LIST_COLOR_SWATCHES,
@@ -38,6 +39,8 @@ import { useReviews } from "@/composable/useReviews";
 import WatchStatusSelect from "@/components/WatchStatusSelect/WatchStatusSelect.vue";
 import RateMovieModal from "@/components/RateMovieModal/RateMovieModal.vue";
 import MoviePosterEditor from "@/components/ImagePicker/MoviePosterEditor.vue";
+import ContentTypeEditor from "@/components/ContentType/ContentTypeEditor.vue";
+import { contentTypeLabel, type ContentKind } from "@/utils/content-kind";
 import type { ImageSelection } from "@/services/media";
 import CatalogMoviePreviewModal from "@/components/Catalog/CatalogMoviePreviewModal.vue";
 import type { UserListDetail, UserListSummary } from "@/stores/userLists/types";
@@ -120,6 +123,7 @@ const showTab = (tab: DetailTab): boolean =>
   !isMobile.value || effectiveTab.value === tab;
 
 interface SimilarMovie {
+  contentKind?: ContentKind | null;
   movieId: string;
   title: string;
   isSerial: boolean;
@@ -302,6 +306,12 @@ const WATCH_STATUS_LABELS: Record<WatchStatus, string> = {
 const movie = computed(() => currentUserMovie.value?.movie);
 const posterSrc = computed(() => movie.value?.imageUrl || FALLBACK_IMAGE_URL);
 const posterEditorOpen = ref(false);
+const typeEditorOpen = ref(false);
+async function onTypeSaved(): Promise<void> {
+  userMoviesStore.isLoaded = false;
+  await loadDetail();
+}
+
 const canEditPoster = computed(
   () =>
     mainStore.userData?.role === "ADMIN" ||
@@ -319,6 +329,7 @@ watch(
 
 watch(currentMovieId, () => {
   posterEditorOpen.value = false;
+  typeEditorOpen.value = false;
 });
 
 function onPosterSaved(selection: ImageSelection | null): void {
@@ -529,12 +540,7 @@ const episodeProgress = computed(() => {
   );
 });
 
-const hasSerialProgress = computed(() => {
-  return (
-    movie.value?.isSerial &&
-    (movie.value.seasonCount || movie.value.episodeCount)
-  );
-});
+const hasSerialProgress = computed(() => !!movie.value?.isSerial);
 
 const isSerialCompleted = computed(() => {
   if (!currentUserMovie.value) {
@@ -972,7 +978,7 @@ const addMovieToList = async (listId: string) => {
              чипы года/типа и название; ниже рейтинг и быстрые действия -->
         <template v-if="isMobile">
           <div class="detail-hero">
-            <img class="detail-hero__bg" :src="posterSrc" :alt="movie.title" />
+            <MoviePoster class="detail-hero__bg" :src="posterSrc" :seed="movie.id" :title="movie.title" :alt="movie.title" />
             <div class="detail-hero__scrim"></div>
 
             <button
@@ -1009,9 +1015,10 @@ const addMovieToList = async (listId: string) => {
                 <span v-if="movie.publishDate" class="detail-hero__chip">
                   {{ formatYear(movie.publishDate) }}
                 </span>
-                <span class="detail-hero__chip">
-                  {{ movie.isSerial ? "сериал" : "фильм" }}
-                </span>
+                <button v-if="canEditPoster" type="button" class="detail-hero__chip detail-type-edit" :aria-label="'Изменить тип: ' + contentTypeLabel(movie)" @click="typeEditorOpen = true">
+                  {{ contentTypeLabel(movie) }} <BaseIcon name="ph:pencil-simple" :width="14" :height="14" />
+                </button>
+                <span v-else class="detail-hero__chip">{{ contentTypeLabel(movie) }}</span>
               </div>
               <h1 class="detail-hero__title">{{ movie.title }}</h1>
             </div>
@@ -1278,6 +1285,9 @@ const addMovieToList = async (listId: string) => {
                 </div>
 
                 <div v-if="!isEditingProgress" class="serial-progress">
+                  <p v-if="!movie.seasonCount && !movie.episodeCount" class="serial-progress__status-hint">
+                    Всего серий пока неизвестно. Текущий сезон: {{ currentUserMovie.currentSeason ?? 'не указан' }}, {{ movie.contentKind === 'TV_SHOW' ? 'выпуск' : 'серия' }}: {{ currentUserMovie.currentEpisode ?? 'не указана' }}.
+                  </p>
                   <div v-if="movie.seasonCount" class="serial-progress__item">
                     <div class="serial-progress__label">
                       <span class="serial-progress__label-text">Сезоны</span>
@@ -1375,7 +1385,6 @@ const addMovieToList = async (listId: string) => {
 
                 <div v-else class="serial-progress serial-progress_editing">
                   <div
-                    v-if="movie.seasonCount"
                     class="serial-progress__edit-item"
                   >
                     <label class="serial-progress__edit-label">
@@ -1384,7 +1393,7 @@ const addMovieToList = async (listId: string) => {
                     <a-input-number
                       v-model:value="editSeason"
                       :min="0"
-                      :max="movie.seasonCount"
+                      :max="movie.seasonCount || undefined"
                       :precision="0"
                       size="large"
                       style="width: 100%"
@@ -1392,7 +1401,6 @@ const addMovieToList = async (listId: string) => {
                   </div>
 
                   <div
-                    v-if="movie.episodeCount"
                     class="serial-progress__edit-item"
                   >
                     <label class="serial-progress__edit-label">
@@ -1401,7 +1409,7 @@ const addMovieToList = async (listId: string) => {
                     <a-input-number
                       v-model:value="editEpisode"
                       :min="0"
-                      :max="movie.episodeCount"
+                      :max="movie.episodeCount || undefined"
                       :precision="0"
                       size="large"
                       style="width: 100%"
@@ -1452,9 +1460,10 @@ const addMovieToList = async (listId: string) => {
                   @click="openSimilar(item.movieId)"
                 >
                   <span class="similar-card__poster">
-                    <img
-                      v-if="item.posterUrl"
+                    <MoviePoster
                       :src="item.posterUrl"
+                      :seed="item.movieId"
+                      :title="item.title"
                       :alt="item.title"
                       loading="lazy"
                     />
@@ -1464,7 +1473,7 @@ const addMovieToList = async (listId: string) => {
                     <template v-if="item.publishDate">
                       {{ formatYear(item.publishDate) }} ·
                     </template>
-                    {{ item.isSerial ? "сериал" : "фильм" }}
+                    {{ contentTypeLabel(item) }}
                   </span>
                 </button>
               </div>
@@ -1477,8 +1486,10 @@ const addMovieToList = async (listId: string) => {
             <div class="detail-panel">
               <div class="detail-panel__head">
                 <div class="detail-panel__poster">
-                  <img
+                  <MoviePoster
                     :src="posterSrc"
+                    :seed="movie.id"
+                    :title="movie.title"
                     :alt="`${movie.title} постер`"
                     class="detail-panel__poster-img"
                   />
@@ -1513,7 +1524,10 @@ const addMovieToList = async (listId: string) => {
                       />
                       {{ formatYear(movie.publishDate) }}
                     </span>
-                    <span
+                    <button v-if="canEditPoster" type="button" class="detail-panel__meta-item detail-type-edit" :aria-label="'Изменить тип: ' + contentTypeLabel(movie)" @click="typeEditorOpen = true">
+                      {{ contentTypeLabel(movie) }} <BaseIcon name="ph:pencil-simple" :width="14" :height="14" />
+                    </button>
+                    <span v-else
                       class="detail-panel__meta-item detail-panel__meta-item_kind"
                     >
                       <BaseIcon
@@ -1521,7 +1535,7 @@ const addMovieToList = async (listId: string) => {
                         :width="13"
                         :height="13"
                       />
-                      {{ movie.isSerial ? "сериал" : "фильм" }}
+                      {{ contentTypeLabel(movie) }}
                     </span>
                     <span
                       v-if="movie.countryCodes?.length"
@@ -1709,6 +1723,8 @@ const addMovieToList = async (listId: string) => {
     :movie-id="catalogPreviewId"
   />
 
+  <ContentTypeEditor v-if="movie && typeEditorOpen && canEditPoster" v-model="typeEditorOpen" :movie="movie" @saved="onTypeSaved" />
+
   <MoviePosterEditor
     v-if="movie && posterEditorOpen"
     v-model="posterEditorOpen"
@@ -1722,7 +1738,7 @@ const addMovieToList = async (listId: string) => {
     :movie-id="currentMovieId"
     :title="movie.title"
     :year="movie.publishDate ? formatYear(movie.publishDate) : ''"
-    :kind="movie.isSerial ? 'сериал' : 'фильм'"
+    :kind="contentTypeLabel(movie)"
     :poster-url="movie.imageUrl"
     :personal-rate="currentUserMovie?.personalRate"
     @saved="onRateSaved"
@@ -1837,6 +1853,8 @@ const addMovieToList = async (listId: string) => {
 @use "../../styles/media" as *;
 @use "@/styles/scrollbar" as *;
 @use "@/styles/layout" as *;
+.detail-type-edit { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 10px; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.detail-type-edit:focus-visible { outline: 2px solid var(--fv-color-accent); outline-offset: 3px; }
 
 .actor-card__photo {
   width: 100%;
@@ -2349,6 +2367,7 @@ const addMovieToList = async (listId: string) => {
     inset: 0;
     width: 100%;
     height: 100%;
+    :deep(.movie-poster__caption) { display: none; }
     object-fit: cover;
   }
 

@@ -8,6 +8,7 @@ network="favourite-qa-$run_id"
 postgres="favourite-qa-postgres-$run_id"
 backend="favourite-qa-backend-$run_id"
 web="favourite-qa-web-$run_id"
+web_ssl="favourite-qa-web-ssl-$run_id"
 backend_image="favourite-backend:qa-$run_id"
 migrate_image="favourite-migrate:qa-$run_id"
 web_image="favourite-web:qa-$run_id"
@@ -18,12 +19,24 @@ cleanup() {
   if [[ "$result" != 0 ]]; then
     docker logs --tail=40 "$backend" 2>/dev/null || true
     docker logs --tail=40 "$web" 2>/dev/null || true
+    docker logs --tail=40 "$web_ssl" 2>/dev/null || true
   fi
 
-  docker rm -fv "$web" "$backend" "$postgres" >/dev/null 2>&1 || true
+  docker rm -fv "$web_ssl" "$web" "$backend" "$postgres" >/dev/null 2>&1 || true
   docker network rm "$network" >/dev/null 2>&1 || true
   docker image rm "$web_image" "$backend_image" "$migrate_image" >/dev/null 2>&1 || true
   rm -rf "$work_dir"
+}
+
+check_web_headers() {
+  local asset
+  asset="$(docker exec "$1" sh -ec '
+    set -- /usr/share/nginx/html/assets/*.js
+    test -f "$1"
+    printf "/assets/%s" "${1##*/}"
+  ')"
+  docker cp "$project_dir/deploy/check-web-headers.cjs" "$backend:/tmp/favourite-check-web-headers.cjs" >/dev/null
+  docker exec "$backend" node /tmp/favourite-check-web-headers.cjs "$2://$1" "$asset"
 }
 
 trap cleanup EXIT
@@ -183,6 +196,7 @@ done
 
 docker exec "$web" wget -q -T 5 -O- http://127.0.0.1/api/health
 docker exec "$web" sh -c 'wget -q -T 5 -O- http://127.0.0.1/ | grep -q "<div id=\"app\""'
+check_web_headers "$web" http
 
 echo
 echo "8/8: HTTPS-конфигурация с одноразовым тестовым сертификатом"
@@ -196,5 +210,19 @@ docker run --rm --platform linux/amd64 --network none -e DOMAIN=example.test \
 docker run --rm --platform linux/amd64 --network "$network" \
   -v "$work_dir/nginx-ssl.conf:/etc/nginx/conf.d/default.conf:ro" \
   -v "$work_dir/certs:/etc/letsencrypt:ro" "$web_image" nginx -t
+
+docker run -d --platform linux/amd64 --name "$web_ssl" --network "$network" \
+  -v "$work_dir/nginx-ssl.conf:/etc/nginx/conf.d/default.conf:ro" \
+  -v "$work_dir/certs:/etc/letsencrypt:ro" "$web_image" >/dev/null
+ssl_ready=false
+for attempt in {1..30}; do
+  if docker exec "$web_ssl" wget --no-check-certificate -q -T 2 -O /dev/null https://127.0.0.1/api/health >/dev/null 2>&1; then
+    ssl_ready=true
+    break
+  fi
+  sleep 1
+done
+[[ "$ssl_ready" == true ]] || { echo "nginx HTTPS readiness failed" >&2; exit 1; }
+check_web_headers "$web_ssl" https
 
 echo "FAVOURITE_DOCKER_CHECK_OK"

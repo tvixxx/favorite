@@ -10,7 +10,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { Genre, WatchStatus } from '../../generated/prisma/enums';
+import { ContentKind, Genre, WatchStatus } from '../../generated/prisma/enums';
 import {
   parseCountryFilters,
   parseGenreFilters,
@@ -23,6 +23,9 @@ import {
 } from '../../common/utils/query-value';
 
 export class CollectionQueryDto {
+  @IsOptional()
+  @IsEnum(ContentKind)
+  contentKind?: ContentKind;
   @Type(() => Number)
   @IsInt()
   @Min(1)

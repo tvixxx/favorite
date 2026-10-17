@@ -84,7 +84,7 @@ watch(
   { immediate: true }
 );
 
-const handleSubmit = async (text: string, rate: number) => {
+const handleSubmit = async (text: string, rate: number, isSpoiler = false) => {
   if (
     isSaving.value ||
     !currentUserId.value ||
@@ -106,7 +106,7 @@ const handleSubmit = async (text: string, rate: number) => {
   const submittedMovieId = movieId;
   try {
     if (isEditing.value && editingReview.value) {
-      await updateReview(editingReview.value.id, { text, rate });
+      await updateReview(editingReview.value.id, { text, rate, isSpoiler });
       if (movieId !== submittedMovieId) {
         return;
       }
@@ -115,7 +115,7 @@ const handleSubmit = async (text: string, rate: number) => {
       editingReview.value = null;
       isEditing.value = false;
     } else {
-      await createReview({ text, rate, movieId });
+      await createReview({ text, rate, movieId, isSpoiler });
       if (movieId !== submittedMovieId) {
         return;
       }
@@ -255,6 +255,7 @@ const handleDelete = async (reviewId: string) => {
           :is-saving="isSaving"
           :initial-text="editingReview?.text ?? ''"
           :initial-rate="editingReview?.rate ?? 0"
+          :initial-is-spoiler="editingReview?.isSpoiler ?? false"
           @submit="handleSubmit"
           @cancel="cancelEdit"
         />

@@ -37,6 +37,7 @@ export type ReviewSumAggregateOutputType = {
 export type ReviewMinAggregateOutputType = {
   id: string | null
   text: string | null
+  isSpoiler: boolean | null
   rate: number | null
   hiddenAt: Date | null
   moderationReason: string | null
@@ -49,6 +50,7 @@ export type ReviewMinAggregateOutputType = {
 export type ReviewMaxAggregateOutputType = {
   id: string | null
   text: string | null
+  isSpoiler: boolean | null
   rate: number | null
   hiddenAt: Date | null
   moderationReason: string | null
@@ -61,6 +63,7 @@ export type ReviewMaxAggregateOutputType = {
 export type ReviewCountAggregateOutputType = {
   id: number
   text: number
+  isSpoiler: number
   rate: number
   hiddenAt: number
   moderationReason: number
@@ -83,6 +86,7 @@ export type ReviewSumAggregateInputType = {
 export type ReviewMinAggregateInputType = {
   id?: true
   text?: true
+  isSpoiler?: true
   rate?: true
   hiddenAt?: true
   moderationReason?: true
@@ -95,6 +99,7 @@ export type ReviewMinAggregateInputType = {
 export type ReviewMaxAggregateInputType = {
   id?: true
   text?: true
+  isSpoiler?: true
   rate?: true
   hiddenAt?: true
   moderationReason?: true
@@ -107,6 +112,7 @@ export type ReviewMaxAggregateInputType = {
 export type ReviewCountAggregateInputType = {
   id?: true
   text?: true
+  isSpoiler?: true
   rate?: true
   hiddenAt?: true
   moderationReason?: true
@@ -206,6 +212,7 @@ export type ReviewGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 export type ReviewGroupByOutputType = {
   id: string
   text: string
+  isSpoiler: boolean
   rate: number
   hiddenAt: Date | null
   moderationReason: string | null
@@ -241,6 +248,7 @@ export type ReviewWhereInput = {
   NOT?: Prisma.ReviewWhereInput | Prisma.ReviewWhereInput[]
   id?: Prisma.StringFilter<"Review"> | string
   text?: Prisma.StringFilter<"Review"> | string
+  isSpoiler?: Prisma.BoolFilter<"Review"> | boolean
   rate?: Prisma.IntFilter<"Review"> | number
   hiddenAt?: Prisma.DateTimeNullableFilter<"Review"> | Date | string | null
   moderationReason?: Prisma.StringNullableFilter<"Review"> | string | null
@@ -256,6 +264,7 @@ export type ReviewWhereInput = {
 export type ReviewOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   text?: Prisma.SortOrder
+  isSpoiler?: Prisma.SortOrder
   rate?: Prisma.SortOrder
   hiddenAt?: Prisma.SortOrderInput | Prisma.SortOrder
   moderationReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -275,6 +284,7 @@ export type ReviewWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ReviewWhereInput[]
   NOT?: Prisma.ReviewWhereInput | Prisma.ReviewWhereInput[]
   text?: Prisma.StringFilter<"Review"> | string
+  isSpoiler?: Prisma.BoolFilter<"Review"> | boolean
   rate?: Prisma.IntFilter<"Review"> | number
   hiddenAt?: Prisma.DateTimeNullableFilter<"Review"> | Date | string | null
   moderationReason?: Prisma.StringNullableFilter<"Review"> | string | null
@@ -290,6 +300,7 @@ export type ReviewWhereUniqueInput = Prisma.AtLeast<{
 export type ReviewOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   text?: Prisma.SortOrder
+  isSpoiler?: Prisma.SortOrder
   rate?: Prisma.SortOrder
   hiddenAt?: Prisma.SortOrderInput | Prisma.SortOrder
   moderationReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -310,6 +321,7 @@ export type ReviewScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ReviewScalarWhereWithAggregatesInput | Prisma.ReviewScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Review"> | string
   text?: Prisma.StringWithAggregatesFilter<"Review"> | string
+  isSpoiler?: Prisma.BoolWithAggregatesFilter<"Review"> | boolean
   rate?: Prisma.IntWithAggregatesFilter<"Review"> | number
   hiddenAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Review"> | Date | string | null
   moderationReason?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
@@ -322,6 +334,7 @@ export type ReviewScalarWhereWithAggregatesInput = {
 export type ReviewCreateInput = {
   id?: string
   text: string
+  isSpoiler?: boolean
   rate?: number
   hiddenAt?: Date | string | null
   moderationReason?: string | null
@@ -335,6 +348,7 @@ export type ReviewCreateInput = {
 export type ReviewUncheckedCreateInput = {
   id?: string
   text: string
+  isSpoiler?: boolean
   rate?: number
   hiddenAt?: Date | string | null
   moderationReason?: string | null
@@ -348,6 +362,7 @@ export type ReviewUncheckedCreateInput = {
 export type ReviewUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   text?: Prisma.StringFieldUpdateOperationsInput | string
+  isSpoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rate?: Prisma.IntFieldUpdateOperationsInput | number
   hiddenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moderationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -361,6 +376,7 @@ export type ReviewUpdateInput = {
 export type ReviewUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   text?: Prisma.StringFieldUpdateOperationsInput | string
+  isSpoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rate?: Prisma.IntFieldUpdateOperationsInput | number
   hiddenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moderationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -374,6 +390,7 @@ export type ReviewUncheckedUpdateInput = {
 export type ReviewCreateManyInput = {
   id?: string
   text: string
+  isSpoiler?: boolean
   rate?: number
   hiddenAt?: Date | string | null
   moderationReason?: string | null
@@ -386,6 +403,7 @@ export type ReviewCreateManyInput = {
 export type ReviewUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   text?: Prisma.StringFieldUpdateOperationsInput | string
+  isSpoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rate?: Prisma.IntFieldUpdateOperationsInput | number
   hiddenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moderationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -396,6 +414,7 @@ export type ReviewUpdateManyMutationInput = {
 export type ReviewUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   text?: Prisma.StringFieldUpdateOperationsInput | string
+  isSpoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rate?: Prisma.IntFieldUpdateOperationsInput | number
   hiddenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moderationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -423,6 +442,7 @@ export type ReviewUserIdMovieIdCompoundUniqueInput = {
 export type ReviewCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   text?: Prisma.SortOrder
+  isSpoiler?: Prisma.SortOrder
   rate?: Prisma.SortOrder
   hiddenAt?: Prisma.SortOrder
   moderationReason?: Prisma.SortOrder
@@ -439,6 +459,7 @@ export type ReviewAvgOrderByAggregateInput = {
 export type ReviewMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   text?: Prisma.SortOrder
+  isSpoiler?: Prisma.SortOrder
   rate?: Prisma.SortOrder
   hiddenAt?: Prisma.SortOrder
   moderationReason?: Prisma.SortOrder
@@ -451,6 +472,7 @@ export type ReviewMaxOrderByAggregateInput = {
 export type ReviewMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   text?: Prisma.SortOrder
+  isSpoiler?: Prisma.SortOrder
   rate?: Prisma.SortOrder
   hiddenAt?: Prisma.SortOrder
   moderationReason?: Prisma.SortOrder
@@ -570,6 +592,7 @@ export type ReviewUpdateOneRequiredWithoutReportsNestedInput = {
 export type ReviewCreateWithoutUserInput = {
   id?: string
   text: string
+  isSpoiler?: boolean
   rate?: number
   hiddenAt?: Date | string | null
   moderationReason?: string | null
@@ -582,6 +605,7 @@ export type ReviewCreateWithoutUserInput = {
 export type ReviewUncheckedCreateWithoutUserInput = {
   id?: string
   text: string
+  isSpoiler?: boolean
   rate?: number
   hiddenAt?: Date | string | null
   moderationReason?: string | null
@@ -623,6 +647,7 @@ export type ReviewScalarWhereInput = {
   NOT?: Prisma.ReviewScalarWhereInput | Prisma.ReviewScalarWhereInput[]
   id?: Prisma.StringFilter<"Review"> | string
   text?: Prisma.StringFilter<"Review"> | string
+  isSpoiler?: Prisma.BoolFilter<"Review"> | boolean
   rate?: Prisma.IntFilter<"Review"> | number
   hiddenAt?: Prisma.DateTimeNullableFilter<"Review"> | Date | string | null
   moderationReason?: Prisma.StringNullableFilter<"Review"> | string | null
@@ -635,6 +660,7 @@ export type ReviewScalarWhereInput = {
 export type ReviewCreateWithoutMovieInput = {
   id?: string
   text: string
+  isSpoiler?: boolean
   rate?: number
   hiddenAt?: Date | string | null
   moderationReason?: string | null
@@ -647,6 +673,7 @@ export type ReviewCreateWithoutMovieInput = {
 export type ReviewUncheckedCreateWithoutMovieInput = {
   id?: string
   text: string
+  isSpoiler?: boolean
   rate?: number
   hiddenAt?: Date | string | null
   moderationReason?: string | null
@@ -685,6 +712,7 @@ export type ReviewUpdateManyWithWhereWithoutMovieInput = {
 export type ReviewCreateWithoutReportsInput = {
   id?: string
   text: string
+  isSpoiler?: boolean
   rate?: number
   hiddenAt?: Date | string | null
   moderationReason?: string | null
@@ -697,6 +725,7 @@ export type ReviewCreateWithoutReportsInput = {
 export type ReviewUncheckedCreateWithoutReportsInput = {
   id?: string
   text: string
+  isSpoiler?: boolean
   rate?: number
   hiddenAt?: Date | string | null
   moderationReason?: string | null
@@ -725,6 +754,7 @@ export type ReviewUpdateToOneWithWhereWithoutReportsInput = {
 export type ReviewUpdateWithoutReportsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   text?: Prisma.StringFieldUpdateOperationsInput | string
+  isSpoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rate?: Prisma.IntFieldUpdateOperationsInput | number
   hiddenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moderationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -737,6 +767,7 @@ export type ReviewUpdateWithoutReportsInput = {
 export type ReviewUncheckedUpdateWithoutReportsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   text?: Prisma.StringFieldUpdateOperationsInput | string
+  isSpoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rate?: Prisma.IntFieldUpdateOperationsInput | number
   hiddenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moderationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -749,6 +780,7 @@ export type ReviewUncheckedUpdateWithoutReportsInput = {
 export type ReviewCreateManyUserInput = {
   id?: string
   text: string
+  isSpoiler?: boolean
   rate?: number
   hiddenAt?: Date | string | null
   moderationReason?: string | null
@@ -760,6 +792,7 @@ export type ReviewCreateManyUserInput = {
 export type ReviewUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   text?: Prisma.StringFieldUpdateOperationsInput | string
+  isSpoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rate?: Prisma.IntFieldUpdateOperationsInput | number
   hiddenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moderationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -772,6 +805,7 @@ export type ReviewUpdateWithoutUserInput = {
 export type ReviewUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   text?: Prisma.StringFieldUpdateOperationsInput | string
+  isSpoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rate?: Prisma.IntFieldUpdateOperationsInput | number
   hiddenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moderationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -784,6 +818,7 @@ export type ReviewUncheckedUpdateWithoutUserInput = {
 export type ReviewUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   text?: Prisma.StringFieldUpdateOperationsInput | string
+  isSpoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rate?: Prisma.IntFieldUpdateOperationsInput | number
   hiddenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moderationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -795,6 +830,7 @@ export type ReviewUncheckedUpdateManyWithoutUserInput = {
 export type ReviewCreateManyMovieInput = {
   id?: string
   text: string
+  isSpoiler?: boolean
   rate?: number
   hiddenAt?: Date | string | null
   moderationReason?: string | null
@@ -806,6 +842,7 @@ export type ReviewCreateManyMovieInput = {
 export type ReviewUpdateWithoutMovieInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   text?: Prisma.StringFieldUpdateOperationsInput | string
+  isSpoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rate?: Prisma.IntFieldUpdateOperationsInput | number
   hiddenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moderationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -818,6 +855,7 @@ export type ReviewUpdateWithoutMovieInput = {
 export type ReviewUncheckedUpdateWithoutMovieInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   text?: Prisma.StringFieldUpdateOperationsInput | string
+  isSpoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rate?: Prisma.IntFieldUpdateOperationsInput | number
   hiddenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moderationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -830,6 +868,7 @@ export type ReviewUncheckedUpdateWithoutMovieInput = {
 export type ReviewUncheckedUpdateManyWithoutMovieInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   text?: Prisma.StringFieldUpdateOperationsInput | string
+  isSpoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rate?: Prisma.IntFieldUpdateOperationsInput | number
   hiddenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moderationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -872,6 +911,7 @@ export type ReviewCountOutputTypeCountReportsArgs<ExtArgs extends runtime.Types.
 export type ReviewSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   text?: boolean
+  isSpoiler?: boolean
   rate?: boolean
   hiddenAt?: boolean
   moderationReason?: boolean
@@ -888,6 +928,7 @@ export type ReviewSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
 export type ReviewSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   text?: boolean
+  isSpoiler?: boolean
   rate?: boolean
   hiddenAt?: boolean
   moderationReason?: boolean
@@ -902,6 +943,7 @@ export type ReviewSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
 export type ReviewSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   text?: boolean
+  isSpoiler?: boolean
   rate?: boolean
   hiddenAt?: boolean
   moderationReason?: boolean
@@ -916,6 +958,7 @@ export type ReviewSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
 export type ReviewSelectScalar = {
   id?: boolean
   text?: boolean
+  isSpoiler?: boolean
   rate?: boolean
   hiddenAt?: boolean
   moderationReason?: boolean
@@ -925,7 +968,7 @@ export type ReviewSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "text" | "rate" | "hiddenAt" | "moderationReason" | "userId" | "movieId" | "createdAt" | "updatedAt", ExtArgs["result"]["review"]>
+export type ReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "text" | "isSpoiler" | "rate" | "hiddenAt" | "moderationReason" | "userId" | "movieId" | "createdAt" | "updatedAt", ExtArgs["result"]["review"]>
 export type ReviewInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   movie?: boolean | Prisma.MovieDefaultArgs<ExtArgs>
@@ -951,6 +994,7 @@ export type $ReviewPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     text: string
+    isSpoiler: boolean
     rate: number
     hiddenAt: Date | null
     moderationReason: string | null
@@ -1386,6 +1430,7 @@ export interface Prisma__ReviewClient<T, Null = never, ExtArgs extends runtime.T
 export interface ReviewFieldRefs {
   readonly id: Prisma.FieldRef<"Review", 'String'>
   readonly text: Prisma.FieldRef<"Review", 'String'>
+  readonly isSpoiler: Prisma.FieldRef<"Review", 'Boolean'>
   readonly rate: Prisma.FieldRef<"Review", 'Int'>
   readonly hiddenAt: Prisma.FieldRef<"Review", 'DateTime'>
   readonly moderationReason: Prisma.FieldRef<"Review", 'String'>

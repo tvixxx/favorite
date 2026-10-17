@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Genre } from '../../generated/prisma/enums';
+import { ContentKind, Genre } from '../../generated/prisma/enums';
 import type { Actor } from '../../generated/prisma/client';
 
 export class MoviePosterResponse {
@@ -14,6 +14,8 @@ export class MoviePosterResponse {
 }
 
 export class MovieResponse {
+  @ApiPropertyOptional({ enum: ContentKind, nullable: true })
+  contentKind: ContentKind | null;
   @ApiProperty({ format: 'uuid' })
   id: string;
 

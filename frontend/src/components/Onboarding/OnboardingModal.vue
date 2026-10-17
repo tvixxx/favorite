@@ -11,6 +11,7 @@ const TOUR_STEPS_PREVIEW: { icon: string; text: string }[] = [
   { icon: "ph:squares-four", text: "Несколько шагов на странице коллекции" },
   { icon: "ph:magnifying-glass", text: "Каталог с подсветкой фильтров" },
   { icon: "ph:users-three", text: "Раздел «Друзья» и уведомления в шапке" },
+  { icon: "ph:sliders-horizontal", text: "Персональные настройки и дополнительные инструменты" },
 ];
 
 const openModel = defineModel<boolean>("open", { required: true });
@@ -76,8 +77,8 @@ const startInteractiveTour = async (): Promise<void> => {
 
         <p class="onboarding-modal__text">
           Рекомендуем пройти <strong>интерактивный тур</strong> — подсветим меню
-          «Медиатека», быстрый ввод и фильтры, каталог, друзей и колокольчик
-          уведомлений.
+          «Медиатека», фильтры, каталог, друзей и уведомления. Покажем, как
+          включать и скрывать дополнительные инструменты в настройках профиля.
         </p>
 
         <div class="onboarding-modal__steps">

@@ -1831,6 +1831,12 @@ export const UserScalarFieldEnum = {
   password: 'password',
   fullName: 'fullName',
   timezone: 'timezone',
+  quickAddEnabled: 'quickAddEnabled',
+  watchTonightEnabled: 'watchTonightEnabled',
+  collectionFilesEnabled: 'collectionFilesEnabled',
+  notifyNewMessages: 'notifyNewMessages',
+  notifyFriendRequests: 'notifyFriendRequests',
+  notifyRecommendations: 'notifyRecommendations',
   role: 'role',
   blockedAt: 'blockedAt',
   blockedReason: 'blockedReason',
@@ -1866,6 +1872,7 @@ export const MovieScalarFieldEnum = {
   genres: 'genres',
   publishDate: 'publishDate',
   isSerial: 'isSerial',
+  contentKind: 'contentKind',
   seasonCount: 'seasonCount',
   episodeCount: 'episodeCount',
   posterId: 'posterId',
@@ -1892,6 +1899,7 @@ export type MoviePosterScalarFieldEnum = (typeof MoviePosterScalarFieldEnum)[key
 export const ReviewScalarFieldEnum = {
   id: 'id',
   text: 'text',
+  isSpoiler: 'isSpoiler',
   rate: 'rate',
   hiddenAt: 'hiddenAt',
   moderationReason: 'moderationReason',
@@ -2186,6 +2194,13 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+
+
+
+/**
  * Reference to a field of type 'UserRole'
  */
 export type EnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole'>
@@ -2210,13 +2225,20 @@ export type EnumGenreFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMode
  * Reference to a field of type 'Genre[]'
  */
 export type ListEnumGenreFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Genre[]'>
+
+
+
+/**
+ * Reference to a field of type 'ContentKind'
+ */
+export type EnumContentKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ContentKind'>
     
 
 
 /**
- * Reference to a field of type 'Boolean'
+ * Reference to a field of type 'ContentKind[]'
  */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+export type ListEnumContentKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ContentKind[]'>
     
 
 

@@ -385,10 +385,10 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     }
   };
 
-  const rateUserMovie = async (userId: string, movieId: string, personalRate: number, reviewText: string): Promise<UserMovie> => {
+  const rateUserMovie = async (userId: string, movieId: string, personalRate: number, reviewText: string, isSpoiler?: boolean): Promise<UserMovie> => {
     const requestRevision = sessionRevision;
     const response = await useFetch<UserMovieApiResponse>(`/users/${userId}/movies/${movieId}/rating`, {
-      method: FETCH_METHOD.patch, data: { personalRate, reviewText },
+      method: FETCH_METHOD.patch, data: { personalRate, reviewText, isSpoiler },
     });
     if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
     if (!isSuccessStatus(response.status)) throw new Error("Не удалось сохранить оценку");

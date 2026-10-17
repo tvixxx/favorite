@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -18,7 +19,7 @@ import type {
   Review,
 } from '../generated/prisma/client';
 import { MoviesStatsResponse } from './dto/movies-stats.dto';
-import { WatchStatus } from '../generated/prisma/enums';
+import { ContentKind, WatchStatus } from '../generated/prisma/enums';
 import { normalizeMovieTitle } from '../common/utils';
 import { UserMovieService } from '../user-movie/user-movie.service';
 import { MediaService } from '../media/media.service';
@@ -26,7 +27,16 @@ import { queryInteger } from '../common/utils/query-value';
 import { lockResource } from '../common/utils/transaction-lock';
 import { invalidateDataCache } from '../common/utils/data-revision';
 
+type TitleCandidate = Pick<
+  Movie,
+  'id' | 'title' | 'isSerial' | 'contentKind' | 'publishDate' | 'countryCodes'
+> & {
+  poster: { url: string; thumbnailUrl: string | null } | null;
+};
+
 interface MovieFilters {
+  contentKind?: ContentKind;
+  isSerial?: boolean;
   genres?: Genre[];
   countryCodes?: string[];
   publishDateFrom?: string;
@@ -35,6 +45,7 @@ interface MovieFilters {
 }
 
 export interface SimilarMovieDto {
+  contentKind?: ContentKind | null;
   movieId: string;
   title: string;
   isSerial: boolean;
@@ -54,25 +65,70 @@ class MovieService {
     private readonly media: MediaService,
   ) {}
 
-  private async findDuplicateMovieIdByNormalizedTitle(
+  public async titleCandidates(
     title: string,
-    excludeMovieId?: string,
-  ): Promise<string | null> {
+    tx: Prisma.TransactionClient = this.prismaService,
+  ): Promise<TitleCandidate[]> {
     const normalized = normalizeMovieTitle(title);
-
-    if (!normalized.length) {
-      return null;
-    }
-
-    const existing = await this.prismaService.movie.findFirst({
-      where: {
-        titleNormalized: normalized,
-        ...(excludeMovieId ? { NOT: { id: excludeMovieId } } : {}),
+    if (!normalized) return [];
+    return tx.movie.findMany({
+      where: { titleNormalized: normalized },
+      orderBy: { id: 'asc' },
+      select: {
+        id: true,
+        title: true,
+        isSerial: true,
+        contentKind: true,
+        publishDate: true,
+        countryCodes: true,
+        poster: { select: { url: true, thumbnailUrl: true } },
       },
-      select: { id: true },
     });
+  }
 
-    return existing?.id ?? null;
+  private async assertDistinct(
+    tx: Prisma.TransactionClient,
+    dto: Pick<
+      CreateMovieRequest,
+      'title' | 'isSerial' | 'publishDate' | 'distinctReason'
+    >,
+    user: CatalogUser,
+    original?: Movie,
+  ): Promise<void> {
+    if (dto.distinctReason !== undefined && user.role !== 'ADMIN') {
+      throw new ForbiddenException(
+        'Подтвердить различие совпадающих произведений может только администратор',
+      );
+    }
+    const year = dto.publishDate
+      ? new Date(dto.publishDate).getUTCFullYear()
+      : null;
+    const previousYear = original?.publishDate?.getUTCFullYear() ?? null;
+    if (
+      original &&
+      normalizeMovieTitle(original.title) === normalizeMovieTitle(dto.title) &&
+      original.isSerial === dto.isSerial &&
+      previousYear === year
+    )
+      return;
+    const candidates = (await this.titleCandidates(dto.title, tx)).filter(
+      (movie) =>
+        movie.id !== original?.id &&
+        movie.isSerial === dto.isSerial &&
+        (year === null ||
+          movie.publishDate === null ||
+          movie.publishDate?.getUTCFullYear() === year),
+    );
+    if (!candidates.length) return;
+    if (
+      user.role === 'ADMIN' &&
+      dto.distinctReason &&
+      dto.distinctReason.trim().length >= 10
+    )
+      return;
+    throw new ConflictException(
+      'Найдено произведение с таким названием и форматом. Выберите существующую карточку, уточните год или обратитесь к администратору.',
+    );
   }
 
   private async withAverageRatings<M extends { id: string }>(
@@ -184,16 +240,9 @@ class MovieService {
       episodeCount,
     } = dto;
 
-    const duplicateOnCreate =
-      await this.findDuplicateMovieIdByNormalizedTitle(title);
-
-    if (duplicateOnCreate) {
-      throw new ConflictException(
-        'Фильм с таким названием уже есть в общем каталоге. Измените название или добавьте существующую позицию из каталога.',
-      );
-    }
-
     const created = await this.prismaService.$transaction(async (tx) => {
+      await lockResource(tx, 'catalog:identity');
+      await this.assertDistinct(tx, dto, user);
       const poster =
         imageUrl || dto.posterAssetId
           ? await this.media.select(
@@ -226,6 +275,7 @@ class MovieService {
           countryCodes,
           genres,
           isSerial,
+          contentKind: dto.contentKind ?? null,
           seasonCount,
           episodeCount,
           poster: poster?.url
@@ -274,6 +324,7 @@ class MovieService {
         movie.id,
         'MOVIE_CREATE',
         Object.keys(dto),
+        dto.distinctReason,
       );
 
       return movie;
@@ -381,6 +432,7 @@ class MovieService {
             title: true,
             genres: true,
             isSerial: true,
+            contentKind: true,
             publishDate: true,
             poster: { select: { url: true } },
           },
@@ -397,6 +449,7 @@ class MovieService {
         movieId: row.movieId,
         title: row.movie.title,
         isSerial: row.movie.isSerial,
+        contentKind: row.movie.contentKind,
         publishDate: row.movie.publishDate?.toISOString() ?? null,
         posterUrl: row.movie.poster?.url ?? null,
         matches: row.movie.genres.filter((genre) => sourceGenres.has(genre))
@@ -408,6 +461,7 @@ class MovieService {
         movieId: row.movieId,
         title: row.title,
         isSerial: row.isSerial,
+        contentKind: row.contentKind,
         publishDate: row.publishDate,
         posterUrl: row.posterUrl,
       }));
@@ -439,6 +493,7 @@ class MovieService {
           select: {
             title: true,
             isSerial: true,
+            contentKind: true,
             publishDate: true,
             poster: { select: { url: true } },
           },
@@ -452,6 +507,7 @@ class MovieService {
       movieId: row.movieId,
       title: row.movie.title,
       isSerial: row.movie.isSerial,
+      contentKind: row.movie.contentKind,
       publishDate: row.movie.publishDate?.toISOString() ?? null,
       posterUrl: row.movie.poster?.url ?? null,
     }));
@@ -504,6 +560,7 @@ class MovieService {
     } = dto;
 
     const result = await this.prismaService.$transaction(async (tx) => {
+      await lockResource(tx, 'catalog:identity');
       await lockResource(tx, `movie:${id}`);
       const movie = await tx.movie.findUnique({
         where: { id },
@@ -531,16 +588,7 @@ class MovieService {
         throw new NotFoundException('Один или несколько актеров не найдены');
       }
 
-      const duplicateId = await this.findDuplicateMovieIdByNormalizedTitle(
-        title,
-        id,
-      );
-
-      if (duplicateId) {
-        throw new ConflictException(
-          'Фильм с таким названием уже есть в общем каталоге.',
-        );
-      }
+      await this.assertDistinct(tx, dto, user, movie);
 
       await tx.movie.update({
         where: { id },
@@ -552,6 +600,9 @@ class MovieService {
           countryCodes,
           genres,
           isSerial,
+          ...(dto.contentKind !== undefined
+            ? { contentKind: dto.contentKind }
+            : {}),
           seasonCount: isSerial ? seasonCount : null,
           episodeCount: isSerial ? episodeCount : null,
           poster: posterChange?.relation,
@@ -571,6 +622,7 @@ class MovieService {
         id,
         'MOVIE_UPDATE',
         Object.keys(dto),
+        dto.distinctReason,
       );
 
       return true;
@@ -585,6 +637,7 @@ class MovieService {
     user: CatalogUser,
   ): Promise<boolean> {
     const result = await this.prismaService.$transaction(async (tx) => {
+      await lockResource(tx, 'catalog:identity');
       await lockResource(tx, `movie:${id}`);
       const movie = await tx.movie.findUnique({
         where: { id },
@@ -622,18 +675,22 @@ class MovieService {
 
       await this.assertTypeChangeAllowed(tx, movie, isSerial);
 
+      await this.assertDistinct(
+        tx,
+        {
+          title: title ?? movie.title,
+          isSerial: isSerial ?? movie.isSerial,
+          publishDate:
+            publishDate === undefined
+              ? movie.publishDate?.toISOString()
+              : publishDate,
+          distinctReason: dto.distinctReason,
+        },
+        user,
+        movie,
+      );
+
       if (title !== undefined) {
-        const duplicateId = await this.findDuplicateMovieIdByNormalizedTitle(
-          title,
-          id,
-        );
-
-        if (duplicateId) {
-          throw new ConflictException(
-            'Фильм с таким названием уже есть в общем каталоге.',
-          );
-        }
-
         updateData.title = title;
         updateData.titleNormalized = normalizeMovieTitle(title);
       }
@@ -656,6 +713,10 @@ class MovieService {
 
       if (isSerial !== undefined) {
         updateData.isSerial = isSerial;
+      }
+
+      if (dto.contentKind !== undefined) {
+        updateData.contentKind = dto.contentKind;
       }
 
       if (seasonCount !== undefined) {
@@ -702,6 +763,7 @@ class MovieService {
         id,
         'MOVIE_UPDATE',
         Object.keys(dto),
+        dto.distinctReason,
       );
 
       return true;
@@ -740,6 +802,7 @@ class MovieService {
     targetId: string,
     action: string,
     fields: string[] = [],
+    distinctReason?: string,
   ): Promise<void> {
     if (user.role !== 'ADMIN') {
       return;
@@ -750,9 +813,11 @@ class MovieService {
         actorId: user.id,
         targetId,
         action,
-        reason: fields.length
-          ? `Поля: ${fields.join(', ')}`
-          : 'Удаление тайтла',
+        reason: distinctReason
+          ? `Различие произведений: ${distinctReason}`
+          : fields.length
+            ? `Поля: ${fields.join(', ')}`
+            : 'Удаление тайтла',
       },
     });
   }
@@ -883,6 +948,7 @@ class MovieService {
         id: true,
         title: true,
         isSerial: true,
+        contentKind: true,
         publishDate: true,
         userMovies: { where: { userId }, take: 1, select: { id: true } },
       },
@@ -931,6 +997,8 @@ class MovieService {
 
   private filtersNonEmpty(filters: MovieFilters): boolean {
     return !!(
+      filters.contentKind ||
+      filters.isSerial !== undefined ||
       filters.genres?.length ||
       filters.countryCodes?.length ||
       filters.publishDateFrom ||
@@ -944,6 +1012,10 @@ class MovieService {
     query?: string,
   ): Prisma.MovieWhereInput {
     const and: Prisma.MovieWhereInput[] = [];
+    if (filters.contentKind !== undefined)
+      and.push({ contentKind: filters.contentKind });
+    if (filters.isSerial !== undefined)
+      and.push({ isSerial: filters.isSerial });
 
     if (query) {
       and.push({

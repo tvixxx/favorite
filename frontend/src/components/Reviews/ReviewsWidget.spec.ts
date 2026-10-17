@@ -40,6 +40,7 @@ describe("Сохранение отзыва", () => {
         userId: "user-id",
         text: "Мой старый отзыв",
         rate: 7,
+        isSpoiler: true,
       } as Review,
     ];
     const wrapper = mount(ReviewsWidget, {
@@ -51,10 +52,10 @@ describe("Сохранение отзыва", () => {
           "a-button": { template: "<button><slot/></button>" },
           ReviewForm: {
             name: "ReviewForm",
-            props: ["initialText", "initialRate"],
+            props: ["initialText", "initialRate", "initialIsSpoiler"],
             emits: ["submit"],
             template:
-              "<button @click=\"$emit('submit', 'Новый текст отзыва', 8)\">Сохранить отзыв</button>",
+              "<button @click=\"$emit('submit', 'Новый текст отзыва', 8, false)\">Сохранить отзыв</button>",
           },
         },
       },
@@ -65,6 +66,7 @@ describe("Сохранение отзыва", () => {
     expect(wrapper.getComponent({ name: "ReviewForm" }).props()).toMatchObject({
       initialText: "Мой старый отзыв",
       initialRate: 7,
+      initialIsSpoiler: true,
     });
     await wrapper
       .findAll("button")
@@ -74,6 +76,7 @@ describe("Сохранение отзыва", () => {
     expect(mocks.update).toHaveBeenCalledWith("own-id", {
       text: "Новый текст отзыва",
       rate: 8,
+      isSpoiler: false,
     });
     expect(mocks.create).not.toHaveBeenCalled();
     wrapper.unmount();
@@ -94,7 +97,7 @@ describe("Сохранение отзыва", () => {
             name: "ReviewForm",
             emits: ["submit"],
             template:
-              "<button @click=\"$emit('submit', '  Достаточно длинный отзыв  ', 7)\">Сохранить</button>",
+              "<button @click=\"$emit('submit', '  Достаточно длинный отзыв  ', 7, true)\">Сохранить</button>",
           },
           BaseIcon: true,
           StateBlock: true,
@@ -111,6 +114,7 @@ describe("Сохранение отзыва", () => {
       text: "Достаточно длинный отзыв",
       rate: 7,
       movieId: "movie-id",
+      isSpoiler: true,
     });
     finish();
     await flushPromises();

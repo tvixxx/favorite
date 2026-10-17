@@ -12,6 +12,7 @@ import { useMainStore } from "@/state/state";
 import { friendlyRequestError, getRequestStatus } from "@/utils/friendlyError";
 import { createRequestGuard } from "@/utils/requestGuard";
 import { trackUsage } from "@/services/usage";
+import { contentTypeLabel, type ContentKind } from "@/utils/content-kind";
 
 const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{
@@ -27,6 +28,12 @@ const readable = ref("");
 const error = ref("");
 const busy = ref<"check" | "import" | "file" | null>(null);
 const result = ref<{ added: number; skipped: number } | null>(null);
+const matches = ref<Record<number, string>>({});
+const selectedMatches = computed(() =>
+  Object.entries(matches.value)
+    .filter(([, movieId]) => movieId)
+    .map(([row, movieId]) => ({ row: Number(row), movieId }))
+);
 interface Preview {
   valid: boolean;
   proof: string | null;
@@ -38,16 +45,23 @@ interface Preview {
     title: string;
     watchStatus: string;
     isFavorite: boolean;
-    personalRate: number;
+    personalRate: number | null;
     status: "ready" | "exists" | "error";
     issue: string;
+    candidates?: {
+      id: string;
+      title: string;
+      isSerial: boolean;
+      contentKind?: ContentKind | null;
+      year: number | null;
+    }[];
   }[];
 }
 const preview = ref<Preview | null>(null);
 let checkedInput = "";
 let controller: AbortController | undefined;
 const requests = createRequestGuard();
-const MAX_BYTES = 32768;
+const MAX_BYTES = 2 * 1024 * 1024;
 const canImport = computed(
   () =>
     !busy.value &&
@@ -99,6 +113,7 @@ function invalidate() {
 watch(
   [format, content],
   () => {
+    matches.value = {};
     filename.value = "";
     readable.value = "";
     invalidate();
@@ -108,6 +123,7 @@ watch(
 watch(
   () => main.sessionRevision,
   () => {
+    matches.value = {};
     invalidate();
     emit("update:modelValue", false);
   },
@@ -128,7 +144,20 @@ function close() {
 }
 
 function inputKey() {
-  return format.value + "\n" + content.value;
+  return format.value + "\n" + content.value + "\n" + JSON.stringify(selectedMatches.value);
+}
+
+function chooseMatch(row: number, movieId: unknown): void {
+  matches.value = {
+    ...matches.value,
+    [row]: typeof movieId === "string" ? movieId : "",
+  };
+  if (preview.value) {
+    preview.value.proof = null;
+    preview.value.valid = false;
+  }
+
+  checkedInput = "";
 }
 
 function toggleReadable() {
@@ -140,7 +169,7 @@ function toggleReadable() {
 
   try {
     if (new TextEncoder().encode(content.value).length > MAX_BYTES)
-      throw new Error("Файл должен быть не больше 32 КБ");
+      throw new Error("Файл должен быть не больше 2 МиБ");
     readable.value = JSON.stringify(
       JSON.parse(content.value.replace(/^\ufeff/, "")),
       null,
@@ -156,7 +185,7 @@ function validate() {
   if (!content.value.trim())
     throw new Error("Выберите файл или вставьте его содержимое");
   if (new TextEncoder().encode(content.value).length > MAX_BYTES)
-    throw new Error("Файл должен быть не больше 32 КБ");
+    throw new Error("Файл должен быть не больше 2 МиБ");
   const text = content.value.replace(/^\ufeff/, "");
   if (format.value === "json") {
     let data: unknown;
@@ -170,22 +199,27 @@ function validate() {
       !data ||
       typeof data !== "object" ||
       !("version" in data) ||
-      data.version !== 1 ||
+      (data.version !== 1 && data.version !== 2) ||
       !("movies" in data) ||
       !Array.isArray(data.movies) ||
       data.movies.length < 1 ||
-      data.movies.length > 200
+      data.movies.length > (data.version === 2 ? 1000 : 200)
     )
       throw new Error(
-        "Ожидается JSON версии 1 с массивом movies от 1 до 200 записей"
+        "Ожидается JSON версии 1 (до 200 записей) или 2 (до 1000 записей) с массивом movies"
       );
+    if (data.version === 1 && new TextEncoder().encode(content.value).length > 32768)
+      throw new Error("Файл версии 1 должен быть не больше 32 КБ");
   } else {
-    if (text.trimEnd().split(/\r\n|\r|\n/).length > 201)
-      throw new Error("Не более 200 записей за один импорт");
     const header = text
       .split(/\r\n|\r|\n/, 1)[0]
       .split(",")
       .map((value) => value.replace(/^"|"$/g, ""));
+    const version2 = header.includes("formatVersion");
+    if (text.trimEnd().split(/\r\n|\r|\n/).length > (version2 ? 1001 : 201))
+      throw new Error(version2 ? "Не более 1000 записей за один импорт" : "Не более 200 записей за один импорт");
+    if (!version2 && new TextEncoder().encode(content.value).length > 32768)
+      throw new Error("Старый CSV должен быть не больше 32 КБ");
     if (
       !["title", "isSerial", "watchStatus"].every((key) => header.includes(key))
     )
@@ -208,7 +242,7 @@ async function chooseFile(event: Event) {
     if (extension !== "csv" && extension !== "json")
       throw new Error("Выберите файл .csv или .json");
     if (file.size > MAX_BYTES)
-      throw new Error("Файл должен быть не больше 32 КБ");
+      throw new Error("Файл должен быть не больше 2 МиБ");
     const bytes = await file.arrayBuffer();
     const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
     if (current()) {
@@ -245,7 +279,11 @@ async function check() {
   try {
     const response = await api.post<Preview>(
       `/users/${main.userData.id}/movies/import/check`,
-      { format: format.value, content: content.value },
+      {
+        format: format.value,
+        content: content.value,
+        ...(selectedMatches.value.length ? { matches: selectedMatches.value } : {}),
+      },
       { signal: controller.signal, timeout: 15000 }
     );
     if (current() && key === inputKey()) {
@@ -282,6 +320,7 @@ async function commit() {
       {
         format: format.value,
         content: content.value,
+        ...(selectedMatches.value.length ? { matches: selectedMatches.value } : {}),
         proof: preview.value!.proof,
       },
       { signal: controller.signal, timeout: 30000 }
@@ -331,7 +370,7 @@ function downloadExample(kind: "csv" | "json") {
     <template #body>
       <div class="collection-import">
         <p>
-          CSV с разделителем-запятой или JSON нашего формата, UTF-8, до 32 КБ и 200 записей. Названия
+          CSV с разделителем-запятой или JSON нашего формата, UTF-8. Старые файлы: до 32 КБ и 200 записей. Выгрузка версии 2: до 2 МиБ и 1000 записей. Названия
           сверяются с каталогом без учёта регистра и лишних пробелов. Тип и
           указанный год должны совпадать.
         </p>
@@ -354,13 +393,32 @@ function downloadExample(kind: "csv" | "json") {
             >Скачать пример CSV</AButton
           >
         </details>
-        <p class="collection-import__hint">
-          Замените пример своими данными. watchStatus: NOT_STARTED, WATCHING,
-          COMPLETED или DROPPED. isSerial/isFavorite/seeLater: true или false.
-          personalRate: целое число 0–10, где 0 означает без оценки. year,
-          isFavorite, seeLater и personalRate необязательны. Прогресс серий при
-          статусе COMPLETED будет выставлен до конца по данным каталога.
-        </p>
+        <section class="collection-import__hint" aria-label="Как заполнить файл">
+          <p>Примеры показывают формат файла. Замените названия на тайтлы из каталога Favorite. Импорт добавляет их в коллекцию, новые карточки каталога не создаёт.</p>
+          <dl>
+            <dt>Статус просмотра — <code>watchStatus</code></dt>
+            <dd>
+              <ul>
+                <li><code>NOT_STARTED</code> — не начато</li>
+                <li><code>WATCHING</code> — смотрю</li>
+                <li><code>COMPLETED</code> — просмотрено</li>
+                <li><code>DROPPED</code> — брошено</li>
+              </ul>
+            </dd>
+            <dt>Да или нет</dt>
+            <dd>
+              <code>isSerial</code>, <code>isFavorite</code>, <code>seeLater</code>:
+              <code>true</code> — да, <code>false</code> — нет.
+            </dd>
+            <dt>Личная оценка — <code>personalRate</code></dt>
+            <dd>Целое число от 0 до 10. Значения 0 и <code>null</code> означают «без оценки». Версия 2 сохраняет исходное значение без изменения.</dd>
+            <dt>Необязательные поля версии 1</dt>
+            <dd><code>year</code>, <code>isFavorite</code>, <code>seeLater</code> и <code>personalRate</code>.</dd>
+          </dl>
+          <p class="collection-import__note">
+            В старом формате при статусе <code>COMPLETED</code> прогресс серий будет выставлен до конца по данным каталога. Версия 2 сохраняет прогресс и даты из файла без пересчёта. Существующие записи коллекции будут пропущены.
+          </p>
+        </section>
         <span class="collection-import__label">Файл коллекции</span>
         <div class="collection-import__file">
           <input
@@ -431,7 +489,7 @@ function downloadExample(kind: "csv" | "json") {
           id="collection-import-content"
           v-model:value="content"
           :rows="6"
-          :maxlength="32768"
+          :maxlength="MAX_BYTES"
           :disabled="busy === 'import' || busy === 'file'"
           spellcheck="false"
         />
@@ -466,6 +524,28 @@ function downloadExample(kind: "csv" | "json") {
               ><span v-else
                 >Текущие оценка, избранное и прогресс сохранятся.</span
               >
+              <div v-if="row.candidates && row.candidates.length > 1">
+                <label :for="`collection-import-match-${row.row}`">Выберите запись</label>
+                <ASelect
+                  :id="`collection-import-match-${row.row}`"
+                  :value="matches[row.row] || undefined"
+                  :aria-label="`Запись для строки ${row.row}`"
+                  class="collection-import__match"
+                  placeholder="Не выбрано"
+                  allow-clear
+                  :disabled="!!busy"
+                  :options="row.candidates.map((candidate) => ({
+                    value: candidate.id,
+                    label: [candidate.title, candidate.year ?? 'Год не указан', contentTypeLabel(candidate)].join(' · '),
+                  }))"
+                  :get-popup-container="(trigger: HTMLElement) => trigger.parentElement ?? trigger"
+                  @change="chooseMatch(row.row, $event)"
+                >
+                  <template #suffixIcon>
+                    <BaseIcon name="ph:caret-down" :width="16" :height="16" />
+                  </template>
+                </ASelect>
+              </div>
             </li>
           </ol>
           <p>
@@ -498,6 +578,13 @@ function downloadExample(kind: "csv" | "json") {
 <style scoped lang="scss">
 .collection-import {
   min-width: 0;
+  padding-bottom: 20px;
+
+  > [role="alert"],
+  > [role="status"],
+  > section[aria-label="Результат проверки"] {
+    margin-top: 20px;
+  }
   p {
     color: var(--fv-color-text-secondary);
     line-height: 1.5;
@@ -542,11 +629,17 @@ function downloadExample(kind: "csv" | "json") {
     overflow-wrap: anywhere;
     min-width: 0;
   }
-  &__format {
+  &__format,
+  &__match {
     width: 100%;
   }
   details {
-    margin: 12px 0;
+    margin: 16px 0;
+
+    pre {
+      margin: 12px 0 16px;
+      border-radius: var(--fv-radius-sm);
+    }
   }
   summary {
     cursor: pointer;
@@ -560,7 +653,39 @@ function downloadExample(kind: "csv" | "json") {
     font-size: 12px;
   }
   &__hint {
-    font-size: 13px;
+    margin: 20px 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--fv-color-text-secondary);
+    overflow-wrap: anywhere;
+
+    dl {
+      margin: 16px 0;
+    }
+    dt {
+      margin-top: 12px;
+      font-weight: 500;
+      color: var(--fv-color-text-primary);
+    }
+    dd {
+      margin: 4px 0 0;
+    }
+    ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    li + li {
+      margin-top: 4px;
+    }
+    code {
+      font-size: 0.9em;
+    }
+  }
+  &__note {
+    padding: 12px;
+    margin: 16px 0 0;
+    border-radius: var(--fv-radius-sm);
+    background: var(--fv-color-bg-secondary);
   }
   &__content-head {
     display: flex;
@@ -568,7 +693,7 @@ function downloadExample(kind: "csv" | "json") {
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
-    margin: 16px 0 6px;
+    margin: 20px 0 12px;
     label {
       margin: 0;
     }

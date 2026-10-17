@@ -141,6 +141,12 @@ export class AuthService {
         authVersion: true,
         tags: true,
         timezone: true,
+        quickAddEnabled: true,
+        watchTonightEnabled: true,
+        collectionFilesEnabled: true,
+        notifyNewMessages: true,
+        notifyFriendRequests: true,
+        notifyRecommendations: true,
         avatarUrl: true,
         avatarThumbnailUrl: true,
         avatarAssetId: true,
@@ -187,7 +193,13 @@ export class AuthService {
       throw new UnauthorizedException('Недействительный access-token');
     }
 
-    return this.validate(payload.id, payload.authVersion);
+    const user = await this.validate(payload.id, payload.authVersion);
+
+    return {
+      ...user,
+      accessTokenExpiresAt:
+        payload.exp === undefined ? undefined : payload.exp * 1000,
+    };
   }
 
   private auth(res: Response, id: string, authVersion: number) {

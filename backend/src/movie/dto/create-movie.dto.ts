@@ -16,11 +16,16 @@ import {
   Matches,
   ValidateNested,
   IsDateString,
+  ValidateIf,
+  MinLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { UpdateUserMovieDto } from '../../user-movie/dto/update-user-movie.dto';
-import { Genre as PrismaGenre } from '../../generated/prisma/enums';
+import {
+  ContentKind,
+  Genre as PrismaGenre,
+} from '../../generated/prisma/enums';
 import { PRODUCTION_COUNTRY_CODES } from '../../constants/production-countries';
 import { normalizeGenre } from '../../common/utils/normalize-genre';
 
@@ -116,6 +121,26 @@ export class CreateMovieRequest {
   @IsBoolean()
   @IsNotEmpty()
   isSerial: boolean;
+
+  @ApiPropertyOptional({
+    enum: ContentKind,
+    description: 'Категория. Отсутствует у старых клиентов.',
+  })
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @IsEnum(ContentKind)
+  contentKind?: ContentKind;
+
+  @ApiPropertyOptional({
+    description: 'Только ADMIN: пояснение различия одноимённых произведений',
+  })
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @IsString()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @MinLength(10)
+  @MaxLength(500)
+  distinctReason?: string;
 
   @ApiProperty({
     description: 'Количество сезонов',

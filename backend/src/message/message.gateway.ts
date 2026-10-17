@@ -19,7 +19,11 @@ import { isAllowedOrigin } from '../common/utils/cors-policy';
 import { isUUID } from 'class-validator';
 
 type ChatSocket = Omit<Socket, 'data'> & {
-  data: { userId?: string; accessToken?: string };
+  data: {
+    userId?: string;
+    accessToken?: string;
+    expiryTimer?: ReturnType<typeof setTimeout>;
+  };
 };
 
 @WebSocketGateway({
@@ -115,6 +119,17 @@ export class MessageGateway
         return;
       }
 
+      if (user.accessTokenExpiresAt !== undefined) {
+        client.data.expiryTimer = setTimeout(
+          () => client.disconnect(),
+          Math.min(
+            Math.max(0, user.accessTokenExpiresAt - Date.now()),
+            2 ** 31 - 1,
+          ),
+        );
+        client.data.expiryTimer.unref();
+      }
+
       const sockets = this.connections.get(userId) ?? new Set<string>();
       const wasOnline = sockets.size > 0;
 
@@ -149,6 +164,7 @@ export class MessageGateway
   }
 
   async handleDisconnect(client: ChatSocket) {
+    clearTimeout(client.data.expiryTimer);
     try {
       const userId = client.data.userId;
 

@@ -48,9 +48,83 @@ const render = () =>
   });
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.post.mockReset();
   store.sessionRevision = 0;
 });
 describe("Обязательная проверка перед импортом коллекции", () => {
+  it("отправляет снимок версии 2 с прогрессом и датами на серверную проверку", async () => {
+    const wrapper = render();
+    const file = JSON.stringify({ version: 2, movies: [{
+      title: "Сериал", year: null, isSerial: true, contentKind: null,
+      watchStatus: "WATCHING", personalRate: null, isFavorite: false, seeLater: true,
+      currentSeason: 2, currentEpisode: 3, addedAt: "2020-01-01T00:00:00Z",
+      startedAt: null, completedAt: null, lastWatchedAt: null, droppedAt: null,
+    }] });
+    mocks.post.mockResolvedValueOnce({ data: preview });
+    await wrapper.get("textarea").setValue(file);
+    await wrapper.get('[data-testid="import-check"]').trigger("click");
+    await flushPromises();
+    expect(mocks.post).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ content: file, format: "json" }), expect.any(Object));
+    expect(wrapper.text()).toContain("Будет добавлен");
+    wrapper.unmount();
+  });
+
+  it("требует повторную проверку после явного выбора одноимённой карточки", async () => {
+    const wrapper = render();
+    await wrapper.get("textarea").setValue(content);
+    mocks.post.mockResolvedValueOnce({
+      data: {
+        ...preview,
+        valid: false,
+        ready: 0,
+        errors: 1,
+        proof: null,
+        rows: [
+          {
+            ...preview.rows[0],
+            status: "error",
+            issue: "Выберите карточку",
+            candidates: [
+              { id: "one", title: "Фильм", isSerial: false, year: 2020 },
+              { id: "two", title: "Фильм", isSerial: false, year: 2024 },
+            ],
+          },
+        ],
+      },
+    });
+    await wrapper.get('[data-testid="import-check"]').trigger("click");
+    await flushPromises();
+    expect(
+      wrapper.get('[data-testid="import-commit"]').attributes("disabled")
+    ).toBeDefined();
+    const choice = wrapper.get('#collection-import-match-1[role="combobox"]');
+    await choice.trigger("mousedown");
+    await flushPromises();
+    const option = wrapper
+      .findAll(".ant-select-item-option")
+      .find((item) => item.text().includes("2020"));
+    expect(option).toBeDefined();
+    await option!.trigger("click");
+    await flushPromises();
+    expect(
+      wrapper.get('[data-testid="import-commit"]').attributes("disabled")
+    ).toBeDefined();
+    mocks.post.mockResolvedValueOnce({ data: preview });
+    await wrapper.get('[data-testid="import-check"]').trigger("click");
+    await flushPromises();
+    expect(mocks.post.mock.calls[1][1]).toMatchObject({
+      matches: [{ row: 1, movieId: "one" }],
+    });
+    expect(
+      wrapper.get('[data-testid="import-commit"]').attributes("disabled")
+    ).toBeUndefined();
+    await wrapper.get("textarea").setValue(content + " ");
+    mocks.post.mockResolvedValueOnce({ data: preview });
+    await wrapper.get('[data-testid="import-check"]').trigger("click");
+    await flushPromises();
+    expect(mocks.post.mock.calls[2][1].matches).toBeUndefined();
+    wrapper.unmount();
+  });
   it("показывает читаемый JSON по кнопке, сохраняя исходные данные и разрешение импорта", async () => {
     const wrapper = render();
     await wrapper.get("textarea").setValue(content);

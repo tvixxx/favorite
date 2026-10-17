@@ -8,11 +8,13 @@ import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import PasswordRecoveryModal from "./PasswordRecoveryModal.vue";
 import { EMAIL_REGEX } from "@/constants";
 import { ERROR_LOGIN_TEXT, SUCCESS_LOGIN_TEXT } from "@/state/constants";
+import { usePasswordRecoveryAvailability } from "@/composable/usePasswordRecoveryAvailability";
 
 const store = useMainStore();
 const router = useRouter();
 
 const isResetOpen = ref(useRoute().query.recover === "1");
+const { enabled: passwordRecoveryEnabled } = usePasswordRecoveryAvailability();
 
 interface FormState {
   email: string;
@@ -89,6 +91,7 @@ const onFinish = async (values: FormState): Promise<void> => {
       </a-button>
 
       <button
+        v-if="passwordRecoveryEnabled"
         type="button"
         class="auth-form__forgot"
         @click="isResetOpen = true"
@@ -98,5 +101,5 @@ const onFinish = async (values: FormState): Promise<void> => {
     </a-form-item>
   </a-form>
 
-  <PasswordRecoveryModal v-if="isResetOpen" v-model="isResetOpen" :email="formState.email" />
+  <PasswordRecoveryModal v-if="isResetOpen && passwordRecoveryEnabled" v-model="isResetOpen" :email="formState.email" />
 </template>

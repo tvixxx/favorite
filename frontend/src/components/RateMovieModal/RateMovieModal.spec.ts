@@ -5,7 +5,7 @@ import RateMovieModal from "./RateMovieModal.vue";
 
 const mocks = vi.hoisted(() => ({ writes: [] as string[], atomic: vi.fn(), fetchReviews: vi.fn() }));
 const updated = { movieId: "movie-id", personalRate: 7, movie: { averageRating: 7 } };
-const reviews = ref([{ id: "review-id", userId: "user-id", rate: 6, text: "Существующий отзыв" }]);
+const reviews = ref([{ id: "review-id", userId: "user-id", rate: 6, text: "Существующий отзыв", isSpoiler: true }]);
 vi.mock("@/stores", () => ({ useUserMoviesStore: () => ({
   rateUserMovie: mocks.atomic,
   updateUserMovie: async () => { mocks.writes.push("personal");
@@ -52,5 +52,15 @@ describe("Сохранение личной оценки с отзывом", () 
   it("не подменяет отсутствующую личную оценку баллом отзыва", async () => {
     await open(null);
     expect(wrapper.find(".rate-modal__score").exists()).toBe(false);
+  });
+
+  it("подставляет отметку спойлера и сохраняет её изменение одним запросом", async () => {
+    await open(7);
+    const checkbox = wrapper.get('input[type="checkbox"]');
+    expect((checkbox.element as HTMLInputElement).checked).toBe(true);
+    await checkbox.setValue(false);
+    await wrapper.findAll("button").find((button) => button.text() === "Сохранить оценку")!.trigger("click");
+    await flushPromises();
+    expect(mocks.atomic).toHaveBeenCalledWith("user-id", "movie-id", 7, "Существующий отзыв", false);
   });
 });

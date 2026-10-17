@@ -1,4 +1,5 @@
-import { flushPromises, mount } from "@vue/test-utils";
+import { DOMWrapper, flushPromises, mount } from "@vue/test-utils";
+import { Select as ASelect, message } from "ant-design-vue";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AdminModeration from "./AdminModeration.vue";
@@ -22,7 +23,7 @@ const entry = {
   createdAt: "2026-10-13T15:00:00Z",
 };
 
-async function render() {
+async function render(realSelect = false) {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [{ path: "/admin", component: AdminModeration }],
@@ -30,8 +31,10 @@ async function render() {
 
   await router.push("/admin?moderation=feedback");
   const wrapper = mount(AdminModeration, {
+    attachTo: document.body,
     global: {
       plugins: [router,createPinia()],
+      components: { ASelect },
       stubs: {
         BaseModal: {
           props: ["modelValue"],
@@ -42,7 +45,7 @@ async function render() {
           props: ["disabled", "loading"],
           template: '<button :disabled="disabled || loading"><slot/></button>',
         },
-        ASelect: {
+        ASelect: realSelect ? false : {
           props: ["value", "options"],
           emits: ["update:value"],
           template:
@@ -50,7 +53,7 @@ async function render() {
         },
         AInput: true,
         ATable: true,
-        ATag: true,
+        ATag: { template: '<span><slot/></span>' },
         AEmpty: true,
         AAlert: true,
         ARadioGroup: true,
@@ -75,7 +78,11 @@ beforeEach(() => {
   api.get.mockReset().mockResolvedValue({ data: { items: [entry], total: 1 } });
   api.patch.mockReset();
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  message.destroy();
+  document.body.innerHTML = "";
+  vi.restoreAllMocks();
+});
 
 describe("Работа с обращением в админке", () => {
   it("показывает полный текст и удалённого автора без выполнения разметки", async () => {
@@ -110,6 +117,34 @@ describe("Работа с обращением в админке", () => {
     await save.trigger("click");
     await flushPromises();
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("сохраняет выбранное через список решение и показывает его после повторной загрузки обращения", async () => {
+    const saved = { ...entry };
+    let request: unknown;
+    api.get.mockImplementation(async () => ({ data: { items: [{ ...saved }], total: 1 } }));
+    api.patch.mockImplementation(async (url: string, body: { status: string }) => {
+      request = { url, body };
+      saved.status = body.status;
+
+      return { data: { ...saved } };
+    });
+    const wrapper = await render(true);
+    await wrapper.get('[role="dialog"] .ant-select-selector').trigger("mousedown");
+    await flushPromises();
+    const option = [...document.querySelectorAll<HTMLElement>('.ant-select-item-option')]
+      .find(element => element.textContent?.trim() === "Решено");
+    expect(option, 'В открытом списке должен быть вариант Решено').toBeDefined();
+    await new DOMWrapper(option!).trigger("click");
+    await flushPromises();
+    expect(wrapper.get('[role="dialog"] .ant-select-selection-item').text()).toBe("Решено");
+    await wrapper.findAll("button").find(button => button.text() === "Сохранить статус")!.trigger("click");
+    await flushPromises();
+
+    expect(request).toEqual({ url: "/feedback/feedback-id/status", body: { status: "DONE" } });
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+    expect(wrapper.get('.admin-mobile .admin-row').text()).toContain("Решено");
     wrapper.unmount();
   });
 });

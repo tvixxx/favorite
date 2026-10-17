@@ -132,7 +132,7 @@ describe('Расчёты административной аналитики н�
     await event(first, timestamp);
     await event(second, timestamp);
     await event(first, timestamp, 'LIST');
-    const result = await service.overview(7);
+    const result = await service.overview(7, 'Europe/Samara');
 
     expect(result.users).toBe(2);
     expect(result.active).toBe(2);
@@ -141,6 +141,17 @@ describe('Расчёты административной аналитики н�
       { feature: 'LIST', users: 1, actions: 1 },
     ]);
     expect(result.heatmap).toEqual([{ day: 2, hour: 14, users: 2 }]);
+  });
+
+  it('по умолчанию рассчитывает границы периода и часы событий в UTC', async () => {
+    const id = await user();
+    await event(id, new Date('2030-01-08T10:00:00Z'));
+
+    const result = await service.overview(7);
+
+    expect(result.timezone).toBe('UTC');
+    expect(result.since).toBe('2030-01-02T00:00:00.000Z');
+    expect(result.heatmap).toEqual([{ day: 2, hour: 10, users: 1 }]);
   });
 
   it('соблюдает обе границы периода и полночь UTC+4', async () => {
@@ -155,7 +166,7 @@ describe('Расчёты административной аналитики н�
     await event(id, new Date('2030-01-07T20:00:00Z'));
     await event(id, now);
     await event(id, new Date(now.getTime() + 1));
-    const result = await service.overview(7);
+    const result = await service.overview(7, 'Europe/Samara');
 
     expect(result.since).toBe(since.toISOString());
     expect(result.until).toBe(now.toISOString());
@@ -292,7 +303,7 @@ describe('Расчёты административной аналитики н�
     try {
       const result = await new AdminAnalyticsService(
         other as PrismaService,
-      ).overview(7);
+      ).overview(7, 'Europe/Samara');
 
       expect(result.registrations).toEqual([{ day: '2030-01-08', count: 1 }]);
       expect(result.heatmap).toEqual([{ day: 2, hour: 0, users: 1 }]);

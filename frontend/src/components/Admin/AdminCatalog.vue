@@ -10,6 +10,7 @@ import { useAdminQueryParam } from "@/composable/useAdminQueryParam";
 import AdminDateFilters from "./AdminDateFilters.vue";
 import AdminDataRegion from "./AdminDataRegion.vue";
 import CatalogEditor from "./CatalogEditor.vue";
+import { contentTypeLabel } from "@/utils/content-kind";
 import CatalogQuality from "./CatalogQuality.vue";
 import ConfirmDialog from "@/components/ConfirmDialog/ConfirmDialog.vue";
 import api from "@/services/api";
@@ -207,7 +208,7 @@ function saved(): void {
           <template v-if="column.key === 'title'">
             <b>{{ record.title }}</b>
             <p class="admin-muted">
-              {{ record.isSerial ? "Сериал" : "Фильм" }}
+              {{ contentTypeLabel(record) }}
             </p>
           </template>
           <template v-else-if="column.key === 'author'">{{
@@ -231,7 +232,7 @@ function saved(): void {
         <article v-for="movie in items" :key="movie.id" class="admin-row">
           <h3>{{ movie.title }}</h3>
           <p class="admin-muted">
-            {{ movie.isSerial ? "Сериал" : "Фильм" }} ·
+            {{ contentTypeLabel(movie) }} ·
             {{ dateLabel(movie.createdAt) }}
           </p>
           <a-button @click="edit(movie.id)">Редактировать</a-button>

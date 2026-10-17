@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onUnmounted, nextTick, watch } from "vue";
 import { useRouter } from "vue-router";
-import { Input, Tag } from "ant-design-vue";
+import { Input, Tag, message } from "ant-design-vue";
 import { findHashMention } from "@/utils/hashMention";
 import {
   fetchUserCollectionSuggestions,
@@ -236,6 +236,12 @@ function pickSuggestion(um: UserMovie) {
   const before = text.slice(0, state.hashIndex);
   const after = text.slice(caret);
   const title = formatUserMovieShareTitle(um);
+  if (chips.value.some(chip => chip.title === title && chip.movieId !== um.movieId)) {
+    message.warning("Одноимённые произведения с одинаковой подписью отправляйте отдельными сообщениями.");
+
+    return;
+  }
+
   const insert = `«${title}» `;
   const next = before + insert + after;
   const mergedPool = chips.value.some((c) => c.movieId === um.movieId)

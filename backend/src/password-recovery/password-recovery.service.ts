@@ -34,8 +34,12 @@ export class PasswordRecoveryService implements OnModuleDestroy {
     private readonly gateway: MessageGateway,
     config: ConfigService,
   ) {
+    const enabled = config.get<string>('PASSWORD_RECOVERY_ENABLED') ?? 'false';
+    if (!['true', 'false'].includes(enabled))
+      throw new Error('PASSWORD_RECOVERY_ENABLED должен быть true или false');
+    if (enabled === 'false') return;
     const host = (config.get<string>('SMTP_HOST') ?? '').trim();
-    if (!host) return;
+    if (!host) throw new Error('Настройте SMTP_HOST для восстановления пароля');
     const port = Number(config.get<string>('SMTP_PORT') ?? '587');
     const secureValue = config.get<string>('SMTP_SECURE');
     if (
@@ -88,8 +92,12 @@ export class PasswordRecoveryService implements OnModuleDestroy {
     });
   }
 
+  public isAvailable(): boolean {
+    return !this.stopping && this.mail !== null;
+  }
+
   public request(email: string): { message: string } {
-    if (this.stopping || !this.mail || this.pending.size >= 32)
+    if (!this.isAvailable() || this.pending.size >= 32)
       throw new ServiceUnavailableException(UNAVAILABLE);
     // Ответ не ждёт поиска аккаунта или SMTP, поэтому не раскрывает наличие email по времени доставки.
     const job = Promise.resolve()
@@ -154,6 +162,7 @@ export class PasswordRecoveryService implements OnModuleDestroy {
     token: string,
     password: string,
   ): Promise<{ message: string }> {
+    if (!this.isAvailable()) throw new ServiceUnavailableException(UNAVAILABLE);
     if (!/^[a-f0-9]{64}$/.test(token))
       throw new BadRequestException(INVALID_LINK);
     const tokenHash = digest(token);

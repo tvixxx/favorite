@@ -87,6 +87,7 @@ beforeEach(async () => {
     },
   });
   const config = new ConfigService({
+    PASSWORD_RECOVERY_ENABLED: 'true',
     NODE_ENV: 'development',
     SMTP_HOST: '127.0.0.1',
     SMTP_PORT: String(capture.port),
@@ -138,6 +139,38 @@ afterEach(async () => {
 });
 
 describe('Восстановление через реальный SMTP и PostgreSQL18', () => {
+  it('отключает бездействующий сокет после истечения access-токена', async () => {
+    const token = app
+      .get(JwtService)
+      .sign(
+        { id: userId, authVersion: 0, type: 'access' },
+        { expiresIn: '2s' },
+      );
+    socket = io(`${base}/chat`, {
+      auth: { token },
+      extraHeaders: { Origin: origin },
+      transports: ['websocket'],
+      reconnection: false,
+    });
+    await waitFor(
+      async () =>
+        !!socket?.connected &&
+        !!(await db.prisma.userStatus.findUnique({ where: { userId } }))
+          ?.isOnline,
+    );
+
+    await waitFor(() => !socket?.connected);
+    await waitFor(
+      async () =>
+        !(await db.prisma.userStatus.findUnique({ where: { userId } }))
+          ?.isOnline,
+    );
+    expect(
+      (await db.prisma.user.findUniqueOrThrow({ where: { id: userId } }))
+        .authVersion,
+    ).toBe(0);
+  });
+
   it('отвечает одинаково известному/неизвестному email и хранит только хеш одноразовой ссылки', async () => {
     const known = await post('/auth/password/request', { email });
     const unknown = await post('/auth/password/request', {

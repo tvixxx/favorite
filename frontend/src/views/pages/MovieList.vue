@@ -22,13 +22,17 @@ import CollectionFiltersBar from "@/components/MoviesFiltersPanel/CollectionFilt
 import { FETCH_METHOD, useFetch, useEscapeKey } from "@/composable";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
 import ConfirmDialog from "@/components/ConfirmDialog/ConfirmDialog.vue";
-import CollectionImportModal from "@/components/CollectionImport/CollectionImportModal.vue";
+import { contentTypeLabel } from "@/utils/content-kind";
+import WatchTonightModal from "@/components/WatchTonight/WatchTonightModal.vue";
+import { getUserPreference } from "@/utils/userPreferences";
 
 const router = useRouter();
 const route = useRoute();
 const userMoviesStore = useUserMoviesStore();
 const mainStore = useMainStore();
-const importOpen = ref(false);
+const watchTonightOpen = ref(false);
+const showQuickAdd = computed(() => getUserPreference(mainStore.userData, "quickAddEnabled"));
+const showWatchTonight = computed(() => getUserPreference(mainStore.userData, "watchTonightEnabled"));
 
 interface QuickAddOption {
   value: string;
@@ -39,7 +43,7 @@ interface QuickAddOption {
 const QUICK_ADD_MIN_QUERY_LENGTH = 2;
 const QUICK_ADD_DEBOUNCE_MS = 280;
 const QUICK_ADD_OPTIONS_LIMIT = 10;
-type QuickAddMovie = Pick<MovieApiResponse, "id" | "title" | "isSerial" | "publishDate"> & {inCollection: boolean};
+type QuickAddMovie = Pick<MovieApiResponse, "id" | "title" | "isSerial" | "contentKind" | "publishDate"> & {inCollection: boolean};
 let quickAddRequest = 0;
 
 const imageErrors = ref<Set<string>>(new Set());
@@ -316,6 +320,13 @@ const closeQuickAddPanel = () => {
   isQuickAddPanelOpen.value = false;
 };
 
+watch(showQuickAdd, (visible) => {
+  if (!visible) closeQuickAddPanel();
+});
+watch(showWatchTonight, (visible) => {
+  if (!visible) watchTonightOpen.value = false;
+});
+
 // Esc закрывает панель быстрого ввода (клик вне уже закрывает)
 useEscapeKey(isQuickAddPanelOpen, closeQuickAddPanel);
 
@@ -331,7 +342,7 @@ const buildQuickAddOptionLabel = (
   movie: QuickAddMovie,
   isExisting: boolean
 ) => {
-  const mediaType = movie.isSerial ? "сериал" : "фильм";
+  const mediaType = contentTypeLabel(movie).toLowerCase();
   const year = movie.publishDate
     ? formatYear(movie.publishDate)
     : "год не указан";
@@ -551,7 +562,6 @@ watch(
         :result-count="totalMovies"
         @update:filters="handleFiltersUpdate"
       />
-      <div class="movie-list__import"><a-button @click="importOpen = true">Импорт коллекции</a-button></div>
       <StateBlock
         v-if="userMoviesStore.isError"
         v-bind="STATE_PRESETS.collectionError"
@@ -573,6 +583,7 @@ watch(
         <MovieCard
           v-for="item in userMoviesStore.visibleUserMovies"
           :key="item.id"
+          :movie-id="item.movieId"
           :poster-src="getPosterSrc(item)"
           :title="movieCardTitle(item.movie)"
           :meta="movieCardMeta(item.movie)"
@@ -607,12 +618,12 @@ watch(
       :loading="isRemoving"
       @confirm="confirmRemoval"
     />
-    <CollectionImportModal v-if="importOpen" v-model="importOpen" @imported="userMoviesStore.refreshAfterImport(userId)" />
+    <WatchTonightModal v-if="showWatchTonight" v-model="watchTonightOpen" />
 
-    <div ref="quickAddFabRoot" class="quick-add-fab" data-tour="tour-quick-add">
+    <div v-if="showQuickAdd || showWatchTonight" ref="quickAddFabRoot" class="quick-add-fab">
       <Transition name="quick-add-fab-panel">
         <div
-          v-if="isQuickAddPanelOpen"
+          v-if="showQuickAdd && isQuickAddPanelOpen"
           class="quick-add-fab__panel"
           @click.stop
         >
@@ -650,10 +661,26 @@ watch(
         </div>
       </Transition>
 
-      <button
+      <div class="quick-add-fab__actions" role="group" aria-label="Быстрые действия с коллекцией">
+        <button
+          v-if="showWatchTonight"
+          type="button"
+          class="quick-add-fab__watch-tonight"
+          aria-label="Что посмотреть сегодня?"
+          @click.stop="closeQuickAddPanel(); watchTonightOpen = true"
+        >
+          <BaseIcon name="ph:shuffle" :width="20" :height="20" />
+          <span class="quick-add-fab__watch-label">Что посмотреть?</span>
+          <span class="quick-add-fab__watch-label-mobile">Подбор</span>
+        </button>
+        <button
+        v-if="showQuickAdd"
+        data-tour="tour-quick-add"
         type="button"
         class="quick-add-fab__button"
         :class="{ 'quick-add-fab__button_active': isQuickAddPanelOpen }"
+        aria-label="Быстрый ввод"
+        :aria-expanded="isQuickAddPanelOpen"
         @click.stop="toggleQuickAddPanel"
       >
         <BaseIcon
@@ -662,7 +689,8 @@ watch(
           :height="22"
         />
         <span class="quick-add-fab__button-text">Быстрый ввод</span>
-      </button>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -674,7 +702,6 @@ watch(
 @use "@/styles/antd-overrides" as *;
 
 .movie-list {
-  &__import { display: flex; justify-content: flex-end; margin: 12px 0 20px; }
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -754,6 +781,44 @@ watch(
   gap: 0.7rem;
   justify-items: end;
 
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--fv-space-12);
+  }
+
+  &__watch-tonight {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--fv-space-8);
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid var(--fv-color-border);
+    border-radius: 999px;
+    background: var(--fv-color-bg-primary);
+    color: var(--fv-color-text-primary);
+    box-shadow: var(--fv-shadow-elevated);
+    font: inherit;
+    font-size: var(--fv-text-p4-size);
+    font-weight: var(--fv-weight-medium);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--fv-color-bg-secondary);
+    }
+  }
+
+  &__watch-label-mobile {
+    display: none;
+  }
+
+  &__watch-tonight:focus-visible,
+  &__button:focus-visible {
+    outline: 2px solid var(--fv-color-accent);
+    outline-offset: 3px;
+  }
+
   &__panel {
     width: min(420px, calc(100vw - 2rem));
     display: grid;
@@ -832,8 +897,13 @@ watch(
       padding: 0.55rem 0.8rem;
     }
 
-    &__button-text {
+    &__button-text,
+    &__watch-label {
       display: none;
+    }
+
+    &__watch-label-mobile {
+      display: inline;
     }
   }
 }

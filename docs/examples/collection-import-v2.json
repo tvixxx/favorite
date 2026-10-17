@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "exportedAt": "2026-10-16T12:00:00.000Z",
+  "movies": [
+    {
+      "title": "Последний рубеж",
+      "year": 2017,
+      "isSerial": false,
+      "contentKind": null,
+      "watchStatus": "COMPLETED",
+      "isFavorite": true,
+      "seeLater": false,
+      "personalRate": 8,
+      "currentSeason": null,
+      "currentEpisode": null,
+      "addedAt": "2026-10-10T12:00:00.000Z",
+      "startedAt": "2026-10-15T16:00:00.000Z",
+      "completedAt": "2026-10-15T18:00:00.000Z",
+      "lastWatchedAt": "2026-10-15T18:00:00.000Z",
+      "droppedAt": null
+    },
+    {
+      "title": "Дом у озера",
+      "year": 2021,
+      "isSerial": true,
+      "contentKind": null,
+      "watchStatus": "WATCHING",
+      "isFavorite": false,
+      "seeLater": false,
+      "personalRate": null,
+      "currentSeason": 1,
+      "currentEpisode": 2,
+      "addedAt": "2026-10-10T12:00:00.000Z",
+      "startedAt": "2026-10-14T17:00:00.000Z",
+      "completedAt": null,
+      "lastWatchedAt": "2026-10-15T17:00:00.000Z",
+      "droppedAt": null
+    }
+  ]
+}
