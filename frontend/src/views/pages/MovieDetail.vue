@@ -40,6 +40,8 @@ import WatchStatusSelect from "@/components/WatchStatusSelect/WatchStatusSelect.
 import RateMovieModal from "@/components/RateMovieModal/RateMovieModal.vue";
 import MoviePosterEditor from "@/components/ImagePicker/MoviePosterEditor.vue";
 import ContentTypeEditor from "@/components/ContentType/ContentTypeEditor.vue";
+import NumberField from "@/components/NumberField/NumberField.vue";
+import { MAX_SEASONS, MAX_EPISODES, isOptionalInteger } from '@/utils/media-numbers';
 import { contentTypeLabel, type ContentKind } from "@/utils/content-kind";
 import type { ImageSelection } from "@/services/media";
 import CatalogMoviePreviewModal from "@/components/Catalog/CatalogMoviePreviewModal.vue";
@@ -319,6 +321,11 @@ const canEditPoster = computed(
       movie.value.createdById === mainStore.userData?.id)
 );
 const actorPhotoErrors = ref(new Set<string>());
+const actorsExpanded = ref(false);
+const ACTORS_PREVIEW_COUNT = 6;
+const visibleActors = computed(() => actorsExpanded.value
+  ? movie.value?.actors ?? []
+  : (movie.value?.actors ?? []).slice(0, ACTORS_PREVIEW_COUNT));
 
 watch(
   () => movie.value?.actors,
@@ -330,6 +337,7 @@ watch(
 watch(currentMovieId, () => {
   posterEditorOpen.value = false;
   typeEditorOpen.value = false;
+  actorsExpanded.value = false;
 });
 
 function onPosterSaved(selection: ImageSelection | null): void {
@@ -452,9 +460,7 @@ const seasonsEpisodesLabel = computed(() => {
   return parts.join(", ");
 });
 
-const hasActors = computed(
-  () => movie.value?.actors && movie.value.actors.length > 0
-);
+const actorCount = computed(() => movie.value?.actors?.length ?? 0);
 
 const availableUserLists = computed<UserListSummary[]>(() => {
   return userListsStore.sortedLists;
@@ -573,6 +579,12 @@ const saveProgress = async () => {
     return;
   }
 
+  if (!isOptionalInteger(editSeason.value, 0, Math.min(movie.value?.seasonCount ?? MAX_SEASONS, MAX_SEASONS)) || !isOptionalInteger(editEpisode.value, 0, Math.min(movie.value?.episodeCount ?? MAX_EPISODES, MAX_EPISODES))) {
+    message.error('Проверьте прогресс сезонов и серий');
+
+    return;
+  }
+
   isProgressSaving.value = true;
 
   try {
@@ -677,7 +689,7 @@ const canIncreaseSeason = computed(() => {
     return false;
   }
 
-  return (currentUserMovie.value?.currentSeason ?? 0) < movie.value.seasonCount;
+  return (currentUserMovie.value?.currentSeason ?? 0) < Math.min(movie.value.seasonCount, MAX_SEASONS);
 });
 
 const canDecreaseEpisode = computed(() => {
@@ -690,7 +702,7 @@ const canIncreaseEpisode = computed(() => {
   }
 
   return (
-    (currentUserMovie.value?.currentEpisode ?? 0) < movie.value.episodeCount
+    (currentUserMovie.value?.currentEpisode ?? 0) < Math.min(movie.value.episodeCount, MAX_EPISODES)
   );
 });
 
@@ -1109,11 +1121,13 @@ const addMovieToList = async (listId: string) => {
                     :width="22"
                     :height="22"
                   />
-                  Описание
+                  {{ movie.descriptionLanguage === 'en' ? 'Описание на английском' : 'Описание' }}
                 </h2>
+                <p v-if="movie.titleEn || movie.originalTitle" class="detail-section__text">{{ movie.titleEn }}<template v-if="movie.originalTitle && movie.originalTitle !== movie.titleEn"> · Оригинал: {{ movie.originalTitle }}</template></p>
                 <p v-if="movie.description" class="detail-section__text">
                   {{ movie.description }}
                 </p>
+                <p v-if="movie.tvdbId" class="detail-section__text">Источник: <a class="detail-section__source-link" href="https://thetvdb.com" target="_blank" rel="noopener noreferrer">TheTVDB <BaseIcon name="ph:arrow-up-right" :width="14" :height="14" aria-hidden="true" /></a></p>
                 <!-- Жанры: в панели их нет (эталон — метастрока год·тип·страны) -->
                 <div v-if="movie.genres?.length" class="detail-genres">
                   <span
@@ -1126,15 +1140,15 @@ const addMovieToList = async (listId: string) => {
                 </div>
               </div>
 
-              <div v-if="hasActors" class="detail-section">
+              <div v-if="actorCount" class="detail-section">
                 <h2 class="detail-section__title">
                   <BaseIcon name="ph:users-three" :width="22" :height="22" />
                   Актёры
                 </h2>
                 <!-- Карточки актёров (эталон): аватар + имя + переход к фильмографии -->
-                <div class="actors-grid">
+                <div id="movie-actors" class="actors-grid">
                   <button
-                    v-for="actor in movie.actors"
+                    v-for="actor in visibleActors"
                     :key="actor.id"
                     type="button"
                     class="actor-card"
@@ -1172,6 +1186,17 @@ const addMovieToList = async (listId: string) => {
                     />
                   </button>
                 </div>
+                <button
+                  v-if="actorCount > ACTORS_PREVIEW_COUNT"
+                  type="button"
+                  class="actors-toggle"
+                  :aria-expanded="actorsExpanded"
+                  aria-controls="movie-actors"
+                  @click="actorsExpanded = !actorsExpanded"
+                >
+                  {{ actorsExpanded ? 'Свернуть' : `Показать всех · ${actorCount}` }}
+                  <BaseIcon :name="actorsExpanded ? 'ph:caret-up' : 'ph:caret-down'" :width="18" :height="18" aria-hidden="true" />
+                </button>
               </div>
 
               <div v-if="isMobile" class="detail-section detail-info">
@@ -1390,13 +1415,12 @@ const addMovieToList = async (listId: string) => {
                     <label class="serial-progress__edit-label">
                       На каком сезоне
                     </label>
-                    <a-input-number
-                      v-model:value="editSeason"
+                    <NumberField
+                      v-model="editSeason"
+                      label="На каком сезоне"
+                      :disabled="isProgressSaving"
                       :min="0"
-                      :max="movie.seasonCount || undefined"
-                      :precision="0"
-                      size="large"
-                      style="width: 100%"
+                      :max="Math.min(movie.seasonCount ?? MAX_SEASONS, MAX_SEASONS)"
                     />
                   </div>
 
@@ -1406,13 +1430,12 @@ const addMovieToList = async (listId: string) => {
                     <label class="serial-progress__edit-label">
                       На какой серии
                     </label>
-                    <a-input-number
-                      v-model:value="editEpisode"
+                    <NumberField
+                      v-model="editEpisode"
+                      label="На какой серии"
+                      :disabled="isProgressSaving"
                       :min="0"
-                      :max="movie.episodeCount || undefined"
-                      :precision="0"
-                      size="large"
-                      style="width: 100%"
+                      :max="Math.min(movie.episodeCount ?? MAX_EPISODES, MAX_EPISODES)"
                     />
                   </div>
 
@@ -1525,6 +1548,7 @@ const addMovieToList = async (listId: string) => {
                       {{ formatYear(movie.publishDate) }}
                     </span>
                     <button v-if="canEditPoster" type="button" class="detail-panel__meta-item detail-type-edit" :aria-label="'Изменить тип: ' + contentTypeLabel(movie)" @click="typeEditorOpen = true">
+                      <BaseIcon :name="movie.isSerial ? 'ph:monitor' : 'ph:film-slate'" :width="13" :height="13" />
                       {{ contentTypeLabel(movie) }} <BaseIcon name="ph:pencil-simple" :width="14" :height="14" />
                     </button>
                     <span v-else
@@ -1855,6 +1879,15 @@ const addMovieToList = async (listId: string) => {
 @use "@/styles/layout" as *;
 .detail-type-edit { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 10px; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 .detail-type-edit:focus-visible { outline: 2px solid var(--fv-color-accent); outline-offset: 3px; }
+.detail-section__source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  text-decoration: none;
+  &:hover { color: var(--fv-color-accent); text-decoration: underline; text-underline-offset: 3px; }
+  &:focus-visible { outline: 2px solid var(--fv-color-accent); outline-offset: 3px; }
+}
 
 .actor-card__photo {
   width: 100%;
@@ -2045,9 +2078,9 @@ const addMovieToList = async (listId: string) => {
 
   &__meta {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 8px;
-    flex-wrap: wrap;
     margin-top: 8px;
     font-size: 13px;
     color: var(--fv-color-text-secondary);
@@ -2057,35 +2090,11 @@ const addMovieToList = async (listId: string) => {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-
-    + .detail-panel__meta-item::before {
-      content: "·";
-      margin-inline-end: 3px;
-      color: var(--fv-color-text-tertiary);
-    }
-
-    &_kind {
-      color: var(--fv-color-accent);
-      font-weight: 500;
-    }
-
-    &_country {
-      flex-basis: 100%;
-
-      &.detail-panel__meta-item::before {
-        content: none;
-      }
-
-      @include mediaMax(1080px) {
-        flex-basis: auto;
-
-        &.detail-panel__meta-item::before {
-          content: "·";
-          margin-inline-end: 3px;
-          color: var(--fv-color-text-tertiary);
-        }
-      }
-    }
+    min-height: 20px;
+    line-height: 20px;
+    text-align: left;
+    > :deep(svg) { flex-shrink: 0; }
+    &.detail-type-edit { min-height: 24px; padding: 0; }
   }
 
   &__rates {
@@ -2866,6 +2875,26 @@ const addMovieToList = async (listId: string) => {
   gap: 12px;
 }
 
+.actors-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  margin: 16px auto 0;
+  padding: 10px 16px;
+  border: 1px solid var(--fv-color-border);
+  border-radius: var(--fv-radius-sm);
+  background: var(--fv-color-bg-secondary);
+  color: var(--fv-color-text-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  &:hover { color: var(--fv-color-accent); border-color: var(--fv-color-accent); }
+  &:focus-visible { outline: 2px solid var(--fv-color-accent); outline-offset: 2px; }
+}
+
 .actor-card {
   display: flex;
   align-items: center;
@@ -3194,6 +3223,8 @@ const addMovieToList = async (listId: string) => {
     flex-wrap: wrap;
     gap: 8px;
   }
+
+  .actors-toggle { width: 100%; }
 
   .actor-card {
     width: auto;

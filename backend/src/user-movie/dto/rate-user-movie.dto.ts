@@ -9,6 +9,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { PlainText } from '../../common/validation/plain-text';
 
 export class RateUserMovieDto {
   @ApiPropertyOptional({
@@ -29,5 +30,6 @@ export class RateUserMovieDto {
   @IsOptional()
   @IsString()
   @MaxLength(500)
+  @PlainText({ multiline: true })
   reviewText?: string;
 }

@@ -15,6 +15,7 @@ import {
 import { Genre } from '../../generated/prisma/enums';
 import { PartialType } from '@nestjs/mapped-types';
 import { Transform } from 'class-transformer';
+import { PlainText } from '../../common/validation/plain-text';
 
 export class UpdateUserDto {
   @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
@@ -53,6 +54,7 @@ export class UpdateUserDto {
   @IsString({ message: 'Полное имя должно быть строкой' })
   @IsNotEmpty({ message: 'Полное имя не должно быть пустым' })
   @Matches(/\S/)
+  @PlainText()
   @Length(3, 50, {
     message: 'Длина имени должна быть от 3 до 50 символов',
   })

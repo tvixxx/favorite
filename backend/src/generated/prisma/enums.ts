@@ -71,7 +71,26 @@ export const Genre = {
   WAR: 'WAR',
   WESTERN: 'WESTERN',
   DOCUMENTARY: 'DOCUMENTARY',
-  Sci_fi: 'Sci_fi'
+  Sci_fi: 'Sci_fi',
+  ADVENTURE: 'ADVENTURE',
+  AWARDS_SHOW: 'AWARDS_SHOW',
+  CHILDREN: 'CHILDREN',
+  CRIME: 'CRIME',
+  FOOD: 'FOOD',
+  GAME_SHOW: 'GAME_SHOW',
+  HISTORY: 'HISTORY',
+  HOME_AND_GARDEN: 'HOME_AND_GARDEN',
+  INDIE: 'INDIE',
+  MARTIAL_ARTS: 'MARTIAL_ARTS',
+  MINI_SERIES: 'MINI_SERIES',
+  NEWS: 'NEWS',
+  PODCAST: 'PODCAST',
+  REALITY: 'REALITY',
+  SOAP: 'SOAP',
+  SPORT: 'SPORT',
+  SUSPENSE: 'SUSPENSE',
+  TALK_SHOW: 'TALK_SHOW',
+  TRAVEL: 'TRAVEL'
 } as const
 
 export type Genre = (typeof Genre)[keyof typeof Genre]

@@ -1867,6 +1867,12 @@ export const MovieScalarFieldEnum = {
   id: 'id',
   title: 'title',
   titleNormalized: 'titleNormalized',
+  titleEn: 'titleEn',
+  originalTitle: 'originalTitle',
+  titleAliases: 'titleAliases',
+  descriptionLanguage: 'descriptionLanguage',
+  tvdbId: 'tvdbId',
+  tvdbType: 'tvdbType',
   description: 'description',
   countryCodes: 'countryCodes',
   genres: 'genres',
@@ -1914,6 +1920,7 @@ export type ReviewScalarFieldEnum = (typeof ReviewScalarFieldEnum)[keyof typeof 
 
 export const ActorScalarFieldEnum = {
   id: 'id',
+  tvdbId: 'tvdbId',
   name: 'name',
   imageUrl: 'imageUrl',
   imageThumbnailUrl: 'imageThumbnailUrl',
@@ -2197,7 +2204,7 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
-
+    
 
 
 /**
@@ -2225,7 +2232,7 @@ export type EnumGenreFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMode
  * Reference to a field of type 'Genre[]'
  */
 export type ListEnumGenreFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Genre[]'>
-
+    
 
 
 /**

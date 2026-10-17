@@ -9,6 +9,7 @@ import {
   Matches,
   ValidateIf,
 } from 'class-validator';
+import { PlainText } from '../../common/validation/plain-text';
 
 export class UpdateUserListDto {
   @ApiProperty({
@@ -20,6 +21,7 @@ export class UpdateUserListDto {
   @IsString()
   @Length(2, 80)
   @Matches(/\S/)
+  @PlainText()
   name?: string;
 
   @ApiProperty({
@@ -30,6 +32,7 @@ export class UpdateUserListDto {
   @IsOptional()
   @IsString()
   @Length(0, 240)
+  @PlainText({ multiline: true })
   description?: string | null;
 
   @ApiProperty({
@@ -52,5 +55,6 @@ export class UpdateUserListDto {
   @ArrayMaxSize(12)
   @IsString({ each: true })
   @Length(1, 24, { each: true })
+  @PlainText({ each: true })
   labels?: string[];
 }

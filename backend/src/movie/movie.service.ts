@@ -21,6 +21,7 @@ import type {
 import { MoviesStatsResponse } from './dto/movies-stats.dto';
 import { ContentKind, WatchStatus } from '../generated/prisma/enums';
 import { normalizeMovieTitle } from '../common/utils';
+import { movieTitleFilter } from '../common/utils/movie-title-filter';
 import { UserMovieService } from '../user-movie/user-movie.service';
 import { MediaService } from '../media/media.service';
 import { queryInteger } from '../common/utils/query-value';
@@ -226,6 +227,7 @@ class MovieService {
   public async create(
     dto: CreateMovieRequest,
     user: CatalogUser,
+    transaction?: Prisma.TransactionClient,
   ): Promise<MovieWithAverageRating> {
     const {
       actorIds,
@@ -240,7 +242,7 @@ class MovieService {
       episodeCount,
     } = dto;
 
-    const created = await this.prismaService.$transaction(async (tx) => {
+    const work = async (tx: Prisma.TransactionClient) => {
       await lockResource(tx, 'catalog:identity');
       await this.assertDistinct(tx, dto, user);
       const poster =
@@ -328,9 +330,12 @@ class MovieService {
       );
 
       return movie;
-    });
+    };
 
-    invalidateDataCache(this.prismaService);
+    const created = transaction
+      ? await work(transaction)
+      : await this.prismaService.$transaction(work);
+    if (!transaction) invalidateDataCache(this.prismaService);
     return { ...created, averageRating: null };
   }
 
@@ -941,7 +946,7 @@ class MovieService {
     if (q.length > 200) throw new BadRequestException('Максимум 200 символов');
     if (q.length < 2) return [];
     const movies = await this.prismaService.movie.findMany({
-      where: { title: { contains: q, mode: 'insensitive' } },
+      where: movieTitleFilter(q),
       take: limit,
       orderBy: [{ title: 'asc' }, { id: 'asc' }],
       select: {
@@ -1018,12 +1023,7 @@ class MovieService {
       and.push({ isSerial: filters.isSerial });
 
     if (query) {
-      and.push({
-        title: {
-          contains: query,
-          mode: 'insensitive',
-        },
-      });
+      and.push(movieTitleFilter(query));
     }
 
     if (filters.genres?.length) {

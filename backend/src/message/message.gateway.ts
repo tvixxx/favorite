@@ -17,6 +17,7 @@ import type { NotificationDto } from '../notification/notification.service';
 import { AuthService } from '../auth/auth.service';
 import { isAllowedOrigin } from '../common/utils/cors-policy';
 import { isUUID } from 'class-validator';
+import { isPlainText } from '../common/validation/plain-text';
 
 type ChatSocket = Omit<Socket, 'data'> & {
   data: {
@@ -227,9 +228,13 @@ export class MessageGateway
 
       if (
         !data ||
+        Object.keys(data).some(
+          (key) => !['receiverId', 'content'].includes(key),
+        ) ||
         typeof data.receiverId !== 'string' ||
         !isUUID(data.receiverId, '4') ||
         typeof data.content !== 'string' ||
+        !isPlainText(data.content, true) ||
         !data.content.trim() ||
         data.content.length > 5000
       ) {
@@ -292,6 +297,7 @@ export class MessageGateway
 
       if (
         !data ||
+        Object.keys(data).some((key) => key !== 'otherUserId') ||
         typeof data.otherUserId !== 'string' ||
         !isUUID(data.otherUserId, '4')
       ) {

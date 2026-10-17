@@ -7,6 +7,7 @@ import {
 } from "ant-design-vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import AppDisclosure from '@/components/AppDisclosure/AppDisclosure.vue';
 import api, { getApiResponseMessage } from "@/services/api";
 import { useMainStore } from "@/state/state";
 import { friendlyRequestError, getRequestStatus } from "@/utils/friendlyError";
@@ -379,20 +380,18 @@ function downloadExample(kind: "csv" | "json") {
           Неизвестные тайтлы сначала добавьте в каталог. Ошибки и дубли в файле
           блокируют всю партию.
         </p>
-        <details>
-          <summary>Пример JSON</summary>
+        <AppDisclosure label="Пример JSON">
           <pre>{{ exampleJson }}</pre>
           <AButton :disabled="!!busy" @click="downloadExample('json')"
             >Скачать пример JSON</AButton
           >
-        </details>
-        <details>
-          <summary>Пример CSV</summary>
+        </AppDisclosure>
+        <AppDisclosure label="Пример CSV">
           <pre>{{ exampleCsv }}</pre>
           <AButton :disabled="!!busy" @click="downloadExample('csv')"
             >Скачать пример CSV</AButton
           >
-        </details>
+        </AppDisclosure>
         <section class="collection-import__hint" aria-label="Как заполнить файл">
           <p>Примеры показывают формат файла. Замените названия на тайтлы из каталога Favorite. Импорт добавляет их в коллекцию, новые карточки каталога не создаёт.</p>
           <dl>
@@ -640,10 +639,6 @@ function downloadExample(kind: "csv" | "json") {
       margin: 12px 0 16px;
       border-radius: var(--fv-radius-sm);
     }
-  }
-  summary {
-    cursor: pointer;
-    color: var(--fv-color-link);
   }
   pre {
     max-width: 100%;

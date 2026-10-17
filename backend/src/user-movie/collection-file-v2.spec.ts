@@ -1,4 +1,7 @@
-import { parseCollectionFile } from './collection-file';
+import {
+  parseCollectionFile,
+  serializeCollectionFile,
+} from './collection-file';
 
 const entry = {
   title: '=Фильм, "пример"',
@@ -19,6 +22,24 @@ const entry = {
 };
 
 describe('Перенос коллекции v2 без изменения данных', () => {
+  it.each(['json', 'csv'] as const)(
+    'сохраняет возможность выгрузить старые данные вне новых границ в %s',
+    (format) => {
+      const legacy = {
+        ...entry,
+        year: 1900,
+        currentSeason: 101,
+        currentEpisode: 5001,
+      };
+      const content = serializeCollectionFile(
+        format,
+        [legacy as never],
+        '2026-10-17T00:00:00Z',
+      );
+      expect(content).toContain('1900');
+      expect(() => parseCollectionFile(format, content)).toThrow();
+    },
+  );
   it('принимает nullable поля, прогресс и даты с явной зоной', () => {
     const rows = parseCollectionFile(
       'json',
@@ -46,6 +67,10 @@ describe('Перенос коллекции v2 без изменения дан�
     { startedAt: '2024-01-02T03:04:05' },
     { currentEpisode: -1 },
     { currentSeason: 1.5 },
+    { currentSeason: 101 },
+    { currentEpisode: 5001 },
+    { year: 1919 },
+    { year: new Date().getUTCFullYear() + 6 },
     { personalRate: '8' },
     { extra: true },
     { isSerial: false, currentEpisode: 3 },

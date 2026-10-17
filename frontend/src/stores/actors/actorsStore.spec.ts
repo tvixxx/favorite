@@ -9,6 +9,16 @@ describe("Поиск и выбор актёров", () => {
   beforeEach(() => { setActivePinia(createPinia()); mocks.fetch.mockReset(); });
   afterEach(() => disposePinia(getActivePinia()!));
 
+  it('показывает русские имена первыми и сохраняет порядок при добавлении нового актёра', async () => {
+    mocks.fetch.mockResolvedValueOnce({ status: 200, data: { items: [{ id: 'en', name: 'Asami Seto' }, { id: 'ru', name: 'Юрий Борисов' }], total: 2 } });
+    const store = useActorsStore();
+    await store.fetchActorsForPickers();
+    expect(new URL(mocks.fetch.mock.calls[0][0], 'http://localhost').searchParams.get('order')).toBe('ru-first');
+    mocks.fetch.mockResolvedValueOnce({ status: 201, data: { id: 'new', name: 'Александр Петров' } });
+    await store.addActorByName('Александр Петров');
+    expect(store.pickerActors.map(actor => actor.name)).toEqual(['Александр Петров', 'Юрий Борисов', 'Asami Seto']);
+  });
+
   it("собирает варианты селекта страницами с учётом лимита API 100", async () => {
     const actors = Array.from({ length: 101 }, (_, index) => ({ id: `actor-${index}`, name: `Актёр ${index}` }));
     mocks.fetch.mockImplementation(async (url: string) => {

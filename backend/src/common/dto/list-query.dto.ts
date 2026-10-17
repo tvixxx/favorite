@@ -12,6 +12,7 @@ import {
   Min,
 } from 'class-validator';
 import { ZonedCalendar } from '../utils/timezone';
+import { PlainText } from '../validation/plain-text';
 
 export class ListQueryDto {
   @IsOptional()
@@ -20,6 +21,7 @@ export class ListQueryDto {
   )
   @IsString()
   @MaxLength(200)
+  @PlainText()
   q?: string;
 
   @Type(() => Number)
@@ -71,6 +73,7 @@ export class CatalogQueryDto extends ListQueryDto {
   @IsOptional()
   @IsString()
   @MaxLength(200)
+  @PlainText()
   author?: string;
 }
 

@@ -3,6 +3,7 @@ import { computed, ref, watch } from "vue";
 import { Alert as AAlert, message } from "ant-design-vue";
 import AdminDataRegion from "./AdminDataRegion.vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
+import AppDisclosure from '@/components/AppDisclosure/AppDisclosure.vue';
 import ImagePicker from "@/components/ImagePicker/ImagePicker.vue";
 import api, { getApiResponseMessage } from "@/services/api";
 import { friendlyRequestError } from "@/utils/friendlyError";
@@ -15,6 +16,8 @@ import type { MovieApiResponse } from "@/stores/movies/types";
 import type { ImageSelection } from "@/services/media";
 import { catalogPublishDate } from "./catalog-editor.utils";
 import ContentTypePicker from "@/components/ContentType/ContentTypePicker.vue";
+import NumberField from "@/components/NumberField/NumberField.vue";
+import { MIN_MEDIA_YEAR, maxMediaYear, MAX_SEASONS, MAX_EPISODES, isOptionalInteger } from '@/utils/media-numbers';
 import TitleCandidates from "@/components/ContentType/TitleCandidates.vue";
 import type { ContentKind, ContentSelection } from "@/utils/content-kind";
 
@@ -70,6 +73,8 @@ const valid = computed(
     countries.value.length &&
     isSerial.value !== null &&
     (props.movieId || contentKind.value) &&
+    isOptionalInteger(year.value, MIN_MEDIA_YEAR, maxMediaYear()) &&
+    (!isSerial.value || (isOptionalInteger(seasonCount.value, 1, MAX_SEASONS) && isOptionalInteger(episodeCount.value, 1, MAX_EPISODES))) &&
     (!distinctReason.value.trim() || distinctReason.value.trim().length >= 10) &&
     !loading.value &&
     !uploading.value
@@ -279,37 +284,45 @@ async function save(): Promise<void> {
             :class="{ 'catalog-editor__numbers--serial': isSerial }"
           >
             <a-form-item label="Год выхода">
-              <a-input-number
-                v-model:value="year"
-                :min="1870"
-                :max="2100"
-                :precision="0"
+              <NumberField
+                :model-value="year ?? undefined"
+                @update:model-value="year = $event ?? null"
+                label="Год выхода"
+                :controls="false"
+                :disabled="saving || loading"
+                :min="MIN_MEDIA_YEAR"
+                :max="maxMediaYear()"
+                :min-digits="4"
+                :max-digits="4"
               />
             </a-form-item>
             <a-form-item v-if="isSerial" label="Сезонов">
-              <a-input-number
-                v-model:value="seasonCount"
+              <NumberField
+                :model-value="seasonCount ?? undefined"
+                @update:model-value="seasonCount = $event ?? null"
+                label="Сезонов"
+                :disabled="saving || loading"
                 :min="1"
-                :max="1000"
-                :precision="0"
+                :max="MAX_SEASONS"
               />
             </a-form-item>
             <a-form-item v-if="isSerial" :label="contentKind === 'TV_SHOW' ? 'Выпусков' : 'Эпизодов'">
-              <a-input-number
-                v-model:value="episodeCount"
+              <NumberField
+                :model-value="episodeCount ?? undefined"
+                @update:model-value="episodeCount = $event ?? null"
+                :label="contentKind === 'TV_SHOW' ? 'Выпусков' : 'Эпизодов'"
+                :disabled="saving || loading"
                 :min="1"
-                :max="10000"
-                :precision="0"
+                :max="MAX_EPISODES"
               />
             </a-form-item>
           </div>
-          <details class="catalog-editor__distinction">
-            <summary>Подтвердить, что это другая запись</summary>
+          <AppDisclosure class="catalog-editor__distinction" label="Подтвердить, что это другая запись">
             <a-form-item label="Пояснение администратора">
               <a-textarea v-model:value="distinctReason" :rows="3" :maxlength="500" placeholder="Чем отличаются произведения: режиссёр, оригинальное название или другие проверенные сведения. Минимум 10 символов." />
             </a-form-item>
             <p class="admin-muted">Позволяет сохранить отдельную карточку при совпадении названия, формата и года. Пояснение останется в журнале действий.</p>
-          </details>
+          </AppDisclosure>
           <p class="admin-muted">
             Изменяется общий каталог. Личные оценки и прогресс пользователей
             сохраняются.
@@ -338,10 +351,6 @@ async function save(): Promise<void> {
   grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 
-  :deep(.ant-input-number) {
-    width: 100%;
-  }
-
   @include mediaTablet {
     &--serial {
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -350,7 +359,6 @@ async function save(): Promise<void> {
 }
 
 .catalog-editor__distinction { margin: 16px 0; overflow-wrap: anywhere; }
-.catalog-editor__distinction summary { cursor: pointer; min-height: 44px; padding: 10px 0; color: var(--fv-color-text-primary); }
 
 </style>
 

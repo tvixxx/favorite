@@ -149,6 +149,12 @@ export const MovieScalarFieldEnum = {
   id: 'id',
   title: 'title',
   titleNormalized: 'titleNormalized',
+  titleEn: 'titleEn',
+  originalTitle: 'originalTitle',
+  titleAliases: 'titleAliases',
+  descriptionLanguage: 'descriptionLanguage',
+  tvdbId: 'tvdbId',
+  tvdbType: 'tvdbType',
   description: 'description',
   countryCodes: 'countryCodes',
   genres: 'genres',
@@ -196,6 +202,7 @@ export type ReviewScalarFieldEnum = (typeof ReviewScalarFieldEnum)[keyof typeof 
 
 export const ActorScalarFieldEnum = {
   id: 'id',
+  tvdbId: 'tvdbId',
   name: 'name',
   imageUrl: 'imageUrl',
   imageThumbnailUrl: 'imageThumbnailUrl',

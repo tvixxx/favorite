@@ -21,6 +21,7 @@ export class ActorService {
     q?: string;
     limit: number;
     offset: number;
+    order?: 'name' | 'ru-first';
   }): Promise<ActorsListResponseDto> {
     const { q, limit, offset } = params;
     const trimmed = q?.trim();
@@ -33,6 +34,34 @@ export class ActorService {
           },
         }
       : {};
+
+    if (params.order === 'ru-first') {
+      const pattern = trimmed ? `%${trimmed}%` : null;
+      const [ids, total] = await Promise.all([
+        this.prismaService.$queryRaw<Array<{ id: string }>>`
+          SELECT id FROM actors
+          WHERE (${pattern}::text IS NULL OR name ILIKE ${pattern})
+          ORDER BY CASE WHEN regexp_replace(name, '^[^[:alpha:]]*', '') ~ '^[А-Яа-яЁё]' THEN 0 ELSE 1 END,
+            translate(lower(name), 'ё', 'е') COLLATE "C", id
+          LIMIT ${limit} OFFSET ${offset}
+        `,
+        this.prismaService.actor.count({ where }),
+      ]);
+      const actors = ids.length
+        ? await this.prismaService.actor.findMany({
+            where: { id: { in: ids.map((actor) => actor.id) } },
+          })
+        : [];
+      const byId = new Map(actors.map((actor) => [actor.id, actor]));
+      return {
+        items: ids
+          .map((actor) => byId.get(actor.id))
+          .filter((actor): actor is Actor => actor !== undefined),
+        total,
+        limit,
+        offset,
+      };
+    }
 
     const [items, total] = await Promise.all([
       this.prismaService.actor.findMany({

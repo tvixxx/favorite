@@ -554,6 +554,7 @@ onMounted(async () => {
             <span class="settings-modal__label">Имя</span>
             <a-input
               v-model:value="editForm.fullName"
+              :maxlength="50"
               :disabled="isSaving"
               size="large"
             >

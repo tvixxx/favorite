@@ -1,6 +1,13 @@
 import { BadRequestException } from '@nestjs/common';
 import { isISO8601 } from 'class-validator';
 import { ContentKind, WatchStatus } from '../generated/prisma/enums';
+import {
+  MIN_MEDIA_YEAR,
+  maxMediaYear,
+  isMediaYear,
+  MAX_SEASONS,
+  MAX_EPISODES,
+} from '../common/validation/media-numbers';
 
 export const MAX_IMPORT_BYTES = 32 * 1024;
 export const MAX_IMPORT_ROWS = 200;
@@ -163,7 +170,7 @@ function csvObjects(content: string): { version: number; rows: unknown[] } {
                 'currentEpisode',
               ].includes(key)
             ) {
-              if (!/^\d+$/.test(value))
+              if (!/^(0|[1-9]\d*)$/.test(value))
                 invalid(`Запись ${index + 1}: ${key} должно быть целым числом`);
               return [[key, Number(value)]];
             }
@@ -187,6 +194,7 @@ function timestamp(value: unknown): value is string {
 function snapshot(
   row: Record<string, unknown>,
   index: number,
+  enforceMediaLimits: boolean,
 ): CollectionEntry {
   const fail = (key: string): never =>
     invalid(`Запись ${index + 1}: проверьте поле ${key}`);
@@ -217,10 +225,14 @@ function snapshot(
   )
     fail('contentKind');
   for (const [key, min, max] of [
-    ['year', 1, 9999],
+    [
+      'year',
+      enforceMediaLimits ? MIN_MEDIA_YEAR : 1,
+      enforceMediaLimits ? maxMediaYear() : 9999,
+    ],
     ['personalRate', 0, 10],
-    ['currentSeason', 0, 2147483647],
-    ['currentEpisode', 0, 2147483647],
+    ['currentSeason', 0, enforceMediaLimits ? MAX_SEASONS : 2147483647],
+    ['currentEpisode', 0, enforceMediaLimits ? MAX_EPISODES : 2147483647],
   ] as const) {
     const value = row[key];
     if (
@@ -249,6 +261,7 @@ function snapshot(
 export function parseCollectionFile(
   format: 'csv' | 'json',
   content: string,
+  enforceMediaLimits = true,
 ): CollectionEntry[] {
   if (
     typeof content !== 'string' ||
@@ -296,7 +309,7 @@ export function parseCollectionFile(
   return rows.map((row: unknown, index) => {
     if (version === 2) {
       if (!object(row)) invalid(`Запись ${index + 1}: неверная структура`);
-      return snapshot(row, index);
+      return snapshot(row, index, enforceMediaLimits);
     }
     const fail = (field: string): never =>
       invalid(`Запись ${index + 1}: проверьте поле ${field}`);
@@ -322,7 +335,8 @@ export function parseCollectionFile(
       fail('watchStatus');
     if (
       row.year !== undefined &&
-      (!Number.isInteger(row.year) ||
+      ((enforceMediaLimits && !isMediaYear(row.year)) ||
+        !Number.isInteger(row.year) ||
         Number(row.year) < 1 ||
         Number(row.year) > 9999)
     )
@@ -357,7 +371,8 @@ export function serializeCollectionFile(
   exportedAt: string,
 ): string {
   const json = JSON.stringify({ version: 2, exportedAt, movies }, null, 2);
-  parseCollectionFile('json', json);
+  // Старые записи можно выгрузить без потерь, новые границы применяются при импорте.
+  parseCollectionFile('json', json, false);
   if (format === 'json') return json;
   const quote = (value: string | number | boolean | null | undefined): string =>
     '"' + String(value ?? '').replaceAll('"', '""') + '"';
@@ -380,6 +395,6 @@ export function serializeCollectionFile(
       )
       .join('\r\n') +
     '\r\n';
-  parseCollectionFile('csv', csv);
+  parseCollectionFile('csv', csv, false);
   return csv;
 }

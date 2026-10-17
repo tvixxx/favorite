@@ -20,12 +20,23 @@ export type ActorModel = runtime.Types.Result.DefaultSelection<Prisma.$ActorPayl
 
 export type AggregateActor = {
   _count: ActorCountAggregateOutputType | null
+  _avg: ActorAvgAggregateOutputType | null
+  _sum: ActorSumAggregateOutputType | null
   _min: ActorMinAggregateOutputType | null
   _max: ActorMaxAggregateOutputType | null
 }
 
+export type ActorAvgAggregateOutputType = {
+  tvdbId: number | null
+}
+
+export type ActorSumAggregateOutputType = {
+  tvdbId: number | null
+}
+
 export type ActorMinAggregateOutputType = {
   id: string | null
+  tvdbId: number | null
   name: string | null
   imageUrl: string | null
   imageThumbnailUrl: string | null
@@ -37,6 +48,7 @@ export type ActorMinAggregateOutputType = {
 
 export type ActorMaxAggregateOutputType = {
   id: string | null
+  tvdbId: number | null
   name: string | null
   imageUrl: string | null
   imageThumbnailUrl: string | null
@@ -48,6 +60,7 @@ export type ActorMaxAggregateOutputType = {
 
 export type ActorCountAggregateOutputType = {
   id: number
+  tvdbId: number
   name: number
   imageUrl: number
   imageThumbnailUrl: number
@@ -59,8 +72,17 @@ export type ActorCountAggregateOutputType = {
 }
 
 
+export type ActorAvgAggregateInputType = {
+  tvdbId?: true
+}
+
+export type ActorSumAggregateInputType = {
+  tvdbId?: true
+}
+
 export type ActorMinAggregateInputType = {
   id?: true
+  tvdbId?: true
   name?: true
   imageUrl?: true
   imageThumbnailUrl?: true
@@ -72,6 +94,7 @@ export type ActorMinAggregateInputType = {
 
 export type ActorMaxAggregateInputType = {
   id?: true
+  tvdbId?: true
   name?: true
   imageUrl?: true
   imageThumbnailUrl?: true
@@ -83,6 +106,7 @@ export type ActorMaxAggregateInputType = {
 
 export type ActorCountAggregateInputType = {
   id?: true
+  tvdbId?: true
   name?: true
   imageUrl?: true
   imageThumbnailUrl?: true
@@ -131,6 +155,18 @@ export type ActorAggregateArgs<ExtArgs extends runtime.Types.Extensions.Internal
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: ActorAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: ActorSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: ActorMinAggregateInputType
@@ -161,12 +197,15 @@ export type ActorGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
   take?: number
   skip?: number
   _count?: ActorCountAggregateInputType | true
+  _avg?: ActorAvgAggregateInputType
+  _sum?: ActorSumAggregateInputType
   _min?: ActorMinAggregateInputType
   _max?: ActorMaxAggregateInputType
 }
 
 export type ActorGroupByOutputType = {
   id: string
+  tvdbId: number | null
   name: string
   imageUrl: string | null
   imageThumbnailUrl: string | null
@@ -175,6 +214,8 @@ export type ActorGroupByOutputType = {
   createdAt: Date
   updatedAt: Date
   _count: ActorCountAggregateOutputType | null
+  _avg: ActorAvgAggregateOutputType | null
+  _sum: ActorSumAggregateOutputType | null
   _min: ActorMinAggregateOutputType | null
   _max: ActorMaxAggregateOutputType | null
 }
@@ -199,6 +240,7 @@ export type ActorWhereInput = {
   OR?: Prisma.ActorWhereInput[]
   NOT?: Prisma.ActorWhereInput | Prisma.ActorWhereInput[]
   id?: Prisma.StringFilter<"Actor"> | string
+  tvdbId?: Prisma.IntNullableFilter<"Actor"> | number | null
   name?: Prisma.StringFilter<"Actor"> | string
   imageUrl?: Prisma.StringNullableFilter<"Actor"> | string | null
   imageThumbnailUrl?: Prisma.StringNullableFilter<"Actor"> | string | null
@@ -213,6 +255,7 @@ export type ActorWhereInput = {
 
 export type ActorOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  tvdbId?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   imageThumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -227,6 +270,7 @@ export type ActorOrderByWithRelationInput = {
 
 export type ActorWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  tvdbId?: number
   imageAssetId?: string
   AND?: Prisma.ActorWhereInput | Prisma.ActorWhereInput[]
   OR?: Prisma.ActorWhereInput[]
@@ -240,10 +284,11 @@ export type ActorWhereUniqueInput = Prisma.AtLeast<{
   imageAsset?: Prisma.XOR<Prisma.MediaAssetNullableScalarRelationFilter, Prisma.MediaAssetWhereInput> | null
   createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   movies?: Prisma.MovieListRelationFilter
-}, "id" | "imageAssetId">
+}, "id" | "tvdbId" | "imageAssetId">
 
 export type ActorOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  tvdbId?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   imageThumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -252,8 +297,10 @@ export type ActorOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ActorCountOrderByAggregateInput
+  _avg?: Prisma.ActorAvgOrderByAggregateInput
   _max?: Prisma.ActorMaxOrderByAggregateInput
   _min?: Prisma.ActorMinOrderByAggregateInput
+  _sum?: Prisma.ActorSumOrderByAggregateInput
 }
 
 export type ActorScalarWhereWithAggregatesInput = {
@@ -261,6 +308,7 @@ export type ActorScalarWhereWithAggregatesInput = {
   OR?: Prisma.ActorScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ActorScalarWhereWithAggregatesInput | Prisma.ActorScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Actor"> | string
+  tvdbId?: Prisma.IntNullableWithAggregatesFilter<"Actor"> | number | null
   name?: Prisma.StringWithAggregatesFilter<"Actor"> | string
   imageUrl?: Prisma.StringNullableWithAggregatesFilter<"Actor"> | string | null
   imageThumbnailUrl?: Prisma.StringNullableWithAggregatesFilter<"Actor"> | string | null
@@ -272,6 +320,7 @@ export type ActorScalarWhereWithAggregatesInput = {
 
 export type ActorCreateInput = {
   id?: string
+  tvdbId?: number | null
   name: string
   imageUrl?: string | null
   imageThumbnailUrl?: string | null
@@ -284,6 +333,7 @@ export type ActorCreateInput = {
 
 export type ActorUncheckedCreateInput = {
   id?: string
+  tvdbId?: number | null
   name: string
   imageUrl?: string | null
   imageThumbnailUrl?: string | null
@@ -296,6 +346,7 @@ export type ActorUncheckedCreateInput = {
 
 export type ActorUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -308,6 +359,7 @@ export type ActorUpdateInput = {
 
 export type ActorUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -320,6 +372,7 @@ export type ActorUncheckedUpdateInput = {
 
 export type ActorCreateManyInput = {
   id?: string
+  tvdbId?: number | null
   name: string
   imageUrl?: string | null
   imageThumbnailUrl?: string | null
@@ -331,6 +384,7 @@ export type ActorCreateManyInput = {
 
 export type ActorUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -340,6 +394,7 @@ export type ActorUpdateManyMutationInput = {
 
 export type ActorUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -366,6 +421,7 @@ export type ActorOrderByRelationAggregateInput = {
 
 export type ActorCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  tvdbId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   imageThumbnailUrl?: Prisma.SortOrder
@@ -375,8 +431,13 @@ export type ActorCountOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
 }
 
+export type ActorAvgOrderByAggregateInput = {
+  tvdbId?: Prisma.SortOrder
+}
+
 export type ActorMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  tvdbId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   imageThumbnailUrl?: Prisma.SortOrder
@@ -388,6 +449,7 @@ export type ActorMaxOrderByAggregateInput = {
 
 export type ActorMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  tvdbId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   imageThumbnailUrl?: Prisma.SortOrder
@@ -395,6 +457,10 @@ export type ActorMinOrderByAggregateInput = {
   createdById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type ActorSumOrderByAggregateInput = {
+  tvdbId?: Prisma.SortOrder
 }
 
 export type ActorCreateNestedOneWithoutImageAssetInput = {
@@ -511,6 +577,7 @@ export type ActorUncheckedUpdateManyWithoutMoviesNestedInput = {
 
 export type ActorCreateWithoutImageAssetInput = {
   id?: string
+  tvdbId?: number | null
   name: string
   imageUrl?: string | null
   imageThumbnailUrl?: string | null
@@ -522,6 +589,7 @@ export type ActorCreateWithoutImageAssetInput = {
 
 export type ActorUncheckedCreateWithoutImageAssetInput = {
   id?: string
+  tvdbId?: number | null
   name: string
   imageUrl?: string | null
   imageThumbnailUrl?: string | null
@@ -549,6 +617,7 @@ export type ActorUpdateToOneWithWhereWithoutImageAssetInput = {
 
 export type ActorUpdateWithoutImageAssetInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -560,6 +629,7 @@ export type ActorUpdateWithoutImageAssetInput = {
 
 export type ActorUncheckedUpdateWithoutImageAssetInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -571,6 +641,7 @@ export type ActorUncheckedUpdateWithoutImageAssetInput = {
 
 export type ActorCreateWithoutCreatedByInput = {
   id?: string
+  tvdbId?: number | null
   name: string
   imageUrl?: string | null
   imageThumbnailUrl?: string | null
@@ -582,6 +653,7 @@ export type ActorCreateWithoutCreatedByInput = {
 
 export type ActorUncheckedCreateWithoutCreatedByInput = {
   id?: string
+  tvdbId?: number | null
   name: string
   imageUrl?: string | null
   imageThumbnailUrl?: string | null
@@ -622,6 +694,7 @@ export type ActorScalarWhereInput = {
   OR?: Prisma.ActorScalarWhereInput[]
   NOT?: Prisma.ActorScalarWhereInput | Prisma.ActorScalarWhereInput[]
   id?: Prisma.StringFilter<"Actor"> | string
+  tvdbId?: Prisma.IntNullableFilter<"Actor"> | number | null
   name?: Prisma.StringFilter<"Actor"> | string
   imageUrl?: Prisma.StringNullableFilter<"Actor"> | string | null
   imageThumbnailUrl?: Prisma.StringNullableFilter<"Actor"> | string | null
@@ -633,6 +706,7 @@ export type ActorScalarWhereInput = {
 
 export type ActorCreateWithoutMoviesInput = {
   id?: string
+  tvdbId?: number | null
   name: string
   imageUrl?: string | null
   imageThumbnailUrl?: string | null
@@ -644,6 +718,7 @@ export type ActorCreateWithoutMoviesInput = {
 
 export type ActorUncheckedCreateWithoutMoviesInput = {
   id?: string
+  tvdbId?: number | null
   name: string
   imageUrl?: string | null
   imageThumbnailUrl?: string | null
@@ -676,6 +751,7 @@ export type ActorUpdateManyWithWhereWithoutMoviesInput = {
 
 export type ActorCreateManyCreatedByInput = {
   id?: string
+  tvdbId?: number | null
   name: string
   imageUrl?: string | null
   imageThumbnailUrl?: string | null
@@ -686,6 +762,7 @@ export type ActorCreateManyCreatedByInput = {
 
 export type ActorUpdateWithoutCreatedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -697,6 +774,7 @@ export type ActorUpdateWithoutCreatedByInput = {
 
 export type ActorUncheckedUpdateWithoutCreatedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -708,6 +786,7 @@ export type ActorUncheckedUpdateWithoutCreatedByInput = {
 
 export type ActorUncheckedUpdateManyWithoutCreatedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -718,6 +797,7 @@ export type ActorUncheckedUpdateManyWithoutCreatedByInput = {
 
 export type ActorUpdateWithoutMoviesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -729,6 +809,7 @@ export type ActorUpdateWithoutMoviesInput = {
 
 export type ActorUncheckedUpdateWithoutMoviesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -740,6 +821,7 @@ export type ActorUncheckedUpdateWithoutMoviesInput = {
 
 export type ActorUncheckedUpdateManyWithoutMoviesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -782,6 +864,7 @@ export type ActorCountOutputTypeCountMoviesArgs<ExtArgs extends runtime.Types.Ex
 
 export type ActorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  tvdbId?: boolean
   name?: boolean
   imageUrl?: boolean
   imageThumbnailUrl?: boolean
@@ -797,6 +880,7 @@ export type ActorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 
 export type ActorSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  tvdbId?: boolean
   name?: boolean
   imageUrl?: boolean
   imageThumbnailUrl?: boolean
@@ -810,6 +894,7 @@ export type ActorSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 
 export type ActorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  tvdbId?: boolean
   name?: boolean
   imageUrl?: boolean
   imageThumbnailUrl?: boolean
@@ -823,6 +908,7 @@ export type ActorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 
 export type ActorSelectScalar = {
   id?: boolean
+  tvdbId?: boolean
   name?: boolean
   imageUrl?: boolean
   imageThumbnailUrl?: boolean
@@ -832,7 +918,7 @@ export type ActorSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ActorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "imageUrl" | "imageThumbnailUrl" | "imageAssetId" | "createdById" | "createdAt" | "updatedAt", ExtArgs["result"]["actor"]>
+export type ActorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tvdbId" | "name" | "imageUrl" | "imageThumbnailUrl" | "imageAssetId" | "createdById" | "createdAt" | "updatedAt", ExtArgs["result"]["actor"]>
 export type ActorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   imageAsset?: boolean | Prisma.Actor$imageAssetArgs<ExtArgs>
   createdBy?: boolean | Prisma.Actor$createdByArgs<ExtArgs>
@@ -857,6 +943,7 @@ export type $ActorPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
+    tvdbId: number | null
     name: string
     imageUrl: string | null
     imageThumbnailUrl: string | null
@@ -1291,6 +1378,7 @@ export interface Prisma__ActorClient<T, Null = never, ExtArgs extends runtime.Ty
  */
 export interface ActorFieldRefs {
   readonly id: Prisma.FieldRef<"Actor", 'String'>
+  readonly tvdbId: Prisma.FieldRef<"Actor", 'Int'>
   readonly name: Prisma.FieldRef<"Actor", 'String'>
   readonly imageUrl: Prisma.FieldRef<"Actor", 'String'>
   readonly imageThumbnailUrl: Prisma.FieldRef<"Actor", 'String'>

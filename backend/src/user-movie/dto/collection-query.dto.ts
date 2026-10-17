@@ -11,6 +11,7 @@ import {
   Min,
 } from 'class-validator';
 import { ContentKind, Genre, WatchStatus } from '../../generated/prisma/enums';
+import { PlainText } from '../../common/validation/plain-text';
 import {
   parseCountryFilters,
   parseGenreFilters,
@@ -44,6 +45,7 @@ export class CollectionQueryDto {
   )
   @IsString()
   @MaxLength(200)
+  @PlainText()
   q?: string;
 
   @IsOptional()

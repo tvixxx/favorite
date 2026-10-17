@@ -8,11 +8,14 @@ import {
   Matches,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
+import { PlainText } from '../../common/validation/plain-text';
 
 export class CreateActorDto {
   @IsNotEmpty()
   @IsString()
   @Matches(/\S/)
+  @PlainText()
+  @MaxLength(200)
   name: string;
 
   @IsOptional()

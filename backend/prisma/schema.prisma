@@ -129,6 +129,12 @@ model Movie {
   id              String    @id @default(uuid())
   title           String
   titleNormalized String    @default("") @map("title_normalized")
+  titleEn         String?  @map("title_en")
+  originalTitle   String?  @map("original_title")
+  titleAliases    String[] @default([]) @map("title_aliases")
+  descriptionLanguage String @default("ru") @map("description_language")
+  tvdbId          Int?     @map("tvdb_id")
+  tvdbType        String?  @map("tvdb_type")
   description     String
   countryCodes    String[]  @default(["US"]) @map("country_codes")
   genres          Genre[]
@@ -151,6 +157,7 @@ model Movie {
 
   @@index([publishDate, title])
   @@index([titleNormalized])
+  @@unique([tvdbType, tvdbId])
   @@map("movies")
 }
 
@@ -191,6 +198,7 @@ model Review {
 
 model Actor {
   id        String   @id @default(uuid())
+  tvdbId    Int?     @unique @map("tvdb_id")
   name      String
   imageUrl String? @map("image_url")
   imageThumbnailUrl String? @map("image_thumbnail_url")
@@ -294,6 +302,25 @@ enum Genre {
   WESTERN
   DOCUMENTARY
   Sci_fi      @map("Sci-fi")
+  ADVENTURE
+  AWARDS_SHOW
+  CHILDREN
+  CRIME
+  FOOD
+  GAME_SHOW
+  HISTORY
+  HOME_AND_GARDEN
+  INDIE
+  MARTIAL_ARTS
+  MINI_SERIES
+  NEWS
+  PODCAST
+  REALITY
+  SOAP
+  SPORT
+  SUSPENSE
+  TALK_SHOW
+  TRAVEL
 
   @@map("enum_genre")
 }

@@ -613,7 +613,8 @@ watch(
 
     <ConfirmDialog
       v-model="removalOpen"
-      :title="`Удалить «${removal?.movie.title ?? ''}» из коллекции?`"
+      title="Удалить из коллекции?"
+      :subject="removal?.movie.title"
       description="Личная оценка и прогресс просмотра будут удалены. Тайтл также исчезнет из всех ваших списков."
       :loading="isRemoving"
       @confirm="confirmRemoval"

@@ -33,6 +33,7 @@ const rules: Record<string, Rule[]> = {
     { pattern: EMAIL_REGEX, message: "Введите корректный email", trigger: "blur" },
   ],
   password: [
+    { max: 128, message: 'Пароль должен содержать не больше 128 символов', trigger: 'blur' },
     { required: true, whitespace: true, message: "Введите пароль", trigger: "blur" },
   ],
 };
@@ -60,7 +61,7 @@ const onFinish = async (values: FormState): Promise<void> => {
   >
     <a-form-item name="email">
       <span class="auth-form__label">Email</span>
-      <a-input v-model:value="formState.email" placeholder="Email" size="large">
+      <a-input v-model:value="formState.email" :maxlength="254" placeholder="Email" size="large">
         <template #prefix>
           <BaseIcon name="ph:envelope-simple" :width="20" :height="20" />
         </template>

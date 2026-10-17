@@ -11,6 +11,7 @@ import {
   IsUUID,
 } from 'class-validator';
 import { FeedbackType } from '../../generated/prisma/enums';
+import { PlainText } from '../../common/validation/plain-text';
 
 export class CreateFeedbackDto {
   @ApiProperty({
@@ -38,6 +39,7 @@ export class CreateFeedbackDto {
     typeof value === 'string' ? value.trim() : value,
   )
   @Length(10, 1000)
+  @PlainText({ multiline: true })
   @Matches(/\S/)
   message: string;
 
@@ -58,6 +60,7 @@ export class CreateFeedbackDto {
   @IsOptional()
   @IsString()
   @MaxLength(2048)
+  @PlainText()
   pageUrl?: string;
 
   @ApiProperty({
@@ -67,6 +70,7 @@ export class CreateFeedbackDto {
   @IsOptional()
   @IsString()
   @MaxLength(512)
+  @PlainText()
   userAgent?: string;
 
   @ApiProperty({
@@ -77,5 +81,6 @@ export class CreateFeedbackDto {
   @IsOptional()
   @IsString()
   @MaxLength(32)
+  @PlainText()
   viewport?: string;
 }

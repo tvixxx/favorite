@@ -71,3 +71,64 @@ describe("Открытие общего тайтла по прямой ссыл�
     wrapper.unmount();
   });
 });
+
+describe('Компактный список актёров в карточке', () => {
+  const movieWithActors = (count: number, id = 'catalog-id') => ({
+    id: 'link-' + id, movieId: id, userId: 'user-id', watchStatus: 'NOT_STARTED',
+    movie: { id, title: 'Тестовый тайтл', genres: [], countryCodes: [], isSerial: false,
+      actors: Array.from({ length: count }, (_, index) => ({ id: 'actor-' + index, name: 'Актёр ' + (index + 1) })),
+    },
+  });
+  const render = () => mount(MovieDetail, { global: { stubs: {
+    CatalogMoviePreviewModal: true, BaseModal: true, StateBlock: true,
+    DetailSkeleton: true, ReviewsWidget: true, RateMovieModal: true, BaseIcon: true,
+    MovieShareButton: true, WatchStatusSelect: true, 'a-button': true, 'a-input': true,
+  } } });
+
+  beforeEach(() => {
+    mocks.route = reactive({ params: { id: 'catalog-id' }, query: {} });
+    mocks.fetch.mockReset();
+  });
+
+  it('показывает первых шесть, раскрывает всех по кнопке и снова сворачивает', async () => {
+    mocks.fetch.mockResolvedValue(movieWithActors(100));
+    const wrapper = render();
+    await flushPromises();
+    expect(wrapper.findAll('.actor-card')).toHaveLength(6);
+    expect(wrapper.findAll('.actor-card__name').map(actor => actor.text())).toEqual(Array.from({ length: 6 }, (_, i) => 'Актёр ' + (i + 1)));
+    const toggle = wrapper.get('button.actors-toggle');
+    expect(toggle.text()).toContain('100');
+    expect(toggle.attributes('aria-expanded')).toBe('false');
+    expect(toggle.attributes('type')).toBe('button');
+    await toggle.trigger('click');
+    expect(wrapper.findAll('.actor-card')).toHaveLength(100);
+    expect(toggle.attributes('aria-expanded')).toBe('true');
+    expect(toggle.text()).toBe('Свернуть');
+    await toggle.trigger('click');
+    expect(wrapper.findAll('.actor-card')).toHaveLength(6);
+    wrapper.unmount();
+  });
+
+  it.each([0, 6])('не показывает кнопку для состава из %s актёров', async count => {
+    mocks.fetch.mockResolvedValue(movieWithActors(count));
+    const wrapper = render();
+    await flushPromises();
+    expect(wrapper.findAll('.actor-card')).toHaveLength(count);
+    expect(wrapper.find('.actors-toggle').exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  it('сворачивает состав при переходе к другому произведению', async () => {
+    mocks.fetch.mockResolvedValueOnce(movieWithActors(15)).mockResolvedValueOnce(movieWithActors(20, 'second-id'));
+    const wrapper = render();
+    await flushPromises();
+    await wrapper.get('.actors-toggle').trigger('click');
+    expect(wrapper.findAll('.actor-card')).toHaveLength(15);
+    mocks.route.params.id = 'second-id';
+    await flushPromises();
+    expect(wrapper.findAll('.actor-card')).toHaveLength(6);
+    expect(wrapper.get('.actors-toggle').attributes('aria-expanded')).toBe('false');
+    expect(wrapper.get('.actors-toggle').text()).toContain('20');
+    wrapper.unmount();
+  });
+});

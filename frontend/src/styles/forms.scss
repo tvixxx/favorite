@@ -1,5 +1,24 @@
 @use "./scrollbar" as *;
 
+.fv-native-field {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  color: var(--fv-color-text-primary);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 24px;
+  outline: none;
+}
+
+textarea.fv-native-field,
+textarea.ant-input {
+  @include customScrollbar();
+}
+
 /**
  * Единый вид полей ввода — эталон MTS Granat `.fld`:
  *   покой  — серая заливка (bg-secondary) + рамка 1.5px transparent + radius 12;
@@ -10,6 +29,7 @@
  */
 
 /* ── базовый вид ─────────────────────────────────────────────── */
+.fv-native-field,
 .ant-input,
 .ant-input-affix-wrapper,
 .ant-input-number,
@@ -38,6 +58,7 @@ textarea.ant-input {
 }
 
 /* hover — лёгкое затемнение заливки, пока поле не в фокусе */
+.fv-native-field:hover:not(:focus):not(:focus-within):not([aria-invalid="true"]),
 .ant-input:hover:not(:focus),
 .ant-input-affix-wrapper:hover:not(.ant-input-affix-wrapper-focused):not(:focus-within),
 .ant-input-number:hover:not(.ant-input-number-focused),
@@ -53,6 +74,8 @@ textarea.ant-input {
 }
 
 /* фокус — белый фон + синяя рамка, без кольца */
+.fv-native-field:focus,
+.fv-native-field:focus-within,
 .ant-input:focus,
 .ant-input-focused,
 .ant-input-affix-wrapper:focus,
@@ -75,6 +98,7 @@ textarea.ant-input {
 }
 
 /* ошибка (Ant status error) — негативная рамка вместо синей */
+.fv-native-field[aria-invalid="true"],
 .ant-input-status-error,
 .ant-input-affix-wrapper-status-error,
 .ant-form-item-has-error .ant-input,
@@ -86,6 +110,7 @@ textarea.ant-input {
 }
 
 /* плейсхолдеры — третичный текст */
+.fv-native-field::placeholder,
 .ant-input::placeholder,
 .ant-input-number-input::placeholder,
 .ant-picker-input > input::placeholder {
@@ -93,6 +118,7 @@ textarea.ant-input {
 }
 
 /* disabled — приглушение */
+.fv-native-field[disabled],
 .ant-input[disabled],
 .ant-input-affix-wrapper-disabled,
 .ant-picker-disabled,

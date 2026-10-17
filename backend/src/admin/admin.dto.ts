@@ -10,6 +10,7 @@ import {
   MinLength,
   ValidateIf,
 } from 'class-validator';
+import { PlainText } from '../common/validation/plain-text';
 
 export class ChangeUserDto {
   @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
@@ -26,6 +27,7 @@ export class ChangeUserDto {
   @IsString()
   @MinLength(3)
   @MaxLength(500)
+  @PlainText({ multiline: true })
   reason!: string;
 }
 
@@ -39,6 +41,7 @@ export class ModerateReviewDto {
   @IsString()
   @MinLength(3)
   @MaxLength(500)
+  @PlainText({ multiline: true })
   reason!: string;
 
   @IsISO8601()
@@ -52,6 +55,7 @@ export class ReportReviewDto {
   @IsOptional()
   @IsString()
   @MaxLength(1000)
+  @PlainText({ multiline: true })
   comment?: string;
 }
 

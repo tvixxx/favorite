@@ -48,7 +48,14 @@ describe('Ограниченные подсказки каталога', () => {
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         take: 10,
-        where: { title: { contains: 'Фильм', mode: 'insensitive' } },
+        where: {
+          OR: [
+            { title: { contains: 'Фильм', mode: 'insensitive' } },
+            { titleEn: { contains: 'Фильм', mode: 'insensitive' } },
+            { originalTitle: { contains: 'Фильм', mode: 'insensitive' } },
+            { titleAliases: { has: 'фильм' } },
+          ],
+        },
         select: {
           id: true,
           title: true,

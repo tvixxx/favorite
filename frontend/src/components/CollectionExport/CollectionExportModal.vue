@@ -8,6 +8,7 @@ import {
 } from "ant-design-vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import AppDisclosure from '@/components/AppDisclosure/AppDisclosure.vue';
 import { useMainStore } from "@/state/state";
 import { useUserMoviesStore } from "@/stores";
 import { buildUserSearchParams } from "@/stores/userMovies/build-user-search-params";
@@ -228,8 +229,7 @@ async function save(print = false): Promise<void> {
         </p>
       </template>
       <template v-else>
-        <details class="collection-export__details">
-          <summary>Что войдёт в файл</summary>
+        <AppDisclosure class="collection-export__details" label="Что войдёт в файл">
           <ul>
             <li>Название, год, вид и формат</li>
             <li>Статус, оценка, избранное и «Посмотреть позже»</li>
@@ -238,7 +238,7 @@ async function save(print = false): Promise<void> {
               Даты добавления, начала, завершения, последнего просмотра и отказа
             </li>
           </ul>
-        </details>
+        </AppDisclosure>
         <p class="collection-export__hint">
           Отзывы, списки и изображения не включаются. Формат версии 2 сохраняет
           прогресс и даты при обратном импорте.
@@ -330,9 +330,6 @@ async function save(print = false): Promise<void> {
   &__details {
     border-top: 1px solid var(--fv-color-border);
     padding-top: 16px;
-  }
-  &__details summary {
-    cursor: pointer;
   }
   &__details ul {
     padding-left: 20px;

@@ -131,6 +131,23 @@ describe('Доступ к чату и несколько вкладок', () => 
     expect(created).toEqual([{ senderId: 'user-id', content: 'Привет' }]);
   });
 
+  it.each([
+    { content: 'Текст\u0000сообщения' },
+    { content: 'Привет', senderId: 'someone-else' },
+  ])(
+    'отклоняет управляющие символы и лишние поля до сохранения %#',
+    async (extra) => {
+      const client = socket('socket-text-check', 'valid-access');
+      await gateway.handleConnection(client);
+      const result = await gateway.handleMessage(
+        { receiverId: peerId, ...extra },
+        client,
+      );
+      expect(result).toEqual({ error: 'Invalid message' });
+      expect(created).toEqual([]);
+    },
+  );
+
   it('не отправляет сообщения через неподтверждённое соединение', async () => {
     const client = socket('socket-1', 'bad-token');
 

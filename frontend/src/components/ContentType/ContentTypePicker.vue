@@ -6,6 +6,7 @@ const props = defineProps<{
   modelValue: ContentSelection;
   disabled?: boolean;
   legacy?: boolean;
+  lockedFormat?: 'movie' | 'series';
 }>();
 const emit = defineEmits<{ "update:modelValue": [value: ContentSelection] }>();
 const choices = [
@@ -54,7 +55,7 @@ function chooseFormat(isSerial: boolean): void {
         :key="choice.value"
         type="button"
         :aria-pressed="selected === choice.value"
-        :disabled="disabled"
+        :disabled="disabled || (choice.value === 'FILM' && lockedFormat === 'series') || (choice.value === 'SERIES' && lockedFormat === 'movie')"
         class="content-type__choice"
         @click="choose(choice.value)"
       >
@@ -71,7 +72,7 @@ function chooseFormat(isSerial: boolean): void {
           type="button"
           class="content-type__choice"
           :aria-pressed="modelValue.isSerial === false"
-          :disabled="disabled"
+          :disabled="disabled || lockedFormat === 'series'"
           @click="chooseFormat(false)"
         >
           {{ show ? "Разовая программа" : "Отдельный фильм" }}
@@ -80,7 +81,7 @@ function chooseFormat(isSerial: boolean): void {
           type="button"
           class="content-type__choice"
           :aria-pressed="modelValue.isSerial === true"
-          :disabled="disabled"
+          :disabled="disabled || lockedFormat === 'movie'"
           @click="chooseFormat(true)"
         >
           {{ show ? "Выпуски" : "Сериал" }}

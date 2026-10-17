@@ -27,11 +27,13 @@ export type AggregateMovie = {
 }
 
 export type MovieAvgAggregateOutputType = {
+  tvdbId: number | null
   seasonCount: number | null
   episodeCount: number | null
 }
 
 export type MovieSumAggregateOutputType = {
+  tvdbId: number | null
   seasonCount: number | null
   episodeCount: number | null
 }
@@ -40,6 +42,11 @@ export type MovieMinAggregateOutputType = {
   id: string | null
   title: string | null
   titleNormalized: string | null
+  titleEn: string | null
+  originalTitle: string | null
+  descriptionLanguage: string | null
+  tvdbId: number | null
+  tvdbType: string | null
   description: string | null
   publishDate: Date | null
   isSerial: boolean | null
@@ -56,6 +63,11 @@ export type MovieMaxAggregateOutputType = {
   id: string | null
   title: string | null
   titleNormalized: string | null
+  titleEn: string | null
+  originalTitle: string | null
+  descriptionLanguage: string | null
+  tvdbId: number | null
+  tvdbType: string | null
   description: string | null
   publishDate: Date | null
   isSerial: boolean | null
@@ -72,6 +84,12 @@ export type MovieCountAggregateOutputType = {
   id: number
   title: number
   titleNormalized: number
+  titleEn: number
+  originalTitle: number
+  titleAliases: number
+  descriptionLanguage: number
+  tvdbId: number
+  tvdbType: number
   description: number
   countryCodes: number
   genres: number
@@ -89,11 +107,13 @@ export type MovieCountAggregateOutputType = {
 
 
 export type MovieAvgAggregateInputType = {
+  tvdbId?: true
   seasonCount?: true
   episodeCount?: true
 }
 
 export type MovieSumAggregateInputType = {
+  tvdbId?: true
   seasonCount?: true
   episodeCount?: true
 }
@@ -102,6 +122,11 @@ export type MovieMinAggregateInputType = {
   id?: true
   title?: true
   titleNormalized?: true
+  titleEn?: true
+  originalTitle?: true
+  descriptionLanguage?: true
+  tvdbId?: true
+  tvdbType?: true
   description?: true
   publishDate?: true
   isSerial?: true
@@ -118,6 +143,11 @@ export type MovieMaxAggregateInputType = {
   id?: true
   title?: true
   titleNormalized?: true
+  titleEn?: true
+  originalTitle?: true
+  descriptionLanguage?: true
+  tvdbId?: true
+  tvdbType?: true
   description?: true
   publishDate?: true
   isSerial?: true
@@ -134,6 +164,12 @@ export type MovieCountAggregateInputType = {
   id?: true
   title?: true
   titleNormalized?: true
+  titleEn?: true
+  originalTitle?: true
+  titleAliases?: true
+  descriptionLanguage?: true
+  tvdbId?: true
+  tvdbType?: true
   description?: true
   countryCodes?: true
   genres?: true
@@ -239,6 +275,12 @@ export type MovieGroupByOutputType = {
   id: string
   title: string
   titleNormalized: string
+  titleEn: string | null
+  originalTitle: string | null
+  titleAliases: string[]
+  descriptionLanguage: string
+  tvdbId: number | null
+  tvdbType: string | null
   description: string
   countryCodes: string[]
   genres: $Enums.Genre[]
@@ -280,6 +322,12 @@ export type MovieWhereInput = {
   id?: Prisma.StringFilter<"Movie"> | string
   title?: Prisma.StringFilter<"Movie"> | string
   titleNormalized?: Prisma.StringFilter<"Movie"> | string
+  titleEn?: Prisma.StringNullableFilter<"Movie"> | string | null
+  originalTitle?: Prisma.StringNullableFilter<"Movie"> | string | null
+  titleAliases?: Prisma.StringNullableListFilter<"Movie">
+  descriptionLanguage?: Prisma.StringFilter<"Movie"> | string
+  tvdbId?: Prisma.IntNullableFilter<"Movie"> | number | null
+  tvdbType?: Prisma.StringNullableFilter<"Movie"> | string | null
   description?: Prisma.StringFilter<"Movie"> | string
   countryCodes?: Prisma.StringNullableListFilter<"Movie">
   genres?: Prisma.EnumGenreNullableListFilter<"Movie">
@@ -304,6 +352,12 @@ export type MovieOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   titleNormalized?: Prisma.SortOrder
+  titleEn?: Prisma.SortOrderInput | Prisma.SortOrder
+  originalTitle?: Prisma.SortOrderInput | Prisma.SortOrder
+  titleAliases?: Prisma.SortOrder
+  descriptionLanguage?: Prisma.SortOrder
+  tvdbId?: Prisma.SortOrderInput | Prisma.SortOrder
+  tvdbType?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrder
   countryCodes?: Prisma.SortOrder
   genres?: Prisma.SortOrder
@@ -327,11 +381,18 @@ export type MovieOrderByWithRelationInput = {
 export type MovieWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   posterId?: string
+  tvdbType_tvdbId?: Prisma.MovieTvdbTypeTvdbIdCompoundUniqueInput
   AND?: Prisma.MovieWhereInput | Prisma.MovieWhereInput[]
   OR?: Prisma.MovieWhereInput[]
   NOT?: Prisma.MovieWhereInput | Prisma.MovieWhereInput[]
   title?: Prisma.StringFilter<"Movie"> | string
   titleNormalized?: Prisma.StringFilter<"Movie"> | string
+  titleEn?: Prisma.StringNullableFilter<"Movie"> | string | null
+  originalTitle?: Prisma.StringNullableFilter<"Movie"> | string | null
+  titleAliases?: Prisma.StringNullableListFilter<"Movie">
+  descriptionLanguage?: Prisma.StringFilter<"Movie"> | string
+  tvdbId?: Prisma.IntNullableFilter<"Movie"> | number | null
+  tvdbType?: Prisma.StringNullableFilter<"Movie"> | string | null
   description?: Prisma.StringFilter<"Movie"> | string
   countryCodes?: Prisma.StringNullableListFilter<"Movie">
   genres?: Prisma.EnumGenreNullableListFilter<"Movie">
@@ -349,12 +410,18 @@ export type MovieWhereUniqueInput = Prisma.AtLeast<{
   userMovies?: Prisma.UserMovieListRelationFilter
   listItems?: Prisma.UserListItemListRelationFilter
   createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-}, "id" | "posterId">
+}, "id" | "posterId" | "tvdbType_tvdbId">
 
 export type MovieOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   titleNormalized?: Prisma.SortOrder
+  titleEn?: Prisma.SortOrderInput | Prisma.SortOrder
+  originalTitle?: Prisma.SortOrderInput | Prisma.SortOrder
+  titleAliases?: Prisma.SortOrder
+  descriptionLanguage?: Prisma.SortOrder
+  tvdbId?: Prisma.SortOrderInput | Prisma.SortOrder
+  tvdbType?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrder
   countryCodes?: Prisma.SortOrder
   genres?: Prisma.SortOrder
@@ -381,6 +448,12 @@ export type MovieScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Movie"> | string
   title?: Prisma.StringWithAggregatesFilter<"Movie"> | string
   titleNormalized?: Prisma.StringWithAggregatesFilter<"Movie"> | string
+  titleEn?: Prisma.StringNullableWithAggregatesFilter<"Movie"> | string | null
+  originalTitle?: Prisma.StringNullableWithAggregatesFilter<"Movie"> | string | null
+  titleAliases?: Prisma.StringNullableListFilter<"Movie">
+  descriptionLanguage?: Prisma.StringWithAggregatesFilter<"Movie"> | string
+  tvdbId?: Prisma.IntNullableWithAggregatesFilter<"Movie"> | number | null
+  tvdbType?: Prisma.StringNullableWithAggregatesFilter<"Movie"> | string | null
   description?: Prisma.StringWithAggregatesFilter<"Movie"> | string
   countryCodes?: Prisma.StringNullableListFilter<"Movie">
   genres?: Prisma.EnumGenreNullableListFilter<"Movie">
@@ -399,6 +472,12 @@ export type MovieCreateInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -421,6 +500,12 @@ export type MovieUncheckedCreateInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -443,6 +528,12 @@ export type MovieUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -465,6 +556,12 @@ export type MovieUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -487,6 +584,12 @@ export type MovieCreateManyInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -505,6 +608,12 @@ export type MovieUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -521,6 +630,12 @@ export type MovieUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -561,10 +676,21 @@ export type EnumGenreNullableListFilter<$PrismaModel = never> = {
   isEmpty?: boolean
 }
 
+export type MovieTvdbTypeTvdbIdCompoundUniqueInput = {
+  tvdbType: string
+  tvdbId: number
+}
+
 export type MovieCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   titleNormalized?: Prisma.SortOrder
+  titleEn?: Prisma.SortOrder
+  originalTitle?: Prisma.SortOrder
+  titleAliases?: Prisma.SortOrder
+  descriptionLanguage?: Prisma.SortOrder
+  tvdbId?: Prisma.SortOrder
+  tvdbType?: Prisma.SortOrder
   description?: Prisma.SortOrder
   countryCodes?: Prisma.SortOrder
   genres?: Prisma.SortOrder
@@ -580,6 +706,7 @@ export type MovieCountOrderByAggregateInput = {
 }
 
 export type MovieAvgOrderByAggregateInput = {
+  tvdbId?: Prisma.SortOrder
   seasonCount?: Prisma.SortOrder
   episodeCount?: Prisma.SortOrder
 }
@@ -588,6 +715,11 @@ export type MovieMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   titleNormalized?: Prisma.SortOrder
+  titleEn?: Prisma.SortOrder
+  originalTitle?: Prisma.SortOrder
+  descriptionLanguage?: Prisma.SortOrder
+  tvdbId?: Prisma.SortOrder
+  tvdbType?: Prisma.SortOrder
   description?: Prisma.SortOrder
   publishDate?: Prisma.SortOrder
   isSerial?: Prisma.SortOrder
@@ -604,6 +736,11 @@ export type MovieMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   titleNormalized?: Prisma.SortOrder
+  titleEn?: Prisma.SortOrder
+  originalTitle?: Prisma.SortOrder
+  descriptionLanguage?: Prisma.SortOrder
+  tvdbId?: Prisma.SortOrder
+  tvdbType?: Prisma.SortOrder
   description?: Prisma.SortOrder
   publishDate?: Prisma.SortOrder
   isSerial?: Prisma.SortOrder
@@ -617,6 +754,7 @@ export type MovieMinOrderByAggregateInput = {
 }
 
 export type MovieSumOrderByAggregateInput = {
+  tvdbId?: Prisma.SortOrder
   seasonCount?: Prisma.SortOrder
   episodeCount?: Prisma.SortOrder
 }
@@ -673,12 +811,29 @@ export type MovieUncheckedUpdateManyWithoutCreatedByNestedInput = {
   deleteMany?: Prisma.MovieScalarWhereInput | Prisma.MovieScalarWhereInput[]
 }
 
+export type MovieCreatetitleAliasesInput = {
+  set: string[]
+}
+
 export type MovieCreatecountryCodesInput = {
   set: string[]
 }
 
 export type MovieCreategenresInput = {
   set: $Enums.Genre[]
+}
+
+export type MovieUpdatetitleAliasesInput = {
+  set?: string[]
+  push?: string | string[]
+}
+
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 export type MovieUpdatecountryCodesInput = {
@@ -693,14 +848,6 @@ export type MovieUpdategenresInput = {
 
 export type NullableEnumContentKindFieldUpdateOperationsInput = {
   set?: $Enums.ContentKind | null
-}
-
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
 }
 
 export type MovieCreateNestedOneWithoutPosterInput = {
@@ -819,6 +966,12 @@ export type MovieCreateWithoutCreatedByInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -840,6 +993,12 @@ export type MovieUncheckedCreateWithoutCreatedByInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -890,6 +1049,12 @@ export type MovieScalarWhereInput = {
   id?: Prisma.StringFilter<"Movie"> | string
   title?: Prisma.StringFilter<"Movie"> | string
   titleNormalized?: Prisma.StringFilter<"Movie"> | string
+  titleEn?: Prisma.StringNullableFilter<"Movie"> | string | null
+  originalTitle?: Prisma.StringNullableFilter<"Movie"> | string | null
+  titleAliases?: Prisma.StringNullableListFilter<"Movie">
+  descriptionLanguage?: Prisma.StringFilter<"Movie"> | string
+  tvdbId?: Prisma.IntNullableFilter<"Movie"> | number | null
+  tvdbType?: Prisma.StringNullableFilter<"Movie"> | string | null
   description?: Prisma.StringFilter<"Movie"> | string
   countryCodes?: Prisma.StringNullableListFilter<"Movie">
   genres?: Prisma.EnumGenreNullableListFilter<"Movie">
@@ -908,6 +1073,12 @@ export type MovieCreateWithoutPosterInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -929,6 +1100,12 @@ export type MovieUncheckedCreateWithoutPosterInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -966,6 +1143,12 @@ export type MovieUpdateWithoutPosterInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -987,6 +1170,12 @@ export type MovieUncheckedUpdateWithoutPosterInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1008,6 +1197,12 @@ export type MovieCreateWithoutReviewsInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -1029,6 +1224,12 @@ export type MovieUncheckedCreateWithoutReviewsInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -1066,6 +1267,12 @@ export type MovieUpdateWithoutReviewsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1087,6 +1294,12 @@ export type MovieUncheckedUpdateWithoutReviewsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1108,6 +1321,12 @@ export type MovieCreateWithoutActorsInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -1129,6 +1348,12 @@ export type MovieUncheckedCreateWithoutActorsInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -1171,6 +1396,12 @@ export type MovieCreateWithoutUserMoviesInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -1192,6 +1423,12 @@ export type MovieUncheckedCreateWithoutUserMoviesInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -1229,6 +1466,12 @@ export type MovieUpdateWithoutUserMoviesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1250,6 +1493,12 @@ export type MovieUncheckedUpdateWithoutUserMoviesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1271,6 +1520,12 @@ export type MovieCreateWithoutListItemsInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -1292,6 +1547,12 @@ export type MovieUncheckedCreateWithoutListItemsInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -1329,6 +1590,12 @@ export type MovieUpdateWithoutListItemsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1350,6 +1617,12 @@ export type MovieUncheckedUpdateWithoutListItemsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1371,6 +1644,12 @@ export type MovieCreateManyCreatedByInput = {
   id?: string
   title: string
   titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
   description: string
   countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
   genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
@@ -1388,6 +1667,12 @@ export type MovieUpdateWithoutCreatedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1409,6 +1694,12 @@ export type MovieUncheckedUpdateWithoutCreatedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1430,6 +1721,12 @@ export type MovieUncheckedUpdateManyWithoutCreatedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1447,6 +1744,12 @@ export type MovieUpdateWithoutActorsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1468,6 +1771,12 @@ export type MovieUncheckedUpdateWithoutActorsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1489,6 +1798,12 @@ export type MovieUncheckedUpdateManyWithoutActorsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.StringFieldUpdateOperationsInput | string
   countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
   genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
@@ -1565,6 +1880,12 @@ export type MovieSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   id?: boolean
   title?: boolean
   titleNormalized?: boolean
+  titleEn?: boolean
+  originalTitle?: boolean
+  titleAliases?: boolean
+  descriptionLanguage?: boolean
+  tvdbId?: boolean
+  tvdbType?: boolean
   description?: boolean
   countryCodes?: boolean
   genres?: boolean
@@ -1590,6 +1911,12 @@ export type MovieSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   id?: boolean
   title?: boolean
   titleNormalized?: boolean
+  titleEn?: boolean
+  originalTitle?: boolean
+  titleAliases?: boolean
+  descriptionLanguage?: boolean
+  tvdbId?: boolean
+  tvdbType?: boolean
   description?: boolean
   countryCodes?: boolean
   genres?: boolean
@@ -1610,6 +1937,12 @@ export type MovieSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   id?: boolean
   title?: boolean
   titleNormalized?: boolean
+  titleEn?: boolean
+  originalTitle?: boolean
+  titleAliases?: boolean
+  descriptionLanguage?: boolean
+  tvdbId?: boolean
+  tvdbType?: boolean
   description?: boolean
   countryCodes?: boolean
   genres?: boolean
@@ -1630,6 +1963,12 @@ export type MovieSelectScalar = {
   id?: boolean
   title?: boolean
   titleNormalized?: boolean
+  titleEn?: boolean
+  originalTitle?: boolean
+  titleAliases?: boolean
+  descriptionLanguage?: boolean
+  tvdbId?: boolean
+  tvdbType?: boolean
   description?: boolean
   countryCodes?: boolean
   genres?: boolean
@@ -1644,7 +1983,7 @@ export type MovieSelectScalar = {
   updatedAt?: boolean
 }
 
-export type MovieOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "titleNormalized" | "description" | "countryCodes" | "genres" | "publishDate" | "isSerial" | "contentKind" | "seasonCount" | "episodeCount" | "posterId" | "createdById" | "createdAt" | "updatedAt", ExtArgs["result"]["movie"]>
+export type MovieOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "titleNormalized" | "titleEn" | "originalTitle" | "titleAliases" | "descriptionLanguage" | "tvdbId" | "tvdbType" | "description" | "countryCodes" | "genres" | "publishDate" | "isSerial" | "contentKind" | "seasonCount" | "episodeCount" | "posterId" | "createdById" | "createdAt" | "updatedAt", ExtArgs["result"]["movie"]>
 export type MovieInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   poster?: boolean | Prisma.Movie$posterArgs<ExtArgs>
   reviews?: boolean | Prisma.Movie$reviewsArgs<ExtArgs>
@@ -1677,6 +2016,12 @@ export type $MoviePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     id: string
     title: string
     titleNormalized: string
+    titleEn: string | null
+    originalTitle: string | null
+    titleAliases: string[]
+    descriptionLanguage: string
+    tvdbId: number | null
+    tvdbType: string | null
     description: string
     countryCodes: string[]
     genres: $Enums.Genre[]
@@ -2121,6 +2466,12 @@ export interface MovieFieldRefs {
   readonly id: Prisma.FieldRef<"Movie", 'String'>
   readonly title: Prisma.FieldRef<"Movie", 'String'>
   readonly titleNormalized: Prisma.FieldRef<"Movie", 'String'>
+  readonly titleEn: Prisma.FieldRef<"Movie", 'String'>
+  readonly originalTitle: Prisma.FieldRef<"Movie", 'String'>
+  readonly titleAliases: Prisma.FieldRef<"Movie", 'String[]'>
+  readonly descriptionLanguage: Prisma.FieldRef<"Movie", 'String'>
+  readonly tvdbId: Prisma.FieldRef<"Movie", 'Int'>
+  readonly tvdbType: Prisma.FieldRef<"Movie", 'String'>
   readonly description: Prisma.FieldRef<"Movie", 'String'>
   readonly countryCodes: Prisma.FieldRef<"Movie", 'String[]'>
   readonly genres: Prisma.FieldRef<"Movie", 'Genre[]'>

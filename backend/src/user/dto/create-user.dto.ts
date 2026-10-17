@@ -12,6 +12,7 @@ import {
 import { BlackListNames } from '../decorators';
 import { Genre } from '../../generated/prisma/enums';
 import { Transform } from 'class-transformer';
+import { PlainText } from '../../common/validation/plain-text';
 
 export class CreateUserDto {
   @Transform(({ value }: { value: unknown }) =>
@@ -21,6 +22,7 @@ export class CreateUserDto {
   @IsNotEmpty()
   @BlackListNames(['xxx', 'xx', 'nigger', 'slave', 'master'])
   @Length(3, 50)
+  @PlainText()
   @Matches(/\S/)
   fullName: string;
 

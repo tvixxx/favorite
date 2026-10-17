@@ -11,6 +11,10 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { WatchStatus } from '../../generated/prisma/enums';
+import {
+  MAX_EPISODES,
+  MAX_SEASONS,
+} from '../../common/validation/media-numbers';
 
 export class UpdateUserMovieDto {
   @ApiProperty({ required: false })
@@ -39,14 +43,14 @@ export class UpdateUserMovieDto {
   @IsOptional()
   @IsInt()
   @Min(0)
-  @Max(1000)
+  @Max(MAX_SEASONS)
   currentSeason?: number;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsInt()
   @Min(0)
-  @Max(10000)
+  @Max(MAX_EPISODES)
   currentEpisode?: number;
 
   @ApiProperty({ required: false })

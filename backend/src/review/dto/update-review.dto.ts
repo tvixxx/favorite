@@ -8,8 +8,10 @@ import {
   Max,
   Min,
   MinLength,
+  MaxLength,
   Matches,
 } from 'class-validator';
+import { PlainText } from '../../common/validation/plain-text';
 
 export class UpdateReviewDto {
   @ApiPropertyOptional({
@@ -29,6 +31,8 @@ export class UpdateReviewDto {
   @IsString()
   @MinLength(10)
   @Matches(/\S/)
+  @PlainText({ multiline: true })
+  @MaxLength(500)
   text: string;
 
   @ApiProperty({

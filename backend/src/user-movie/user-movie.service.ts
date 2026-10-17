@@ -17,6 +17,8 @@ import { invalidateDataCache } from '../common/utils/data-revision';
 import type { CollectionQueryDto } from './dto/collection-query.dto';
 import type { CollectionExportQueryDto } from './collection-export.dto';
 import { MAX_SNAPSHOT_ROWS, serializeCollectionFile } from './collection-file';
+import { movieTitleFilter } from '../common/utils/movie-title-filter';
+import { MAX_SEASONS, MAX_EPISODES } from '../common/validation/media-numbers';
 
 interface UserMovieFilters {
   contentKind?: ContentKind;
@@ -70,10 +72,6 @@ type MovieProgressMeta = {
 @Injectable()
 export class UserMovieService {
   constructor(private readonly prismaService: PrismaService) {}
-
-  private clampToRange(value: number, min: number, max: number): number {
-    return Math.min(Math.max(value, min), max);
-  }
 
   private normalizeProgressPayload(
     movie: MovieProgressMeta,
@@ -143,18 +141,30 @@ export class UserMovieService {
       return result;
     }
 
-    if (result.currentSeason !== undefined && result.currentSeason !== null) {
-      const seasonValue = Math.max(result.currentSeason, 0);
-      result.currentSeason = hasSeason
-        ? this.clampToRange(seasonValue, 0, seasonCap)
-        : seasonValue;
+    if (
+      result.watchStatus === WatchStatus.COMPLETED &&
+      ((seasonCap ?? 0) > MAX_SEASONS || (episodeCap ?? 0) > MAX_EPISODES)
+    ) {
+      throw new BadRequestException(
+        'Количество сезонов или серий превышает допустимый предел',
+      );
     }
 
-    if (result.currentEpisode !== undefined && result.currentEpisode !== null) {
-      const episodeValue = Math.max(result.currentEpisode, 0);
-      result.currentEpisode = hasEpisode
-        ? this.clampToRange(episodeValue, 0, episodeCap)
-        : episodeValue;
+    for (const [value, cap, maximum] of [
+      [result.currentSeason, seasonCap, MAX_SEASONS],
+      [result.currentEpisode, episodeCap, MAX_EPISODES],
+    ] as const) {
+      if (
+        value !== undefined &&
+        value !== null &&
+        (!Number.isInteger(value) ||
+          value < 0 ||
+          value > Math.min(cap ?? maximum, maximum))
+      ) {
+        throw new BadRequestException(
+          'Прогресс превышает допустимое количество сезонов или серий',
+        );
+      }
     }
 
     const effectiveSeason =
@@ -371,7 +381,7 @@ export class UserMovieService {
       countryCodes: countryCode,
     });
     if (q) {
-      const title = { title: { contains: q, mode: 'insensitive' as const } };
+      const title = movieTitleFilter(q);
       where.movie = where.movie ? { AND: [where.movie, title] } : title;
     }
     return where;
@@ -498,12 +508,7 @@ export class UserMovieService {
 
     const where = this.buildWhereClause(userId, filters);
 
-    const titleFilter: Prisma.MovieWhereInput = {
-      title: {
-        contains: query.trim(),
-        mode: 'insensitive',
-      },
-    };
+    const titleFilter = movieTitleFilter(query);
 
     if (!where.movie) {
       where.movie = titleFilter;

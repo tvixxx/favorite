@@ -81,6 +81,8 @@ services:
       FRONTEND_ORIGIN: https://${DOMAIN}
       # Восстановление включается отдельно после настройки и проверки почты.
       PASSWORD_RECOVERY_ENABLED: ${PASSWORD_RECOVERY_ENABLED:-false}
+      CATALOG_TVDB_ENABLED: ${CATALOG_TVDB_ENABLED:-false}
+      TVDB_API_KEY: ${TVDB_API_KEY:-}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_SECURE: ${SMTP_SECURE:-false}

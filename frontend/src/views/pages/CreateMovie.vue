@@ -32,8 +32,12 @@ import ImagePicker from "@/components/ImagePicker/ImagePicker.vue";
 import MoviePoster from "@/components/MoviePoster/MoviePoster.vue";
 import type { ImageSelection } from "@/services/media";
 import ContentTypePicker from "@/components/ContentType/ContentTypePicker.vue";
+import NumberField from "@/components/NumberField/NumberField.vue";
+import { MIN_MEDIA_YEAR, maxMediaYear, MAX_SEASONS, MAX_EPISODES, isOptionalInteger, isMediaDate, progressMax } from '@/utils/media-numbers';
 import TitleCandidates from "@/components/ContentType/TitleCandidates.vue";
 import { type ContentKind, type ContentSelection } from "@/utils/content-kind";
+import TvdbAdd from '@/components/Tvdb/TvdbAdd.vue';
+import { tvdbEnabled } from '@/services/tvdb';
 
 const { navigateBack } = useNavigateBack();
 const moviesStore = useMoviesStore();
@@ -42,6 +46,25 @@ const actorsStore = useActorsStore();
 const mainStore = useMainStore();
 
 const userId = computed(() => mainStore.userData?.id || "");
+const catalogueEnabled = ref(false);
+const addMode = ref<'manual' | 'search'>('manual');
+const capabilityRequest = new AbortController();
+onMounted(async () => {
+  const enabled = await tvdbEnabled(capabilityRequest.signal);
+  if (capabilityRequest.signal.aborted) return;
+  catalogueEnabled.value = enabled;
+  if (enabled && !formData.title.trim()) addMode.value = 'search';
+});
+onBeforeUnmount(() => capabilityRequest.abort());
+function addManually(title: string): void {
+  if (!formData.title.trim()) formData.title = title;
+  addMode.value = 'manual';
+}
+
+function refreshImported(): void {
+  void userMoviesStore.refreshAfterImport(userId.value);
+}
+
 const isActorResolving = ref(false);
 const isSubmitting = ref(false);
 const posterSelection = ref<ImageSelection | null>(null);
@@ -204,6 +227,10 @@ const cancel = (): void => {
   void navigateBack({ fallback: { name: "library-collection" } });
 };
 
+function isPublishYearDisabled(date: { year: () => number }): boolean {
+  return !isOptionalInteger(date.year(), MIN_MEDIA_YEAR, maxMediaYear());
+}
+
 onMounted(async () => {
   try {
     await actorsStore.fetchActorsForPickers();
@@ -219,6 +246,17 @@ const addNewMovie = async () => {
 
   if (!formData.contentKind || formData.isSerial === null) {
     typeError.value = !formData.contentKind ? "Выберите, что добавляете" : "Уточните формат";
+
+    return;
+  }
+
+  if (!isMediaDate(formData.publishDate) || (formData.isSerial && !([
+    [formData.seasonCount, 1, MAX_SEASONS],
+    [formData.episodeCount, 1, MAX_EPISODES],
+    [formData.currentSeason, 0, progressMax(formData.seasonCount, MAX_SEASONS)],
+    [formData.currentEpisode, 0, progressMax(formData.episodeCount, MAX_EPISODES)],
+  ] as const).every(([value, min, max]) => isOptionalInteger(value, min, max)))) {
+    message.error('Проверьте год выхода и числовые поля сезонов и серий');
 
     return;
   }
@@ -309,8 +347,14 @@ const addNewMovie = async () => {
       <div class="create-movie__card">
 
         <h1 class="create-movie__title">Добавить в коллекцию</h1>
+        <div v-if="catalogueEnabled" class="cm-add-modes" role="group" aria-label="Способ добавления">
+          <button type="button" :aria-pressed="addMode === 'search'" @click="addMode = 'search'">Найти в TheTVDB</button>
+          <button type="button" :aria-pressed="addMode === 'manual'" @click="addMode = 'manual'">Вручную</button>
+        </div>
+        <TvdbAdd v-if="catalogueEnabled" v-show="addMode === 'search'" :user-id="userId" :session-revision="mainStore.sessionRevision" :is-admin="mainStore.userData?.role === 'ADMIN'" @manual="addManually" @added="refreshImported" />
 
         <a-form
+          v-show="addMode === 'manual'"
           ref="formRef"
           :model="formData"
           :disabled="isSubmitting"
@@ -335,6 +379,7 @@ const addNewMovie = async () => {
               >
                 <a-input
                   v-model:value="formData.title"
+                  :maxlength="200"
                   size="large"
                   placeholder="Например: Интерстеллар"
                 />
@@ -389,6 +434,7 @@ const addNewMovie = async () => {
                     v-model:value="formData.publishDate"
                     size="large"
                     picker="year"
+                    :disabled-date="isPublishYearDisabled"
                     value-format="YYYY-MM-DD"
                     style="width: 100%"
                     placeholder="Выберите дату"
@@ -480,26 +526,22 @@ const addNewMovie = async () => {
 
               <div v-if="formData.isSerial" class="cm-row2">
                 <a-form-item label="Количество сезонов" name="seasonCount">
-                  <a-input-number
-                    v-model:value="formData.seasonCount"
+                  <NumberField
+                    v-model="formData.seasonCount"
+                    label="Количество сезонов"
+                    :disabled="isSubmitting"
                     :min="1"
-                    :max="1000"
-                    :precision="0"
-                    size="large"
-                    placeholder="Например: 5"
-                    style="width: 100%"
+                    :max="MAX_SEASONS"
                   />
                 </a-form-item>
 
                 <a-form-item :label="formData.contentKind === 'TV_SHOW' ? 'Количество выпусков' : 'Количество эпизодов'" name="episodeCount">
-                  <a-input-number
-                    v-model:value="formData.episodeCount"
+                  <NumberField
+                    v-model="formData.episodeCount"
+                    :label="formData.contentKind === 'TV_SHOW' ? 'Количество выпусков' : 'Количество эпизодов'"
+                    :disabled="isSubmitting"
                     :min="1"
-                    :max="10000"
-                    :precision="0"
-                    size="large"
-                    placeholder="Например: 10"
-                    style="width: 100%"
+                    :max="MAX_EPISODES"
                   />
                 </a-form-item>
               </div>
@@ -512,14 +554,12 @@ const addNewMovie = async () => {
                   label="На каком сезоне остановились"
                   name="currentSeason"
                 >
-                  <a-input-number
-                    v-model:value="formData.currentSeason"
-                    :min="1"
-                      :max="formData.seasonCount || undefined"
-                    :precision="0"
-                    size="large"
-                    placeholder="Например: 2"
-                    style="width: 100%"
+                  <NumberField
+                    v-model="formData.currentSeason"
+                    label="На каком сезоне остановились"
+                    :disabled="isSubmitting"
+                    :min="0"
+                    :max="progressMax(formData.seasonCount, MAX_SEASONS)"
                   />
                 </a-form-item>
 
@@ -527,14 +567,12 @@ const addNewMovie = async () => {
                     :label="formData.contentKind === 'TV_SHOW' ? 'На каком выпуске остановились' : 'На какой серии остановились'"
                   name="currentEpisode"
                 >
-                  <a-input-number
-                    v-model:value="formData.currentEpisode"
-                    :min="1"
-                      :max="formData.episodeCount || undefined"
-                    :precision="0"
-                    size="large"
-                    placeholder="Например: 5"
-                    style="width: 100%"
+                  <NumberField
+                    v-model="formData.currentEpisode"
+                    :label="formData.contentKind === 'TV_SHOW' ? 'На каком выпуске остановились' : 'На какой серии остановились'"
+                    :disabled="isSubmitting"
+                    :min="0"
+                    :max="progressMax(formData.episodeCount, MAX_EPISODES)"
                   />
                 </a-form-item>
               </div>
@@ -612,8 +650,15 @@ const addNewMovie = async () => {
 <style scoped lang="scss">
 @use "../../styles/media" as *;
 @use "@/styles/layout" as *;
+@use "@/styles/movie-form" as *;
 
 .cm-type-error { margin: 8px 0 0; color: var(--fv-color-negative); }
+.cm-add-modes {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;
+  button { padding: 12px 18px; border: 1px solid var(--fv-color-border); border-radius: var(--fv-radius-sm); background: transparent; color: var(--fv-color-text-primary); font: inherit; cursor: pointer; }
+  button[aria-pressed="true"] { background: var(--fv-color-accent-soft); border-color: var(--fv-color-accent); }
+  button:focus-visible { outline: 2px solid var(--fv-color-accent); outline-offset: 3px; }
+}
 
 .create-movie {
   @include pageShell(2rem);
@@ -898,50 +943,7 @@ const addNewMovie = async () => {
 
 /* футер */
 .cm-footer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 1.75rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--fv-color-border);
-
-  &__cancel,
-  &__submit {
-    flex: 0 0 auto; // не растягивать
-    height: 46px;
-    padding: 0 22px;
-    border-radius: var(--fv-radius-sm);
-    font-weight: 500;
-  }
-
-  // Эталон мобилки: кнопка сохранения закреплена снизу
-  @include mediaMax(767.98px) {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 40;
-    margin-top: 0;
-    padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
-    background: color-mix(in srgb, var(--fv-color-bg-primary) 94%, transparent);
-    backdrop-filter: blur(10px);
-
-    &__cancel {
-      flex: 1;
-    }
-
-    &__submit {
-      flex: 2;
-    }
-  }
-
-  &__submit {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    justify-content: center;
-  }
+  @include movieFormFooter;
 }
 
 /* лейблы полей — 14/500, вторичный цвет */
@@ -973,28 +975,6 @@ const addNewMovie = async () => {
 
 :deep(.ant-picker-input > input) {
   min-height: auto;
-}
-
-/* число сезонов/эпизодов — компактное чистое поле (44px), текст по центру,
-   без некрасивых стрелок-степперов (ввод с клавиатуры, min/max сохранены) */
-:deep(.ant-input-number) {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-}
-
-:deep(.ant-input-number-input-wrap) {
-  flex: 1;
-  min-width: 0;
-}
-
-:deep(.ant-input-number-input) {
-  width: 100%;
-  height: 42px;
-}
-
-:deep(.ant-input-number-handler-wrap) {
-  display: none;
 }
 
 /* textarea — авто-высота */
