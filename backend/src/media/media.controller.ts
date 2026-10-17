@@ -94,6 +94,23 @@ export class MediaController {
   ) {
     return this.media.discard(id, user.id);
   }
+
+  @AuthProtected()
+  @Get('images/:id/:filename')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('X-Content-Type-Options', 'nosniff')
+  public async privateImage(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('filename') filename: string,
+    @Authorized() user: User,
+  ): Promise<StreamableFile> {
+    const bytes = await this.media.privateImage(id, filename, user);
+    return new StreamableFile(bytes, {
+      type: 'image/webp',
+      disposition: 'inline',
+      length: bytes.length,
+    });
+  }
 }
 
 @Controller('media/images')

@@ -20,17 +20,17 @@ export async function fetchUserCollectionSuggestions(
     return [];
   }
 
-  const params = new URLSearchParams({ q });
-  const { data, status } = await useFetch<UserMovieApiResponse[]>(
-    `/users/${userId}/movies/search?${params.toString()}`,
+  const params = new URLSearchParams({ q, limit: String(Math.min(Math.max(limit, 1), 25)), offset: "0" });
+  const { data, status } = await useFetch<{items: UserMovieApiResponse[]}>(
+    `/users/${userId}/movies/page?${params.toString()}`,
     { method: FETCH_METHOD.get },
   );
 
-  if (status !== 200 || !Array.isArray(data)) {
+  if (status !== 200 || !Array.isArray(data?.items)) {
     return [];
   }
 
-  return mapUserMoviesFromApi(data).slice(0, limit);
+  return mapUserMoviesFromApi(data.items);
 }
 
 /** Точное совпадение строки «title» с карточкой в коллекции (после поиска). */
@@ -46,7 +46,7 @@ export async function findUserMovieByQuotedTitle(
 
   const list = await fetchUserCollectionSuggestions(userId, q, 25);
 
-  return (
-    list.find((um) => formatUserMovieShareTitle(um) === quotedTitle) ?? null
-  );
+  const matches = list.filter((um) => formatUserMovieShareTitle(um) === quotedTitle);
+
+  return list.length < 25 && matches.length === 1 ? matches[0] : null;
 }

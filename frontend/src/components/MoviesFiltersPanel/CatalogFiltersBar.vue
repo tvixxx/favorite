@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import dayjs, { type Dayjs } from "dayjs";
+import {releaseMonthBound,releaseDateInput} from '@/utils/releaseDate';
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import FiltersSheet from "@/components/MoviesFiltersPanel/FiltersSheet.vue";
@@ -17,6 +18,8 @@ import {
   GenreLabels,
 } from "@/components/Genres/constants/genres.constants";
 import { PRODUCTION_COUNTRIES } from "@/constants/countries/production-countries";
+import ContentKindFilter from "@/components/ContentType/ContentKindFilter.vue";
+import { contentKindOptions } from "@/utils/content-kind";
 
 const props = defineProps<{
   lockedActorIds?: string[];
@@ -37,16 +40,18 @@ const selectedCountries = computed<string[]>({
 });
 const publishDateRange = computed<[Dayjs, Dayjs] | null>({
   get: (): [Dayjs, Dayjs] | null => moviesStore.filters.publishDateFrom && moviesStore.filters.publishDateTo
-    ? [dayjs(moviesStore.filters.publishDateFrom), dayjs(moviesStore.filters.publishDateTo)] : null,
+    ? [releaseDateInput(moviesStore.filters.publishDateFrom), releaseDateInput(moviesStore.filters.publishDateTo)] : null,
   set: (range) => updateFilters({
-    publishDateFrom: range?.[0] ? range[0].startOf("month").toISOString() : undefined,
-    publishDateTo: range?.[1] ? range[1].endOf("month").toISOString() : undefined,
+    publishDateFrom: range?.[0] ? releaseMonthBound(range[0],'from') : undefined,
+    publishDateTo: range?.[1] ? releaseMonthBound(range[1],'to') : undefined,
   }),
 });
 const isDrawerOpen = ref(false);
 
 const advancedCount = computed(() => {
   let n = 0;
+  if (moviesStore.filters.contentKind) n += 1;
+  if (moviesStore.filters.isSerial !== undefined) n += 1;
   if (selectedGenres.value.length) n += 1;
   if (selectedCountries.value.length) n += 1;
   if (publishDateRange.value) n += 1;
@@ -66,6 +71,9 @@ const activeTags = computed<FilterTag[]>(() => {
   selectedCountries.value.forEach((code) => {
     tags.push({ key: `country:${code}`, label: countryLabel(code) });
   });
+  const category = contentKindOptions.find(option => option.value === moviesStore.filters.contentKind);
+  if (category) tags.push({ key: "contentKind", label: category.label });
+  if (moviesStore.filters.isSerial !== undefined) tags.push({ key: "format", label: moviesStore.filters.isSerial ? "Сериалы и выпуски" : "Фильмы" });
 
   const [from, to] = publishDateRange.value ?? [];
 
@@ -81,6 +89,8 @@ const activeTags = computed<FilterTag[]>(() => {
 
 const removeTag = (key: string): void => {
   const [type, value] = key.split(":");
+  if (type === "contentKind") updateFilters({ contentKind: undefined });
+  if (type === "format") updateFilters({ isSerial: undefined });
 
   if (type === "genre") {
     selectedGenres.value = selectedGenres.value.filter((g) => g !== value);
@@ -110,7 +120,7 @@ function updateFilters(patch: MoviesFilters): void {
 }
 
 const resetAdvanced = (): void => {
-  updateFilters({ genres: undefined, countryCodes: undefined, publishDateFrom: undefined, publishDateTo: undefined });
+  updateFilters({ contentKind: undefined, isSerial: undefined, genres: undefined, countryCodes: undefined, publishDateFrom: undefined, publishDateTo: undefined });
 };
 
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
@@ -191,6 +201,7 @@ const onSearchEnter = (): void => {
       @reset="resetAdvanced"
     >
       <GenreFilter v-model="selectedGenres" />
+      <ContentKindFilter :content-kind="moviesStore.filters.contentKind" :is-serial="moviesStore.filters.isSerial" show-format @change="updateFilters" />
       <CountryFilter v-model="selectedCountries" />
       <PeriodChips v-model="publishDateRange" />
     </FiltersSheet>

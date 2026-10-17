@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import MoviePoster from "@/components/MoviePoster/MoviePoster.vue";
 
 interface Props {
+  movieId?: string;
   posterSrc: string;
   title: string;
   meta?: string;
@@ -56,8 +58,11 @@ const emit = defineEmits<{
     @keydown.space.self.prevent="emit('open')"
   >
     <div class="movie-card__poster-wrap">
-      <img
+      <MoviePoster
         :src="posterSrc"
+        :seed="movieId || title"
+        :title="title"
+        :meta="meta"
         :alt="posterAlt || `${title} постер`"
         class="movie-card__poster"
         loading="lazy"

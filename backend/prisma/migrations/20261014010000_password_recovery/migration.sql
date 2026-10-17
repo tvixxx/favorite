@@ -1,0 +1,7 @@
+CREATE TABLE "password_resets" (
+  "user_id" TEXT NOT NULL PRIMARY KEY REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+  "token_hash" TEXT NOT NULL UNIQUE,
+  "auth_version" INTEGER NOT NULL,
+  "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "expires_at" TIMESTAMP(3) NOT NULL
+);

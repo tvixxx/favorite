@@ -40,10 +40,15 @@ export class MediaService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   public describe(asset: MediaAsset) {
+    const privateImage = asset.purpose === 'FEEDBACK_SCREENSHOT';
     return {
       id: asset.id,
-      url: this.storage.publicUrl(asset.mainKey),
-      thumbnailUrl: this.storage.publicUrl(asset.thumbnailKey),
+      url: privateImage
+        ? `/uploads/images/${asset.id}/full.webp`
+        : this.storage.publicUrl(asset.mainKey),
+      thumbnailUrl: privateImage
+        ? `/uploads/images/${asset.id}/thumbnail.webp`
+        : this.storage.publicUrl(asset.thumbnailKey),
       mimeType: asset.mimeType,
       byteSize: asset.byteSize,
       width: asset.width,
@@ -59,8 +64,9 @@ export class MediaService implements OnModuleInit, OnModuleDestroy {
     }
 
     const id = randomUUID();
-    const mainKey = `images/${id}/full.webp`;
-    const thumbnailKey = `images/${id}/thumbnail.webp`;
+    const prefix = purpose === 'FEEDBACK_SCREENSHOT' ? 'feedback' : 'images';
+    const mainKey = `${prefix}/${id}/full.webp`;
+    const thumbnailKey = `${prefix}/${id}/thumbnail.webp`;
     const since = new Date(Date.now() - TEMPORARY_MEDIA_MS);
 
     await this.prisma.$transaction(async (tx) => {
@@ -156,10 +162,11 @@ export class MediaService implements OnModuleInit, OnModuleDestroy {
     }
 
     if (currentAssetId === id) {
+      const image = this.describe(asset);
       return {
         assetId: id,
-        url: this.storage.publicUrl(asset.mainKey),
-        thumbnailUrl: this.storage.publicUrl(asset.thumbnailKey),
+        url: image.url,
+        thumbnailUrl: image.thumbnailUrl,
       };
     }
 
@@ -185,10 +192,11 @@ export class MediaService implements OnModuleInit, OnModuleDestroy {
       );
     }
 
+    const image = this.describe(asset);
     return {
       assetId: id,
-      url: this.storage.publicUrl(asset.mainKey),
-      thumbnailUrl: this.storage.publicUrl(asset.thumbnailKey),
+      url: image.url,
+      thumbnailUrl: image.thumbnailUrl,
     };
   }
 
@@ -283,6 +291,7 @@ export class MediaService implements OnModuleInit, OnModuleDestroy {
         poster: null,
         avatar: null,
         actorPhoto: null,
+        feedback: null,
       },
       data: { status: 'DELETING', expiresAt: new Date() },
     });
@@ -323,6 +332,7 @@ export class MediaService implements OnModuleInit, OnModuleDestroy {
           poster: null,
           avatar: null,
           actorPhoto: null,
+          feedback: null,
         },
       });
     }
@@ -342,6 +352,7 @@ export class MediaService implements OnModuleInit, OnModuleDestroy {
           poster: null,
           avatar: null,
           actorPhoto: null,
+          feedback: null,
         },
         take: 100,
       });
@@ -354,6 +365,7 @@ export class MediaService implements OnModuleInit, OnModuleDestroy {
             poster: null,
             avatar: null,
             actorPhoto: null,
+            feedback: null,
           },
           data: { status: 'DELETING' },
         });
@@ -376,7 +388,11 @@ export class MediaService implements OnModuleInit, OnModuleDestroy {
 
     const asset = await this.prisma.mediaAsset.findUnique({ where: { id } });
 
-    if (!asset || asset.status !== 'READY') {
+    if (
+      !asset ||
+      asset.status !== 'READY' ||
+      asset.purpose === 'FEEDBACK_SCREENSHOT'
+    ) {
       throw new NotFoundException();
     }
 
@@ -398,5 +414,25 @@ export class MediaService implements OnModuleInit, OnModuleDestroy {
 
   public onModuleDestroy(): void {
     clearInterval(this.cleanupTimer);
+  }
+
+  public async privateImage(
+    id: string,
+    filename: string,
+    user: { id: string; role: string },
+  ): Promise<Buffer> {
+    if (!['full.webp', 'thumbnail.webp'].includes(filename))
+      throw new NotFoundException();
+    const asset = await this.prisma.mediaAsset.findUnique({ where: { id } });
+    if (
+      !asset ||
+      asset.status !== 'READY' ||
+      asset.purpose !== 'FEEDBACK_SCREENSHOT' ||
+      (asset.ownerId !== user.id && user.role !== 'ADMIN')
+    )
+      throw new NotFoundException();
+    return this.storage.readPrivate(
+      filename === 'full.webp' ? asset.mainKey : asset.thumbnailKey,
+    );
   }
 }

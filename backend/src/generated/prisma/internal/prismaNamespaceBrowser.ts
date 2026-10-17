@@ -53,6 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   MediaAsset: 'MediaAsset',
   User: 'User',
+  PasswordReset: 'PasswordReset',
   Movie: 'Movie',
   MoviePoster: 'MoviePoster',
   Review: 'Review',
@@ -64,7 +65,10 @@ export const ModelName = {
   Message: 'Message',
   UserStatus: 'UserStatus',
   Notification: 'Notification',
-  Feedback: 'Feedback'
+  Feedback: 'Feedback',
+  ReviewReport: 'ReviewReport',
+  AdminAuditLog: 'AdminAuditLog',
+  UsageEvent: 'UsageEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -108,7 +112,17 @@ export const UserScalarFieldEnum = {
   email: 'email',
   password: 'password',
   fullName: 'fullName',
+  timezone: 'timezone',
+  quickAddEnabled: 'quickAddEnabled',
+  watchTonightEnabled: 'watchTonightEnabled',
+  collectionFilesEnabled: 'collectionFilesEnabled',
+  notifyNewMessages: 'notifyNewMessages',
+  notifyFriendRequests: 'notifyFriendRequests',
+  notifyRecommendations: 'notifyRecommendations',
   role: 'role',
+  blockedAt: 'blockedAt',
+  blockedReason: 'blockedReason',
+  authVersion: 'authVersion',
   tags: 'tags',
   avatarUrl: 'avatarUrl',
   avatarThumbnailUrl: 'avatarThumbnailUrl',
@@ -120,15 +134,33 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+export const PasswordResetScalarFieldEnum = {
+  userId: 'userId',
+  tokenHash: 'tokenHash',
+  authVersion: 'authVersion',
+  createdAt: 'createdAt',
+  expiresAt: 'expiresAt'
+} as const
+
+export type PasswordResetScalarFieldEnum = (typeof PasswordResetScalarFieldEnum)[keyof typeof PasswordResetScalarFieldEnum]
+
+
 export const MovieScalarFieldEnum = {
   id: 'id',
   title: 'title',
   titleNormalized: 'titleNormalized',
+  titleEn: 'titleEn',
+  originalTitle: 'originalTitle',
+  titleAliases: 'titleAliases',
+  descriptionLanguage: 'descriptionLanguage',
+  tvdbId: 'tvdbId',
+  tvdbType: 'tvdbType',
   description: 'description',
   countryCodes: 'countryCodes',
   genres: 'genres',
   publishDate: 'publishDate',
   isSerial: 'isSerial',
+  contentKind: 'contentKind',
   seasonCount: 'seasonCount',
   episodeCount: 'episodeCount',
   posterId: 'posterId',
@@ -155,7 +187,10 @@ export type MoviePosterScalarFieldEnum = (typeof MoviePosterScalarFieldEnum)[key
 export const ReviewScalarFieldEnum = {
   id: 'id',
   text: 'text',
+  isSpoiler: 'isSpoiler',
   rate: 'rate',
+  hiddenAt: 'hiddenAt',
+  moderationReason: 'moderationReason',
   userId: 'userId',
   movieId: 'movieId',
   createdAt: 'createdAt',
@@ -167,6 +202,7 @@ export type ReviewScalarFieldEnum = (typeof ReviewScalarFieldEnum)[keyof typeof 
 
 export const ActorScalarFieldEnum = {
   id: 'id',
+  tvdbId: 'tvdbId',
   name: 'name',
   imageUrl: 'imageUrl',
   imageThumbnailUrl: 'imageThumbnailUrl',
@@ -286,12 +322,48 @@ export const FeedbackScalarFieldEnum = {
   pageUrl: 'pageUrl',
   userAgent: 'userAgent',
   viewport: 'viewport',
+  screenshotAssetId: 'screenshotAssetId',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type FeedbackScalarFieldEnum = (typeof FeedbackScalarFieldEnum)[keyof typeof FeedbackScalarFieldEnum]
+
+
+export const ReviewReportScalarFieldEnum = {
+  id: 'id',
+  reviewId: 'reviewId',
+  reporterId: 'reporterId',
+  reason: 'reason',
+  comment: 'comment',
+  resolvedAt: 'resolvedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type ReviewReportScalarFieldEnum = (typeof ReviewReportScalarFieldEnum)[keyof typeof ReviewReportScalarFieldEnum]
+
+
+export const AdminAuditLogScalarFieldEnum = {
+  id: 'id',
+  actorId: 'actorId',
+  action: 'action',
+  targetId: 'targetId',
+  reason: 'reason',
+  createdAt: 'createdAt'
+} as const
+
+export type AdminAuditLogScalarFieldEnum = (typeof AdminAuditLogScalarFieldEnum)[keyof typeof AdminAuditLogScalarFieldEnum]
+
+
+export const UsageEventScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  feature: 'feature',
+  occurredAt: 'occurredAt'
+} as const
+
+export type UsageEventScalarFieldEnum = (typeof UsageEventScalarFieldEnum)[keyof typeof UsageEventScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -20,11 +21,7 @@ import { FeedbackService } from './feedback.service';
 import { CreateFeedbackDto, UpdateFeedbackStatusDto } from './dto';
 import { AdminOnly, AuthProtected, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
-import { FeedbackStatus } from '../generated/prisma/enums';
-import { queryEnum, queryInteger } from '../common/utils/query-value';
-
-const DEFAULT_LIMIT = 20;
-const MAX_LIMIT = 100;
+import { FeedbackQueryDto } from '../common/dto/list-query.dto';
 
 @ApiTags('Feedback')
 @Controller('feedback')
@@ -58,21 +55,10 @@ export class FeedbackController {
   @AdminOnly()
   @Get()
   public async findAll(
-    @Query('status') statusRaw?: unknown,
-    @Query('limit') limitRaw?: unknown,
-    @Query('offset') offsetRaw?: unknown,
+    @Query() query: FeedbackQueryDto,
+    @Authorized() user: User,
   ) {
-    const status = queryEnum(
-      statusRaw,
-      'status',
-      Object.values(FeedbackStatus),
-    );
-
-    return this.feedbackService.findAll({
-      status,
-      limit: queryInteger(limitRaw, 'limit', DEFAULT_LIMIT, 1, MAX_LIMIT),
-      offset: queryInteger(offsetRaw, 'offset', 0, 0, 2147483647),
-    });
+    return this.feedbackService.findAll(query, user.timezone);
   }
 
   @ApiOperation({
@@ -82,9 +68,10 @@ export class FeedbackController {
   @AdminOnly()
   @Patch(':id/status')
   public async updateStatus(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: UpdateFeedbackStatusDto,
+    @Authorized() user: User,
   ) {
-    return this.feedbackService.updateStatus(id, dto.status);
+    return this.feedbackService.updateStatus(id, dto.status, user.id);
   }
 }

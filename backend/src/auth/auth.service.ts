@@ -60,7 +60,7 @@ export class AuthService {
       },
     });
 
-    return this.auth(res, user.id);
+    return this.auth(res, user.id, user.authVersion);
   }
 
   public async login(res: Response, dto: LoginRequest) {
@@ -71,6 +71,8 @@ export class AuthService {
       select: {
         id: true,
         password: true,
+        blockedAt: true,
+        authVersion: true,
       },
     });
 
@@ -86,7 +88,11 @@ export class AuthService {
       throw new NotFoundException('Неверная почта или пароль');
     }
 
-    return this.auth(res, user.id);
+    if (user.blockedAt) {
+      throw new UnauthorizedException('Доступ к аккаунту ограничен');
+    }
+
+    return this.auth(res, user.id, user.authVersion);
   }
 
   public async refresh(req: Request, res: Response) {
@@ -112,20 +118,9 @@ export class AuthService {
       throw new UnauthorizedException('Недействительный refresh-token');
     }
 
-    if (payload) {
-      const user = await this.prismaService.user.findUnique({
-        where: { id: payload.id },
-        select: {
-          id: true,
-        },
-      });
+    const user = await this.validate(payload.id, payload.authVersion);
 
-      if (!user) {
-        throw new NotFoundException('Пользователь не найден');
-      }
-
-      return this.auth(res, user.id);
-    }
+    return this.auth(res, user.id, payload.authVersion ?? 0);
   }
 
   public logout(res: Response): Promise<boolean> {
@@ -134,7 +129,7 @@ export class AuthService {
     return Promise.resolve(true);
   }
 
-  public async validate(id: string) {
+  public async validate(id: string, authVersion = 0) {
     const user = await this.prismaService.user.findUnique({
       where: { id },
       select: {
@@ -142,7 +137,16 @@ export class AuthService {
         email: true,
         fullName: true,
         role: true,
+        blockedAt: true,
+        authVersion: true,
         tags: true,
+        timezone: true,
+        quickAddEnabled: true,
+        watchTonightEnabled: true,
+        collectionFilesEnabled: true,
+        notifyNewMessages: true,
+        notifyFriendRequests: true,
+        notifyRecommendations: true,
         avatarUrl: true,
         avatarThumbnailUrl: true,
         avatarAssetId: true,
@@ -155,7 +159,21 @@ export class AuthService {
       throw new NotFoundException('Пользователь не найден');
     }
 
-    return user;
+    if (user.blockedAt) {
+      throw new UnauthorizedException('Доступ к аккаунту ограничен');
+    }
+
+    const { authVersion: currentVersion, ...publicUser } = user;
+
+    if (
+      !Number.isSafeInteger(authVersion) ||
+      authVersion < 0 ||
+      currentVersion !== authVersion
+    ) {
+      throw new UnauthorizedException('Сессия отозвана. Войдите снова');
+    }
+
+    return publicUser;
   }
 
   public async verifyAccessToken(token: string) {
@@ -175,11 +193,17 @@ export class AuthService {
       throw new UnauthorizedException('Недействительный access-token');
     }
 
-    return this.validate(payload.id);
+    const user = await this.validate(payload.id, payload.authVersion);
+
+    return {
+      ...user,
+      accessTokenExpiresAt:
+        payload.exp === undefined ? undefined : payload.exp * 1000,
+    };
   }
 
-  private auth(res: Response, id: string) {
-    const { accessToken, refreshToken } = this.generateTokens(id);
+  private auth(res: Response, id: string, authVersion: number) {
+    const { accessToken, refreshToken } = this.generateTokens(id, authVersion);
     const { exp } = this.jwtService.decode<{ exp: number }>(refreshToken);
     const expiresTimeMs = new Date(exp * 1000);
 
@@ -198,11 +222,14 @@ export class AuthService {
     });
   }
 
-  private generateTokens(id: string): {
+  private generateTokens(
+    id: string,
+    authVersion: number,
+  ): {
     accessToken: string;
     refreshToken: string;
   } {
-    const payload: JwtPayload = { id };
+    const payload: JwtPayload = { id, authVersion };
 
     const accessToken = this.jwtService.sign({ ...payload, type: 'access' }, {
       expiresIn: this.JWT_ACCESS_TOKEN_TTL,

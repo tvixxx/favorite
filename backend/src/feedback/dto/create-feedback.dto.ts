@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
@@ -7,10 +8,20 @@ import {
   Length,
   MaxLength,
   Matches,
+  IsUUID,
 } from 'class-validator';
 import { FeedbackType } from '../../generated/prisma/enums';
+import { PlainText } from '../../common/validation/plain-text';
 
 export class CreateFeedbackDto {
+  @ApiProperty({
+    required: false,
+    description: 'ID собственной загрузки скриншота',
+  })
+  @IsOptional()
+  @IsUUID('4')
+  screenshotAssetId?: string;
+
   @ApiProperty({
     enum: FeedbackType,
     description: 'Тип обращения',
@@ -24,7 +35,11 @@ export class CreateFeedbackDto {
     example: 'Не хватает импорта коллекции из файла',
   })
   @IsString()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @Length(10, 1000)
+  @PlainText({ multiline: true })
   @Matches(/\S/)
   message: string;
 
@@ -45,6 +60,7 @@ export class CreateFeedbackDto {
   @IsOptional()
   @IsString()
   @MaxLength(2048)
+  @PlainText()
   pageUrl?: string;
 
   @ApiProperty({
@@ -54,6 +70,7 @@ export class CreateFeedbackDto {
   @IsOptional()
   @IsString()
   @MaxLength(512)
+  @PlainText()
   userAgent?: string;
 
   @ApiProperty({
@@ -64,5 +81,6 @@ export class CreateFeedbackDto {
   @IsOptional()
   @IsString()
   @MaxLength(32)
+  @PlainText()
   viewport?: string;
 }

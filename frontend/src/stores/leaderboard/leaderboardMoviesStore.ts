@@ -1,10 +1,12 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import dayjs, { type Dayjs } from "dayjs";
+import type { Dayjs } from "dayjs";
+import {releaseMonthBound} from '@/utils/releaseDate';
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { isSuccessStatus } from "@/utils";
 import { createRequestGuard } from "@/utils/requestGuard";
 import type { Genre } from "@/components/Genres/constants/genres.constants";
+import type { ContentKind } from "@/utils/content-kind";
 
 export type LeaderboardMovieSortBy =
   | "avgPersonalRate"
@@ -15,6 +17,7 @@ export type LeaderboardMovieSortBy =
 export type LeaderboardMovieSortOrder = "asc" | "desc";
 
 export interface LeaderboardMovieRow {
+  contentKind?: ContentKind | null;
   rank: number;
   movieId: string;
   title: string;
@@ -78,14 +81,14 @@ export const useLeaderboardMoviesStore = defineStore(
       if (publishDateRange.value?.[0]) {
         params.set(
           "publishDateFrom",
-          dayjs(publishDateRange.value[0]).startOf("month").toISOString(),
+          releaseMonthBound(publishDateRange.value[0],'from'),
         );
       }
 
       if (publishDateRange.value?.[1]) {
         params.set(
           "publishDateTo",
-          dayjs(publishDateRange.value[1]).endOf("month").toISOString(),
+          releaseMonthBound(publishDateRange.value[1],'to'),
         );
       }
 

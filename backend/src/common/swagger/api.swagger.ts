@@ -21,6 +21,7 @@ import { UserListModule } from '../../user-list/user-list.module';
 import { NotificationModule } from '../../notification/notification.module';
 import { FeedbackModule } from '../../feedback/feedback.module';
 import { MediaModule } from '../../media/media.module';
+import { PasswordRecoveryModule } from '../../password-recovery/password-recovery.module';
 
 const getSwaggerDocumentConfig = (): Omit<OpenAPIObject, 'paths'> => {
   const { title, description, version, contact } = SWAGGER_CONFIG_DATA;
@@ -47,6 +48,7 @@ const SWAGGER_DOCUMENT_INCLUDE_MODULES = [
   ActorModule,
   UserModule,
   AuthModule,
+  PasswordRecoveryModule,
   UserMovieModule,
   LeaderboardModule,
   FriendshipModule,

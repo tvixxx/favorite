@@ -16,13 +16,24 @@ import {
   Matches,
   ValidateNested,
   IsDateString,
+  ValidateIf,
+  MinLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { UpdateUserMovieDto } from '../../user-movie/dto/update-user-movie.dto';
-import { Genre as PrismaGenre } from '../../generated/prisma/enums';
+import {
+  ContentKind,
+  Genre as PrismaGenre,
+} from '../../generated/prisma/enums';
 import { PRODUCTION_COUNTRY_CODES } from '../../constants/production-countries';
 import { normalizeGenre } from '../../common/utils/normalize-genre';
+import { PlainText } from '../../common/validation/plain-text';
+import {
+  IsMediaDate,
+  MAX_EPISODES,
+  MAX_SEASONS,
+} from '../../common/validation/media-numbers';
 
 export class CreateMovieRequest {
   @ApiProperty({
@@ -33,6 +44,8 @@ export class CreateMovieRequest {
   @IsNotEmpty()
   @IsString()
   @Matches(/\S/, { message: 'Введите название фильма' })
+  @PlainText()
+  @MaxLength(200)
   title: string;
 
   @ApiProperty({
@@ -43,6 +56,7 @@ export class CreateMovieRequest {
   })
   @IsOptional()
   @IsDateString({ strict: true })
+  @IsMediaDate()
   publishDate?: string | null;
 
   @ApiProperty({
@@ -77,6 +91,8 @@ export class CreateMovieRequest {
   @IsString()
   @IsNotEmpty()
   @Matches(/\S/, { message: 'Введите описание фильма' })
+  @PlainText({ multiline: true })
+  @MaxLength(10000)
   description: string;
 
   @ApiProperty({
@@ -117,30 +133,51 @@ export class CreateMovieRequest {
   @IsNotEmpty()
   isSerial: boolean;
 
+  @ApiPropertyOptional({
+    enum: ContentKind,
+    description: 'Категория. Отсутствует у старых клиентов.',
+  })
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @IsEnum(ContentKind)
+  contentKind?: ContentKind;
+
+  @ApiPropertyOptional({
+    description: 'Только ADMIN: пояснение различия одноимённых произведений',
+  })
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @IsString()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @MinLength(10)
+  @MaxLength(500)
+  @PlainText({ multiline: true })
+  distinctReason?: string;
+
   @ApiProperty({
     description: 'Количество сезонов',
     minimum: 1,
-    maximum: 1000,
+    maximum: MAX_SEASONS,
     example: '2',
     type: Number,
   })
   @IsInt()
   @IsOptional()
   @Min(1)
-  @Max(1000)
+  @Max(MAX_SEASONS)
   seasonCount?: number;
 
   @ApiProperty({
     description: 'Количество эпизодов',
     minimum: 1,
-    maximum: 10000,
+    maximum: MAX_EPISODES,
     example: '10',
     type: Number,
   })
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(10000)
+  @Max(MAX_EPISODES)
   episodeCount?: number;
 
   @ApiProperty({

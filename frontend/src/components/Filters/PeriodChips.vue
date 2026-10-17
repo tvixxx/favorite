@@ -7,7 +7,7 @@ const range = defineModel<[Dayjs, Dayjs] | null>({ default: null });
 
 type Period = { key: string; label: string; from?: number; to?: number };
 
-const CURRENT_YEAR = dayjs().year();
+const CURRENT_YEAR = new Date().getUTCFullYear();
 
 const PERIODS: Period[] = [
   { key: "any", label: "Любой год" },

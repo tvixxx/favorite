@@ -131,6 +131,23 @@ describe('Доступ к чату и несколько вкладок', () => 
     expect(created).toEqual([{ senderId: 'user-id', content: 'Привет' }]);
   });
 
+  it.each([
+    { content: 'Текст\u0000сообщения' },
+    { content: 'Привет', senderId: 'someone-else' },
+  ])(
+    'отклоняет управляющие символы и лишние поля до сохранения %#',
+    async (extra) => {
+      const client = socket('socket-text-check', 'valid-access');
+      await gateway.handleConnection(client);
+      const result = await gateway.handleMessage(
+        { receiverId: peerId, ...extra },
+        client,
+      );
+      expect(result).toEqual({ error: 'Invalid message' });
+      expect(created).toEqual([]);
+    },
+  );
+
   it('не отправляет сообщения через неподтверждённое соединение', async () => {
     const client = socket('socket-1', 'bad-token');
 
@@ -217,5 +234,54 @@ describe('Доступ к чату и несколько вкладок', () => 
       await gateway.handleMessageRead({ otherUserId: 'not-a-uuid' }, client),
     ).toEqual({ error: 'Invalid conversation' });
     expect(created).toEqual([]);
+  });
+
+  it('закрывает соединение при блокировке во время вступления в комнату', async () => {
+    const client = socket('blocked-during-join', 'valid-access');
+    client.join = jest.fn(() => {
+      auth.verifyAccessToken.mockRejectedValue(new Error('Blocked'));
+      return Promise.resolve();
+    });
+
+    await gateway.handleConnection(client);
+
+    expect(disconnected).toEqual(['blocked-during-join']);
+    expect(online.size).toBe(0);
+  });
+
+  it('отклоняет сообщения и отметку прочтения после блокировки открытой вкладки', async () => {
+    const client = socket('blocked-after-connect', 'valid-access');
+    await gateway.handleConnection(client);
+    auth.verifyAccessToken.mockRejectedValue(new Error('Blocked'));
+
+    await expect(
+      gateway.handleMessage({ receiverId: peerId, content: 'Привет' }, client),
+    ).resolves.toEqual({ error: 'Unauthorized' });
+    await expect(
+      gateway.handleMessageRead({ otherUserId: peerId }, client),
+    ).resolves.toEqual({ error: 'Unauthorized' });
+    expect(created).toEqual([]);
+    expect(disconnected).toContain(client.id);
+  });
+
+  it('отключает сокет по сроку токена и отменяет ожидание при обычном закрытии', async () => {
+    jest.useFakeTimers();
+    try {
+      auth.verifyAccessToken.mockResolvedValue({
+        id: 'user-id',
+        accessTokenExpiresAt: Date.now() + 1000,
+      });
+      const closed = socket('closed', 'valid-access');
+      const idle = socket('idle', 'valid-access');
+      await gateway.handleConnection(closed);
+      await gateway.handleConnection(idle);
+      await gateway.handleDisconnect(closed);
+
+      await jest.advanceTimersByTimeAsync(1000);
+
+      expect(disconnected).toEqual(['idle']);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

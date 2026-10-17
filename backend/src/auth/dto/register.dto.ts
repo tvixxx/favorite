@@ -8,6 +8,7 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
+import { PlainText } from '../../common/validation/plain-text';
 
 export class RegisterRequest {
   @ApiProperty({
@@ -22,6 +23,7 @@ export class RegisterRequest {
   @IsString({ message: 'Имя должно быть строкой' })
   @IsNotEmpty({ message: 'Имя обязательно для заполнения' })
   @Matches(/\S/, { message: 'Имя не должно состоять из пробелов' })
+  @PlainText()
   @MaxLength(50, { message: 'Имя не должно превышать 50 символов' })
   @MinLength(3, { message: 'Имя должно содержать не менее 3 символов' })
   fullName: string;

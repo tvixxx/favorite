@@ -15,8 +15,9 @@
 
 ```bash
 # 1. база (отдельного compose для разработки нет — контейнер поднимается вручную)
-docker run -d --name postgres -p 5433:5432 -v favorite-pg:/var/lib/postgresql \
-  -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e POSTGRES_DB=favorites \
+# Заранее задайте POSTGRES_PASSWORD в своём терминале, не сохраняйте пароль в Git.
+docker run -d --name postgres -p 127.0.0.1:5433:5432 -v favorite-pg:/var/lib/postgresql \
+  -e POSTGRES_USER=favorite -e POSTGRES_PASSWORD -e POSTGRES_DB=favorites \
   postgres:18-alpine
 
 # 2. бэкенд → http://localhost:3005, Swagger на /docs
@@ -37,15 +38,17 @@ yarn dev
 ```env
 NODE_ENV=development
 COOKIE_DOMAIN=localhost
-JWT_SECRET=<любая строка>
+JWT_SECRET=<длинная случайная строка>
 JWT_ACCESS_TOKEN_TTL=2h
 JWT_REFRESH_TOKEN_TTL=7d
-DATABASE_URL=postgresql://root:123456@localhost:5433/favorites
+DATABASE_URL=postgresql://favorite:<URL-encoded password>@localhost:5433/favorites
 ```
 
 Контракт дополнительных настроек, медиа и production описан в [deploy/README.md](deploy/README.md). Значения выше предназначены только для локальной разработки.
 
-**Не запускать reset для базы с данными.** У старой локальной базы было расхождение схемы `movies` с историей миграций. Обычный путь — `yarn prisma migrate deploy`. Если история существующей базы расходится, сначала проверить её состояние и применённый SQL. `yarn prisma migrate resolve --applied <имя>` допустим только после проверки, что весь SQL этой миграции действительно выполнен.
+**Не запускать reset для базы с данными.** Обычный путь — `yarn prisma migrate deploy`. Если история существующей базы расходится, сначала проверить её состояние и применённый SQL. `yarn prisma migrate resolve --applied <имя>` допустим только после проверки, что весь SQL этой миграции действительно выполнен.
+
+Храните `backend/prisma/schema.prisma`, каталог `backend/prisma/migrations/` и `migration_lock.toml` в Git. Это история изменений структуры базы, необходимая для воспроизводимого развёртывания. Применённые миграции не удаляют и не переписывают. Пароли, дампы, реальные пользовательские данные и локальные настройки подключения в репозиторий не добавляют. При существующем Docker-томе используйте прежние локальные настройки доступа, новые переменные контейнера не меняют пароль уже созданной базы.
 
 ## Проверки перед сдачей работы
 

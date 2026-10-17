@@ -1,11 +1,17 @@
-import { Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  OnModuleDestroy,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   DeleteObjectCommand,
   PutObjectCommand,
+  GetObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
 @Injectable()
@@ -14,6 +20,7 @@ export class ImageStorage implements OnModuleDestroy {
   private readonly root: string;
   private readonly publicBase: string;
   private readonly bucket: string;
+  private readonly privateBucket: string;
   private readonly client: S3Client | null;
 
   constructor(config: ConfigService) {
@@ -57,6 +64,7 @@ export class ImageStorage implements OnModuleDestroy {
     this.publicBase = publicURL.href.replace(/\/$/, '');
     this.bucket =
       provider === 's3' ? config.getOrThrow<string>('MEDIA_S3_BUCKET') : '';
+    this.privateBucket = config.get<string>('MEDIA_S3_PRIVATE_BUCKET') ?? '';
     this.client =
       provider === 's3'
         ? new S3Client({
@@ -79,7 +87,9 @@ export class ImageStorage implements OnModuleDestroy {
   }
 
   private validateKey(key: string): void {
-    if (!/^images\/[0-9a-f-]{36}\/(full|thumbnail)\.webp$/i.test(key)) {
+    if (
+      !/^(images|feedback)\/[0-9a-f-]{36}\/(full|thumbnail)\.webp$/i.test(key)
+    ) {
       throw new Error('Недопустимый ключ изображения');
     }
   }
@@ -90,6 +100,8 @@ export class ImageStorage implements OnModuleDestroy {
 
   public publicUrl(key: string): string {
     this.validateKey(key);
+    if (key.startsWith('feedback/'))
+      throw new Error('У вложения нет публичной ссылки');
 
     return `${this.publicBase}/${key}`;
   }
@@ -99,11 +111,14 @@ export class ImageStorage implements OnModuleDestroy {
     if (this.client) {
       await this.client.send(
         new PutObjectCommand({
-          Bucket: this.bucket,
+          Bucket: this.bucketFor(key),
           Key: key,
           Body: bytes,
           ContentType: 'image/webp',
-          CacheControl: 'public, max-age=31536000, immutable',
+          ACL: key.startsWith('feedback/') ? 'private' : undefined,
+          CacheControl: key.startsWith('feedback/')
+            ? 'private, no-store'
+            : 'public, max-age=31536000, immutable',
         }),
       );
     } else {
@@ -119,7 +134,7 @@ export class ImageStorage implements OnModuleDestroy {
       this.validateKey(key);
       if (this.client) {
         await this.client.send(
-          new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
+          new DeleteObjectCommand({ Bucket: this.bucketFor(key), Key: key }),
         );
       } else {
         await rm(join(this.root, key), { force: true });
@@ -135,5 +150,25 @@ export class ImageStorage implements OnModuleDestroy {
     this.validateKey(key);
 
     return join(this.root, key);
+  }
+
+  private bucketFor(key: string): string {
+    if (!key.startsWith('feedback/')) return this.bucket;
+    if (!this.privateBucket || this.privateBucket === this.bucket)
+      throw new ServiceUnavailableException(
+        'Хранилище вложений пока не настроено',
+      );
+    return this.privateBucket;
+  }
+
+  public async readPrivate(key: string): Promise<Buffer> {
+    this.validateKey(key);
+    if (!key.startsWith('feedback/')) throw new NotFoundException();
+    if (!this.client) return readFile(this.localPath(key));
+    const object = await this.client.send(
+      new GetObjectCommand({ Bucket: this.bucketFor(key), Key: key }),
+    );
+    if (!object.Body) throw new NotFoundException();
+    return Buffer.from(await object.Body.transformToByteArray());
   }
 }

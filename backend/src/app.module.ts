@@ -29,6 +29,9 @@ import { HttpThrottlerGuard } from './common/guards/http-throttler.guard';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { MediaModule } from './media/media.module';
 import { HealthController } from './health/health.controller';
+import { AdminModule } from './admin/admin.module';
+import { PasswordRecoveryModule } from './password-recovery/password-recovery.module';
+import { TvdbModule } from './tvdb/tvdb.module';
 
 @Module({
   imports: [
@@ -48,6 +51,8 @@ import { HealthController } from './health/health.controller';
     ReviewModule,
     ActorModule,
     AuthModule,
+    PasswordRecoveryModule,
+    TvdbModule,
     UserMovieModule,
     BadgeModule,
     FriendshipModule,
@@ -58,6 +63,7 @@ import { HealthController } from './health/health.controller';
     NotificationModule,
     FeedbackModule,
     MediaModule,
+    AdminModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

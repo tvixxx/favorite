@@ -22,11 +22,17 @@ import CollectionFiltersBar from "@/components/MoviesFiltersPanel/CollectionFilt
 import { FETCH_METHOD, useFetch, useEscapeKey } from "@/composable";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
 import ConfirmDialog from "@/components/ConfirmDialog/ConfirmDialog.vue";
+import { contentTypeLabel } from "@/utils/content-kind";
+import WatchTonightModal from "@/components/WatchTonight/WatchTonightModal.vue";
+import { getUserPreference } from "@/utils/userPreferences";
 
 const router = useRouter();
 const route = useRoute();
 const userMoviesStore = useUserMoviesStore();
 const mainStore = useMainStore();
+const watchTonightOpen = ref(false);
+const showQuickAdd = computed(() => getUserPreference(mainStore.userData, "quickAddEnabled"));
+const showWatchTonight = computed(() => getUserPreference(mainStore.userData, "watchTonightEnabled"));
 
 interface QuickAddOption {
   value: string;
@@ -37,6 +43,8 @@ interface QuickAddOption {
 const QUICK_ADD_MIN_QUERY_LENGTH = 2;
 const QUICK_ADD_DEBOUNCE_MS = 280;
 const QUICK_ADD_OPTIONS_LIMIT = 10;
+type QuickAddMovie = Pick<MovieApiResponse, "id" | "title" | "isSerial" | "contentKind" | "publishDate"> & {inCollection: boolean};
+let quickAddRequest = 0;
 
 const imageErrors = ref<Set<string>>(new Set());
 const quickAddQuery = ref("");
@@ -47,20 +55,21 @@ const quickAddFabRoot = ref<HTMLElement | null>(null);
 let quickAddDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const userId = computed(() => mainStore.userData?.id || "");
-const totalMovies = computed(() => userMoviesStore.currentList.length);
+const totalMovies = computed(() => userMoviesStore.totalCount);
 
 // Догрузка вместо страниц (спека new-9): порция = pageSize
 const restCount = computed(
   () => totalMovies.value - userMoviesStore.visibleUserMovies.length
 );
 
-const showMore = (): void => {
-  userMoviesStore.setCurrentPage(userMoviesStore.currentPage + 1);
+const showMore = async (): Promise<void> => {
+  try {
+    await userMoviesStore.loadMore(userId.value);
+  } catch {
+    message.error("Не удалось загрузить следующую порцию");
+  }
 };
 
-const userMovieIds = computed(() => {
-  return new Set(userMoviesStore.userMovies.map((item) => item.movieId));
-});
 const showSkeleton = useMinLoading(() => userMoviesStore.isLoading);
 
 const shouldFetchMovies = computed(
@@ -291,6 +300,7 @@ const goToMovie = (item: UserMovie) => {
 };
 
 const resetQuickAddState = () => {
+  quickAddRequest++;
   quickAddQuery.value = "";
   quickAddOptions.value = [];
   isQuickAddLoading.value = false;
@@ -306,8 +316,16 @@ const openQuickAddPanel = () => {
 };
 
 const closeQuickAddPanel = () => {
+  resetQuickAddState();
   isQuickAddPanelOpen.value = false;
 };
+
+watch(showQuickAdd, (visible) => {
+  if (!visible) closeQuickAddPanel();
+});
+watch(showWatchTonight, (visible) => {
+  if (!visible) watchTonightOpen.value = false;
+});
 
 // Esc закрывает панель быстрого ввода (клик вне уже закрывает)
 useEscapeKey(isQuickAddPanelOpen, closeQuickAddPanel);
@@ -321,10 +339,10 @@ const toggleQuickAddPanel = () => {
 };
 
 const buildQuickAddOptionLabel = (
-  movie: MovieApiResponse,
+  movie: QuickAddMovie,
   isExisting: boolean
 ) => {
-  const mediaType = movie.isSerial ? "сериал" : "фильм";
+  const mediaType = contentTypeLabel(movie).toLowerCase();
   const year = movie.publishDate
     ? formatYear(movie.publishDate)
     : "год не указан";
@@ -334,6 +352,7 @@ const buildQuickAddOptionLabel = (
 };
 
 const fetchQuickAddOptions = async (query: string) => {
+  const request = ++quickAddRequest;
   const q = query.trim();
 
   if (!q || q.length < QUICK_ADD_MIN_QUERY_LENGTH) {
@@ -346,8 +365,8 @@ const fetchQuickAddOptions = async (query: string) => {
   isQuickAddLoading.value = true;
 
   try {
-    const endpoint = `/movies/search?q=${encodeURIComponent(q)}`;
-    const { data, status } = await useFetch<MovieApiResponse[]>(endpoint, {
+    const endpoint = `/movies/suggestions?q=${encodeURIComponent(q)}&limit=${QUICK_ADD_OPTIONS_LIMIT}`;
+    const { data, status } = await useFetch<QuickAddMovie[]>(endpoint, {
       method: FETCH_METHOD.get,
     });
 
@@ -355,8 +374,9 @@ const fetchQuickAddOptions = async (query: string) => {
       throw new Error("Не удалось загрузить подсказки");
     }
 
-    const prepared = data.slice(0, QUICK_ADD_OPTIONS_LIMIT).map((movie) => {
-      const isExisting = userMovieIds.value.has(movie.id);
+    if (request !== quickAddRequest) return;
+    const prepared = data.map((movie) => {
+      const isExisting = movie.inCollection;
 
       return {
         value: movie.id,
@@ -367,14 +387,16 @@ const fetchQuickAddOptions = async (query: string) => {
 
     quickAddOptions.value = prepared;
   } catch {
-    quickAddOptions.value = [];
+    if (request === quickAddRequest) quickAddOptions.value = [];
   } finally {
-    isQuickAddLoading.value = false;
+    if (request === quickAddRequest) isQuickAddLoading.value = false;
   }
 };
 
 const handleQuickAddSearch = (value: string) => {
+  quickAddRequest++;
   quickAddQuery.value = value;
+  quickAddOptions.value = [];
 
   if (quickAddDebounceTimer) {
     clearTimeout(quickAddDebounceTimer);
@@ -393,6 +415,7 @@ const handleQuickAddSearch = (value: string) => {
   quickAddDebounceTimer = setTimeout(() => {
     void fetchQuickAddOptions(value);
   }, QUICK_ADD_DEBOUNCE_MS);
+  isQuickAddLoading.value = true;
 };
 
 const handleQuickAddSelect = async (movieId: string) => {
@@ -492,6 +515,7 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+  resetQuickAddState();
   window.removeEventListener("mousedown", onGlobalPointerDown);
   window.removeEventListener("keydown", onGlobalKeydown);
 
@@ -559,6 +583,7 @@ watch(
         <MovieCard
           v-for="item in userMoviesStore.visibleUserMovies"
           :key="item.id"
+          :movie-id="item.movieId"
           :poster-src="getPosterSrc(item)"
           :title="movieCardTitle(item.movie)"
           :meta="movieCardMeta(item.movie)"
@@ -579,7 +604,7 @@ watch(
         v-if="showPaginator && userMoviesStore.hasMoreUserMovies"
         class="movie-list__more"
       >
-        <a-button size="large" @click="showMore">
+        <a-button size="large" :loading="userMoviesStore.isLoadingMore" @click="showMore">
           Показать ещё
           <span class="movie-list__more-count">{{ restCount }}</span>
         </a-button>
@@ -588,16 +613,18 @@ watch(
 
     <ConfirmDialog
       v-model="removalOpen"
-      :title="`Удалить «${removal?.movie.title ?? ''}» из коллекции?`"
+      title="Удалить из коллекции?"
+      :subject="removal?.movie.title"
       description="Личная оценка и прогресс просмотра будут удалены. Тайтл также исчезнет из всех ваших списков."
       :loading="isRemoving"
       @confirm="confirmRemoval"
     />
+    <WatchTonightModal v-if="showWatchTonight" v-model="watchTonightOpen" />
 
-    <div ref="quickAddFabRoot" class="quick-add-fab" data-tour="tour-quick-add">
+    <div v-if="showQuickAdd || showWatchTonight" ref="quickAddFabRoot" class="quick-add-fab">
       <Transition name="quick-add-fab-panel">
         <div
-          v-if="isQuickAddPanelOpen"
+          v-if="showQuickAdd && isQuickAddPanelOpen"
           class="quick-add-fab__panel"
           @click.stop
         >
@@ -611,6 +638,7 @@ watch(
             v-model:value="quickAddQuery"
             :options="quickAddOptions"
             :filter-option="false"
+            :get-popup-container="(trigger: HTMLElement) => trigger.parentElement ?? trigger"
             placement="topLeft"
             :not-found-content="
               quickAddQuery.trim().length >= QUICK_ADD_MIN_QUERY_LENGTH &&
@@ -634,10 +662,26 @@ watch(
         </div>
       </Transition>
 
-      <button
+      <div class="quick-add-fab__actions" role="group" aria-label="Быстрые действия с коллекцией">
+        <button
+          v-if="showWatchTonight"
+          type="button"
+          class="quick-add-fab__watch-tonight"
+          aria-label="Что посмотреть сегодня?"
+          @click.stop="closeQuickAddPanel(); watchTonightOpen = true"
+        >
+          <BaseIcon name="ph:shuffle" :width="20" :height="20" />
+          <span class="quick-add-fab__watch-label">Что посмотреть?</span>
+          <span class="quick-add-fab__watch-label-mobile">Подбор</span>
+        </button>
+        <button
+        v-if="showQuickAdd"
+        data-tour="tour-quick-add"
         type="button"
         class="quick-add-fab__button"
         :class="{ 'quick-add-fab__button_active': isQuickAddPanelOpen }"
+        aria-label="Быстрый ввод"
+        :aria-expanded="isQuickAddPanelOpen"
         @click.stop="toggleQuickAddPanel"
       >
         <BaseIcon
@@ -646,7 +690,8 @@ watch(
           :height="22"
         />
         <span class="quick-add-fab__button-text">Быстрый ввод</span>
-      </button>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -737,6 +782,44 @@ watch(
   gap: 0.7rem;
   justify-items: end;
 
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--fv-space-12);
+  }
+
+  &__watch-tonight {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--fv-space-8);
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid var(--fv-color-border);
+    border-radius: 999px;
+    background: var(--fv-color-bg-primary);
+    color: var(--fv-color-text-primary);
+    box-shadow: var(--fv-shadow-elevated);
+    font: inherit;
+    font-size: var(--fv-text-p4-size);
+    font-weight: var(--fv-weight-medium);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--fv-color-bg-secondary);
+    }
+  }
+
+  &__watch-label-mobile {
+    display: none;
+  }
+
+  &__watch-tonight:focus-visible,
+  &__button:focus-visible {
+    outline: 2px solid var(--fv-color-accent);
+    outline-offset: 3px;
+  }
+
   &__panel {
     width: min(420px, calc(100vw - 2rem));
     display: grid;
@@ -815,8 +898,13 @@ watch(
       padding: 0.55rem 0.8rem;
     }
 
-    &__button-text {
+    &__button-text,
+    &__watch-label {
       display: none;
+    }
+
+    &__watch-label-mobile {
+      display: inline;
     }
   }
 }

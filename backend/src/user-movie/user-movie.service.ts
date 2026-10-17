@@ -11,10 +11,17 @@ import {
   RateUserMovieDto,
 } from './dto';
 import type { UserMovie, Prisma } from '../generated/prisma/client';
-import { Genre, WatchStatus } from '../generated/prisma/enums';
+import { ContentKind, Genre, WatchStatus } from '../generated/prisma/enums';
 import { lockResource } from '../common/utils/transaction-lock';
+import { invalidateDataCache } from '../common/utils/data-revision';
+import type { CollectionQueryDto } from './dto/collection-query.dto';
+import type { CollectionExportQueryDto } from './collection-export.dto';
+import { MAX_SNAPSHOT_ROWS, serializeCollectionFile } from './collection-file';
+import { movieTitleFilter } from '../common/utils/movie-title-filter';
+import { MAX_SEASONS, MAX_EPISODES } from '../common/validation/media-numbers';
 
 interface UserMovieFilters {
+  contentKind?: ContentKind;
   genres?: Genre[];
   countryCodes?: string[];
   personalRateMin?: number;
@@ -65,10 +72,6 @@ type MovieProgressMeta = {
 @Injectable()
 export class UserMovieService {
   constructor(private readonly prismaService: PrismaService) {}
-
-  private clampToRange(value: number, min: number, max: number): number {
-    return Math.min(Math.max(value, min), max);
-  }
 
   private normalizeProgressPayload(
     movie: MovieProgressMeta,
@@ -138,18 +141,30 @@ export class UserMovieService {
       return result;
     }
 
-    if (result.currentSeason !== undefined && result.currentSeason !== null) {
-      const seasonValue = Math.max(result.currentSeason, 0);
-      result.currentSeason = hasSeason
-        ? this.clampToRange(seasonValue, 0, seasonCap)
-        : seasonValue;
+    if (
+      result.watchStatus === WatchStatus.COMPLETED &&
+      ((seasonCap ?? 0) > MAX_SEASONS || (episodeCap ?? 0) > MAX_EPISODES)
+    ) {
+      throw new BadRequestException(
+        'Количество сезонов или серий превышает допустимый предел',
+      );
     }
 
-    if (result.currentEpisode !== undefined && result.currentEpisode !== null) {
-      const episodeValue = Math.max(result.currentEpisode, 0);
-      result.currentEpisode = hasEpisode
-        ? this.clampToRange(episodeValue, 0, episodeCap)
-        : episodeValue;
+    for (const [value, cap, maximum] of [
+      [result.currentSeason, seasonCap, MAX_SEASONS],
+      [result.currentEpisode, episodeCap, MAX_EPISODES],
+    ] as const) {
+      if (
+        value !== undefined &&
+        value !== null &&
+        (!Number.isInteger(value) ||
+          value < 0 ||
+          value > Math.min(cap ?? maximum, maximum))
+      ) {
+        throw new BadRequestException(
+          'Прогресс превышает допустимое количество сезонов или серий',
+        );
+      }
     }
 
     const effectiveSeason =
@@ -311,7 +326,7 @@ export class UserMovieService {
     const [userMovie, avg] = await Promise.all([
       query,
       prisma.review.aggregate({
-        where: { movieId },
+        where: { movieId, hiddenAt: null },
         _avg: { rate: true },
       }),
     ]);
@@ -327,6 +342,137 @@ export class UserMovieService {
         averageRating: avg._avg.rate ?? null,
       },
     } as UserMovie;
+  }
+
+  public async pageByUser(
+    userId: string,
+    query: CollectionQueryDto,
+  ): Promise<{
+    items: UserMovie[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const { limit, offset } = query;
+    const where = this.collectionWhere(userId, query);
+    const [items, total] = await this.prismaService.$transaction(
+      [
+        this.prismaService.userMovie.findMany({
+          where,
+          take: limit,
+          skip: offset,
+          orderBy: [{ addedAt: 'desc' }, { id: 'asc' }],
+          include: { movie: { include: { poster: true, actors: true } } },
+        }),
+        this.prismaService.userMovie.count({ where }),
+      ],
+      { isolationLevel: 'RepeatableRead' },
+    );
+    return { items, total, limit, offset };
+  }
+
+  private collectionWhere(
+    userId: string,
+    query: CollectionQueryDto,
+  ): Prisma.UserMovieWhereInput {
+    const { q, countryCode, ...filters } = query;
+    const where = this.buildWhereClause(userId, {
+      ...filters,
+      countryCodes: countryCode,
+    });
+    if (q) {
+      const title = movieTitleFilter(q);
+      where.movie = where.movie ? { AND: [where.movie, title] } : title;
+    }
+    return where;
+  }
+
+  public async exportCollection(
+    userId: string,
+    query: CollectionExportQueryDto,
+  ) {
+    const where =
+      query.scope === 'filtered'
+        ? this.collectionWhere(userId, query)
+        : {
+            userId,
+            ...(query.scope === 'completed'
+              ? { watchStatus: WatchStatus.COMPLETED }
+              : {}),
+          };
+    const rows = await this.prismaService.userMovie.findMany({
+      where,
+      take: MAX_SNAPSHOT_ROWS + 1,
+      orderBy: [{ addedAt: 'desc' }, { id: 'asc' }],
+      select: {
+        watchStatus: true,
+        isFavorite: true,
+        seeLater: true,
+        personalRate: true,
+        currentSeason: true,
+        currentEpisode: true,
+        addedAt: true,
+        startedAt: true,
+        completedAt: true,
+        lastWatchedAt: true,
+        droppedAt: true,
+        movie: {
+          select: {
+            title: true,
+            publishDate: true,
+            contentKind: true,
+            isSerial: true,
+            ...(query.format === 'pdf'
+              ? { poster: { select: { url: true, thumbnailUrl: true } } }
+              : {}),
+          },
+        },
+      },
+    });
+    if (rows.length > MAX_SNAPSHOT_ROWS)
+      throw new BadRequestException(
+        `Выгрузка поддерживает до ${MAX_SNAPSHOT_ROWS} тайтлов. Уточните фильтры.`,
+      );
+    const exportedAt = new Date().toISOString();
+    const movies = rows.map((row) => ({
+      title: row.movie.title,
+      year: row.movie.publishDate?.getUTCFullYear() ?? null,
+      isSerial: row.movie.isSerial,
+      contentKind: row.movie.contentKind,
+      watchStatus: row.watchStatus,
+      isFavorite: row.isFavorite,
+      seeLater: row.seeLater,
+      personalRate: row.personalRate,
+      currentSeason: row.currentSeason,
+      currentEpisode: row.currentEpisode,
+      addedAt: row.addedAt.toISOString(),
+      startedAt: row.startedAt?.toISOString() ?? null,
+      completedAt: row.completedAt?.toISOString() ?? null,
+      lastWatchedAt: row.lastWatchedAt?.toISOString() ?? null,
+      droppedAt: row.droppedAt?.toISOString() ?? null,
+    }));
+    if (query.format === 'pdf')
+      return {
+        exportedAt,
+        movies: movies.map((movie, index) => ({
+          title: movie.title,
+          year: movie.year,
+          isSerial: movie.isSerial,
+          contentKind: movie.contentKind,
+          watchStatus: movie.watchStatus,
+          personalRate: movie.personalRate,
+          completedAt: movie.completedAt,
+          posterUrl:
+            rows[index].movie.poster?.thumbnailUrl ||
+            rows[index].movie.poster?.url ||
+            null,
+        })),
+      };
+    return {
+      exportedAt,
+      count: movies.length,
+      content: serializeCollectionFile(query.format, movies, exportedAt),
+    };
   }
 
   public async findAllByUser(
@@ -362,12 +508,7 @@ export class UserMovieService {
 
     const where = this.buildWhereClause(userId, filters);
 
-    const titleFilter: Prisma.MovieWhereInput = {
-      title: {
-        contains: query.trim(),
-        mode: 'insensitive',
-      },
-    };
+    const titleFilter = movieTitleFilter(query);
 
     if (!where.movie) {
       where.movie = titleFilter;
@@ -397,6 +538,8 @@ export class UserMovieService {
     filters: UserMovieFilters,
   ): Prisma.MovieWhereInput | undefined {
     const parts: Prisma.MovieWhereInput[] = [];
+    if (filters.contentKind !== undefined)
+      parts.push({ contentKind: filters.contentKind });
 
     if (filters.genres?.length) {
       parts.push({
@@ -519,9 +662,11 @@ export class UserMovieService {
     prisma: Prisma.TransactionClient = this.prismaService,
   ): Promise<UserMovie> {
     if (prisma === this.prismaService) {
-      return this.prismaService.$transaction((tx) =>
+      const result = await this.prismaService.$transaction((tx) =>
         this.create(userId, dto, tx),
       );
+      invalidateDataCache(this.prismaService);
+      return result;
     }
 
     const { movieId, ...data } = dto;
@@ -590,9 +735,11 @@ export class UserMovieService {
     prisma: Prisma.TransactionClient = this.prismaService,
   ): Promise<UserMovie> {
     if (prisma === this.prismaService) {
-      return this.prismaService.$transaction((tx) =>
+      const result = await this.prismaService.$transaction((tx) =>
         this.update(userId, movieId, dto, tx),
       );
+      invalidateDataCache(this.prismaService);
+      return result;
     }
 
     await lockResource(prisma, `movie:${movieId}`);
@@ -660,7 +807,7 @@ export class UserMovieService {
       throw new BadRequestException('Минимальная длина отзыва — 10 символов');
     }
 
-    return this.prismaService.$transaction(async (tx) => {
+    const result = await this.prismaService.$transaction(async (tx) => {
       await lockResource(tx, `collection:${userId}:${movieId}`);
       const where = { userId_movieId: { userId, movieId } };
       const current = await tx.userMovie.findUnique({ where });
@@ -682,16 +829,28 @@ export class UserMovieService {
       if (ownReview) {
         await tx.review.update({
           where: { id: ownReview.id },
-          data: { rate: dto.personalRate, text: text || ownReview.text },
+          data: {
+            rate: dto.personalRate,
+            text: text || ownReview.text,
+            ...(text && dto.isSpoiler !== undefined
+              ? { isSpoiler: dto.isSpoiler }
+              : {}),
+          },
         });
       } else if (text) {
         await tx.review.create({
-          data: { userId, movieId, rate: dto.personalRate, text },
+          data: {
+            userId,
+            movieId,
+            rate: dto.personalRate,
+            text,
+            isSpoiler: dto.isSpoiler ?? false,
+          },
         });
       }
 
       const avg = await tx.review.aggregate({
-        where: { movieId },
+        where: { movieId, hiddenAt: null },
         _avg: { rate: true },
       });
 
@@ -700,6 +859,8 @@ export class UserMovieService {
         movie: { ...updated.movie, averageRating: avg._avg.rate },
       };
     });
+    invalidateDataCache(this.prismaService);
+    return result;
   }
 
   public async delete(userId: string, movieId: string): Promise<string> {
@@ -719,6 +880,7 @@ export class UserMovieService {
         });
       });
 
+      invalidateDataCache(this.prismaService);
       return movieId;
     } catch (error: unknown) {
       if (
@@ -777,11 +939,9 @@ export class UserMovieService {
   }
 
   public async getUserAnalytics(userId: string): Promise<UserMovieAnalytics> {
-    const since7 = new Date();
-    since7.setDate(since7.getDate() - 7);
+    const since7 = new Date(Date.now() - 7 * 86_400_000);
 
-    const since = new Date();
-    since.setDate(since.getDate() - 30);
+    const since = new Date(Date.now() - 30 * 86_400_000);
 
     const [
       totalTitles,

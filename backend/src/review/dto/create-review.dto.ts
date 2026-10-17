@@ -1,16 +1,28 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsNotEmpty,
+  IsBoolean,
+  ValidateIf,
   IsInt,
   IsString,
   IsUUID,
   Max,
   Min,
   MinLength,
+  MaxLength,
   Matches,
 } from 'class-validator';
+import { PlainText } from '../../common/validation/plain-text';
 
 export class CreateReviewDto {
+  @ApiPropertyOptional({
+    description: 'Отзыв содержит спойлеры',
+    type: Boolean,
+  })
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  isSpoiler?: boolean;
+
   @ApiProperty({
     description: 'Текст отзыва',
     example: 'Какой-то отзыв для примера',
@@ -20,6 +32,8 @@ export class CreateReviewDto {
   @IsString()
   @MinLength(10)
   @Matches(/\S/)
+  @PlainText({ multiline: true })
+  @MaxLength(500)
   text: string;
 
   @ApiProperty({

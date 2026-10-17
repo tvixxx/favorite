@@ -9,6 +9,7 @@ describe('Статусы просмотра и удаление из колле�
   let current: Record<string, unknown>;
   let listItems: Array<{ userId: string; movieId: string }>;
   let isSerial: boolean;
+  let episodeCount: number;
   let listFailure: boolean;
   let service: UserMovieService;
 
@@ -30,6 +31,7 @@ describe('Статусы просмотра и удаление из колле�
       { userId: 'other-user', movieId: 'movie-id' },
     ];
     isSerial = false;
+    episodeCount = 10;
     listFailure = false;
     const tx = {
       $executeRaw: jest.fn().mockResolvedValue(1),
@@ -50,7 +52,7 @@ describe('Статусы просмотра и удаление из колле�
           Promise.resolve({
             isSerial,
             seasonCount: 2,
-            episodeCount: 10,
+            episodeCount,
           }),
         ),
       },
@@ -98,6 +100,35 @@ describe('Статусы просмотра и удаление из колле�
     expect(result.droppedAt).toBeNull();
     expect(result.startedAt).toEqual(new Date('2026-01-01'));
   });
+
+  it('не обходит лимит серий автоматическим заполнением при статусе просмотрено', async () => {
+    isSerial = true;
+    episodeCount = 5001;
+    const before = structuredClone(current);
+    await expect(
+      service.update('user-id', 'movie-id', {
+        watchStatus: WatchStatus.COMPLETED,
+      }),
+    ).rejects.toMatchObject({ status: 400 });
+    expect(current).toEqual(before);
+  });
+
+  it.each([
+    { currentSeason: 3 },
+    { currentEpisode: 11 },
+    { currentSeason: 101 },
+    { currentEpisode: 5001 },
+  ])(
+    'отклоняет прогресс за пределами без подмены и записи %#',
+    async (change) => {
+      isSerial = true;
+      const before = structuredClone(current);
+      await expect(
+        service.update('user-id', 'movie-id', change),
+      ).rejects.toMatchObject({ status: 400 });
+      expect(current).toEqual(before);
+    },
+  );
 
   it.each([false, true])(
     'сбрасывает даты и прогресс при не начато, сериал: %s',

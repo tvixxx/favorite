@@ -16,11 +16,16 @@ jest.mock('../prisma/prisma.service', () => ({ PrismaService: class {} }));
 describe('Атомарное сохранение оценки и отзыва через API', () => {
   let app: INestApplication<Server>;
   let personalRate: number;
-  let review: { id: string; text: string; rate: number };
+  let review: { id: string; text: string; rate: number; isSpoiler: boolean };
   let failReview: boolean;
   beforeEach(async () => {
     personalRate = 4;
-    review = { id: 'review-id', text: 'Предыдущий отзыв', rate: 4 };
+    review = {
+      id: 'review-id',
+      text: 'Предыдущий отзыв',
+      rate: 4,
+      isSpoiler: true,
+    };
     failReview = false;
     const tx = {
       $executeRaw: jest.fn().mockResolvedValue(1),
@@ -85,7 +90,7 @@ describe('Атомарное сохранение оценки и отзыва �
       .compile();
     app = module.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ transform: true }));
-    await app.init();
+    await app.listen(0, '127.0.0.1');
   });
   afterEach(async () => {
     await app.close();
@@ -129,4 +134,42 @@ describe('Атомарное сохранение оценки и отзыва �
       .expect(400);
     expect(personalRate).toBe(4);
   });
+
+  it('сохраняет отметку спойлера при изменении только оценки', async () => {
+    await request(app.getHttpServer())
+      .patch('/users/user-id/movies/movie-id/rating')
+      .send({ personalRate: 8, reviewText: '', isSpoiler: false })
+      .expect(200);
+    expect(review).toMatchObject({
+      text: 'Предыдущий отзыв',
+      isSpoiler: true,
+      rate: 8,
+    });
+  });
+
+  it('позволяет снять отметку спойлера при сохранении текста', async () => {
+    await request(app.getHttpServer())
+      .patch('/users/user-id/movies/movie-id/rating')
+      .send({
+        personalRate: 8,
+        reviewText: 'Текст без раскрытия сюжета',
+        isSpoiler: false,
+      })
+      .expect(200);
+    expect(review).toMatchObject({
+      isSpoiler: false,
+      text: 'Текст без раскрытия сюжета',
+    });
+  });
+
+  it.each([null, 'false', 1])(
+    'отклоняет неверный флаг спойлера %p до записи',
+    async (isSpoiler) => {
+      await request(app.getHttpServer())
+        .patch('/users/user-id/movies/movie-id/rating')
+        .send({ personalRate: 8, isSpoiler })
+        .expect(400);
+      expect(personalRate).toBe(4);
+    },
+  );
 });

@@ -50,6 +50,11 @@ export type MediaAsset = Prisma.MediaAssetModel
  */
 export type User = Prisma.UserModel
 /**
+ * Model PasswordReset
+ * 
+ */
+export type PasswordReset = Prisma.PasswordResetModel
+/**
  * Model Movie
  * 
  */
@@ -110,3 +115,18 @@ export type Notification = Prisma.NotificationModel
  * Читается администратором через GET /feedback.
  */
 export type Feedback = Prisma.FeedbackModel
+/**
+ * Model ReviewReport
+ * 
+ */
+export type ReviewReport = Prisma.ReviewReportModel
+/**
+ * Model AdminAuditLog
+ * 
+ */
+export type AdminAuditLog = Prisma.AdminAuditLogModel
+/**
+ * Model UsageEvent
+ * 
+ */
+export type UsageEvent = Prisma.UsageEventModel

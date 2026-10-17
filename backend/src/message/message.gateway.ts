@@ -17,9 +17,14 @@ import type { NotificationDto } from '../notification/notification.service';
 import { AuthService } from '../auth/auth.service';
 import { isAllowedOrigin } from '../common/utils/cors-policy';
 import { isUUID } from 'class-validator';
+import { isPlainText } from '../common/validation/plain-text';
 
 type ChatSocket = Omit<Socket, 'data'> & {
-  data: { userId?: string; accessToken?: string };
+  data: {
+    userId?: string;
+    accessToken?: string;
+    expiryTimer?: ReturnType<typeof setTimeout>;
+  };
 };
 
 @WebSocketGateway({
@@ -72,6 +77,10 @@ export class MessageGateway
     return Promise.resolve();
   }
 
+  public disconnectUser(userId: string): void {
+    this.server.in(`user:${userId}`).disconnectSockets(true);
+  }
+
   async handleConnection(client: ChatSocket) {
     try {
       if (
@@ -104,8 +113,22 @@ export class MessageGateway
       client.data.accessToken = token;
       await client.join(`user:${userId}`);
 
+      // Блокировка могла завершиться до вступления сокета в отключаемую комнату.
+      await this.authService.verifyAccessToken(token);
+
       if (!client.connected) {
         return;
+      }
+
+      if (user.accessTokenExpiresAt !== undefined) {
+        client.data.expiryTimer = setTimeout(
+          () => client.disconnect(),
+          Math.min(
+            Math.max(0, user.accessTokenExpiresAt - Date.now()),
+            2 ** 31 - 1,
+          ),
+        );
+        client.data.expiryTimer.unref();
       }
 
       const sockets = this.connections.get(userId) ?? new Set<string>();
@@ -142,6 +165,7 @@ export class MessageGateway
   }
 
   async handleDisconnect(client: ChatSocket) {
+    clearTimeout(client.data.expiryTimer);
     try {
       const userId = client.data.userId;
 
@@ -204,9 +228,13 @@ export class MessageGateway
 
       if (
         !data ||
+        Object.keys(data).some(
+          (key) => !['receiverId', 'content'].includes(key),
+        ) ||
         typeof data.receiverId !== 'string' ||
         !isUUID(data.receiverId, '4') ||
         typeof data.content !== 'string' ||
+        !isPlainText(data.content, true) ||
         !data.content.trim() ||
         data.content.length > 5000
       ) {
@@ -269,6 +297,7 @@ export class MessageGateway
 
       if (
         !data ||
+        Object.keys(data).some((key) => key !== 'otherUserId') ||
         typeof data.otherUserId !== 'string' ||
         !isUUID(data.otherUserId, '4')
       ) {

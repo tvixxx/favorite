@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { isISO8601 } from 'class-validator';
+import { isPlainText } from '../validation/plain-text';
 
 export function queryString(value: unknown, name: string): string | undefined {
   if (value === undefined || value === '') {
@@ -9,6 +10,11 @@ export function queryString(value: unknown, name: string): string | undefined {
   if (typeof value !== 'string') {
     throw new BadRequestException(`Параметр ${name} должен быть строкой`);
   }
+
+  if (!isPlainText(value))
+    throw new BadRequestException(
+      `Параметр ${name} содержит недопустимые управляющие символы`,
+    );
 
   return value;
 }

@@ -240,11 +240,9 @@ export class BadgeService {
       return result;
     }
 
-    const weekAgo = new Date();
-    const monthAgo = new Date();
-
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    monthAgo.setDate(monthAgo.getDate() - 30);
+    const now = Date.now();
+    const weekAgo = new Date(now - 7 * 86_400_000);
+    const monthAgo = new Date(now - 30 * 86_400_000);
 
     const filters: Array<{
       field: keyof (BadgeStats & TimeStats);
@@ -333,11 +331,9 @@ export class BadgeService {
   }
 
   private async getTimeBasedStats(userId: string) {
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-
-    const monthAgo = new Date();
-    monthAgo.setDate(monthAgo.getDate() - 30);
+    const now = Date.now();
+    const weekAgo = new Date(now - 7 * 86_400_000);
+    const monthAgo = new Date(now - 30 * 86_400_000);
 
     const [weekCount, monthCount] = await Promise.all([
       this.prismaService.userMovie.count({

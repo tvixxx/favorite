@@ -1,12 +1,12 @@
 import { Global, Module } from '@nestjs/common';
 import { UserService } from './user.service';
-import { UserController } from './user.controller';
+import { UserController, TimezoneController } from './user.controller';
 import { MediaModule } from '../media/media.module';
 
 @Global()
 @Module({
   imports: [MediaModule],
-  controllers: [UserController],
+  controllers: [UserController, TimezoneController],
   providers: [UserService],
   exports: [UserService],
 })

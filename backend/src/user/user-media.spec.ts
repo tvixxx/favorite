@@ -53,6 +53,9 @@ describe('Сохранение фото профиля', () => {
       $executeRaw: jest.fn().mockResolvedValue(1),
       user: {
         delete: jest.fn().mockResolvedValue({ avatarAssetId: 'avatar-id' }),
+        findUnique: jest
+          .fn()
+          .mockResolvedValue({ id: 'user-id', role: 'USER' }),
       },
     };
     const prisma = {

@@ -1,52 +1,58 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue";
 import type { FormInstance } from "ant-design-vue";
+import { Checkbox as ACheckbox } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 
 const props = withDefaults(
   defineProps<{
     initialText?: string;
     initialRate?: number;
+    initialIsSpoiler?: boolean;
     isEditing?: boolean;
     isSaving?: boolean;
   }>(),
   {
     initialText: "",
     initialRate: 0,
+    initialIsSpoiler: false,
     isEditing: false,
     isSaving: false,
   }
 );
 
 const emit = defineEmits<{
-  submit: [text: string, rate: number];
+  submit: [text: string, rate: number, isSpoiler: boolean];
   cancel: [];
 }>();
 
 const reviewForm = reactive({
   text: props.initialText,
   rate: props.initialRate,
+  isSpoiler: props.initialIsSpoiler,
 });
 
 const reviewFormRef = ref<FormInstance | null>(null);
 
 watch(
-  () => [props.initialText, props.initialRate],
-  ([text, rate]) => {
-    reviewForm.text = text as string;
-    reviewForm.rate = rate as number;
+  () => [props.initialText, props.initialRate, props.initialIsSpoiler] as const,
+  ([text, rate, isSpoiler]) => {
+    reviewForm.text = text;
+    reviewForm.rate = rate;
+    reviewForm.isSpoiler = isSpoiler;
   }
 );
 
 const handleSubmit = () => {
   if (props.isSaving) return;
-  emit("submit", reviewForm.text, reviewForm.rate);
+  emit("submit", reviewForm.text, reviewForm.rate, reviewForm.isSpoiler);
 };
 
 const resetForm = () => {
   reviewForm.text = "";
   reviewForm.rate = 0;
   reviewFormRef.value?.resetFields();
+  reviewForm.isSpoiler = false;
 };
 
 defineExpose({
@@ -84,10 +90,14 @@ const handleCancel = () => {
         v-model:value="reviewForm.text"
         size="large"
         :rows="4"
-        placeholder="Расскажите о своих впечатлениях от фильма..."
+        placeholder="Расскажите о своих впечатлениях..."
         :maxlength="500"
         :show-count="true"
       />
+    </a-form-item>
+
+    <a-form-item name="isSpoiler">
+      <ACheckbox v-model:checked="reviewForm.isSpoiler">Содержит спойлеры</ACheckbox>
     </a-form-item>
 
     <a-form-item class="review-form__actions">

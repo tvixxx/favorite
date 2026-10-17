@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { hash } from 'argon2';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -6,11 +11,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MediaService } from '../media/media.service';
 import type { Prisma } from '../generated/prisma/client';
 import { lockResource } from '../common/utils/transaction-lock';
+import { invalidateDataCache } from '../common/utils/data-revision';
+import { ZonedCalendar } from '../common/utils/timezone';
 
 const publicUserSelect = {
   id: true,
   email: true,
   fullName: true,
+  timezone: true,
   role: true,
   tags: true,
   createdAt: true,
@@ -18,6 +26,16 @@ const publicUserSelect = {
   avatarUrl: true,
   avatarThumbnailUrl: true,
   avatarAssetId: true,
+} as const;
+
+const profileUserSelect = {
+  ...publicUserSelect,
+  quickAddEnabled: true,
+  watchTonightEnabled: true,
+  collectionFilesEnabled: true,
+  notifyNewMessages: true,
+  notifyFriendRequests: true,
+  notifyRecommendations: true,
 } as const;
 
 @Injectable()
@@ -91,7 +109,7 @@ export class UserService {
     dto: Partial<UpdateUserDto>,
     options?: { allowTags?: boolean; actorId?: string },
   ) {
-    return this.prismaService.$transaction(async (tx) => {
+    const result = await this.prismaService.$transaction(async (tx) => {
       await lockResource(tx, `user:${id}`);
       const current = await tx.user.findUnique({
         where: { id },
@@ -102,7 +120,17 @@ export class UserService {
         throw new NotFoundException('Пользователь не найден');
       }
 
-      const data: Prisma.UserUpdateInput = { fullName: dto.fullName };
+      const data: Prisma.UserUpdateInput = {
+        fullName: dto.fullName,
+        quickAddEnabled: dto.quickAddEnabled,
+        watchTonightEnabled: dto.watchTonightEnabled,
+        collectionFilesEnabled: dto.collectionFilesEnabled,
+        notifyNewMessages: dto.notifyNewMessages,
+        notifyFriendRequests: dto.notifyFriendRequests,
+        notifyRecommendations: dto.notifyRecommendations,
+      };
+      if (dto.timezone !== undefined)
+        data.timezone = new ZonedCalendar(dto.timezone).zone;
 
       if (options?.allowTags && dto.tags !== undefined) {
         data.tags = dto.tags;
@@ -125,7 +153,7 @@ export class UserService {
         const updated = await tx.user.update({
           where: { id },
           data,
-          select: publicUserSelect,
+          select: profileUserSelect,
         });
 
         if (current.avatarAssetId !== selected.assetId) {
@@ -135,14 +163,50 @@ export class UserService {
         return updated;
       }
 
-      return tx.user.update({ where: { id }, data, select: publicUserSelect });
+      return tx.user.update({ where: { id }, data, select: profileUserSelect });
     });
+    invalidateDataCache(this.prismaService);
+    return result;
   }
 
-  public async delete(id: string) {
+  public async delete(id: string, actorId?: string) {
+    if (actorId === id) {
+      throw new ForbiddenException(
+        'Нельзя удалить собственный аккаунт администратора',
+      );
+    }
+
     try {
       await this.prismaService.$transaction(async (tx) => {
+        await lockResource(tx, 'admin:user-access');
+        if (actorId) {
+          const actor = await tx.user.findFirst({
+            where: { id: actorId, role: 'ADMIN', blockedAt: null },
+            select: { id: true },
+          });
+
+          if (!actor) {
+            throw new ForbiddenException('Права администратора изменились');
+          }
+        }
         await lockResource(tx, `user:${id}`);
+        const target = await tx.user.findUnique({
+          where: { id },
+          select: { role: true, blockedAt: true },
+        });
+
+        if (
+          target?.role === 'ADMIN' &&
+          !target.blockedAt &&
+          (await tx.user.count({
+            where: { role: 'ADMIN', blockedAt: null },
+          })) <= 1
+        ) {
+          throw new ConflictException(
+            'Нельзя удалить последнего администратора',
+          );
+        }
+
         const deleted = await tx.user.delete({
           where: { id },
           select: { avatarAssetId: true },
@@ -151,6 +215,7 @@ export class UserService {
         await this.media.release(tx, deleted.avatarAssetId);
       });
 
+      invalidateDataCache(this.prismaService);
       return id;
     } catch (error: unknown) {
       const code = (error as { code?: string }).code;

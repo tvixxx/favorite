@@ -1,7 +1,7 @@
 import type { AxiosProgressEvent } from "axios";
 import api from "./api";
 
-export type ImagePurpose = "MOVIE_POSTER" | "USER_AVATAR" | "ACTOR_PHOTO";
+export type ImagePurpose = "MOVIE_POSTER" | "USER_AVATAR" | "ACTOR_PHOTO" | "FEEDBACK_SCREENSHOT";
 export interface ImageSelection {
   url: string;
   assetId?: string | null;

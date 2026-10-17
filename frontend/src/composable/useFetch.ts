@@ -2,6 +2,7 @@ import type { MaybeRefOrGetter } from "@vueuse/core";
 import { toValue } from "vue";
 import api from "@/services/api";
 import type { AppEndpoints } from "@/constants/api/endpoints";
+import { trackUsage } from "@/services/usage";
 
 export enum FETCH_METHOD {
   get = "GET",
@@ -46,6 +47,8 @@ export async function useFetch<T = unknown>(
     default:
       response = await api.get<T>(urlValue);
   }
+
+  trackUsage(urlValue, options.method ?? FETCH_METHOD.get, options.data);
 
   return {
     data: response.data,

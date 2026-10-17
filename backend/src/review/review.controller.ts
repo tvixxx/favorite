@@ -21,11 +21,24 @@ import { ReviewService } from './review.service';
 import { ReviewResponse, CreateReviewDto, UpdateReviewDto } from './dto';
 import { AuthProtected, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
+import { ReportReviewDto } from '../admin/admin.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Reviews')
 @Controller('reviews')
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
+
+  @Post(':id/reports')
+  @AuthProtected()
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  public report(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: ReportReviewDto,
+    @Authorized() user: User,
+  ) {
+    return this.reviewService.report(id, user.id, dto);
+  }
 
   @ApiOperation({
     summary: 'Создать отзыв',

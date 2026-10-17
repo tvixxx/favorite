@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import dayjs, { type Dayjs } from "dayjs";
+import {releaseMonthBound,releaseDateInput} from '@/utils/releaseDate';
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import FiltersSheet from "@/components/MoviesFiltersPanel/FiltersSheet.vue";
@@ -17,6 +18,8 @@ import {
   GenreLabels,
 } from "@/components/Genres/constants/genres.constants";
 import { PRODUCTION_COUNTRIES } from "@/constants/countries/production-countries";
+import ContentKindFilter from "@/components/ContentType/ContentKindFilter.vue";
+import { contentKindOptions } from "@/utils/content-kind";
 
 const props = withDefaults(
   defineProps<{
@@ -67,10 +70,10 @@ const selectedCountries = computed<string[]>({
 });
 const publishDateRange = computed<[Dayjs, Dayjs] | null>({
   get: (): [Dayjs, Dayjs] | null => props.filters.publishDateFrom && props.filters.publishDateTo
-    ? [dayjs(props.filters.publishDateFrom), dayjs(props.filters.publishDateTo)] : null,
+    ? [releaseDateInput(props.filters.publishDateFrom), releaseDateInput(props.filters.publishDateTo)] : null,
   set: (range) => updateFilters({
-    publishDateFrom: range?.[0] ? range[0].startOf("month").toISOString() : undefined,
-    publishDateTo: range?.[1] ? range[1].endOf("month").toISOString() : undefined,
+    publishDateFrom: range?.[0] ? releaseMonthBound(range[0],'from') : undefined,
+    publishDateTo: range?.[1] ? releaseMonthBound(range[1],'to') : undefined,
   }),
 });
 const rateRange = computed<[number, number]>({
@@ -85,6 +88,7 @@ const rateActive = computed(
 
 const advancedCount = computed(() => {
   let n = 0;
+  if (props.filters.contentKind) n += 1;
   if (selectedGenres.value.length) n += 1;
   if (selectedCountries.value.length) n += 1;
   if (publishDateRange.value) n += 1;
@@ -140,7 +144,7 @@ const togglePreset = (key: PresetKey): void => {
 
   publishDateRange.value = isActive
     ? null
-    : [dayjs(`${FRESH_FROM_YEAR}-01-01`), dayjs()];
+    : [dayjs(`${FRESH_FROM_YEAR}-01-01`), releaseDateInput(new Date().toISOString())];
 };
 
 const countryLabel = (code: string): string =>
@@ -155,6 +159,8 @@ const activeTags = computed<FilterTag[]>(() => {
   selectedCountries.value.forEach((code) => {
     tags.push({ key: `country:${code}`, label: countryLabel(code) });
   });
+  const category = contentKindOptions.find(option => option.value === props.filters.contentKind);
+  if (category) tags.push({ key: "contentKind", label: category.label });
 
   const [from, to] = publishDateRange.value ?? [];
 
@@ -177,6 +183,7 @@ const activeTags = computed<FilterTag[]>(() => {
 
 const removeTag = (key: string): void => {
   const [type, value] = key.split(":");
+  if (type === "contentKind") updateFilters({ contentKind: undefined });
 
   if (type === "genre") {
     selectedGenres.value = selectedGenres.value.filter((g) => g !== value);
@@ -207,7 +214,7 @@ const setStatus = (key: StatusKey): void => {
 };
 
 const resetAdvanced = (): void => {
-  updateFilters({ genres: undefined, countryCodes: undefined, publishDateFrom: undefined, publishDateTo: undefined, personalRateMin: undefined, personalRateMax: undefined });
+  updateFilters({ contentKind: undefined, genres: undefined, countryCodes: undefined, publishDateFrom: undefined, publishDateTo: undefined, personalRateMin: undefined, personalRateMax: undefined });
 };
 
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
@@ -294,6 +301,7 @@ const onSearchEnter = (): void => {
       @reset="resetAdvanced"
     >
       <GenreFilter v-model="selectedGenres" />
+      <ContentKindFilter :content-kind="props.filters.contentKind" @change="updateFilters" />
       <CountryFilter v-model="selectedCountries" />
       <PeriodChips v-model="publishDateRange" />
 

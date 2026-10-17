@@ -45,15 +45,19 @@ const imageErrors = ref<Set<string>>(new Set());
 const previewOpen = ref(false);
 const previewMovieId = ref<string | null>(null);
 
-const totalMovies = computed(() => moviesStore.currentMoviesList.length);
+const totalMovies = computed(() => moviesStore.totalMovies);
 
 // Догрузка вместо страниц (спека new-9): порция = pageSize
-const restCount = computed(
-  () => totalMovies.value - moviesStore.visibleMovies.length
+const restCount = computed(() =>
+  Math.max(0, totalMovies.value - moviesStore.visibleMovies.length)
 );
 
-const showMore = (): void => {
-  moviesStore.setCurrentPage(moviesStore.currentPage + 1);
+const showMore = async (): Promise<void> => {
+  try {
+    await moviesStore.loadMoreMovies();
+  } catch {
+    message.error("Не удалось загрузить ещё. Попробуйте повторить.");
+  }
 };
 
 const hasMovies = computed(() => totalMovies.value !== 0);
@@ -224,6 +228,7 @@ async function resetCatalogFilters(): Promise<void> {
         <MovieCard
           v-for="item in moviesStore.visibleMovies"
           :key="item.id"
+          :movie-id="item.id"
           :poster-src="getPosterSrc(item)"
           :title="movieCardTitle(item)"
           :meta="movieCardMeta(item)"
@@ -239,8 +244,14 @@ async function resetCatalogFilters(): Promise<void> {
         v-if="showPaginator && moviesStore.hasMoreMovies"
         class="catalog-page__more"
       >
-        <a-button size="large" @click="showMore">
-          Показать ещё
+        <a-button
+          size="large"
+          :loading="moviesStore.isLoadingMore"
+          @click="showMore"
+        >
+          {{
+            moviesStore.loadMoreError ? "Повторить загрузку" : "Показать ещё"
+          }}
           <span class="catalog-page__more-count">{{ restCount }}</span>
         </a-button>
       </div>

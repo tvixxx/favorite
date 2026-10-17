@@ -6,12 +6,12 @@ export class ReviewUserSnippetDto {
 
   @ApiProperty({ description: 'Отображаемое имя' })
   fullName: string;
-
-  @ApiProperty({ description: 'Email' })
-  email: string;
 }
 
 export class ReviewResponse {
+  @ApiProperty({ description: 'Отзыв содержит спойлеры' })
+  isSpoiler: boolean;
+
   @ApiProperty({ description: 'ID отзыва' })
   id: string;
 

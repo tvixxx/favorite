@@ -20,6 +20,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
+const { randomBytes } = require('node:crypto');
 
 const BACKEND_DIR = path.resolve(__dirname, '..', '..');
 
@@ -98,7 +99,7 @@ function dump(target) {
       ]
     : ['-U', CONFIG.user, '-d', CONFIG.db, '-Fc'];
 
-  const out = fs.openSync(target, 'w');
+  const out = fs.openSync(target, 'wx', 0o600);
 
   try {
     run(CONFIG.container ? 'docker' : 'pg_dump', args, {
@@ -215,15 +216,24 @@ async function ping(url) {
 (async () => {
   fs.mkdirSync(CONFIG.dir, { recursive: true });
 
-  let file = path.join(CONFIG.dir, `${CONFIG.db}-${stamp(new Date())}.dump`);
+  let file = path.join(
+    CONFIG.dir,
+    `${CONFIG.db}-${stamp(new Date())}-${randomBytes(8).toString('hex')}.dump`,
+  );
+  const partial = `${file}.partial`;
+  let size;
 
-  dump(file);
-
-  const size = fs.statSync(file).size;
-
-  if (size < 1024) {
-    fs.unlinkSync(file);
-    throw new Error(`Дамп подозрительно мал (${size} байт) — считаю неудачей`);
+  try {
+    dump(partial);
+    size = fs.statSync(partial).size;
+    if (size < 1024) {
+      throw new Error(
+        `Дамп подозрительно мал (${size} байт) — считаю неудачей`,
+      );
+    }
+    fs.renameSync(partial, file);
+  } finally {
+    if (fs.existsSync(partial)) fs.unlinkSync(partial);
   }
 
   if (CONFIG.gpgRecipient) {

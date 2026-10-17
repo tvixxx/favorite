@@ -79,12 +79,32 @@ export function createOnboardingDriver(
   const prev = (path: string | null) =>
     moveTo(path, () => tourRef.movePrevious());
 
+  const showSettings = (move: () => void) => async (): Promise<void> => {
+    const button = qs('[data-tour="profile-settings"]');
+    if (button instanceof HTMLElement) button.click();
+    await sleep(240);
+    const section = qs('[data-tour="personal-settings"]');
+    if (section instanceof HTMLElement) {
+      section.scrollIntoView({ block: "start", behavior: "instant" });
+    }
+
+    await settleLayout();
+    move();
+  };
+
+  const hideSettings = (move: () => void) => async (): Promise<void> => {
+    const button = qs('.profile-settings-modal .modal__close');
+    if (button instanceof HTMLElement) button.click();
+    await settleLayout();
+    move();
+  };
+
   const steps: DriveStep[] = [
     {
       popover: {
         title: "Добро пожаловать",
         description:
-          "Мы подсветим ключевые места: меню «Медиатека», коллекцию и каталог, друзей и уведомления. Используйте «Далее» или стрелки на клавиатуре.",
+          "Мы покажем коллекцию и каталог, друзей, уведомления и персональные настройки. Используйте «Далее» или стрелки на клавиатуре.",
         side: "over",
         align: "center",
         onNextClick: next("/library/collection"),
@@ -105,11 +125,10 @@ export function createOnboardingDriver(
       },
     },
     {
-      element: () => qs('[data-tour="tour-quick-add"]') ?? document.body,
       popover: {
-        title: "Быстрый ввод",
+        title: "Дополнительные инструменты",
         description:
-          "На странице коллекции добавляйте тайтлы из каталога без долгого поиска.",
+          "Быстрый ввод добавляет тайтлы из каталога. «Что посмотреть сегодня» выбирает из «Буду смотреть». Импорт и экспорт работают с файлами коллекции. Включать и скрывать эти инструменты можно в профиле. В конце тура покажем, где.",
         align: "center",
         onNextClick: next(null),
         onPrevClick: prev(null),
@@ -164,8 +183,38 @@ export function createOnboardingDriver(
           "Новые сообщения и заявки подсвечиваются здесь (в реальном времени при открытом приложении).",
         side: "bottom",
         align: "end",
-        onNextClick: next(null),
+        onNextClick: next("/profile"),
         onPrevClick: prev(null),
+      },
+    },
+    {
+      element: () => qs('[data-tour="profile-settings"]') ?? document.body,
+      popover: {
+        title: "Настройки профиля",
+        description: "Здесь можно настроить интерфейс под себя. Откроем раздел с переключателями.",
+        side: "bottom",
+        align: "end",
+        onNextClick: showSettings(() => tourRef.moveNext()),
+        onPrevClick: prev("/friends"),
+      },
+    },
+    {
+      element: () => {
+        const section = qs('[data-tour="personal-settings"]');
+        const body = section?.closest(".modal__body");
+        if (body instanceof HTMLElement && section && section.getBoundingClientRect().height > body.clientHeight) {
+          return body;
+        }
+
+        return section ?? document.body;
+      },
+      popover: {
+        title: "Персональные настройки",
+        description: "Быстрый ввод включён по умолчанию. Подбор на сегодня и импорт/экспорт — выключены. Переключатели сохраняются сразу для вашего аккаунта. Ниже можно настроить уведомления. Всё можно изменить позже: Профиль → Настройки.",
+        side: "left",
+        align: "start",
+        onNextClick: hideSettings(() => tourRef.moveNext()),
+        onPrevClick: hideSettings(() => tourRef.movePrevious()),
       },
     },
     {
@@ -175,7 +224,7 @@ export function createOnboardingDriver(
           "Дальше просто пользуйтесь Favorite. Тур можно закрыть или вернуться к любому шагу кнопкой «Назад».",
         side: "over",
         align: "center",
-        onPrevClick: prev(null),
+        onPrevClick: showSettings(() => tourRef.movePrevious()),
       },
     },
   ];

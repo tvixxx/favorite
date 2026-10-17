@@ -1,14 +1,19 @@
 <script lang="ts" setup>
 import type { Review } from "@/stores";
+import ReviewText from "./ReviewText.vue";
 import { computed, ref } from "vue";
+import { Menu as AMenu, MenuItem as AMenuItem } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import ConfirmDialog from "@/components/ConfirmDialog/ConfirmDialog.vue";
+import {useDateTime} from '@/composable/useDateTime';
+const {formatInstant,dateKey}=useDateTime();
 
 const props = withDefaults(
   defineProps<{
     review: Review;
     isEditing?: boolean;
     canEdit?: boolean;
+    canReport?: boolean;
     busy?: boolean;
   }>(),
   { canEdit: false, busy: false },
@@ -17,6 +22,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   edit: [review: Review];
   delete: [reviewId: string];
+  report: [reviewId: string];
 }>();
 
 const ratePercent = computed(() => (props.review.rate / 10) * 100);
@@ -59,7 +65,9 @@ const timeLabel = computed(() => {
     return `${hours} ч назад`;
   }
 
-  const days = Math.floor(hours / 24);
+  const currentDay=dateKey(new Date());
+  const createdDay=dateKey(raw);
+  const days = currentDay&&createdDay ? Math.round((Date.parse(currentDay+'T00:00:00Z')-Date.parse(createdDay+'T00:00:00Z'))/86400000) : Math.floor(hours/24);
 
   if (days === 1) {
     return "вчера";
@@ -69,7 +77,7 @@ const timeLabel = computed(() => {
     return `${days} дн назад`;
   }
 
-  return new Date(raw).toLocaleDateString("ru-RU", {
+  return formatInstant(raw, {
     day: "numeric",
     month: "long",
   });
@@ -104,6 +112,11 @@ const confirmDelete = (): void => {
       </div>
 
       <span v-if="props.canEdit" class="review-item__badge">Ваш отзыв</span>
+      <span v-if="review.hiddenAt" class="review-item__badge">Скрыт модератором</span>
+      <a-dropdown v-if="canReport" :trigger="['click']">
+        <a-button type="text" aria-label="Действия с отзывом"><BaseIcon name="ph:dots-three" :width="24" :height="24" /></a-button>
+        <template #overlay><a-menu><a-menu-item key="report" @click="emit('report', review.id)">Пожаловаться</a-menu-item></a-menu></template>
+      </a-dropdown>
 
       <div v-if="props.canEdit" class="review-item__actions">
         <button
@@ -128,7 +141,12 @@ const confirmDelete = (): void => {
       </div>
     </div>
 
-    <p class="review-item__text">{{ review.text }}</p>
+    <ReviewText
+      class="review-item__text"
+      :review-id="review.id"
+      :text="review.text"
+      :is-spoiler="review.isSpoiler"
+    />
 
     <p class="review-item__author">
       {{ authorLabel }}<template v-if="timeLabel"> · {{ timeLabel }}</template>
@@ -178,6 +196,7 @@ const confirmDelete = (): void => {
 
   &__header {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 12px;
     margin-bottom: 10px;

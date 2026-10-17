@@ -9,8 +9,13 @@ import {
   Patch,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
+import { Throttle } from '@nestjs/throttler';
+import { CollectionExportQueryDto } from './collection-export.dto';
 import { UserMovieService } from './user-movie.service';
+import { CollectionQueryDto } from './dto/collection-query.dto';
 import {
   CreateUserMovieBodyDto,
   UpdateUserMovieDto,
@@ -23,7 +28,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { WatchStatus } from '../generated/prisma/enums';
+import { ContentKind, WatchStatus } from '../generated/prisma/enums';
 import {
   parseCountryFilters,
   parseGenreFilters,
@@ -49,6 +54,51 @@ export class UserMovieController {
     }
   }
 
+  @AuthProtected()
+  @Get('export')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ summary: 'Выгрузить свою коллекцию или данные PDF-отчёта' })
+  public async exportCollection(
+    @Param('userId') userId: string,
+    @Authorized() user: User,
+    @Query() query: CollectionExportQueryDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    this.ensureSelf(userId, user);
+    const result = await this.userMovieService.exportCollection(userId, query);
+    response.setHeader('Cache-Control', 'private, no-store');
+    const count = 'content' in result ? result.count : result.movies.length;
+    if (!count) {
+      response.status(204);
+      return;
+    }
+    if ('content' in result) {
+      response.type(
+        query.format === 'csv'
+          ? 'text/csv; charset=utf-8'
+          : 'application/json; charset=utf-8',
+      );
+      response.setHeader(
+        'Content-Disposition',
+        `attachment; filename="favorite-collection-${result.exportedAt.slice(0, 10)}.${query.format}"`,
+      );
+      return result.content;
+    }
+    return result;
+  }
+
+  @AuthProtected()
+  @Get('page')
+  @ApiOperation({ summary: 'Страница личной коллекции с поиском и фильтрами' })
+  public page(
+    @Param('userId') userId: string,
+    @Authorized() user: User,
+    @Query() query: CollectionQueryDto,
+  ) {
+    this.ensureSelf(userId, user);
+    return this.userMovieService.pageByUser(userId, query);
+  }
+
   @ApiOperation({
     summary: 'Получить все фильмы пользователя',
     description:
@@ -72,9 +122,15 @@ export class UserMovieController {
     @Query('seeLater') seeLater?: string,
     @Query('watchStatus') watchStatus?: string,
     @Query('isSerial') isSerial?: string,
+    @Query('contentKind') contentKind?: unknown,
   ) {
     this.ensureSelf(userId, user);
     return this.userMovieService.findAllByUser(userId, {
+      contentKind: queryEnum(
+        contentKind,
+        'contentKind',
+        Object.values(ContentKind),
+      ),
       genres: parseGenreFilters(genres),
       countryCodes: parseCountryFilters(countryCode),
       personalRateMin: queryNumber(personalRateMin, 'personalRateMin', 0, 10),
@@ -115,12 +171,18 @@ export class UserMovieController {
     @Query('seeLater') seeLater?: string,
     @Query('watchStatus') watchStatus?: string,
     @Query('isSerial') isSerial?: string,
+    @Query('contentKind') contentKind?: unknown,
   ) {
     this.ensureSelf(userId, user);
     return this.userMovieService.searchUserMovies(
       userId,
       queryString(query, 'q') ?? '',
       {
+        contentKind: queryEnum(
+          contentKind,
+          'contentKind',
+          Object.values(ContentKind),
+        ),
         genres: parseGenreFilters(genres),
         countryCodes: parseCountryFilters(countryCode),
         personalRateMin: queryNumber(personalRateMin, 'personalRateMin', 0, 10),

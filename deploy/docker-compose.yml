@@ -65,8 +65,6 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      # Все переменные ниже читаются через configService.getOrThrow: если какой-то
-      # не будет, приложение не поднимется вообще (проверено на стенде)
       NODE_ENV: production
       PORT: 3005
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
@@ -81,10 +79,21 @@ services:
       # оставляем ровно свой origin, без звёздочки
       CORS_ORIGINS: https://${DOMAIN}
       FRONTEND_ORIGIN: https://${DOMAIN}
+      # Восстановление включается отдельно после настройки и проверки почты.
+      PASSWORD_RECOVERY_ENABLED: ${PASSWORD_RECOVERY_ENABLED:-false}
+      CATALOG_TVDB_ENABLED: ${CATALOG_TVDB_ENABLED:-false}
+      TVDB_API_KEY: ${TVDB_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
       MEDIA_STORAGE: s3
       MEDIA_PUBLIC_BASE_URL: ${MEDIA_PUBLIC_BASE_URL:?Configure media storage}
       MEDIA_S3_ENDPOINT: ${MEDIA_S3_ENDPOINT:?Configure media storage}
       MEDIA_S3_BUCKET: ${MEDIA_S3_BUCKET:?Configure media storage}
+      MEDIA_S3_PRIVATE_BUCKET: ${MEDIA_S3_PRIVATE_BUCKET:-}
       MEDIA_S3_REGION: ${MEDIA_S3_REGION:-ru-1}
       MEDIA_S3_PATH_STYLE: ${MEDIA_S3_PATH_STYLE:-true}
       MEDIA_S3_ACCESS_KEY: ${MEDIA_S3_ACCESS_KEY:?Configure media storage}

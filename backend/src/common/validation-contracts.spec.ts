@@ -47,15 +47,15 @@ describe('Контракты входных данных API', () => {
     },
   );
 
-  it('принимает 1000 сезонов и 10000 эпизодов, отклоняет превышение', async () => {
+  it('принимает 100 сезонов и 5000 эпизодов, отклоняет превышение', async () => {
     await expect(
-      validate({ seasonCount: 1000, episodeCount: 10000 }, PatchMovieDto),
-    ).resolves.toMatchObject({ seasonCount: 1000, episodeCount: 10000 });
+      validate({ seasonCount: 100, episodeCount: 5000 }, PatchMovieDto),
+    ).resolves.toMatchObject({ seasonCount: 100, episodeCount: 5000 });
     await expect(
-      validate({ seasonCount: 1001 }, PatchMovieDto),
+      validate({ seasonCount: 101 }, PatchMovieDto),
     ).rejects.toMatchObject({ status: 400 });
     await expect(
-      validate({ episodeCount: 10001 }, PatchMovieDto),
+      validate({ episodeCount: 5001 }, PatchMovieDto),
     ).rejects.toMatchObject({ status: 400 });
   });
 

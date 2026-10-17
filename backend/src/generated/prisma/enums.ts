@@ -20,7 +20,8 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 export const MediaPurpose = {
   MOVIE_POSTER: 'MOVIE_POSTER',
   USER_AVATAR: 'USER_AVATAR',
-  ACTOR_PHOTO: 'ACTOR_PHOTO'
+  ACTOR_PHOTO: 'ACTOR_PHOTO',
+  FEEDBACK_SCREENSHOT: 'FEEDBACK_SCREENSHOT'
 } as const
 
 export type MediaPurpose = (typeof MediaPurpose)[keyof typeof MediaPurpose]
@@ -34,6 +35,16 @@ export const MediaStatus = {
 } as const
 
 export type MediaStatus = (typeof MediaStatus)[keyof typeof MediaStatus]
+
+
+export const ContentKind = {
+  GENERAL: 'GENERAL',
+  ANIME: 'ANIME',
+  ANIMATION: 'ANIMATION',
+  TV_SHOW: 'TV_SHOW'
+} as const
+
+export type ContentKind = (typeof ContentKind)[keyof typeof ContentKind]
 
 
 export const WatchStatus = {
@@ -60,7 +71,26 @@ export const Genre = {
   WAR: 'WAR',
   WESTERN: 'WESTERN',
   DOCUMENTARY: 'DOCUMENTARY',
-  Sci_fi: 'Sci_fi'
+  Sci_fi: 'Sci_fi',
+  ADVENTURE: 'ADVENTURE',
+  AWARDS_SHOW: 'AWARDS_SHOW',
+  CHILDREN: 'CHILDREN',
+  CRIME: 'CRIME',
+  FOOD: 'FOOD',
+  GAME_SHOW: 'GAME_SHOW',
+  HISTORY: 'HISTORY',
+  HOME_AND_GARDEN: 'HOME_AND_GARDEN',
+  INDIE: 'INDIE',
+  MARTIAL_ARTS: 'MARTIAL_ARTS',
+  MINI_SERIES: 'MINI_SERIES',
+  NEWS: 'NEWS',
+  PODCAST: 'PODCAST',
+  REALITY: 'REALITY',
+  SOAP: 'SOAP',
+  SPORT: 'SPORT',
+  SUSPENSE: 'SUSPENSE',
+  TALK_SHOW: 'TALK_SHOW',
+  TRAVEL: 'TRAVEL'
 } as const
 
 export type Genre = (typeof Genre)[keyof typeof Genre]

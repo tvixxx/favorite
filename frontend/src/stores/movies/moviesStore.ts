@@ -22,12 +22,23 @@ import {
   mapMoviesFromApi,
 } from "@/stores/movies/utils";
 
+interface MoviesPage {
+  items: MovieApiResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   // Movies
   const moviesList = ref<Movie[]>([]);
   const isMoviesLoaded = ref<boolean>(false);
   const isMoviesLoading = ref(false);
   const isMoviesError = ref<string | null>(null);
+  const totalMovies = ref(0);
+  const isLoadingMore = ref(false);
+  const loadMoreError = ref<string | null>(null);
+  const nextOffset = ref(0);
 
   // Search
   const searchResults = ref<Movie[]>([]);
@@ -102,6 +113,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
   const setFilters = (newFilters: MoviesFilters) => {
     queryRequests.invalidate();
+    isLoadingMore.value = false;
     isMoviesLoaded.value = false;
     filters.value = newFilters;
   };
@@ -114,18 +126,14 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     return moviesList.value;
   });
 
-  // Догрузка: показываем все порции до текущей включительно («Показать ещё»)
-  const visibleMovies = computed(() =>
-    currentMoviesList.value.slice(0, currentPage.value * pageSize.value),
-  );
+  const visibleMovies = computed(() => currentMoviesList.value);
 
-  const hasMoreMovies = computed(
-    () => visibleMovies.value.length < currentMoviesList.value.length,
-  );
+  const hasMoreMovies = computed(() => nextOffset.value < totalMovies.value);
 
   const hasActiveFilters = computed(() => {
     return (
       !!searchQuery.value ||
+      !!filters.value.contentKind || filters.value.isSerial !== undefined ||
       !!filters.value.genres?.length ||
       !!filters.value.countryCodes?.length ||
       !!filters.value.publishDateFrom ||
@@ -142,7 +150,10 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
     if (response?.data && isSuccessStatus(response.status)) {
       const movie = mapMovieFromApi(response.data);
-      moviesList.value = [movie, ...moviesList.value.filter((item) => item.id !== movie.id)];
+      moviesList.value = [
+        movie,
+        ...moviesList.value.filter((item) => item.id !== movie.id),
+      ];
       moviesStats.value = null;
 
       return movie;
@@ -158,58 +169,113 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     searchQuery.value = "";
     searchResults.value = [];
     isSearching.value = false;
+    isLoadingMore.value = false;
+    loadMoreError.value = null;
   };
 
-  const fetchMovies = async (query = "") => {
+  const fetchMovies = async (query = "", append = false): Promise<void> => {
+    if (
+      append &&
+      (isMoviesLoading.value || isLoadingMore.value || !hasMoreMovies.value)
+    ) {
+      return;
+    }
+
     const isCurrent = queryRequests.begin();
+
     query = query.trim();
     searchQuery.value = query;
-    isSearching.value = !!query;
-    currentPage.value = 1;
-    setLoadingMovies(true);
+    isSearching.value = !append && !!query;
+    isLoadingMore.value = append;
+    loadMoreError.value = null;
+
+    if (!append) {
+      currentPage.value = 1;
+      nextOffset.value = 0;
+      totalMovies.value = 0;
+      setLoadingMovies(true);
+    }
+
     setErrorMovies(null);
 
     const start = Date.now();
 
     try {
       const params = buildSearchParams(filters.value, query);
-      let endpoint = MOVIES_ENDPOINTS;
 
-      if (query) {
-        endpoint = `${MOVIES_ENDPOINTS}/search`;
-      }
+      params.set("limit", String(pageSize.value));
+      params.set("offset", String(append ? nextOffset.value : 0));
 
-      const queryString = params.toString();
-      if (queryString) {
-        endpoint = `${endpoint}${
-          endpoint.includes("?") ? "&" : "?"
-        }${queryString}`;
-      }
-
-      const { data, status } = await useFetch<MovieApiResponse[]>(endpoint, {
+      const endpoint = `${MOVIES_ENDPOINTS}/page?${params.toString()}`;
+      const { data, status } = await useFetch<MoviesPage>(endpoint, {
         method: FETCH_METHOD.get,
       });
-      if (!isCurrent()) return;
+
+      if (!isCurrent()) {
+        return;
+      }
 
       if (status !== 200) {
         throw new Error(ERROR_FETCH_MOVIES_TEXT);
       }
 
-      if (query) searchResults.value = mapMoviesFromApi(data);
-      else setMovies(mapMoviesFromApi(data));
+      const incoming = mapMoviesFromApi(data.items);
+      // Между запросами каталог может пополниться, поэтому не дублируем карточки.
+      const items = append
+        ? [
+            ...new Map(
+              [...currentMoviesList.value, ...incoming].map((item) => [
+                item.id,
+                item,
+              ])
+            ).values(),
+          ]
+        : incoming;
+
+      nextOffset.value = data.items.length
+        ? data.offset + data.items.length
+        : data.total;
+      totalMovies.value = data.total;
+
+      if (query) {
+        searchResults.value = items;
+      } else {
+        setMovies(items);
+      }
+
+      if (append) {
+        currentPage.value += 1;
+      }
     } catch (err) {
-      if (!isCurrent()) return;
-      setErrorMovies(ERROR_FETCH_MOVIES_TEXT);
+      if (!isCurrent()) {
+        return;
+      }
+
+      if (append) {
+        loadMoreError.value = "Не удалось загрузить ещё. Попробуйте повторить.";
+      } else {
+        setErrorMovies(ERROR_FETCH_MOVIES_TEXT);
+      }
+
       throw err;
     } finally {
-      setTimeout(() => {
+      if (append) {
         if (isCurrent()) {
-          setLoadingMovies(false);
-          isSearching.value = false;
+          isLoadingMore.value = false;
         }
-      }, getDefaultLoaderDelayTime(start));
+      } else {
+        setTimeout(() => {
+          if (isCurrent()) {
+            setLoadingMovies(false);
+            isSearching.value = false;
+          }
+        }, getDefaultLoaderDelayTime(start));
+      }
     }
   };
+
+  const loadMoreMovies = (): Promise<void> =>
+    fetchMovies(searchQuery.value, true);
 
   const findMovie = (query: string) => fetchMovies(query);
 
@@ -222,7 +288,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
     try {
       const { data, status } = await useFetch<MoviesStats>(
-        `${MOVIES_ENDPOINTS}/stats`,
+        `${MOVIES_ENDPOINTS}/stats`
       );
       if (!isCurrent()) return;
 
@@ -260,7 +326,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
         `${MOVIES_ENDPOINTS}/${movieId}`,
         {
           method: FETCH_METHOD.get,
-        },
+        }
       );
       if (!isCurrent()) return;
 
@@ -286,6 +352,10 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     isMoviesLoaded,
     isMoviesLoading,
     isMoviesError,
+    totalMovies,
+    isLoadingMore,
+    loadMoreError,
+    loadMoreMovies,
     searchResults,
     // Movies list refs
     currentPage,

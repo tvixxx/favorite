@@ -26,8 +26,10 @@ describe('Авторизация и назначение токенов', () => 
   beforeEach(() => {
     prisma = {
       user: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'user-id' }),
-        create: jest.fn().mockResolvedValue({ id: 'user-id' }),
+        findUnique: jest
+          .fn()
+          .mockResolvedValue({ id: 'user-id', authVersion: 0 }),
+        create: jest.fn().mockResolvedValue({ id: 'user-id', authVersion: 0 }),
       },
     };
     service = new AuthService(prisma as unknown as PrismaService, config, jwt);
@@ -134,9 +136,128 @@ describe('Авторизация и назначение токенов', () => 
       { cookies: { refresh_token: token } } as unknown as Request,
       res,
     );
-    expect(jwt.verify(result!.accessToken)).toMatchObject({
+    expect(jwt.verify(result.accessToken)).toMatchObject({
       id: 'user-id',
       type: 'access',
     });
+  });
+
+  it('не принимает действующий access-токен заблокированного пользователя', async () => {
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-id',
+      blockedAt: new Date(),
+    });
+
+    await expect(
+      service.verifyAccessToken(jwt.sign({ id: 'user-id', type: 'access' })),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('не обновляет сессию заблокированного пользователя', async () => {
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-id',
+      blockedAt: new Date(),
+    });
+
+    await expect(
+      service.refresh(
+        {
+          cookies: {
+            refresh_token: jwt.sign({ id: 'user-id', type: 'refresh' }),
+          },
+        } as unknown as Request,
+        res,
+      ),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(cookie).not.toHaveBeenCalled();
+  });
+
+  it('не выдаёт токены заблокированному пользователю даже с верным паролем', async () => {
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-id',
+      password: await hash('test-only-password'),
+      blockedAt: new Date(),
+    });
+
+    await expect(
+      service.login(res, {
+        email: 'blocked@example.test',
+        password: 'test-only-password',
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(cookie).not.toHaveBeenCalled();
+  });
+  it('после разблокировки требует новый вход для API, чата и обновления сессии', async () => {
+    const user = {
+      id: 'user-id',
+      password: await hash('test-only-password'),
+      blockedAt: null as Date | null,
+      authVersion: 0,
+    };
+    prisma.user.findUnique.mockImplementation(() =>
+      Promise.resolve({ ...user }),
+    );
+    const oldSession = await service.login(res, {
+      email: 'example@example.test',
+      password: 'test-only-password',
+    });
+    const oldRefresh = cookie.mock.calls[0][1];
+    const strategy = new JwtStrategy(service, config);
+
+    user.blockedAt = new Date();
+    user.authVersion++;
+    await expect(
+      service.verifyAccessToken(oldSession.accessToken),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    user.blockedAt = null;
+
+    await expect(
+      strategy.validate(jwt.verify(oldSession.accessToken)),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(
+      service.verifyAccessToken(oldSession.accessToken),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    cookie.mockClear();
+    await expect(
+      service.refresh(
+        { cookies: { refresh_token: oldRefresh } } as unknown as Request,
+        res,
+      ),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(cookie).not.toHaveBeenCalled();
+
+    const fresh = await service.login(res, {
+      email: 'example@example.test',
+      password: 'test-only-password',
+    });
+    await expect(
+      service.verifyAccessToken(fresh.accessToken),
+    ).resolves.toMatchObject({ id: user.id });
+    await expect(
+      strategy.validate(jwt.verify(fresh.accessToken)),
+    ).resolves.toMatchObject({ id: user.id });
+    await expect(
+      service.refresh(
+        {
+          cookies: { refresh_token: cookie.mock.calls[0][1] },
+        } as unknown as Request,
+        res,
+      ),
+    ).resolves.toHaveProperty('accessToken');
+  });
+
+  it('принимает прежние токены без версии только до первой блокировки', async () => {
+    const token = jwt.sign({ id: 'user-id', type: 'access' });
+    await expect(service.verifyAccessToken(token)).resolves.toMatchObject({
+      id: 'user-id',
+    });
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-id',
+      blockedAt: null,
+      authVersion: 1,
+    });
+    await expect(service.verifyAccessToken(token)).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
   });
 });

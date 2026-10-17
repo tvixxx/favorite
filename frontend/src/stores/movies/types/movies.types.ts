@@ -1,5 +1,6 @@
 import { Genre } from "@/components/Genres/constants/genres.constants";
 import type { Actor } from "@/stores";
+import type { ContentKind } from "@/utils/content-kind";
 
 export interface MoviePoster {
   url: string;
@@ -17,6 +18,12 @@ export enum WatchStatus {
 
 // API ответ для Movie (общие данные фильма)
 export interface MovieApiResponse {
+  titleEn?: string | null;
+  originalTitle?: string | null;
+  descriptionLanguage?: 'ru' | 'en';
+  tvdbId?: number | null;
+  tvdbType?: 'movie' | 'series' | null;
+  contentKind?: ContentKind | null;
   id: string;
   createdById?: string | null;
   title: string;
@@ -43,6 +50,13 @@ export interface MovieApiResponse {
 
 // FE модель Movie (общие данные)
 export interface Movie {
+  titleEn?: string | null;
+  originalTitle?: string | null;
+  descriptionLanguage?: 'ru' | 'en';
+  tvdbId?: number | null;
+  tvdbType?: 'movie' | 'series' | null;
+  updatedAt?: string;
+  contentKind?: ContentKind | null;
   id: string;
   createdById?: string | null;
   title: string;
@@ -122,6 +136,9 @@ export interface UserMovie {
 }
 
 export interface Review {
+  isSpoiler?: boolean;
+  hiddenAt?: string | null;
+  moderationReason?: string | null;
   id: string;
   text: string;
   rate: number;
@@ -187,6 +204,8 @@ export interface UserMoviesAnalytics {
 }
 
 export interface MoviesFilters {
+  contentKind?: ContentKind;
+  isSerial?: boolean;
   genres?: Genre[];
   countryCodes?: string[];
   publishDateFrom?: string;
@@ -195,6 +214,7 @@ export interface MoviesFilters {
 }
 
 export interface UserMoviesFilters {
+  contentKind?: ContentKind;
   genres?: Genre[];
   countryCodes?: string[];
   personalRateMin?: number;

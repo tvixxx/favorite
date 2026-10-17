@@ -10,10 +10,42 @@ import { UpdateReviewDto } from './dto/update-review.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import type { Review } from '../generated/prisma/client';
 import { lockResource } from '../common/utils/transaction-lock';
+import type { ReportReviewDto } from '../admin/admin.dto';
 
 @Injectable()
 export class ReviewService {
   constructor(private readonly prismaService: PrismaService) {}
+
+  public async report(
+    reviewId: string,
+    reporterId: string,
+    dto: ReportReviewDto,
+  ): Promise<{ id: string }> {
+    const review = await this.prismaService.review.findUnique({
+      where: { id: reviewId },
+      select: { userId: true, hiddenAt: true },
+    });
+
+    if (!review || review.hiddenAt) {
+      throw new NotFoundException('Отзыв не найден');
+    }
+
+    if (review.userId === reporterId) {
+      throw new ForbiddenException('Нельзя жаловаться на свой отзыв');
+    }
+
+    return this.prismaService.reviewReport.upsert({
+      where: { reviewId_reporterId: { reviewId, reporterId } },
+      create: {
+        reviewId,
+        reporterId,
+        reason: dto.reason,
+        comment: dto.comment?.trim() || null,
+      },
+      update: {},
+      select: { id: true },
+    });
+  }
 
   public async create(dto: CreateReviewDto, userId: string): Promise<Review> {
     const { movieId, text, rate } = dto;
@@ -34,6 +66,7 @@ export class ReviewService {
         data: {
           text,
           rate,
+          isSpoiler: dto.isSpoiler ?? false,
           user: {
             connect: {
               id: userId,
@@ -50,7 +83,6 @@ export class ReviewService {
             select: {
               id: true,
               fullName: true,
-              email: true,
             },
           },
         },
@@ -66,13 +98,12 @@ export class ReviewService {
           select: {
             id: true,
             fullName: true,
-            email: true,
           },
         },
       },
     });
 
-    if (!review) {
+    if (!review || review.hiddenAt) {
       throw new NotFoundException('Review not found');
     }
 
@@ -110,13 +141,13 @@ export class ReviewService {
       data: {
         text,
         rate,
+        ...(dto.isSpoiler !== undefined ? { isSpoiler: dto.isSpoiler } : {}),
       },
       include: {
         user: {
           select: {
             id: true,
             fullName: true,
-            email: true,
           },
         },
       },

@@ -8,6 +8,7 @@ const open = defineModel<boolean>({ required: true });
 const props = withDefaults(
   defineProps<{
     title: string;
+    subject?: string;
     description?: string;
     confirmText?: string;
     cancelText?: string;
@@ -32,13 +33,18 @@ const onConfirm = (): void => {
 </script>
 
 <template>
-  <BaseModal v-model="open" headerless :aria-label="props.title">
+  <BaseModal v-model="open" headerless :aria-label="props.subject ? `${props.title} ${props.subject}` : props.title">
     <template #body>
       <div class="confirm-dialog__body">
-        <span class="confirm-dialog__icon" aria-hidden="true">
-          <BaseIcon :name="props.icon" :width="34" :height="34" />
-        </span>
-        <h3 class="confirm-dialog__title">{{ props.title }}</h3>
+        <div class="confirm-dialog__heading">
+          <span class="confirm-dialog__icon" aria-hidden="true">
+            <BaseIcon :name="props.icon" :width="26" :height="26" />
+          </span>
+          <div class="confirm-dialog__copy">
+            <h3 class="confirm-dialog__title">{{ props.title }}</h3>
+            <p v-if="props.subject" class="confirm-dialog__subject">{{ props.subject }}</p>
+          </div>
+        </div>
         <p v-if="props.description" class="confirm-dialog__desc">
           {{ props.description }}
         </p>
@@ -74,39 +80,48 @@ const onConfirm = (): void => {
 
 .confirm-dialog {
   &__body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    text-align: left;
     padding: 28px 24px 8px;
+    @include mediaMax(767.98px) { padding: 28px 22px 12px; }
   }
+
+  &__heading { display: flex; align-items: flex-start; gap: 16px; }
+  &__copy { min-width: 0; padding-top: 2px; }
 
   &__icon {
     display: grid;
     place-items: center;
-    width: 72px;
-    height: 72px;
-    margin-bottom: 16px;
-    // Эталон delete-confirm: negative-soft заливка в скруглённом квадрате (r14)
-    border-radius: 50%;
+    flex: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
     background: var(--fv-color-negative-soft);
     color: var(--fv-color-negative);
   }
 
   &__title {
-    margin: 0 0 6px;
+    margin: 0;
     font-family: var(--fv-font-display);
     font-size: 1.25rem;
-    font-weight: 500;
-    line-height: 1.2;
+    font-weight: 600;
+    line-height: 1.3;
     color: var(--fv-color-text-primary);
+    overflow-wrap: anywhere;
+  }
+
+  &__subject {
+    margin: 8px 0 0;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--fv-color-text-secondary);
+    overflow-wrap: anywhere;
   }
 
   &__desc {
-    margin: 0;
-    max-width: 320px;
-    font-size: 0.92rem;
-    line-height: 1.45;
+    margin: 20px 0 0;
+    font-size: 14px;
+    line-height: 1.6;
     color: var(--fv-color-text-secondary);
   }
 
@@ -150,6 +165,8 @@ const onConfirm = (): void => {
       opacity: 0.6;
       cursor: default;
     }
+
+    &:focus-visible { outline: 2px solid var(--fv-color-accent); outline-offset: 3px; }
 
     &--danger {
       background: var(--fv-color-brand);

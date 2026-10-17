@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
+import MoviePoster from "@/components/MoviePoster/MoviePoster.vue";
 import { RouterLink } from "vue-router";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { useChatMovie } from "@/composable/useChatMovie";
 import { GenreLabels } from "@/components/Genres/constants/genres.constants";
 import { formatAverageRating, formatYear } from "@/utils";
+import { contentTypeLabel } from "@/utils/content-kind";
 
 const props = defineProps<{
   url: string;
@@ -30,17 +32,15 @@ function parseDetailId(url: string): string | null {
 
 const detailId = computed(() => parseDetailId(props.url));
 const movie = useChatMovie(detailId);
-const imgError = ref(false);
 
 const displayTitle = computed(() => movie.value?.title || props.title);
 
 const posterSrc = computed(
   () => movie.value?.imageUrl || "",
 );
-const showPoster = computed(() => !!posterSrc.value && !imgError.value);
 
 const label = computed(() =>
-  movie.value?.isSerial ? "Сериал · FAVORITE" : "Фильм · FAVORITE",
+  `${contentTypeLabel(movie.value ?? {})} · FAVORITE`,
 );
 
 const meta = computed(() => {
@@ -83,14 +83,13 @@ const rating = computed(() => {
     "
   >
     <span class="chat-movie-card__poster" aria-hidden="true">
-      <img
-        v-if="showPoster"
+      <MoviePoster
         :src="posterSrc"
+        :seed="detailId || displayTitle"
+        :title="displayTitle"
         :alt="displayTitle"
         class="chat-movie-card__poster-img"
-        @error="imgError = true"
       />
-      <BaseIcon v-else name="ph:film-slate" :width="20" :height="20" />
     </span>
 
     <span class="chat-movie-card__body">

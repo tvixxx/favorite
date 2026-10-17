@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { computed, onScopeDispose, ref } from "vue";
+import { isAxiosError } from "axios";
 import {
   AUTH_ME_ENDPOINT,
   AUTH_USER_ENDPOINT,
@@ -26,13 +27,16 @@ import { useFriendsStore } from "@/stores/friends/friendsStore";
 import { useBadgesStore } from "@/stores/badges/badgesStore";
 import { useChatStore } from "@/stores/chat/chatStore";
 import { useReviewsStore } from "@/composable/useReviews";
+import { getUserPreferences, type UserPreferences } from "@/utils/userPreferences";
 
 function profileData(profile: UserProfileResponse): UserData {
   return {
+    ...getUserPreferences(profile),
     id: profile.id,
     email: profile.email,
     fullName: profile.fullName || profile.fullname || profile.name || "",
     role: profile.role,
+    timezone: profile.timezone ?? "UTC",
     avatarUrl: profile.avatarUrl ?? null,
     avatarThumbnailUrl: profile.avatarThumbnailUrl ?? null,
     avatarAssetId: profile.avatarAssetId ?? null,
@@ -58,6 +62,8 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
   // Состояние копируем: DEFAULT_MAIN_STATE — общая константа, её нельзя мутировать
   const state = ref<State>(structuredClone(DEFAULT_MAIN_STATE));
   const sessionRevision = ref(0);
+  const authUnavailable = ref(false);
+  const isUpdatingProfile = ref(false);
 
   /** Разделяемый запрос проверки сессии — чтобы не гонять `/auth/@me` дважды */
   let authRequest: Promise<void> | null = null;
@@ -75,11 +81,13 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     await updateProfile({ fullName: displayName });
   }
 
-  async function updateProfile(payload: {
+  async function updateProfile(payload: Partial<UserPreferences> & {
     fullName?: string;
+    timezone?: string;
     avatarUrl?: string | null;
     avatarAssetId?: string | null;
   }): Promise<void> {
+    if (isUpdatingProfile.value) throw new Error("Профиль уже сохраняется");
     const id = user.value.data?.id;
 
     if (!id) {
@@ -87,26 +95,30 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     }
 
     const requestRevision = sessionRevision.value;
+    isUpdatingProfile.value = true;
+    try {
+      const userProfileData = await useFetch<UserProfileResponse>(
+        `${USERS_ENDPOINTS}/${id}`,
+        {
+          method: FETCH_METHOD.patch,
+          data: payload,
+        }
+      );
 
-    const userProfileData = await useFetch<UserProfileResponse>(
-      `${USERS_ENDPOINTS}/${id}`,
-      {
-        method: FETCH_METHOD.patch,
-        data: payload,
+      if (requestRevision !== sessionRevision.value) {
+        throw new Error("Сессия изменилась");
       }
-    );
 
-    if (requestRevision !== sessionRevision.value) {
-      throw new Error("Сессия изменилась");
-    }
+      if (userProfileData?.data && isSuccessStatus(userProfileData.status)) {
+        const userObj = profileData(userProfileData.data);
 
-    if (userProfileData?.data && isSuccessStatus(userProfileData.status)) {
-      const userObj = profileData(userProfileData.data);
-
-      userDataRaw.value = userObj;
-      state.value.user.data = userObj;
-    } else {
-      throw new Error("Не удалось изменить имя");
+        userDataRaw.value = userObj;
+        state.value.user.data = userObj;
+      } else {
+        throw new Error("Не удалось сохранить профиль");
+      }
+    } finally {
+      if (requestRevision === sessionRevision.value) isUpdatingProfile.value = false;
     }
   }
 
@@ -182,7 +194,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
    * оказаться «залогиненным» с истёкшим токеном и увидеть шапку на /login.
    */
   async function fetchUser(): Promise<void> {
-    if (user.value.isAuthLoaded) {
+    if (user.value.isAuthLoaded && !authUnavailable.value) {
       return;
     }
 
@@ -207,12 +219,15 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     state.value.isFetchingUser = true;
 
     try {
-      const { data, status } =
-        await useFetch<UserProfileResponse>(AUTH_ME_ENDPOINT);
+      const { data, status } = await useFetch<UserProfileResponse>(
+        AUTH_ME_ENDPOINT
+      );
 
       if (requestRevision !== sessionRevision.value) {
         return;
       }
+
+      authUnavailable.value = false;
 
       if (isSuccessStatus(status)) {
         const userObj = profileData(data);
@@ -225,15 +240,18 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
         state.value.user.data = null;
         state.value.user.loggedIn = false;
       }
-    } catch {
+    } catch (error) {
       if (requestRevision !== sessionRevision.value) {
         return;
       }
 
+      authUnavailable.value =
+        isAxiosError(error) &&
+        (!error.response || error.response.status >= 500);
       userDataRaw.value = null;
       state.value.user.data = null;
       state.value.user.loggedIn = false;
-      throw new Error("Не удалось получить данные пользователя");
+      throw new Error("Не удалось получить данные пользователя", { cause: error });
     } finally {
       if (requestRevision === sessionRevision.value) {
         state.value.user.isAuthLoaded = true;
@@ -294,6 +312,8 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
   function clearAuthState(): void {
     sessionRevision.value++;
     authRequest = null;
+    authUnavailable.value = false;
+    isUpdatingProfile.value = false;
     userDataRaw.value = null;
     accessToken.value = null;
     state.value.user.data = null;
@@ -353,6 +373,8 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     userDataRaw,
     accessToken,
     sessionRevision,
+    authUnavailable,
+    isUpdatingProfile,
 
     updateDisplayName,
     updateProfile,

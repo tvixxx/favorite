@@ -10,6 +10,8 @@ import LeaderboardRow from "@/components/Leaderboard/LeaderboardRow.vue";
 import { useRouter } from "vue-router";
 import { useLeaderboardMoviesStore } from "@/stores";
 import { formatYear } from "@/utils";
+import { contentTypeLabel, type ContentKind } from "@/utils/content-kind";
+import MoviePoster from "@/components/MoviePoster/MoviePoster.vue";
 
 const store = useLeaderboardMoviesStore();
 const { items, total, isLoading, isError, currentPage } = storeToRefs(store);
@@ -34,6 +36,7 @@ watch(previewOpen, (open) => {
 });
 
 const rowSubtitle = (row: {
+  contentKind?: ContentKind | null;
   publishDate: string | null;
   isSerial: boolean;
 }): string => {
@@ -43,7 +46,7 @@ const rowSubtitle = (row: {
     parts.push(formatYear(row.publishDate));
   }
 
-  parts.push(row.isSerial ? "сериал" : "фильм");
+  parts.push(contentTypeLabel(row).toLowerCase());
 
   return parts.join(" · ");
 };
@@ -108,9 +111,10 @@ onMounted(() => {
           >
             <template #media>
               <span class="lb-movies__poster">
-                <img
-                  v-if="row.posterUrl"
+                <MoviePoster
                   :src="row.posterUrl"
+                  :seed="row.movieId"
+                  :title="row.title"
                   :alt="row.title"
                   loading="lazy"
                 />

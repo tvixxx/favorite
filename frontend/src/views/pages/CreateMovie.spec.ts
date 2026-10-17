@@ -2,6 +2,7 @@ import { mount, flushPromises } from "@vue/test-utils";
 import { Form } from "ant-design-vue";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import CreateMovie from "./CreateMovie.vue";
+import api from '@/services/api';
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
@@ -17,7 +18,7 @@ vi.mock("@/services/media", () => ({
 }));
 vi.mock("vue-router", () => ({ useRouter: () => ({ back: vi.fn() }) }));
 vi.mock("@/state/state", () => ({
-  useMainStore: () => ({ userData: { id: "user-id" } }),
+  useMainStore: () => ({ userData: { id: "user-id" }, sessionRevision: 0 }),
 }));
 vi.mock("@/stores/movies/moviesStore", () => ({
   useMoviesStore: () => ({ createMovie: mocks.create }),
@@ -38,19 +39,80 @@ vi.mock("@/stores/actors/actorsStore", () => ({
   }),
 }));
 vi.mock("@/services/api", () => ({
+  default: { get: vi.fn().mockResolvedValue({ data: [] }) },
   getApiResponseMessage: vi.fn(),
   isApiConflictError: () => false,
 }));
 
 describe("Создание через форму", () => {
+  it('скрывает поиск по умолчанию и сохраняет ручной черновик при переключении включённого каталога', async () => {
+    const off = render(); await flushPromises();
+    expect(off.find('[aria-label="Способ добавления"]').exists()).toBe(false);
+    off.unmount();
+    vi.mocked(api.get).mockResolvedValueOnce({ data: { enabled: true } });
+    const wrapper = render(); await flushPromises();
+    await wrapper.findAll('[aria-label="Способ добавления"] button').find(b => b.text() === 'Вручную')!.trigger('click');
+    await wrapper.get('input[placeholder="Например: Интерстеллар"]').setValue('Черновик');
+    await wrapper.findAll('[aria-label="Способ добавления"] button').find(b => b.text() === 'Найти в TheTVDB')!.trigger('click');
+    await wrapper.findAll('[aria-label="Способ добавления"] button').find(b => b.text() === 'Вручную')!.trigger('click');
+    expect((wrapper.get('input[placeholder="Например: Интерстеллар"]').element as HTMLInputElement).value).toBe('Черновик');
+    wrapper.unmount();
+  });
+  it("показывает пять типов и не отправляет форму с пропущенным выбором", async () => {
+    mocks.create.mockClear();
+    const wrapper = render();
+    await wrapper.get('input[placeholder="Например: Интерстеллар"]').setValue("Новый тайтл");
+    await wrapper.get("textarea").setValue("Описание");
+    for (const label of ["Фильм", "Сериал", "Аниме", "Мультфильм", "ТВ-шоу"]) {
+      expect(wrapper.findAll("button").some(button => button.text() === label)).toBe(true);
+    }
+
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    expect(mocks.create).not.toHaveBeenCalled();
+    expect(wrapper.text()).toContain("Выберите, что добавляете");
+    wrapper.unmount();
+  });
+
+  it("передаёт аниме-сериал с прежним признаком серийности", async () => {
+    mocks.create.mockReset().mockResolvedValue({ id: "movie-id" });
+    mocks.fetch.mockResolvedValue(undefined);
+    const wrapper = render();
+    await wrapper.get('input[placeholder="Например: Интерстеллар"]').setValue("Новое аниме");
+    await wrapper.get("textarea").setValue("Описание");
+    const anime = wrapper.findAll("button").find(button => button.text() === "Аниме");
+    expect(anime).toBeDefined();
+    await anime!.trigger("click");
+    await wrapper.get('select[aria-label="Страны"]').setValue(["CN"]);
+    await wrapper.findAll("button").find(button => button.text() === "Драма")!.trigger("click");
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    expect(mocks.create).not.toHaveBeenCalled();
+    await wrapper.get('[aria-label="Формат"]').findAll("button").find(button => button.text() === "Сериал")!.trigger("click");
+    await wrapper.get('input[aria-label="Количество сезонов"]').setValue('2');
+    await wrapper.get('input[aria-label="Количество эпизодов"]').setValue('24');
+    await wrapper.get('button[aria-label="Увеличить: Количество эпизодов"]').trigger('click');
+    expect(mocks.create).not.toHaveBeenCalled();
+    await wrapper.get('input[aria-label="Количество сезонов"]').setValue('003');
+    await wrapper.get('form').trigger('submit'); await flushPromises();
+    expect(mocks.create).not.toHaveBeenCalled();
+    expect((wrapper.get('input[aria-label="Количество сезонов"]').element as HTMLInputElement).value).toBe('003');
+    await wrapper.get('input[aria-label="Количество сезонов"]').setValue('2');
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    expect(mocks.create.mock.calls[0][0]).toMatchObject({ contentKind: "ANIME", isSerial: true, title: "Новое аниме", countryCodes: ["CN"], seasonCount: 2, episodeCount: 25 });
+    wrapper.unmount();
+  });
+
   it("передаёт личные параметры вместе с фильмом без второго запроса записи", async () => {
-    mocks.create.mockResolvedValue({ id: "movie-id" });
+    mocks.create.mockReset().mockResolvedValue({ id: "movie-id" });
     mocks.addPersonal.mockResolvedValue({});
     mocks.fetch.mockResolvedValue(undefined);
     const wrapper = render();
     await wrapper
       .get('input[placeholder="Например: Интерстеллар"]')
       .setValue("Новый фильм");
+    await chooseFilm(wrapper);
     await wrapper.get("textarea").setValue("Описание фильма");
     await wrapper.get("button.cm-pill--more").trigger("click");
     await wrapper
@@ -63,7 +125,7 @@ describe("Создание через форму", () => {
       title: "Новый фильм",
       description: "Описание фильма",
       actorIds: [],
-      genres: ["ACTION", "Sci_fi"],
+      genres: ["DRAMA", "Sci_fi"],
       collection: {
         watchStatus: "NOT_STARTED",
         personalRate: null,
@@ -83,6 +145,7 @@ describe("Создание через форму", () => {
       })
     );
     const wrapper = render();
+    await chooseFilm(wrapper);
     await wrapper
       .get('input[placeholder="Например: Интерстеллар"]')
       .setValue("Новый фильм");
@@ -103,7 +166,7 @@ describe("Создание через форму", () => {
   });
 });
 
-describe("Проверка обязательного постера", () => {
+describe("Необязательный постер", () => {
   let wrapper: ReturnType<typeof render>;
 
   afterEach(() => {
@@ -142,13 +205,11 @@ describe("Проверка обязательного постера", () => {
     await flushPromises();
   };
 
-  it("убирает ошибку после загрузки, сохраняя ошибки других обязательных полей", async () => {
+  it("сохраняет ошибки обязательных полей после загрузки и удаления необязательного постера", async () => {
     wrapper = render(true);
     await wrapper.get("form").trigger("submit");
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain(
-        "Выберите изображение или вставьте ссылку"
-      );
+      expect(wrapper.text()).toContain("Введите название");
     });
     await choosePoster();
     await vi.waitFor(() => {
@@ -156,8 +217,8 @@ describe("Проверка обязательного постера", () => {
         "Выберите изображение или вставьте ссылку"
       );
     });
-    expect(wrapper.text()).toContain("Введите название фильма");
-    expect(wrapper.text()).toContain("Введите описание фильма");
+    expect(wrapper.text()).toContain("Введите название");
+    expect(wrapper.text()).toContain("Добавьте описание");
 
     const removeButton = wrapper
       .findAll("button")
@@ -167,10 +228,24 @@ describe("Проверка обязательного постера", () => {
     await removeButton!.trigger("click");
     await wrapper.get("form").trigger("submit");
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain(
+      expect(wrapper.text()).not.toContain(
         "Выберите изображение или вставьте ссылку"
       );
+      expect(wrapper.text()).toContain("Добавьте описание");
     });
+  });
+
+  it("сохраняет заполненную форму без постера, не отправляя фиктивный URL", async () => {
+    mocks.create.mockReset().mockResolvedValue({ id: "movie-id" });
+    mocks.fetch.mockResolvedValue(undefined);
+    wrapper = render(true);
+    await wrapper.get('input[placeholder="Например: Интерстеллар"]').setValue("Без постера");
+    await chooseFilm(wrapper);
+    await wrapper.get("textarea").setValue("Описание фильма");
+    await wrapper.get("form").trigger("submit");
+    await vi.waitFor(() => expect(mocks.create).toHaveBeenCalledOnce());
+    expect(mocks.create.mock.calls[0][0].imageUrl).toBeUndefined();
+    expect(mocks.create.mock.calls[0][0].posterAssetId).toBeUndefined();
   });
 
   it("не показывает ошибку постера при очистке успешно сохранённой формы", async () => {
@@ -180,20 +255,25 @@ describe("Проверка обязательного постера", () => {
     await wrapper
       .get('input[placeholder="Например: Интерстеллар"]')
       .setValue("Новый фильм");
+    await chooseFilm(wrapper);
     await wrapper.get("textarea").setValue("Описание фильма");
     await choosePoster();
     await wrapper.get("form").trigger("submit");
     await vi.waitFor(() => {
       expect(mocks.create).toHaveBeenCalledOnce();
-      expect(wrapper.find('img[alt="Предпросмотр постера"]').exists()).toBe(
-        false
-      );
+      expect(wrapper.get('img[alt="Предпросмотр постера"]').attributes("src")).toMatch(/^data:image\/svg\+xml/);
     });
     expect(wrapper.text()).not.toContain(
       "Выберите изображение или вставьте ссылку"
     );
   });
 });
+
+async function chooseFilm(wrapper: ReturnType<typeof render>): Promise<void> {
+  await wrapper.findAll("button").find(button => button.text() === "Фильм")!.trigger("click");
+  await wrapper.findAll("button").find(button => button.text() === "Драма")!.trigger("click");
+  await wrapper.get('select[aria-label="Страны"]').setValue(["US"]);
+}
 
 function render(realForm = false) {
   if (realForm) {
@@ -236,11 +316,15 @@ function render(realForm = false) {
             '<textarea :value="value" @input="$emit(\'update:value\', $event.target.value)"/>',
         },
         "a-button": { template: "<button><slot/></button>" },
-        "a-select": true,
+        "a-select": {
+          name: "ASelect",
+          props: ["value", "options"],
+          emits: ["update:value", "change"],
+          template: `<select multiple :aria-label="options?.length ? 'Страны' : 'Актёры'" :value="value" @change="$emit('update:value', Array.from($event.target.selectedOptions).map(option => option.value))"><option v-for="option in options" :key="option.value" :value="option.value">{{ option.label }}</option></select>`,
+        },
         "a-select-option": true,
         "a-date-picker": true,
         "a-switch": true,
-        "a-input-number": true,
         "a-rate": true,
       },
     },

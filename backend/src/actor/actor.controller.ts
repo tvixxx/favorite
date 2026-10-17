@@ -6,6 +6,7 @@ import {
   Patch,
   Post,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiNotFoundResponse,
@@ -17,7 +18,12 @@ import { ActorService } from './actor.service';
 import { CreateActorDto, PatchActorDto } from './dto/create-actor.dto';
 import { AuthCatalogWrite, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
-import { queryInteger, queryString } from '../common/utils/query-value';
+import {
+  queryInteger,
+  queryString,
+  queryEnum,
+} from '../common/utils/query-value';
+import { isPlainText } from '../common/validation/plain-text';
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 20;
@@ -45,12 +51,19 @@ export class ActorController {
     @Query('q') q?: unknown,
     @Query('limit') limitRaw?: unknown,
     @Query('offset') offsetRaw?: unknown,
+    @Query('order') orderRaw?: unknown,
   ) {
     const limit = queryInteger(limitRaw, 'limit', DEFAULT_LIMIT, 1, MAX_LIMIT);
     const offset = queryInteger(offsetRaw, 'offset', 0, 0, 2147483647);
+    const search = queryString(q, 'q');
+    if (search && (search.length > 200 || !isPlainText(search)))
+      throw new BadRequestException(
+        'Поисковый запрос должен содержать не больше 200 символов без управляющих знаков',
+      );
 
     return this.actorService.findMany({
-      q: queryString(q, 'q'),
+      q: search,
+      order: queryEnum(orderRaw, 'order', ['name', 'ru-first']),
       limit,
       offset,
     });

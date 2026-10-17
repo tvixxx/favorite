@@ -1,0 +1,32 @@
+@use './media' as *;
+
+@mixin movieFormFooter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--fv-color-border);
+  &__cancel, &__submit {
+    flex: 0 0 auto;
+    height: 46px;
+    padding: 0 22px;
+    border-radius: var(--fv-radius-sm);
+    font-weight: 500;
+  }
+  @include mediaMax(767.98px) {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    margin-top: 0;
+    padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in srgb, var(--fv-color-bg-primary) 94%, transparent);
+    backdrop-filter: blur(10px);
+    &__cancel { flex: 1; }
+    &__submit { flex: 2; }
+  }
+  &__submit { display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+}

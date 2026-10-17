@@ -8,9 +8,14 @@ describe('Изменение актёрского состава', () => {
     const tx = {
       $executeRaw: jest.fn().mockResolvedValue(1),
       movie: {
-        findUnique: jest
-          .fn()
-          .mockResolvedValue({ id: 'movie', createdById: 'user' }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'movie',
+          title: 'Фильм',
+          isSerial: false,
+          publishDate: null,
+          createdById: 'user',
+        }),
+        findMany: jest.fn().mockResolvedValue([]),
         update,
       },
     };
@@ -41,9 +46,13 @@ describe('Изменение актёрского состава', () => {
       const tx = {
         $executeRaw: jest.fn().mockResolvedValue(1),
         movie: {
-          findUnique: jest
-            .fn()
-            .mockResolvedValue({ id: 'movie', createdById: 'user' }),
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'movie',
+            title: 'Фильм',
+            isSerial: false,
+            publishDate: null,
+            createdById: 'user',
+          }),
           update: ({
             data,
           }: {

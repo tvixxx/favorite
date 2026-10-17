@@ -12,6 +12,22 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 jest.mock('../src/prisma/prisma.service', () => ({ PrismaService: class {} }));
 
+jest.mock('@nestjs/config', () => {
+  const actual =
+    jest.requireActual<typeof import('@nestjs/config')>('@nestjs/config');
+  const forRoot = actual.ConfigModule.forRoot.bind(
+    actual.ConfigModule,
+  ) as typeof actual.ConfigModule.forRoot;
+
+  jest
+    .spyOn(actual.ConfigModule, 'forRoot')
+    .mockImplementation((options) =>
+      forRoot({ ...options, ignoreEnvFile: true }),
+    );
+
+  return actual;
+});
+
 describe('Сборка приложения и HTTP-контракты без настоящей базы', () => {
   let app: INestApplication<Server>;
 
@@ -51,7 +67,7 @@ describe('Сборка приложения и HTTP-контракты без н
         forbidNonWhitelisted: true,
       }),
     );
-    await app.init();
+    await app.listen(0, '127.0.0.1');
   });
 
   afterAll(async () => {

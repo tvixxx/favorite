@@ -28,6 +28,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     ) {
       throw new UnauthorizedException('Недействительный access-token');
     }
-    return await this.authService.validate(payload.id);
+    return await this.authService.validate(payload.id, payload.authVersion);
   }
 }

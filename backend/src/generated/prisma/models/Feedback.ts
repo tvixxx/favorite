@@ -34,6 +34,7 @@ export type FeedbackMinAggregateOutputType = {
   pageUrl: string | null
   userAgent: string | null
   viewport: string | null
+  screenshotAssetId: string | null
   status: $Enums.FeedbackStatus | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -48,6 +49,7 @@ export type FeedbackMaxAggregateOutputType = {
   pageUrl: string | null
   userAgent: string | null
   viewport: string | null
+  screenshotAssetId: string | null
   status: $Enums.FeedbackStatus | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -62,6 +64,7 @@ export type FeedbackCountAggregateOutputType = {
   pageUrl: number
   userAgent: number
   viewport: number
+  screenshotAssetId: number
   status: number
   createdAt: number
   updatedAt: number
@@ -78,6 +81,7 @@ export type FeedbackMinAggregateInputType = {
   pageUrl?: true
   userAgent?: true
   viewport?: true
+  screenshotAssetId?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -92,6 +96,7 @@ export type FeedbackMaxAggregateInputType = {
   pageUrl?: true
   userAgent?: true
   viewport?: true
+  screenshotAssetId?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -106,6 +111,7 @@ export type FeedbackCountAggregateInputType = {
   pageUrl?: true
   userAgent?: true
   viewport?: true
+  screenshotAssetId?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -193,6 +199,7 @@ export type FeedbackGroupByOutputType = {
   pageUrl: string | null
   userAgent: string | null
   viewport: string | null
+  screenshotAssetId: string | null
   status: $Enums.FeedbackStatus
   createdAt: Date
   updatedAt: Date
@@ -228,9 +235,11 @@ export type FeedbackWhereInput = {
   pageUrl?: Prisma.StringNullableFilter<"Feedback"> | string | null
   userAgent?: Prisma.StringNullableFilter<"Feedback"> | string | null
   viewport?: Prisma.StringNullableFilter<"Feedback"> | string | null
+  screenshotAssetId?: Prisma.StringNullableFilter<"Feedback"> | string | null
   status?: Prisma.EnumFeedbackStatusFilter<"Feedback"> | $Enums.FeedbackStatus
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
+  screenshot?: Prisma.XOR<Prisma.MediaAssetNullableScalarRelationFilter, Prisma.MediaAssetWhereInput> | null
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }
 
@@ -243,14 +252,17 @@ export type FeedbackOrderByWithRelationInput = {
   pageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   userAgent?: Prisma.SortOrderInput | Prisma.SortOrder
   viewport?: Prisma.SortOrderInput | Prisma.SortOrder
+  screenshotAssetId?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  screenshot?: Prisma.MediaAssetOrderByWithRelationInput
   user?: Prisma.UserOrderByWithRelationInput
 }
 
 export type FeedbackWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  screenshotAssetId?: string
   AND?: Prisma.FeedbackWhereInput | Prisma.FeedbackWhereInput[]
   OR?: Prisma.FeedbackWhereInput[]
   NOT?: Prisma.FeedbackWhereInput | Prisma.FeedbackWhereInput[]
@@ -264,8 +276,9 @@ export type FeedbackWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumFeedbackStatusFilter<"Feedback"> | $Enums.FeedbackStatus
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
+  screenshot?: Prisma.XOR<Prisma.MediaAssetNullableScalarRelationFilter, Prisma.MediaAssetWhereInput> | null
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-}, "id">
+}, "id" | "screenshotAssetId">
 
 export type FeedbackOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -276,6 +289,7 @@ export type FeedbackOrderByWithAggregationInput = {
   pageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   userAgent?: Prisma.SortOrderInput | Prisma.SortOrder
   viewport?: Prisma.SortOrderInput | Prisma.SortOrder
+  screenshotAssetId?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -296,6 +310,7 @@ export type FeedbackScalarWhereWithAggregatesInput = {
   pageUrl?: Prisma.StringNullableWithAggregatesFilter<"Feedback"> | string | null
   userAgent?: Prisma.StringNullableWithAggregatesFilter<"Feedback"> | string | null
   viewport?: Prisma.StringNullableWithAggregatesFilter<"Feedback"> | string | null
+  screenshotAssetId?: Prisma.StringNullableWithAggregatesFilter<"Feedback"> | string | null
   status?: Prisma.EnumFeedbackStatusWithAggregatesFilter<"Feedback"> | $Enums.FeedbackStatus
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Feedback"> | Date | string
@@ -312,6 +327,7 @@ export type FeedbackCreateInput = {
   status?: $Enums.FeedbackStatus
   createdAt?: Date | string
   updatedAt?: Date | string
+  screenshot?: Prisma.MediaAssetCreateNestedOneWithoutFeedbackInput
   user?: Prisma.UserCreateNestedOneWithoutFeedbacksInput
 }
 
@@ -324,6 +340,7 @@ export type FeedbackUncheckedCreateInput = {
   pageUrl?: string | null
   userAgent?: string | null
   viewport?: string | null
+  screenshotAssetId?: string | null
   status?: $Enums.FeedbackStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -340,6 +357,7 @@ export type FeedbackUpdateInput = {
   status?: Prisma.EnumFeedbackStatusFieldUpdateOperationsInput | $Enums.FeedbackStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  screenshot?: Prisma.MediaAssetUpdateOneWithoutFeedbackNestedInput
   user?: Prisma.UserUpdateOneWithoutFeedbacksNestedInput
 }
 
@@ -352,6 +370,7 @@ export type FeedbackUncheckedUpdateInput = {
   pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   viewport?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  screenshotAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumFeedbackStatusFieldUpdateOperationsInput | $Enums.FeedbackStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -366,6 +385,7 @@ export type FeedbackCreateManyInput = {
   pageUrl?: string | null
   userAgent?: string | null
   viewport?: string | null
+  screenshotAssetId?: string | null
   status?: $Enums.FeedbackStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -393,9 +413,15 @@ export type FeedbackUncheckedUpdateManyInput = {
   pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   viewport?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  screenshotAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumFeedbackStatusFieldUpdateOperationsInput | $Enums.FeedbackStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type FeedbackNullableScalarRelationFilter = {
+  is?: Prisma.FeedbackWhereInput | null
+  isNot?: Prisma.FeedbackWhereInput | null
 }
 
 export type FeedbackListRelationFilter = {
@@ -417,6 +443,7 @@ export type FeedbackCountOrderByAggregateInput = {
   pageUrl?: Prisma.SortOrder
   userAgent?: Prisma.SortOrder
   viewport?: Prisma.SortOrder
+  screenshotAssetId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -431,6 +458,7 @@ export type FeedbackMaxOrderByAggregateInput = {
   pageUrl?: Prisma.SortOrder
   userAgent?: Prisma.SortOrder
   viewport?: Prisma.SortOrder
+  screenshotAssetId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -445,9 +473,42 @@ export type FeedbackMinOrderByAggregateInput = {
   pageUrl?: Prisma.SortOrder
   userAgent?: Prisma.SortOrder
   viewport?: Prisma.SortOrder
+  screenshotAssetId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type FeedbackCreateNestedOneWithoutScreenshotInput = {
+  create?: Prisma.XOR<Prisma.FeedbackCreateWithoutScreenshotInput, Prisma.FeedbackUncheckedCreateWithoutScreenshotInput>
+  connectOrCreate?: Prisma.FeedbackCreateOrConnectWithoutScreenshotInput
+  connect?: Prisma.FeedbackWhereUniqueInput
+}
+
+export type FeedbackUncheckedCreateNestedOneWithoutScreenshotInput = {
+  create?: Prisma.XOR<Prisma.FeedbackCreateWithoutScreenshotInput, Prisma.FeedbackUncheckedCreateWithoutScreenshotInput>
+  connectOrCreate?: Prisma.FeedbackCreateOrConnectWithoutScreenshotInput
+  connect?: Prisma.FeedbackWhereUniqueInput
+}
+
+export type FeedbackUpdateOneWithoutScreenshotNestedInput = {
+  create?: Prisma.XOR<Prisma.FeedbackCreateWithoutScreenshotInput, Prisma.FeedbackUncheckedCreateWithoutScreenshotInput>
+  connectOrCreate?: Prisma.FeedbackCreateOrConnectWithoutScreenshotInput
+  upsert?: Prisma.FeedbackUpsertWithoutScreenshotInput
+  disconnect?: Prisma.FeedbackWhereInput | boolean
+  delete?: Prisma.FeedbackWhereInput | boolean
+  connect?: Prisma.FeedbackWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.FeedbackUpdateToOneWithWhereWithoutScreenshotInput, Prisma.FeedbackUpdateWithoutScreenshotInput>, Prisma.FeedbackUncheckedUpdateWithoutScreenshotInput>
+}
+
+export type FeedbackUncheckedUpdateOneWithoutScreenshotNestedInput = {
+  create?: Prisma.XOR<Prisma.FeedbackCreateWithoutScreenshotInput, Prisma.FeedbackUncheckedCreateWithoutScreenshotInput>
+  connectOrCreate?: Prisma.FeedbackCreateOrConnectWithoutScreenshotInput
+  upsert?: Prisma.FeedbackUpsertWithoutScreenshotInput
+  disconnect?: Prisma.FeedbackWhereInput | boolean
+  delete?: Prisma.FeedbackWhereInput | boolean
+  connect?: Prisma.FeedbackWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.FeedbackUpdateToOneWithWhereWithoutScreenshotInput, Prisma.FeedbackUpdateWithoutScreenshotInput>, Prisma.FeedbackUncheckedUpdateWithoutScreenshotInput>
 }
 
 export type FeedbackCreateNestedManyWithoutUserInput = {
@@ -500,8 +561,23 @@ export type EnumFeedbackStatusFieldUpdateOperationsInput = {
   set?: $Enums.FeedbackStatus
 }
 
-export type FeedbackCreateWithoutUserInput = {
+export type FeedbackCreateWithoutScreenshotInput = {
   id?: string
+  type: $Enums.FeedbackType
+  message: string
+  email?: string | null
+  pageUrl?: string | null
+  userAgent?: string | null
+  viewport?: string | null
+  status?: $Enums.FeedbackStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user?: Prisma.UserCreateNestedOneWithoutFeedbacksInput
+}
+
+export type FeedbackUncheckedCreateWithoutScreenshotInput = {
+  id?: string
+  userId?: string | null
   type: $Enums.FeedbackType
   message: string
   email?: string | null
@@ -513,6 +589,64 @@ export type FeedbackCreateWithoutUserInput = {
   updatedAt?: Date | string
 }
 
+export type FeedbackCreateOrConnectWithoutScreenshotInput = {
+  where: Prisma.FeedbackWhereUniqueInput
+  create: Prisma.XOR<Prisma.FeedbackCreateWithoutScreenshotInput, Prisma.FeedbackUncheckedCreateWithoutScreenshotInput>
+}
+
+export type FeedbackUpsertWithoutScreenshotInput = {
+  update: Prisma.XOR<Prisma.FeedbackUpdateWithoutScreenshotInput, Prisma.FeedbackUncheckedUpdateWithoutScreenshotInput>
+  create: Prisma.XOR<Prisma.FeedbackCreateWithoutScreenshotInput, Prisma.FeedbackUncheckedCreateWithoutScreenshotInput>
+  where?: Prisma.FeedbackWhereInput
+}
+
+export type FeedbackUpdateToOneWithWhereWithoutScreenshotInput = {
+  where?: Prisma.FeedbackWhereInput
+  data: Prisma.XOR<Prisma.FeedbackUpdateWithoutScreenshotInput, Prisma.FeedbackUncheckedUpdateWithoutScreenshotInput>
+}
+
+export type FeedbackUpdateWithoutScreenshotInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumFeedbackTypeFieldUpdateOperationsInput | $Enums.FeedbackType
+  message?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  viewport?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumFeedbackStatusFieldUpdateOperationsInput | $Enums.FeedbackStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneWithoutFeedbacksNestedInput
+}
+
+export type FeedbackUncheckedUpdateWithoutScreenshotInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumFeedbackTypeFieldUpdateOperationsInput | $Enums.FeedbackType
+  message?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  viewport?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumFeedbackStatusFieldUpdateOperationsInput | $Enums.FeedbackStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type FeedbackCreateWithoutUserInput = {
+  id?: string
+  type: $Enums.FeedbackType
+  message: string
+  email?: string | null
+  pageUrl?: string | null
+  userAgent?: string | null
+  viewport?: string | null
+  status?: $Enums.FeedbackStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  screenshot?: Prisma.MediaAssetCreateNestedOneWithoutFeedbackInput
+}
+
 export type FeedbackUncheckedCreateWithoutUserInput = {
   id?: string
   type: $Enums.FeedbackType
@@ -521,6 +655,7 @@ export type FeedbackUncheckedCreateWithoutUserInput = {
   pageUrl?: string | null
   userAgent?: string | null
   viewport?: string | null
+  screenshotAssetId?: string | null
   status?: $Enums.FeedbackStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -564,6 +699,7 @@ export type FeedbackScalarWhereInput = {
   pageUrl?: Prisma.StringNullableFilter<"Feedback"> | string | null
   userAgent?: Prisma.StringNullableFilter<"Feedback"> | string | null
   viewport?: Prisma.StringNullableFilter<"Feedback"> | string | null
+  screenshotAssetId?: Prisma.StringNullableFilter<"Feedback"> | string | null
   status?: Prisma.EnumFeedbackStatusFilter<"Feedback"> | $Enums.FeedbackStatus
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
@@ -577,6 +713,7 @@ export type FeedbackCreateManyUserInput = {
   pageUrl?: string | null
   userAgent?: string | null
   viewport?: string | null
+  screenshotAssetId?: string | null
   status?: $Enums.FeedbackStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -593,6 +730,7 @@ export type FeedbackUpdateWithoutUserInput = {
   status?: Prisma.EnumFeedbackStatusFieldUpdateOperationsInput | $Enums.FeedbackStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  screenshot?: Prisma.MediaAssetUpdateOneWithoutFeedbackNestedInput
 }
 
 export type FeedbackUncheckedUpdateWithoutUserInput = {
@@ -603,6 +741,7 @@ export type FeedbackUncheckedUpdateWithoutUserInput = {
   pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   viewport?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  screenshotAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumFeedbackStatusFieldUpdateOperationsInput | $Enums.FeedbackStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -616,6 +755,7 @@ export type FeedbackUncheckedUpdateManyWithoutUserInput = {
   pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   viewport?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  screenshotAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumFeedbackStatusFieldUpdateOperationsInput | $Enums.FeedbackStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -632,9 +772,11 @@ export type FeedbackSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   pageUrl?: boolean
   userAgent?: boolean
   viewport?: boolean
+  screenshotAssetId?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  screenshot?: boolean | Prisma.Feedback$screenshotArgs<ExtArgs>
   user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }, ExtArgs["result"]["feedback"]>
 
@@ -647,9 +789,11 @@ export type FeedbackSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   pageUrl?: boolean
   userAgent?: boolean
   viewport?: boolean
+  screenshotAssetId?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  screenshot?: boolean | Prisma.Feedback$screenshotArgs<ExtArgs>
   user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }, ExtArgs["result"]["feedback"]>
 
@@ -662,9 +806,11 @@ export type FeedbackSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   pageUrl?: boolean
   userAgent?: boolean
   viewport?: boolean
+  screenshotAssetId?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  screenshot?: boolean | Prisma.Feedback$screenshotArgs<ExtArgs>
   user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }, ExtArgs["result"]["feedback"]>
 
@@ -677,25 +823,30 @@ export type FeedbackSelectScalar = {
   pageUrl?: boolean
   userAgent?: boolean
   viewport?: boolean
+  screenshotAssetId?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type FeedbackOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "type" | "message" | "email" | "pageUrl" | "userAgent" | "viewport" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["feedback"]>
+export type FeedbackOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "type" | "message" | "email" | "pageUrl" | "userAgent" | "viewport" | "screenshotAssetId" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["feedback"]>
 export type FeedbackInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  screenshot?: boolean | Prisma.Feedback$screenshotArgs<ExtArgs>
   user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }
 export type FeedbackIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  screenshot?: boolean | Prisma.Feedback$screenshotArgs<ExtArgs>
   user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }
 export type FeedbackIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  screenshot?: boolean | Prisma.Feedback$screenshotArgs<ExtArgs>
   user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }
 
 export type $FeedbackPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Feedback"
   objects: {
+    screenshot: Prisma.$MediaAssetPayload<ExtArgs> | null
     user: Prisma.$UserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -716,6 +867,7 @@ export type $FeedbackPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     pageUrl: string | null
     userAgent: string | null
     viewport: string | null
+    screenshotAssetId: string | null
     status: $Enums.FeedbackStatus
     createdAt: Date
     updatedAt: Date
@@ -1113,6 +1265,7 @@ readonly fields: FeedbackFieldRefs;
  */
 export interface Prisma__FeedbackClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  screenshot<T extends Prisma.Feedback$screenshotArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Feedback$screenshotArgs<ExtArgs>>): Prisma.Prisma__MediaAssetClient<runtime.Types.Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.Feedback$userArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Feedback$userArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1151,6 +1304,7 @@ export interface FeedbackFieldRefs {
   readonly pageUrl: Prisma.FieldRef<"Feedback", 'String'>
   readonly userAgent: Prisma.FieldRef<"Feedback", 'String'>
   readonly viewport: Prisma.FieldRef<"Feedback", 'String'>
+  readonly screenshotAssetId: Prisma.FieldRef<"Feedback", 'String'>
   readonly status: Prisma.FieldRef<"Feedback", 'FeedbackStatus'>
   readonly createdAt: Prisma.FieldRef<"Feedback", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Feedback", 'DateTime'>
@@ -1552,6 +1706,25 @@ export type FeedbackDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Limit how many Feedbacks to delete.
    */
   limit?: number
+}
+
+/**
+ * Feedback.screenshot
+ */
+export type Feedback$screenshotArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MediaAsset
+   */
+  select?: Prisma.MediaAssetSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MediaAsset
+   */
+  omit?: Prisma.MediaAssetOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MediaAssetInclude<ExtArgs> | null
+  where?: Prisma.MediaAssetWhereInput
 }
 
 /**

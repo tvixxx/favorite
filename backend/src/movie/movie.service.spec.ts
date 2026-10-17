@@ -25,6 +25,7 @@ describe('Права на общие и пользовательские фил�
     posterFailure = false;
     progress = { currentSeason: null, currentEpisode: null };
     const tx = {
+      adminAuditLog: { create: jest.fn().mockResolvedValue({}) },
       $executeRaw: jest.fn().mockResolvedValue(1),
       userMovie: {
         findFirst: jest.fn(
@@ -57,6 +58,7 @@ describe('Права на общие и пользовательские фил�
       movie: {
         findUnique: jest.fn(() => Promise.resolve(movie)),
         findFirst: jest.fn().mockResolvedValue(null),
+        findMany: jest.fn().mockResolvedValue([]),
         update: jest.fn(({ data }: { data: Prisma.MovieUpdateInput }) =>
           Promise.resolve(Object.assign(movie, data)),
         ),
@@ -123,6 +125,19 @@ describe('Права на общие и пользовательские фил�
         { id: 'user-id', role: 'USER' },
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(movie.title).toBe('Исходное название');
+  });
+
+  it('не перезаписывает карточку из устаревшего административного редактора', async () => {
+    movie.updatedAt = new Date('2026-10-13T10:00:00Z');
+
+    await expect(
+      service.patch(
+        'movie-id',
+        { title: 'Устаревшее', expectedUpdatedAt: '2026-10-13T09:00:00Z' },
+        { id: 'admin-id', role: 'ADMIN' },
+      ),
+    ).rejects.toMatchObject({ status: 409 });
     expect(movie.title).toBe('Исходное название');
   });
 

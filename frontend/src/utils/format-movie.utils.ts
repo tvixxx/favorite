@@ -1,5 +1,6 @@
 import { countriesLabelsRu } from "@/constants/countries/production-countries";
 import { formatYear } from "./date.utils";
+import { contentTypeLabel, type ContentKind } from "./content-kind";
 
 export function formatAverageRating(
   value: number | null | undefined
@@ -12,6 +13,7 @@ export function formatAverageRating(
 }
 
 interface MovieCardLike {
+  contentKind?: ContentKind | null;
   title: string;
   isSerial?: boolean;
   publishDate?: Date | string | null;
@@ -20,6 +22,8 @@ interface MovieCardLike {
 
 /** Заголовок карточки: название + пометка «(сериал)» */
 export function movieCardTitle(movie: MovieCardLike): string {
+  if (movie.contentKind && movie.contentKind !== "GENERAL") return `${movie.title} (${contentTypeLabel(movie).toLowerCase()})`;
+
   return `${movie.title}${movie.isSerial ? " (сериал)" : ""}`;
 }
 
