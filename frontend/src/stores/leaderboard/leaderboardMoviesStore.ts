@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import type { Dayjs } from "dayjs";
-import {releaseMonthBound} from '@/utils/releaseDate';
+import { releaseMonthBound } from "@/utils/releaseDate";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { isSuccessStatus } from "@/utils";
 import { createRequestGuard } from "@/utils/requestGuard";
@@ -55,11 +55,12 @@ export const useLeaderboardMoviesStore = defineStore(
     const requests = createRequestGuard();
 
     const currentPage = computed(
-      () => Math.floor(offset.value / PAGE_SIZE) + 1,
+      () => Math.floor(offset.value / PAGE_SIZE) + 1
     );
 
     const buildQuery = () => {
       const params = new URLSearchParams();
+
       params.set("limit", String(PAGE_SIZE));
       params.set("offset", String(offset.value));
       params.set("sortBy", sortBy.value);
@@ -81,14 +82,14 @@ export const useLeaderboardMoviesStore = defineStore(
       if (publishDateRange.value?.[0]) {
         params.set(
           "publishDateFrom",
-          releaseMonthBound(publishDateRange.value[0],'from'),
+          releaseMonthBound(publishDateRange.value[0], "from")
         );
       }
 
       if (publishDateRange.value?.[1]) {
         params.set(
           "publishDateTo",
-          releaseMonthBound(publishDateRange.value[1],'to'),
+          releaseMonthBound(publishDateRange.value[1], "to")
         );
       }
 
@@ -97,14 +98,16 @@ export const useLeaderboardMoviesStore = defineStore(
 
     const fetchTopMovies = async () => {
       const isCurrent = requests.begin();
+
       isLoading.value = true;
       isError.value = null;
 
       try {
         const { data, status } = await useFetch<LeaderboardTopMoviesResponse>(
           `/leaderboard/top-movies?${buildQuery()}`,
-          { method: FETCH_METHOD.get },
+          { method: FETCH_METHOD.get }
         );
+
         if (!isCurrent()) return;
 
         if (!isSuccessStatus(status)) {
@@ -125,7 +128,7 @@ export const useLeaderboardMoviesStore = defineStore(
 
     const setSort = async (
       by: LeaderboardMovieSortBy,
-      order: LeaderboardMovieSortOrder,
+      order: LeaderboardMovieSortOrder
     ) => {
       sortBy.value = by;
       sortOrder.value = order;
@@ -174,5 +177,5 @@ export const useLeaderboardMoviesStore = defineStore(
       clearFilters,
       refreshFromStart,
     };
-  },
+  }
 );

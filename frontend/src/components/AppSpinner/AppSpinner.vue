@@ -21,7 +21,7 @@ const { size = 20, onDark = false } = defineProps<Props>();
 
 <style scoped lang="scss">
 @use "../../styles/media" as *;
-/* Точечный спиннер (эталон): трек grey + дуга text-primary */
+
 .app-spinner {
   display: inline-block;
   flex-shrink: 0;

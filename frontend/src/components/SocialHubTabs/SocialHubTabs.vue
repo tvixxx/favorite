@@ -13,7 +13,7 @@ const props = withDefaults(
     /** Число непрочитанных сообщений для бейджа на «Чат» */
     unreadCount?: number;
   }>(),
-  { unreadCount: 0 },
+  { unreadCount: 0 }
 );
 
 const route = useRoute();
@@ -21,7 +21,7 @@ const router = useRouter();
 
 const isChat = computed(() => route.path.startsWith("/chat"));
 const badge = computed(() =>
-  props.unreadCount > 99 ? "99+" : String(props.unreadCount),
+  props.unreadCount > 99 ? "99+" : String(props.unreadCount)
 );
 
 const goChat = (): void => {
@@ -87,8 +87,7 @@ const goFriends = (): void => {
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       color var(--fv-motion-fast) var(--fv-ease),
       border-color var(--fv-motion-fast) var(--fv-ease);
 

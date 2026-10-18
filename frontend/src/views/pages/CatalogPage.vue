@@ -145,10 +145,9 @@ watch(
   () => props.actorId,
   async () => {
     applyActorFilter();
-    moviesStore.setCurrentPage(1);
 
     try {
-      await moviesStore.fetchMovies();
+      await moviesStore.ensureMovies();
     } catch {
       message.error(ERROR_FETCH_MOVIES_TEXT);
     }
@@ -293,6 +292,10 @@ async function resetCatalogFilters(): Promise<void> {
 
   &__grid {
     @include cardsGrid;
+
+    @include mediaMax($tablet) {
+      margin-bottom: 0;
+    }
   }
 
   // Догрузка: кнопка «Показать ещё» по центру под сеткой
@@ -301,6 +304,10 @@ async function resetCatalogFilters(): Promise<void> {
     justify-content: center;
     margin-top: 8px;
     padding: 8px 0 32px;
+
+    @include mediaMax($tablet) {
+      padding-bottom: 0;
+    }
 
     .ant-btn {
       display: inline-flex;

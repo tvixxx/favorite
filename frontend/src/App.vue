@@ -57,22 +57,26 @@ const isAuthLoaded = computed(() => store.user.isAuthLoaded);
 // Гостевые экраны (вход/регистрация) — без шапки и таб-бара, даже если
 // состояние авторизации ещё «догоняет»
 const isGuestRoute = computed(() =>
-  route.matched.some((record) => record.meta.guest || record.meta.authScreen),
+  route.matched.some((record) => record.meta.guest || record.meta.authScreen)
 );
 
 const showNavMenu = computed(
-  () => isAuthLoaded.value && store.isLoggedIn && !isGuestRoute.value,
+  () => isAuthLoaded.value && store.isLoggedIn && !isGuestRoute.value
 );
 
 // Экраны со своей нижней панелью действий (детальная) прячут таб-бар
 const hideMobileTabBar = computed(() =>
-  route.matched.some((record) => record.meta.hideMobileTabBar),
+  route.matched.some((record) => record.meta.hideMobileTabBar)
 );
 
 const onboardingOpen = ref(false);
 
 watch(
-  [() => store.user.isAuthLoaded, () => store.isLoggedIn, () => store.userData?.id],
+  [
+    () => store.user.isAuthLoaded,
+    () => store.isLoggedIn,
+    () => store.userData?.id,
+  ],
   ([authLoaded, loggedIn, userId]) => {
     if (!authLoaded || !loggedIn || !userId) {
       onboardingOpen.value = false;
@@ -84,11 +88,15 @@ watch(
       onboardingOpen.value = true;
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 watch(
-  [() => store.user.isAuthLoaded, () => store.isLoggedIn, () => store.userData?.id],
+  [
+    () => store.user.isAuthLoaded,
+    () => store.isLoggedIn,
+    () => store.userData?.id,
+  ],
   async ([authLoaded, loggedIn, userId]) => {
     if (!authLoaded) {
       return;
@@ -113,7 +121,7 @@ watch(
       notificationsStore.resetSession();
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 useTheme();
@@ -159,13 +167,15 @@ useHotThemeKeys();
 
 <style lang="scss">
 @use "./styles/media" as *;
+
 #app {
   font-family: var(--fv-font-ui);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--fv-color-text-primary);
   width: 100%;
-  height: 100%;
+  min-height: 100%;
+  height: auto;
 }
 
 /* Фолбэк ленивой подгрузки роутов — брендовый спиннер по центру, без «голого» текста */
@@ -191,17 +201,23 @@ body {
 
 /* Видимый фокус для клавиатуры (эталон: двойное кольцо — «вырез» фоном + синий контур).
    Поля обслуживает forms.scss, компоненты со своим фокусом переопределяют правило сами. */
-:where(button, a, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+:where(
+    button,
+    a,
+    [role="button"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
   outline: none;
-  box-shadow:
-    0 0 0 3px var(--fv-color-bg-primary),
+  box-shadow: 0 0 0 3px var(--fv-color-bg-primary),
     0 0 0 5px var(--fv-color-accent);
 }
 
 /* Место под нижний таб-бар на мобиле, чтобы контент не прятался */
 @include mediaMax($tablet) {
   #app {
-    padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(
+      var(--fv-mobile-tabbar-height) + env(safe-area-inset-bottom, 0px)
+    );
   }
 
   /* Экраны со своей нижней панелью (детальная, обратная связь):
@@ -212,6 +228,8 @@ body {
     padding-bottom: 0;
   }
 
-  #app:has(.auth-page) { padding-bottom: 0; }
+  #app:has(.auth-page) {
+    padding-bottom: 0;
+  }
 }
 </style>

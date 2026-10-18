@@ -405,6 +405,7 @@ export const ModelName = {
   Review: 'Review',
   Actor: 'Actor',
   UserMovie: 'UserMovie',
+  WatchEntry: 'WatchEntry',
   UserList: 'UserList',
   UserListItem: 'UserListItem',
   Friendship: 'Friendship',
@@ -430,7 +431,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "mediaAsset" | "user" | "passwordReset" | "movie" | "moviePoster" | "review" | "actor" | "userMovie" | "userList" | "userListItem" | "friendship" | "message" | "userStatus" | "notification" | "feedback" | "reviewReport" | "adminAuditLog" | "usageEvent"
+    modelProps: "mediaAsset" | "user" | "passwordReset" | "movie" | "moviePoster" | "review" | "actor" | "userMovie" | "watchEntry" | "userList" | "userListItem" | "friendship" | "message" | "userStatus" | "notification" | "feedback" | "reviewReport" | "adminAuditLog" | "usageEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1023,6 +1024,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserMovieCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserMovieCountAggregateOutputType> | number
+        }
+      }
+    }
+    WatchEntry: {
+      payload: Prisma.$WatchEntryPayload<ExtArgs>
+      fields: Prisma.WatchEntryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WatchEntryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchEntryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WatchEntryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchEntryPayload>
+        }
+        findFirst: {
+          args: Prisma.WatchEntryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchEntryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WatchEntryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchEntryPayload>
+        }
+        findMany: {
+          args: Prisma.WatchEntryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchEntryPayload>[]
+        }
+        create: {
+          args: Prisma.WatchEntryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchEntryPayload>
+        }
+        createMany: {
+          args: Prisma.WatchEntryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WatchEntryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchEntryPayload>[]
+        }
+        delete: {
+          args: Prisma.WatchEntryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchEntryPayload>
+        }
+        update: {
+          args: Prisma.WatchEntryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchEntryPayload>
+        }
+        deleteMany: {
+          args: Prisma.WatchEntryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WatchEntryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WatchEntryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchEntryPayload>[]
+        }
+        upsert: {
+          args: Prisma.WatchEntryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchEntryPayload>
+        }
+        aggregate: {
+          args: Prisma.WatchEntryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWatchEntry>
+        }
+        groupBy: {
+          args: Prisma.WatchEntryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WatchEntryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WatchEntryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WatchEntryCountAggregateOutputType> | number
         }
       }
     }
@@ -1955,6 +2030,27 @@ export const UserMovieScalarFieldEnum = {
 export type UserMovieScalarFieldEnum = (typeof UserMovieScalarFieldEnum)[keyof typeof UserMovieScalarFieldEnum]
 
 
+export const WatchEntryScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  movieId: 'movieId',
+  requestId: 'requestId',
+  requestHash: 'requestHash',
+  viewedOn: 'viewedOn',
+  scope: 'scope',
+  season: 'season',
+  isRewatch: 'isRewatch',
+  rating: 'rating',
+  note: 'note',
+  revision: 'revision',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WatchEntryScalarFieldEnum = (typeof WatchEntryScalarFieldEnum)[keyof typeof WatchEntryScalarFieldEnum]
+
+
 export const UserListScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -2519,6 +2615,7 @@ export type GlobalOmitConfig = {
   review?: Prisma.ReviewOmit
   actor?: Prisma.ActorOmit
   userMovie?: Prisma.UserMovieOmit
+  watchEntry?: Prisma.WatchEntryOmit
   userList?: Prisma.UserListOmit
   userListItem?: Prisma.UserListItemOmit
   friendship?: Prisma.FriendshipOmit

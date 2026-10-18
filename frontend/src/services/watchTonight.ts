@@ -12,6 +12,7 @@ export async function fetchWatchTonight(
   const seen = new Set<string>();
   let offset = 0;
   let total: number | undefined;
+
   do {
     const params = new URLSearchParams({
       seeLater: "true",
@@ -23,6 +24,7 @@ export async function fetchWatchTonight(
       items: UserMovieApiResponse[];
       total: number;
     }>(`/users/${userId}/movies/page?${params}`, { signal });
+
     if (signal.aborted) throw new DOMException("Отменено", "AbortError");
     if (
       !Array.isArray(data.items) ||

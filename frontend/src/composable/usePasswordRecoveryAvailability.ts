@@ -14,7 +14,9 @@ export function usePasswordRecoveryAvailability(): {
 
   async function load(): Promise<void> {
     controller?.abort();
+
     const current = new AbortController();
+
     controller = current;
     enabled.value = false;
     checking.value = true;
@@ -24,7 +26,9 @@ export function usePasswordRecoveryAvailability(): {
         "/auth/password/capabilities",
         { signal: current.signal, timeout: 10000 }
       );
-      if (!current.signal.aborted) enabled.value = data?.passwordRecovery === true;
+
+      if (!current.signal.aborted)
+        enabled.value = data?.passwordRecovery === true;
     } catch {
       if (!current.signal.aborted) failed.value = true;
     } finally {

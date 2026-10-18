@@ -99,7 +99,9 @@ const emit = defineEmits<{
           type="button"
           class="movie-card__action movie-card__action--fav"
           :class="{ 'movie-card__action--fav-on': favorite }"
-          :aria-label="favorite ? 'Убрать из избранного' : 'Добавить в избранное'"
+          :aria-label="
+            favorite ? 'Убрать из избранного' : 'Добавить в избранное'
+          "
           :aria-pressed="favorite"
           :disabled="busy"
           @click.stop="emit('toggle-favorite')"
@@ -133,6 +135,7 @@ const emit = defineEmits<{
 
 <style lang="scss" scoped>
 @use "../../styles/media" as *;
+
 .movie-card {
   min-width: 0;
   cursor: pointer;
@@ -150,8 +153,7 @@ const emit = defineEmits<{
     overflow: hidden;
     background: var(--fv-color-bg-secondary);
     box-shadow: var(--fv-shadow-card);
-    transition:
-      transform var(--fv-motion-base) var(--fv-ease),
+    transition: transform var(--fv-motion-base) var(--fv-ease),
       box-shadow var(--fv-motion-base) var(--fv-ease);
   }
 
@@ -203,8 +205,7 @@ const emit = defineEmits<{
     border-radius: 999px;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-    transition:
-      transform var(--fv-motion-fast) var(--fv-ease),
+    transition: transform var(--fv-motion-fast) var(--fv-ease),
       background var(--fv-motion-fast) var(--fv-ease);
 
     &:active {

@@ -2,15 +2,19 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { nextTick } from "vue";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AdminUsers from "./AdminUsers.vue";
+
 const mocks = vi.hoisted(() => ({ get: vi.fn() }));
+
 vi.mock("@/services/api", () => ({ default: { get: mocks.get } }));
 vi.mock("vue-router", () => ({
   useRoute: () => ({ query: {} }),
   useRouter: () => ({ replace: vi.fn() }),
 }));
+
 vi.mock("@/state/state", () => ({
   useMainStore: () => ({ userData: { id: "admin" } }),
 }));
+
 const stubs = {
   AdminDateFilters: true,
   BaseModal: true,
@@ -21,6 +25,7 @@ const stubs = {
   "a-pagination": true,
 };
 let wrapper: ReturnType<typeof mount>;
+
 beforeEach(() =>
   vi.stubGlobal("matchMedia", (media: string) => ({
     media,
@@ -33,6 +38,7 @@ beforeEach(() =>
     dispatchEvent: () => false,
   }))
 );
+
 afterEach(() => {
   wrapper?.unmount();
   vi.unstubAllGlobals();
@@ -41,11 +47,13 @@ afterEach(() => {
 describe("Состояния загрузки пользователей администратора", () => {
   it("показывает один лоадер без пустого состояния, затем отдельное сообщение об отсутствии результатов", async () => {
     let finish!: (value: unknown) => void;
+
     mocks.get.mockReturnValueOnce(
       new Promise((resolve) => {
         finish = resolve;
       })
     );
+
     wrapper = mount(AdminUsers, { global: { stubs } });
     await nextTick();
     expect(wrapper.find('[role="status"]').exists()).toBe(true);
@@ -58,6 +66,7 @@ describe("Состояния загрузки пользователей адм�
     expect(wrapper.text()).not.toContain("No data");
     wrapper.unmount();
   });
+
   it("после ошибки запроса показывает ошибку с повтором вместо сообщения о пустом списке", async () => {
     mocks.get.mockRejectedValueOnce(new Error("QA unavailable"));
     wrapper = mount(AdminUsers, { global: { stubs } });

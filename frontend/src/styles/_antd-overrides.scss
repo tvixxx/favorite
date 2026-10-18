@@ -10,7 +10,8 @@
 }
 
 @mixin antFocusRing($mixPercent: 10%) {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fv-color-accent) $mixPercent, transparent);
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--fv-color-accent) $mixPercent, transparent);
 }
 
 @mixin mutedInsetPanel {
@@ -18,5 +19,3 @@
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--fv-color-border) 30%, transparent);
 }
-
-

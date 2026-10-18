@@ -2,16 +2,23 @@ import { defineStore } from "pinia";
 import { computed, ref, watch } from "vue";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { isSuccessStatus } from "@/utils";
-import { isNotificationTypeEnabled, useNotificationPrefs } from "@/composable/useNotificationPrefs";
+import {
+  isNotificationTypeEnabled,
+  useNotificationPrefs,
+} from "@/composable/useNotificationPrefs";
 import type { NotificationDto } from "./types";
 
 export const useNotificationsStore = defineStore("notifications", () => {
   const prefs = useNotificationPrefs();
   const types = computed(() => [
     ...(prefs.newMessages.value ? ["CHAT_MESSAGE"] : []),
-    ...(prefs.friendRequests.value ? ["FRIEND_REQUEST", "FRIEND_ACCEPTED"] : []),
+    ...(prefs.friendRequests.value
+      ? ["FRIEND_REQUEST", "FRIEND_ACCEPTED"]
+      : []),
   ]);
-  const typeQuery = computed(() => types.value.map((type) => `types=${type}`).join("&"));
+  const typeQuery = computed(() =>
+    types.value.map((type) => `types=${type}`).join("&")
+  );
   let activeUserId: string | null = null;
   let revision = 0;
   const items = ref<NotificationDto[]>([]);
@@ -25,6 +32,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
   const fetchUnreadCount = async (userId: string) => {
     const requestRevision = revision;
+
     if (!userId?.trim()) {
       return;
     }
@@ -38,7 +46,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
     try {
       const response = await useFetch<number>(
         `/users/${userId}/notifications/unread-count?${typeQuery.value}`,
-        { method: FETCH_METHOD.get },
+        { method: FETCH_METHOD.get }
       );
 
       if (requestRevision === revision && isSuccessStatus(response.status)) {
@@ -52,6 +60,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
   const fetchNotifications = async (userId: string, limit = 30) => {
     const requestRevision = revision;
+
     if (!userId?.trim()) {
       return [];
     }
@@ -68,21 +77,26 @@ export const useNotificationsStore = defineStore("notifications", () => {
     try {
       const response = await useFetch<NotificationDto[]>(
         `/users/${userId}/notifications?limit=${limit}&${typeQuery.value}`,
-        { method: FETCH_METHOD.get },
+        { method: FETCH_METHOD.get }
       );
+
       if (requestRevision !== revision) return [];
 
       if (!isSuccessStatus(response.status)) {
         throw new Error("Не удалось загрузить уведомления");
       }
 
-      items.value = response.data.filter((item) => isNotificationTypeEnabled(item.type));
+      items.value = response.data.filter((item) =>
+        isNotificationTypeEnabled(item.type)
+      );
 
       return items.value;
     } catch (error: unknown) {
       if (requestRevision !== revision) return [];
+
       const text =
         error instanceof Error ? error.message : "Ошибка загрузки уведомлений";
+
       setError(text);
       throw error;
     } finally {
@@ -93,7 +107,9 @@ export const useNotificationsStore = defineStore("notifications", () => {
   const hydrate = async (userId: string) => {
     if (activeUserId !== userId) revision++;
     activeUserId = userId;
+
     const requestRevision = revision;
+
     await fetchUnreadCount(userId);
     if (requestRevision !== revision) return;
     await fetchNotifications(userId);
@@ -125,6 +141,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
   const markRead = async (userId: string, notificationId: string) => {
     const requestRevision = revision;
+
     if (!userId?.trim() || !notificationId?.trim()) {
       return null;
     }
@@ -132,8 +149,9 @@ export const useNotificationsStore = defineStore("notifications", () => {
     try {
       const response = await useFetch<NotificationDto | null>(
         `/users/${userId}/notifications/${notificationId}/read`,
-        { method: FETCH_METHOD.patch },
+        { method: FETCH_METHOD.patch }
       );
+
       if (requestRevision !== revision) return null;
 
       if (!isSuccessStatus(response.status)) {
@@ -155,8 +173,9 @@ export const useNotificationsStore = defineStore("notifications", () => {
       return updated;
     } catch (error: unknown) {
       if (requestRevision !== revision) return null;
-      const text =
-        error instanceof Error ? error.message : "Ошибка обновления";
+
+      const text = error instanceof Error ? error.message : "Ошибка обновления";
+
       setError(text);
       throw error;
     }
@@ -164,6 +183,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
   const markAllRead = async (userId: string) => {
     const requestRevision = revision;
+
     if (!userId?.trim()) {
       return;
     }
@@ -173,8 +193,9 @@ export const useNotificationsStore = defineStore("notifications", () => {
     try {
       const response = await useFetch<void>(
         `/users/${userId}/notifications/read-all?${typeQuery.value}`,
-        { method: FETCH_METHOD.post },
+        { method: FETCH_METHOD.post }
       );
+
       if (requestRevision !== revision) return;
 
       if (!isSuccessStatus(response.status)) {
@@ -187,11 +208,13 @@ export const useNotificationsStore = defineStore("notifications", () => {
         ...n,
         readAt: n.readAt ?? now,
       }));
+
       unreadCount.value = 0;
     } catch (error: unknown) {
       if (requestRevision !== revision) return;
-      const text =
-        error instanceof Error ? error.message : "Ошибка обновления";
+
+      const text = error instanceof Error ? error.message : "Ошибка обновления";
+
       setError(text);
       throw error;
     }

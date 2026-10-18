@@ -6,6 +6,7 @@ vi.mock("vue-router", async (importOriginal) => ({
   ...(await importOriginal<typeof import("vue-router")>()),
   useRouter: () => ({ push: vi.fn() }),
 }));
+
 vi.mock("@/state/state", () => ({ useMainStore: () => ({ userData: null }) }));
 vi.mock("@/stores", () => ({
   useMoviesStore: () => ({
@@ -40,6 +41,7 @@ describe("Спойлер в предпросмотре каталога", () => 
         },
       },
     });
+
     expect(wrapper.text()).not.toContain("Развязка сюжета в предпросмотре");
     await wrapper.get('button[aria-expanded="false"]').trigger("click");
     expect(wrapper.text()).toContain("Развязка сюжета в предпросмотре");

@@ -2,6 +2,7 @@ import { mount } from "@vue/test-utils";
 import { describe, expect, it } from "vitest";
 import AdminEngagement from "./AdminEngagement.vue";
 import type { AdminEngagementData } from "./admin.types";
+
 const data: AdminEngagementData = {
   activity: {
     dau: 2,
@@ -34,9 +35,11 @@ const data: AdminEngagementData = {
     },
   ],
 };
+
 describe("Активность, воронка и удержание", () => {
   it("показывает значения и конверсии, отличает частичную историю от нулевых показателей", () => {
     const wrapper = mount(AdminEngagement, { props: { data, days: 30 } });
+
     expect(wrapper.text()).toContain("За сутки");
     expect(wrapper.text()).toContain("Частичная история");
     expect(wrapper.text()).toContain("50% от предыдущего шага");
@@ -46,6 +49,7 @@ describe("Активность, воронка и удержание", () => {
     expect(wrapper.get('[data-week="2026-10-05"]').text()).not.toContain("0%");
     wrapper.unmount();
   });
+
   it("не показывает NaN/Infinity при пустой воронке", () => {
     const wrapper = mount(AdminEngagement, {
       props: {
@@ -53,6 +57,7 @@ describe("Активность, воронка и удержание", () => {
         days: 7,
       },
     });
+
     expect(wrapper.text()).not.toMatch(/NaN|Infinity/);
     expect(wrapper.text()).toContain("Нет данных для конверсии");
     wrapper.unmount();

@@ -9,7 +9,10 @@ import { onUnmounted, ref, watch, type Ref } from "vue";
  *
  * @param source геттер флага загрузки, напр. `() => store.isLoading`
  */
-export function useMinLoading(source: () => boolean, minMs = 400): Ref<boolean> {
+export function useMinLoading(
+  source: () => boolean,
+  minMs = 400
+): Ref<boolean> {
   const shown = ref(false);
   let shownAt = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -40,7 +43,7 @@ export function useMinLoading(source: () => boolean, minMs = 400): Ref<boolean> 
         }
       }
     },
-    { immediate: true },
+    { immediate: true }
   );
 
   onUnmounted(() => clearTimeout(timer));

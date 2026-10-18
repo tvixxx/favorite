@@ -13,6 +13,7 @@ function pushTextWithUrls(chunk: string, out: ChatMessageSegment[]): void {
 
   let last = 0;
   let m: RegExpExecArray | null;
+
   URL_RE.lastIndex = 0;
   while ((m = URL_RE.exec(chunk)) !== null) {
     if (m.index > last) {
@@ -36,6 +37,7 @@ export function parseChatMessageContent(text: string): ChatMessageSegment[] {
   const segments: ChatMessageSegment[] = [];
   let lastIndex = 0;
   let m: RegExpExecArray | null;
+
   MOVIE_PAIR_RE.lastIndex = 0;
   while ((m = MOVIE_PAIR_RE.exec(text)) !== null) {
     if (m.index > lastIndex) {
@@ -54,15 +56,17 @@ export function parseChatMessageContent(text: string): ChatMessageSegment[] {
 }
 
 function mergeAdjacentText(
-  segments: ChatMessageSegment[],
+  segments: ChatMessageSegment[]
 ): ChatMessageSegment[] {
   const out: ChatMessageSegment[] = [];
+
   for (const s of segments) {
     if (s.type === "text" && !s.text) {
       continue;
     }
 
     const prev = out[out.length - 1];
+
     if (s.type === "text" && prev?.type === "text") {
       prev.text += s.text;
     } else {

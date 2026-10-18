@@ -22,7 +22,7 @@ const props = withDefaults(
     cancelText: "Отмена",
     icon: "ph:trash",
     loading: false,
-  },
+  }
 );
 
 const emit = defineEmits<{ confirm: [] }>();
@@ -33,7 +33,13 @@ const onConfirm = (): void => {
 </script>
 
 <template>
-  <BaseModal v-model="open" headerless :aria-label="props.subject ? `${props.title} ${props.subject}` : props.title">
+  <BaseModal
+    v-model="open"
+    headerless
+    :aria-label="
+      props.subject ? `${props.title} ${props.subject}` : props.title
+    "
+  >
     <template #body>
       <div class="confirm-dialog__body">
         <div class="confirm-dialog__heading">
@@ -42,7 +48,9 @@ const onConfirm = (): void => {
           </span>
           <div class="confirm-dialog__copy">
             <h3 class="confirm-dialog__title">{{ props.title }}</h3>
-            <p v-if="props.subject" class="confirm-dialog__subject">{{ props.subject }}</p>
+            <p v-if="props.subject" class="confirm-dialog__subject">
+              {{ props.subject }}
+            </p>
           </div>
         </div>
         <p v-if="props.description" class="confirm-dialog__desc">
@@ -82,11 +90,22 @@ const onConfirm = (): void => {
   &__body {
     text-align: left;
     padding: 28px 24px 8px;
-    @include mediaMax(767.98px) { padding: 28px 22px 12px; }
+
+    @include mediaMax(767.98px) {
+      padding: 28px 22px 12px;
+    }
   }
 
-  &__heading { display: flex; align-items: flex-start; gap: 16px; }
-  &__copy { min-width: 0; padding-top: 2px; }
+  &__heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  &__copy {
+    min-width: 0;
+    padding-top: 2px;
+  }
 
   &__icon {
     display: grid;
@@ -151,8 +170,7 @@ const onConfirm = (): void => {
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       opacity var(--fv-motion-fast) var(--fv-ease);
 
     @include mediaTablet {
@@ -166,7 +184,10 @@ const onConfirm = (): void => {
       cursor: default;
     }
 
-    &:focus-visible { outline: 2px solid var(--fv-color-accent); outline-offset: 3px; }
+    &:focus-visible {
+      outline: 2px solid var(--fv-color-accent);
+      outline-offset: 3px;
+    }
 
     &--danger {
       background: var(--fv-color-brand);

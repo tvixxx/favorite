@@ -20,7 +20,6 @@ import {
 } from "@/stores/movies/utils";
 
 export const useUserMoviesStore = defineStore("userMovies", () => {
-  // State
   const userMovies = ref<UserMovie[]>([]);
   const isLoaded = ref<boolean>(false);
   const isLoading = ref(false);
@@ -28,12 +27,10 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   const totalCount = ref(0);
   const isError = ref<string | null>(null);
 
-  // Search
   const searchResults = ref<UserMovie[]>([]);
   const searchQuery = ref<string>("");
   const isSearching = ref<boolean>(false);
 
-  // Filters
   const filters = ref<UserMoviesFilters>({});
 
   const queryRequests = createRequestGuard();
@@ -41,13 +38,13 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   const statsRequests = createRequestGuard();
   const analyticsRequests = createRequestGuard();
   let sessionRevision = 0;
+  let loadedQueryKey = "";
+  let freshUntil = 0;
 
-  // Pagination
   const currentPage = ref(1);
   // Порция догрузки: 20 = 4 полных ряда сетки на десктопе (5 карточек в ряд)
   const pageSize = ref(20);
 
-  // Stats
   const stats = ref<UserMoviesStats | null>(null);
   const isStatsLoading = ref<boolean>(false);
   const isStatsError = ref<string | null>(null);
@@ -55,7 +52,6 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   const isAnalyticsLoading = ref<boolean>(false);
   const isAnalyticsError = ref<string | null>(null);
 
-  // Computed
   const currentList = computed(() => {
     // Текстовый поиск хранится отдельно: пока в сторе есть q — показываем searchResults.
     // Иначе загруженные страницы коллекции, включая фильтры без поиска.
@@ -70,7 +66,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   const visibleUserMovies = computed(() => currentList.value);
 
   const hasMoreUserMovies = computed(
-    () => currentList.value.length < totalCount.value,
+    () => currentList.value.length < totalCount.value
   );
 
   const totalPages = computed(() => {
@@ -78,11 +74,11 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   });
 
   const favoriteUserMovies = computed(() =>
-    userMovies.value.filter((um) => um.isFavorite),
+    userMovies.value.filter((um) => um.isFavorite)
   );
 
   const seeLaterUserMovies = computed(() =>
-    userMovies.value.filter((um) => um.seeLater),
+    userMovies.value.filter((um) => um.seeLater)
   );
 
   const hasActiveFilters = computed(() => {
@@ -101,7 +97,6 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     );
   });
 
-  // Actions
   const setLoading = (value: boolean) => {
     isLoading.value = value;
   };
@@ -144,13 +139,17 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     isLoadingMore.value = false;
   };
 
-  // API calls
-  const requestPage = async (userId: string, query: string, append = false): Promise<void> => {
+  const requestPage = async (
+    userId: string,
+    query: string,
+    append = false
+  ): Promise<void> => {
     if (!userId?.trim()) {
       return;
     }
 
     const isCurrent = queryRequests.begin();
+
     searchQuery.value = query;
     isSearching.value = !!query;
     isLoadingMore.value = append;
@@ -163,7 +162,11 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
     try {
       const params = buildUserSearchParams(filters.value, query || undefined);
+
       params.set("limit", String(pageSize.value));
+
+      const queryKey = `${userId}?${params.toString()}`;
+
       params.set("offset", String(append ? currentList.value.length : 0));
 
       const queryString = params.toString();
@@ -171,36 +174,54 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
         queryString ? `?${queryString}` : ""
       }`;
 
-      const { data, status } = await useFetch<{items: UserMovieApiResponse[]; total: number}>(
-        endpoint,
-        {
-          method: FETCH_METHOD.get,
-        },
-      );
+      const { data, status } = await useFetch<{
+        items: UserMovieApiResponse[];
+        total: number;
+      }>(endpoint, {
+        method: FETCH_METHOD.get,
+      });
+
       if (!isCurrent()) return;
 
-      if (status !== 200 || !Array.isArray(data.items) || !Number.isSafeInteger(data.total) || data.total < 0) {
+      if (
+        status !== 200 ||
+        !Array.isArray(data.items) ||
+        !Number.isSafeInteger(data.total) ||
+        data.total < 0
+      ) {
         throw new Error("Ошибка загрузки фильмов");
       }
 
       const incoming = mapUserMoviesFromApi(data.items);
-      const loadedIds = new Set(currentList.value.map(row => row.movieId));
-      if (append && (data.total !== totalCount.value || incoming.some(row => loadedIds.has(row.movieId)))) {
+      const loadedIds = new Set(currentList.value.map((row) => row.movieId));
+
+      if (
+        append &&
+        (data.total !== totalCount.value ||
+          incoming.some((row) => loadedIds.has(row.movieId)))
+      ) {
         await requestPage(userId, query);
 
         return;
       }
 
-      if ((!incoming.length && data.total > (append ? currentList.value.length : 0)) || new Set(incoming.map(row => row.movieId)).size !== incoming.length) {
+      if (
+        (!incoming.length &&
+          data.total > (append ? currentList.value.length : 0)) ||
+        new Set(incoming.map((row) => row.movieId)).size !== incoming.length
+      ) {
         throw new Error("Некорректная страница коллекции");
       }
 
       const items = append ? [...currentList.value, ...incoming] : incoming;
+
       if (query) searchResults.value = items;
       else setUserMovies(items, data.total);
       totalCount.value = data.total;
       currentPage.value = append ? currentPage.value + 1 : 1;
       isLoaded.value = true;
+      loadedQueryKey = queryKey;
+      if (!append) freshUntil = Date.now() + 120000;
     } catch (err) {
       if (!isCurrent()) return;
       if (!append) setError("Ошибка загрузки фильмов");
@@ -216,10 +237,35 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     }
   };
 
-  const fetchUserMovies = (userId: string): Promise<void> => requestPage(userId, "");
-  const searchUserMovies = (userId: string, query: string): Promise<void> => requestPage(userId, query.trim());
+  const fetchUserMovies = (userId: string): Promise<void> =>
+    requestPage(userId, "");
+  const ensureUserMovies = async (userId: string): Promise<void> => {
+    const params = buildUserSearchParams(
+      filters.value,
+      searchQuery.value.trim() || undefined
+    );
+
+    params.set("limit", String(pageSize.value));
+    if (
+      isLoaded.value &&
+      !isError.value &&
+      loadedQueryKey === `${userId}?${params.toString()}` &&
+      Date.now() < freshUntil
+    )
+      return;
+    await requestPage(userId, searchQuery.value.trim());
+  };
+
+  const searchUserMovies = (userId: string, query: string): Promise<void> =>
+    requestPage(userId, query.trim());
   const loadMore = async (userId: string): Promise<void> => {
-    if (isLoadingMore.value || isLoading.value || !isLoaded.value || !hasMoreUserMovies.value) return;
+    if (
+      isLoadingMore.value ||
+      isLoading.value ||
+      !isLoaded.value ||
+      !hasMoreUserMovies.value
+    )
+      return;
 
     return requestPage(userId, searchQuery.value.trim(), true);
   };
@@ -230,6 +276,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     }
 
     const isCurrent = statsRequests.begin();
+
     isStatsLoading.value = true;
     isStatsError.value = null;
 
@@ -237,8 +284,9 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
     try {
       const { data, status } = await useFetch<UserMoviesStats>(
-        `/users/${userId}/movies/stats`,
+        `/users/${userId}/movies/stats`
       );
+
       if (!isCurrent()) return;
 
       if (status !== 200) {
@@ -263,6 +311,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     }
 
     const isCurrent = analyticsRequests.begin();
+
     isAnalyticsLoading.value = true;
     isAnalyticsError.value = null;
 
@@ -270,8 +319,9 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
     try {
       const { data, status } = await useFetch<UserMoviesAnalytics>(
-        `/users/${userId}/movies/analytics`,
+        `/users/${userId}/movies/analytics`
       );
+
       if (!isCurrent()) return;
 
       if (status !== 200) {
@@ -299,6 +349,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   };
 
   const refreshAfterImport = async (userId: string): Promise<void> => {
+    freshUntil = 0;
     await Promise.allSettled([
       requestPage(userId, searchQuery.value.trim()),
       refreshDerivedData(userId),
@@ -308,7 +359,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   const addUserMovie = async (
     userId: string,
     movieId: string,
-    data: Partial<UserMovie>,
+    data: Partial<UserMovie>
   ) => {
     if (!userId?.trim()) {
       throw new Error("Не указан пользователь");
@@ -323,17 +374,27 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
           ...data,
           movieId,
         },
-      },
+      }
     );
-    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
+
+    if (requestRevision !== sessionRevision)
+      throw new Error("Сессия изменилась");
 
     if (response?.data && isSuccessStatus(response.status)) {
+      freshUntil = 0;
+
       const userMovie = mapUserMovieFromApi(response.data);
+
       if (isLoaded.value) {
-        await requestPage(userId, searchQuery.value.trim()).catch(() => undefined);
+        await requestPage(userId, searchQuery.value.trim()).catch(
+          () => undefined
+        );
       } else {
         queryRequests.invalidate();
-        userMovies.value = [userMovie, ...userMovies.value.filter((item) => item.movieId !== movieId)];
+        userMovies.value = [
+          userMovie,
+          ...userMovies.value.filter((item) => item.movieId !== movieId),
+        ];
       }
 
       await refreshDerivedData(userId);
@@ -347,7 +408,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   const updateUserMovie = async (
     userId: string,
     movieId: string,
-    data: Partial<UserMovie>,
+    data: Partial<UserMovie>
   ) => {
     if (!userId?.trim()) {
       throw new Error("Не указан пользователь");
@@ -359,22 +420,27 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       {
         method: FETCH_METHOD.patch,
         data,
-      },
+      }
     );
-    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
+
+    if (requestRevision !== sessionRevision)
+      throw new Error("Сессия изменилась");
 
     if (isSuccessStatus(response.status)) {
       const updatedUserMovie = mapUserMovieFromApi(response.data);
 
       userMovies.value = userMovies.value.map((um) =>
-        um.movieId === movieId ? updatedUserMovie : um,
+        um.movieId === movieId ? updatedUserMovie : um
       );
 
       searchResults.value = searchResults.value.map((um) =>
-        um.movieId === movieId ? updatedUserMovie : um,
+        um.movieId === movieId ? updatedUserMovie : um
       );
+
       if (isLoaded.value && (hasActiveFilters.value || searchQuery.value)) {
-        await requestPage(userId, searchQuery.value.trim()).catch(() => undefined);
+        await requestPage(userId, searchQuery.value.trim()).catch(
+          () => undefined
+        );
       }
 
       await refreshDerivedData(userId);
@@ -385,20 +451,43 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     }
   };
 
-  const rateUserMovie = async (userId: string, movieId: string, personalRate: number, reviewText: string, isSpoiler?: boolean): Promise<UserMovie> => {
+  const rateUserMovie = async (
+    userId: string,
+    movieId: string,
+    personalRate: number,
+    reviewText: string,
+    isSpoiler?: boolean
+  ): Promise<UserMovie> => {
     const requestRevision = sessionRevision;
-    const response = await useFetch<UserMovieApiResponse>(`/users/${userId}/movies/${movieId}/rating`, {
-      method: FETCH_METHOD.patch, data: { personalRate, reviewText, isSpoiler },
-    });
-    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
-    if (!isSuccessStatus(response.status)) throw new Error("Не удалось сохранить оценку");
+    const response = await useFetch<UserMovieApiResponse>(
+      `/users/${userId}/movies/${movieId}/rating`,
+      {
+        method: FETCH_METHOD.patch,
+        data: { personalRate, reviewText, isSpoiler },
+      }
+    );
+
+    if (requestRevision !== sessionRevision)
+      throw new Error("Сессия изменилась");
+    if (!isSuccessStatus(response.status))
+      throw new Error("Не удалось сохранить оценку");
     analyticsRequests.invalidate();
     analytics.value = null;
+
     const updated = mapUserMovieFromApi(response.data);
-    userMovies.value = userMovies.value.map((item) => item.movieId === movieId ? updated : item);
-    searchResults.value = searchResults.value.map((item) => item.movieId === movieId ? updated : item);
+
+    userMovies.value = userMovies.value.map((item) =>
+      item.movieId === movieId ? updated : item
+    );
+
+    searchResults.value = searchResults.value.map((item) =>
+      item.movieId === movieId ? updated : item
+    );
+
     if (isLoaded.value && (hasActiveFilters.value || searchQuery.value)) {
-      await requestPage(userId, searchQuery.value.trim()).catch(() => undefined);
+      await requestPage(userId, searchQuery.value.trim()).catch(
+        () => undefined
+      );
     }
 
     return updated;
@@ -406,7 +495,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
   const fetchUserMovieById = async (
     userId: string,
-    movieId: string,
+    movieId: string
   ): Promise<UserMovie | null> => {
     if (!userId?.trim()) {
       return null;
@@ -419,8 +508,9 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
         `/users/${userId}/movies/${movieId}`,
         {
           method: FETCH_METHOD.get,
-        },
+        }
       );
+
       if (!isCurrent()) return null;
 
       if (status === 404) {
@@ -434,7 +524,9 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       const mapped = mapUserMovieFromApi(data);
 
       if (userMovies.value.some((um) => um.movieId === mapped.movieId)) {
-        userMovies.value = userMovies.value.map((item) => item.movieId === mapped.movieId ? mapped : item);
+        userMovies.value = userMovies.value.map((item) =>
+          item.movieId === mapped.movieId ? mapped : item
+        );
       }
 
       return mapped;
@@ -452,9 +544,16 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
   function forgetMissingMovie(movieId: string): void {
     queryRequests.invalidate();
-    if (currentList.value.some(item => item.movieId === movieId)) totalCount.value = Math.max(0, totalCount.value - 1);
-    userMovies.value = userMovies.value.filter((item) => item.movieId !== movieId);
-    searchResults.value = searchResults.value.filter((item) => item.movieId !== movieId);
+    if (currentList.value.some((item) => item.movieId === movieId))
+      totalCount.value = Math.max(0, totalCount.value - 1);
+    userMovies.value = userMovies.value.filter(
+      (item) => item.movieId !== movieId
+    );
+
+    searchResults.value = searchResults.value.filter(
+      (item) => item.movieId !== movieId
+    );
+
     isLoaded.value = false;
     setLoading(false);
     isSearching.value = false;
@@ -473,18 +572,25 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       `/users/${userId}/movies/${movieId}`,
       {
         method: FETCH_METHOD.delete,
-      },
+      }
     );
-    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
+
+    if (requestRevision !== sessionRevision)
+      throw new Error("Сессия изменилась");
 
     if (isSuccessStatus(response.status)) {
-      const wasVisible = currentList.value.some((item) => item.movieId === movieId);
+      const wasVisible = currentList.value.some(
+        (item) => item.movieId === movieId
+      );
+
       userMovies.value = userMovies.value.filter(
-        (um) => um.movieId !== movieId,
+        (um) => um.movieId !== movieId
       );
+
       searchResults.value = searchResults.value.filter(
-        (um) => um.movieId !== movieId,
+        (um) => um.movieId !== movieId
       );
+
       if (wasVisible) totalCount.value = Math.max(0, totalCount.value - 1);
       useUserListsStore().resetSession();
       await refreshDerivedData(userId);
@@ -495,11 +601,13 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
   const removeFromSearchResults = (movieId: string) => {
     searchResults.value = searchResults.value.filter(
-      (um) => um.movieId !== movieId,
+      (um) => um.movieId !== movieId
     );
   };
 
   const resetSession = () => {
+    freshUntil = 0;
+    loadedQueryKey = "";
     sessionRevision++;
     queryRequests.invalidate();
     detailRequests.invalidate();
@@ -526,7 +634,6 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   };
 
   return {
-    // State
     userMovies,
     isLoaded,
     isLoading,
@@ -546,7 +653,6 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     isAnalyticsLoading,
     isAnalyticsError,
 
-    // Computed
     currentList,
     visibleUserMovies,
     hasMoreUserMovies,
@@ -555,7 +661,6 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     seeLaterUserMovies,
     hasActiveFilters,
 
-    // Actions
     setLoading,
     setError,
     setUserMovies,
@@ -564,6 +669,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     setFilters,
     clearSearch,
     fetchUserMovies,
+    ensureUserMovies,
     loadMore,
     searchUserMovies,
     fetchUserMoviesStats,

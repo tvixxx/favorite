@@ -28,9 +28,10 @@ export const LEADERBOARD_HERO_MOVIES: LeaderboardHeroMeta = {
 };
 
 export function getLeaderboardHeroMeta(
-  route: RouteLocationNormalizedLoaded,
+  route: RouteLocationNormalizedLoaded
 ): LeaderboardHeroMeta | undefined {
   const raw = route.meta.leaderboardHero;
+
   if (!raw || typeof raw !== "object") {
     return undefined;
   }

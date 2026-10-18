@@ -912,6 +912,17 @@ class MovieService {
         typeof error === 'object' &&
         error !== null &&
         'code' in error &&
+        error.code === 'P2003'
+      ) {
+        throw new ConflictException(
+          'Произведение связано с сохранённой историей. Его можно убрать из коллекции, сохранив записи дневника.',
+        );
+      }
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
         error.code === 'P2025'
       ) {
         throw new NotFoundException(`Фильм с айди: ${id} не найден`);

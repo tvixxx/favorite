@@ -18,8 +18,9 @@ import { useAdminQueryParam } from "@/composable/useAdminQueryParam";
 import AdminDateFilters from "./AdminDateFilters.vue";
 import AdminDataRegion from "./AdminDataRegion.vue";
 import { type AdminReview, type AdminFeedback } from "./admin.types";
-import {useDateTime} from '@/composable/useDateTime';
-const {dateLabel}=useDateTime();
+import { useDateTime } from "@/composable/useDateTime";
+
+const { dateLabel } = useDateTime();
 
 const tab = useAdminQueryParam("moderation", "reviews", undefined, [
   "reviews",
@@ -116,6 +117,7 @@ const columns = [
 onMounted(() => {
   void (tab.value === "reviews" ? reviews.load() : feedback.load());
 });
+
 watch(
   tab,
   () => void (tab.value === "reviews" ? reviews.load() : feedback.load())
@@ -145,6 +147,7 @@ async function moderate(dismiss = false): Promise<void> {
   }
 
   saving.value = true;
+
   const review = selectedReview.value;
 
   try {
@@ -183,6 +186,7 @@ async function saveStatus(): Promise<void> {
     await api.patch(`/feedback/${selectedFeedback.value.id}/status`, {
       status: nextStatus.value,
     });
+
     feedbackOpen.value = false;
     message.success("Статус обращения обновлён");
     await feedback.load();
@@ -455,7 +459,10 @@ async function saveStatus(): Promise<void> {
           {{ dateLabel(selectedFeedback.createdAt) }}
         </p>
         <p class="admin-text">{{ selectedFeedback.message }}</p>
-        <ProtectedImage v-if="selectedFeedback.screenshotAssetId" :asset-id="selectedFeedback.screenshotAssetId" />
+        <ProtectedImage
+          v-if="selectedFeedback.screenshotAssetId"
+          :asset-id="selectedFeedback.screenshotAssetId"
+        />
         <dl class="admin-facts">
           <dt>Email для ответа</dt>
           <dd>{{ selectedFeedback.email ?? "Не указан" }}</dd>

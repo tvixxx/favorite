@@ -15,6 +15,7 @@ const error = ref("");
 const busy = ref(false);
 let generation = 0;
 let controller: AbortController | undefined;
+
 function clear() {
   generation++;
   controller?.abort();
@@ -37,6 +38,7 @@ async function load() {
   }
 
   const current = generation;
+
   controller = new AbortController();
   busy.value = true;
   try {
@@ -46,6 +48,7 @@ async function load() {
       }.webp`,
       { responseType: "blob", signal: controller.signal, timeout: 15000 }
     );
+
     if (current === generation) url.value = URL.createObjectURL(response.data);
   } catch (cause) {
     if (current === generation) error.value = friendlyRequestError(cause);
@@ -59,6 +62,7 @@ watch(
   () => void load(),
   { immediate: true }
 );
+
 onBeforeUnmount(clear);
 </script>
 <template>
@@ -85,6 +89,7 @@ onBeforeUnmount(clear);
   width: 100%;
   min-width: 0;
   color: var(--fv-color-text-secondary);
+
   img {
     display: block;
     max-width: 100%;
@@ -92,6 +97,7 @@ onBeforeUnmount(clear);
     object-fit: contain;
     margin: auto;
   }
+
   [role="status"] {
     display: flex;
     align-items: center;
@@ -99,6 +105,7 @@ onBeforeUnmount(clear);
     gap: 8px;
     min-height: 100px;
   }
+
   a {
     display: block;
     margin-top: 12px;

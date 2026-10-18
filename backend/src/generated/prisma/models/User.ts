@@ -362,6 +362,7 @@ export type UserWhereInput = {
   usageEvents?: Prisma.UsageEventListRelationFilter
   adminActions?: Prisma.AdminAuditLogListRelationFilter
   passwordReset?: Prisma.XOR<Prisma.PasswordResetNullableScalarRelationFilter, Prisma.PasswordResetWhereInput> | null
+  watchEntries?: Prisma.WatchEntryListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -404,6 +405,7 @@ export type UserOrderByWithRelationInput = {
   usageEvents?: Prisma.UsageEventOrderByRelationAggregateInput
   adminActions?: Prisma.AdminAuditLogOrderByRelationAggregateInput
   passwordReset?: Prisma.PasswordResetOrderByWithRelationInput
+  watchEntries?: Prisma.WatchEntryOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -449,6 +451,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   usageEvents?: Prisma.UsageEventListRelationFilter
   adminActions?: Prisma.AdminAuditLogListRelationFilter
   passwordReset?: Prisma.XOR<Prisma.PasswordResetNullableScalarRelationFilter, Prisma.PasswordResetWhereInput> | null
+  watchEntries?: Prisma.WatchEntryListRelationFilter
 }, "id" | "email" | "avatarAssetId">
 
 export type UserOrderByWithAggregationInput = {
@@ -546,6 +549,7 @@ export type UserCreateInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -587,6 +591,7 @@ export type UserUncheckedCreateInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -628,6 +633,7 @@ export type UserUpdateInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -669,6 +675,7 @@ export type UserUncheckedUpdateInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -966,6 +973,20 @@ export type UserUpdateOneRequiredWithoutUserMoviesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutUserMoviesInput, Prisma.UserUpdateWithoutUserMoviesInput>, Prisma.UserUncheckedUpdateWithoutUserMoviesInput>
 }
 
+export type UserCreateNestedOneWithoutWatchEntriesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWatchEntriesInput, Prisma.UserUncheckedCreateWithoutWatchEntriesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWatchEntriesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutWatchEntriesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWatchEntriesInput, Prisma.UserUncheckedCreateWithoutWatchEntriesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWatchEntriesInput
+  upsert?: Prisma.UserUpsertWithoutWatchEntriesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutWatchEntriesInput, Prisma.UserUpdateWithoutWatchEntriesInput>, Prisma.UserUncheckedUpdateWithoutWatchEntriesInput>
+}
+
 export type UserCreateNestedOneWithoutListsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutListsInput, Prisma.UserUncheckedCreateWithoutListsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutListsInput
@@ -1162,6 +1183,7 @@ export type UserCreateWithoutUploadedMediaInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutUploadedMediaInput = {
@@ -1202,6 +1224,7 @@ export type UserUncheckedCreateWithoutUploadedMediaInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutUploadedMediaInput = {
@@ -1247,6 +1270,7 @@ export type UserCreateWithoutAvatarAssetInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAvatarAssetInput = {
@@ -1287,6 +1311,7 @@ export type UserUncheckedCreateWithoutAvatarAssetInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAvatarAssetInput = {
@@ -1343,6 +1368,7 @@ export type UserUpdateWithoutUploadedMediaInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUploadedMediaInput = {
@@ -1383,6 +1409,7 @@ export type UserUncheckedUpdateWithoutUploadedMediaInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutAvatarAssetInput = {
@@ -1434,6 +1461,7 @@ export type UserUpdateWithoutAvatarAssetInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAvatarAssetInput = {
@@ -1474,6 +1502,7 @@ export type UserUncheckedUpdateWithoutAvatarAssetInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPasswordResetInput = {
@@ -1514,6 +1543,7 @@ export type UserCreateWithoutPasswordResetInput = {
   reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPasswordResetInput = {
@@ -1554,6 +1584,7 @@ export type UserUncheckedCreateWithoutPasswordResetInput = {
   reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPasswordResetInput = {
@@ -1610,6 +1641,7 @@ export type UserUpdateWithoutPasswordResetInput = {
   reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPasswordResetInput = {
@@ -1650,6 +1682,7 @@ export type UserUncheckedUpdateWithoutPasswordResetInput = {
   reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutCreatedMoviesInput = {
@@ -1690,6 +1723,7 @@ export type UserCreateWithoutCreatedMoviesInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCreatedMoviesInput = {
@@ -1730,6 +1764,7 @@ export type UserUncheckedCreateWithoutCreatedMoviesInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCreatedMoviesInput = {
@@ -1786,6 +1821,7 @@ export type UserUpdateWithoutCreatedMoviesInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCreatedMoviesInput = {
@@ -1826,6 +1862,7 @@ export type UserUncheckedUpdateWithoutCreatedMoviesInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutReviewsInput = {
@@ -1866,6 +1903,7 @@ export type UserCreateWithoutReviewsInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutReviewsInput = {
@@ -1906,6 +1944,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutReviewsInput = {
@@ -1962,6 +2001,7 @@ export type UserUpdateWithoutReviewsInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewsInput = {
@@ -2002,6 +2042,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutCreatedActorsInput = {
@@ -2042,6 +2083,7 @@ export type UserCreateWithoutCreatedActorsInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCreatedActorsInput = {
@@ -2082,6 +2124,7 @@ export type UserUncheckedCreateWithoutCreatedActorsInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCreatedActorsInput = {
@@ -2138,6 +2181,7 @@ export type UserUpdateWithoutCreatedActorsInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCreatedActorsInput = {
@@ -2178,6 +2222,7 @@ export type UserUncheckedUpdateWithoutCreatedActorsInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutUserMoviesInput = {
@@ -2218,6 +2263,7 @@ export type UserCreateWithoutUserMoviesInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutUserMoviesInput = {
@@ -2258,6 +2304,7 @@ export type UserUncheckedCreateWithoutUserMoviesInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutUserMoviesInput = {
@@ -2314,6 +2361,7 @@ export type UserUpdateWithoutUserMoviesInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUserMoviesInput = {
@@ -2339,6 +2387,187 @@ export type UserUncheckedUpdateWithoutUserMoviesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
+  createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutWatchEntriesInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
+  role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
+  authVersion?: number
+  tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
+  userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
+  createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
+  createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
+  passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutWatchEntriesInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
+  role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
+  authVersion?: number
+  tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
+  userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
+  createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
+  createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
+  passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutWatchEntriesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutWatchEntriesInput, Prisma.UserUncheckedCreateWithoutWatchEntriesInput>
+}
+
+export type UserUpsertWithoutWatchEntriesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutWatchEntriesInput, Prisma.UserUncheckedUpdateWithoutWatchEntriesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutWatchEntriesInput, Prisma.UserUncheckedCreateWithoutWatchEntriesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutWatchEntriesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutWatchEntriesInput, Prisma.UserUncheckedUpdateWithoutWatchEntriesInput>
+}
+
+export type UserUpdateWithoutWatchEntriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
+  userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
+  createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
+  createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
+  passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutWatchEntriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
+  userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
@@ -2394,6 +2623,7 @@ export type UserCreateWithoutListsInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutListsInput = {
@@ -2434,6 +2664,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutListsInput = {
@@ -2490,6 +2721,7 @@ export type UserUpdateWithoutListsInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutListsInput = {
@@ -2530,6 +2762,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutFriendshipsRequestedInput = {
@@ -2570,6 +2803,7 @@ export type UserCreateWithoutFriendshipsRequestedInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFriendshipsRequestedInput = {
@@ -2610,6 +2844,7 @@ export type UserUncheckedCreateWithoutFriendshipsRequestedInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFriendshipsRequestedInput = {
@@ -2655,6 +2890,7 @@ export type UserCreateWithoutFriendshipsReceivedInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFriendshipsReceivedInput = {
@@ -2695,6 +2931,7 @@ export type UserUncheckedCreateWithoutFriendshipsReceivedInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFriendshipsReceivedInput = {
@@ -2751,6 +2988,7 @@ export type UserUpdateWithoutFriendshipsRequestedInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFriendshipsRequestedInput = {
@@ -2791,6 +3029,7 @@ export type UserUncheckedUpdateWithoutFriendshipsRequestedInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutFriendshipsReceivedInput = {
@@ -2842,6 +3081,7 @@ export type UserUpdateWithoutFriendshipsReceivedInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFriendshipsReceivedInput = {
@@ -2882,6 +3122,7 @@ export type UserUncheckedUpdateWithoutFriendshipsReceivedInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutSentMessagesInput = {
@@ -2922,6 +3163,7 @@ export type UserCreateWithoutSentMessagesInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSentMessagesInput = {
@@ -2962,6 +3204,7 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSentMessagesInput = {
@@ -3007,6 +3250,7 @@ export type UserCreateWithoutReceivedMessagesInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutReceivedMessagesInput = {
@@ -3047,6 +3291,7 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutReceivedMessagesInput = {
@@ -3103,6 +3348,7 @@ export type UserUpdateWithoutSentMessagesInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSentMessagesInput = {
@@ -3143,6 +3389,7 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutReceivedMessagesInput = {
@@ -3194,6 +3441,7 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
@@ -3234,6 +3482,7 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutStatusInput = {
@@ -3274,6 +3523,7 @@ export type UserCreateWithoutStatusInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutStatusInput = {
@@ -3314,6 +3564,7 @@ export type UserUncheckedCreateWithoutStatusInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutStatusInput = {
@@ -3370,6 +3621,7 @@ export type UserUpdateWithoutStatusInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutStatusInput = {
@@ -3410,6 +3662,7 @@ export type UserUncheckedUpdateWithoutStatusInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutNotificationsInput = {
@@ -3450,6 +3703,7 @@ export type UserCreateWithoutNotificationsInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -3490,6 +3744,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -3546,6 +3801,7 @@ export type UserUpdateWithoutNotificationsInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -3586,6 +3842,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutFeedbacksInput = {
@@ -3626,6 +3883,7 @@ export type UserCreateWithoutFeedbacksInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFeedbacksInput = {
@@ -3666,6 +3924,7 @@ export type UserUncheckedCreateWithoutFeedbacksInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFeedbacksInput = {
@@ -3722,6 +3981,7 @@ export type UserUpdateWithoutFeedbacksInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFeedbacksInput = {
@@ -3762,6 +4022,7 @@ export type UserUncheckedUpdateWithoutFeedbacksInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutReviewReportsInput = {
@@ -3802,6 +4063,7 @@ export type UserCreateWithoutReviewReportsInput = {
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutReviewReportsInput = {
@@ -3842,6 +4104,7 @@ export type UserUncheckedCreateWithoutReviewReportsInput = {
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutReviewReportsInput = {
@@ -3898,6 +4161,7 @@ export type UserUpdateWithoutReviewReportsInput = {
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewReportsInput = {
@@ -3938,6 +4202,7 @@ export type UserUncheckedUpdateWithoutReviewReportsInput = {
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAdminActionsInput = {
@@ -3978,6 +4243,7 @@ export type UserCreateWithoutAdminActionsInput = {
   reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
   usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAdminActionsInput = {
@@ -4018,6 +4284,7 @@ export type UserUncheckedCreateWithoutAdminActionsInput = {
   reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
   usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAdminActionsInput = {
@@ -4074,6 +4341,7 @@ export type UserUpdateWithoutAdminActionsInput = {
   reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
   usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAdminActionsInput = {
@@ -4114,6 +4382,7 @@ export type UserUncheckedUpdateWithoutAdminActionsInput = {
   reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
   usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutUsageEventsInput = {
@@ -4154,6 +4423,7 @@ export type UserCreateWithoutUsageEventsInput = {
   reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
   adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutUsageEventsInput = {
@@ -4194,6 +4464,7 @@ export type UserUncheckedCreateWithoutUsageEventsInput = {
   reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
   adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
   passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutUsageEventsInput = {
@@ -4250,6 +4521,7 @@ export type UserUpdateWithoutUsageEventsInput = {
   reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
   adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUsageEventsInput = {
@@ -4290,6 +4562,7 @@ export type UserUncheckedUpdateWithoutUsageEventsInput = {
   reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
   adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
   passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -4313,6 +4586,7 @@ export type UserCountOutputType = {
   reviewReports: number
   usageEvents: number
   adminActions: number
+  watchEntries: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4331,6 +4605,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   reviewReports?: boolean | UserCountOutputTypeCountReviewReportsArgs
   usageEvents?: boolean | UserCountOutputTypeCountUsageEventsArgs
   adminActions?: boolean | UserCountOutputTypeCountAdminActionsArgs
+  watchEntries?: boolean | UserCountOutputTypeCountWatchEntriesArgs
 }
 
 /**
@@ -4448,6 +4723,13 @@ export type UserCountOutputTypeCountAdminActionsArgs<ExtArgs extends runtime.Typ
   where?: Prisma.AdminAuditLogWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountWatchEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WatchEntryWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -4489,6 +4771,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   usageEvents?: boolean | Prisma.User$usageEventsArgs<ExtArgs>
   adminActions?: boolean | Prisma.User$adminActionsArgs<ExtArgs>
   passwordReset?: boolean | Prisma.User$passwordResetArgs<ExtArgs>
+  watchEntries?: boolean | Prisma.User$watchEntriesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -4586,6 +4869,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   usageEvents?: boolean | Prisma.User$usageEventsArgs<ExtArgs>
   adminActions?: boolean | Prisma.User$adminActionsArgs<ExtArgs>
   passwordReset?: boolean | Prisma.User$passwordResetArgs<ExtArgs>
+  watchEntries?: boolean | Prisma.User$watchEntriesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4616,6 +4900,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     usageEvents: Prisma.$UsageEventPayload<ExtArgs>[]
     adminActions: Prisma.$AdminAuditLogPayload<ExtArgs>[]
     passwordReset: Prisma.$PasswordResetPayload<ExtArgs> | null
+    watchEntries: Prisma.$WatchEntryPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -5051,6 +5336,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   usageEvents<T extends Prisma.User$usageEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$usageEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UsageEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   adminActions<T extends Prisma.User$adminActionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$adminActionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AdminAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   passwordReset<T extends Prisma.User$passwordResetArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$passwordResetArgs<ExtArgs>>): Prisma.Prisma__PasswordResetClient<runtime.Types.Result.GetResult<Prisma.$PasswordResetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  watchEntries<T extends Prisma.User$watchEntriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$watchEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WatchEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5916,6 +6202,30 @@ export type User$passwordResetArgs<ExtArgs extends runtime.Types.Extensions.Inte
    */
   include?: Prisma.PasswordResetInclude<ExtArgs> | null
   where?: Prisma.PasswordResetWhereInput
+}
+
+/**
+ * User.watchEntries
+ */
+export type User$watchEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WatchEntry
+   */
+  select?: Prisma.WatchEntrySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WatchEntry
+   */
+  omit?: Prisma.WatchEntryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WatchEntryInclude<ExtArgs> | null
+  where?: Prisma.WatchEntryWhereInput
+  orderBy?: Prisma.WatchEntryOrderByWithRelationInput | Prisma.WatchEntryOrderByWithRelationInput[]
+  cursor?: Prisma.WatchEntryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WatchEntryScalarFieldEnum | Prisma.WatchEntryScalarFieldEnum[]
 }
 
 /**

@@ -31,8 +31,12 @@ const route = useRoute();
 const userMoviesStore = useUserMoviesStore();
 const mainStore = useMainStore();
 const watchTonightOpen = ref(false);
-const showQuickAdd = computed(() => getUserPreference(mainStore.userData, "quickAddEnabled"));
-const showWatchTonight = computed(() => getUserPreference(mainStore.userData, "watchTonightEnabled"));
+const showQuickAdd = computed(() =>
+  getUserPreference(mainStore.userData, "quickAddEnabled")
+);
+const showWatchTonight = computed(() =>
+  getUserPreference(mainStore.userData, "watchTonightEnabled")
+);
 
 interface QuickAddOption {
   value: string;
@@ -43,7 +47,12 @@ interface QuickAddOption {
 const QUICK_ADD_MIN_QUERY_LENGTH = 2;
 const QUICK_ADD_DEBOUNCE_MS = 280;
 const QUICK_ADD_OPTIONS_LIMIT = 10;
-type QuickAddMovie = Pick<MovieApiResponse, "id" | "title" | "isSerial" | "contentKind" | "publishDate"> & {inCollection: boolean};
+
+type QuickAddMovie = Pick<
+  MovieApiResponse,
+  "id" | "title" | "isSerial" | "contentKind" | "publishDate"
+> & { inCollection: boolean };
+
 let quickAddRequest = 0;
 
 const imageErrors = ref<Set<string>>(new Set());
@@ -72,9 +81,7 @@ const showMore = async (): Promise<void> => {
 
 const showSkeleton = useMinLoading(() => userMoviesStore.isLoading);
 
-const shouldFetchMovies = computed(
-  () => !userMoviesStore.isLoaded && mainStore.isLoggedIn && userId.value
-);
+const shouldFetchMovies = computed(() => mainStore.isLoggedIn && userId.value);
 const showPaginator = computed(
   () =>
     !!totalMovies.value &&
@@ -206,6 +213,7 @@ const addToFavorite = async (item: UserMovie) => {
     await userMoviesStore.updateUserMovie(userId.value, item.movieId, {
       isFavorite: true,
     });
+
     message.success(`${item.movie.title} добавлен в избранное`);
   } catch {
     message.error(`Не удалось добавить в избранное: ${item.movie.title}`);
@@ -217,6 +225,7 @@ const removeFromFavorite = async (item: UserMovie) => {
     await userMoviesStore.updateUserMovie(userId.value, item.movieId, {
       isFavorite: false,
     });
+
     message.success(`${item.movie.title} удален из избранного`);
   } catch {
     message.error(`Не удалось удалить из избранного: ${item.movie.title}`);
@@ -268,18 +277,18 @@ const applyRoutePresetFilters = async () => {
     isSerialRaw === null
       ? undefined
       : isSerialRaw === "true"
-        ? true
-        : isSerialRaw === "false"
-          ? false
-          : undefined;
+      ? true
+      : isSerialRaw === "false"
+      ? false
+      : undefined;
   const seeLater =
     seeLaterRaw === null
       ? undefined
       : seeLaterRaw === "true"
-        ? true
-        : seeLaterRaw === "false"
-          ? false
-          : undefined;
+      ? true
+      : seeLaterRaw === "false"
+      ? false
+      : undefined;
 
   userMoviesStore.setFilters({
     ...userMoviesStore.filters,
@@ -323,6 +332,7 @@ const closeQuickAddPanel = () => {
 watch(showQuickAdd, (visible) => {
   if (!visible) closeQuickAddPanel();
 });
+
 watch(showWatchTonight, (visible) => {
   if (!visible) watchTonightOpen.value = false;
 });
@@ -365,7 +375,9 @@ const fetchQuickAddOptions = async (query: string) => {
   isQuickAddLoading.value = true;
 
   try {
-    const endpoint = `/movies/suggestions?q=${encodeURIComponent(q)}&limit=${QUICK_ADD_OPTIONS_LIMIT}`;
+    const endpoint = `/movies/suggestions?q=${encodeURIComponent(
+      q
+    )}&limit=${QUICK_ADD_OPTIONS_LIMIT}`;
     const { data, status } = await useFetch<QuickAddMovie[]>(endpoint, {
       method: FETCH_METHOD.get,
     });
@@ -375,6 +387,7 @@ const fetchQuickAddOptions = async (query: string) => {
     }
 
     if (request !== quickAddRequest) return;
+
     const prepared = data.map((movie) => {
       const isExisting = movie.inCollection;
 
@@ -415,6 +428,7 @@ const handleQuickAddSearch = (value: string) => {
   quickAddDebounceTimer = setTimeout(() => {
     void fetchQuickAddOptions(value);
   }, QUICK_ADD_DEBOUNCE_MS);
+
   isQuickAddLoading.value = true;
 };
 
@@ -505,7 +519,7 @@ onMounted(async () => {
 
   if (shouldFetchMovies.value) {
     try {
-      await userMoviesStore.fetchUserMovies(userId.value);
+      await userMoviesStore.ensureUserMovies(userId.value);
     } catch {
       message.error(ERROR_FETCH_MOVIES_TEXT);
     }
@@ -604,7 +618,11 @@ watch(
         v-if="showPaginator && userMoviesStore.hasMoreUserMovies"
         class="movie-list__more"
       >
-        <a-button size="large" :loading="userMoviesStore.isLoadingMore" @click="showMore">
+        <a-button
+          size="large"
+          :loading="userMoviesStore.isLoadingMore"
+          @click="showMore"
+        >
           Показать ещё
           <span class="movie-list__more-count">{{ restCount }}</span>
         </a-button>
@@ -621,7 +639,11 @@ watch(
     />
     <WatchTonightModal v-if="showWatchTonight" v-model="watchTonightOpen" />
 
-    <div v-if="showQuickAdd || showWatchTonight" ref="quickAddFabRoot" class="quick-add-fab">
+    <div
+      v-if="showQuickAdd || showWatchTonight"
+      ref="quickAddFabRoot"
+      class="quick-add-fab"
+    >
       <Transition name="quick-add-fab-panel">
         <div
           v-if="showQuickAdd && isQuickAddPanelOpen"
@@ -662,34 +684,41 @@ watch(
         </div>
       </Transition>
 
-      <div class="quick-add-fab__actions" role="group" aria-label="Быстрые действия с коллекцией">
+      <div
+        class="quick-add-fab__actions"
+        role="group"
+        aria-label="Быстрые действия с коллекцией"
+      >
         <button
           v-if="showWatchTonight"
           type="button"
           class="quick-add-fab__watch-tonight"
           aria-label="Что посмотреть сегодня?"
-          @click.stop="closeQuickAddPanel(); watchTonightOpen = true"
+          @click.stop="
+            closeQuickAddPanel();
+            watchTonightOpen = true;
+          "
         >
           <BaseIcon name="ph:shuffle" :width="20" :height="20" />
           <span class="quick-add-fab__watch-label">Что посмотреть?</span>
           <span class="quick-add-fab__watch-label-mobile">Подбор</span>
         </button>
         <button
-        v-if="showQuickAdd"
-        data-tour="tour-quick-add"
-        type="button"
-        class="quick-add-fab__button"
-        :class="{ 'quick-add-fab__button_active': isQuickAddPanelOpen }"
-        aria-label="Быстрый ввод"
-        :aria-expanded="isQuickAddPanelOpen"
-        @click.stop="toggleQuickAddPanel"
-      >
-        <BaseIcon
-          :name="isQuickAddPanelOpen ? 'ph:x' : 'ph:plus'"
-          :width="22"
-          :height="22"
-        />
-        <span class="quick-add-fab__button-text">Быстрый ввод</span>
+          v-if="showQuickAdd"
+          data-tour="tour-quick-add"
+          type="button"
+          class="quick-add-fab__button"
+          :class="{ 'quick-add-fab__button_active': isQuickAddPanelOpen }"
+          aria-label="Быстрый ввод"
+          :aria-expanded="isQuickAddPanelOpen"
+          @click.stop="toggleQuickAddPanel"
+        >
+          <BaseIcon
+            :name="isQuickAddPanelOpen ? 'ph:x' : 'ph:plus'"
+            :width="22"
+            :height="22"
+          />
+          <span class="quick-add-fab__button-text">Быстрый ввод</span>
         </button>
       </div>
     </div>
@@ -714,6 +743,10 @@ watch(
 
   &__grid {
     @include cardsGrid;
+
+    @include mediaMax($tablet) {
+      margin-bottom: 0;
+    }
   }
 
   // Догрузка: кнопка «Показать ещё» по центру под сеткой
@@ -722,6 +755,10 @@ watch(
     justify-content: center;
     margin-top: 8px;
     padding: 8px 0 32px;
+
+    @include mediaMax($tablet) {
+      padding-bottom: 0;
+    }
 
     .ant-btn {
       display: inline-flex;
@@ -869,8 +906,7 @@ watch(
     gap: 0.42rem;
     cursor: pointer;
     box-shadow: var(--fv-shadow-brand-md);
-    transition:
-      transform var(--fv-motion-slow) var(--fv-ease),
+    transition: transform var(--fv-motion-slow) var(--fv-ease),
       box-shadow var(--fv-motion-slow) var(--fv-ease);
 
     &:hover {

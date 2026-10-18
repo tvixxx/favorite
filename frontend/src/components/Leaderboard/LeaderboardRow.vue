@@ -85,6 +85,7 @@ const medalTone = computed<"gold" | "silver" | "bronze" | "default">(() => {
 
 <style lang="scss" scoped>
 @use "../../styles/media" as *;
+
 .lb-row {
   display: flex;
   align-items: center;
@@ -103,7 +104,6 @@ const medalTone = computed<"gold" | "silver" | "bronze" | "default">(() => {
     border-bottom: none;
   }
 
-  // Своя строка: синяя подложка, место и имя — синим (эталон)
   &--highlighted {
     border-radius: 12px;
     border-bottom-color: transparent;

@@ -1,11 +1,13 @@
 function parseDate(date: Date | string | null): Date | null {
   if (!date) return null;
+
   const parsed = new Date(date);
 
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 const formatters = new Map<string, Intl.DateTimeFormat>();
+
 function formatter(
   timezone: string,
   options: Intl.DateTimeFormatOptions,
@@ -15,6 +17,7 @@ function formatter(
     typeof timezone === "string" && timezone.length <= 80 ? timezone : "UTC";
   const key = JSON.stringify([zone, locale, options]);
   let current = formatters.get(key);
+
   if (!current) {
     try {
       current = new Intl.DateTimeFormat(locale, { ...options, timeZone: zone });
@@ -54,7 +57,9 @@ export function calendarDateKey(
   timezone = "UTC"
 ): string | null {
   const parsed = parseDate(date);
+
   if (!parsed) return null;
+
   const parts = Object.fromEntries(
     formatter(
       timezone,
@@ -76,6 +81,7 @@ export function calendarDateKey(
 
 export const formatDate = (date: Date | string | null, timezone = "UTC") => {
   const parsed = parseDate(date);
+
   if (!parsed) {
     return "не указано";
   }
@@ -89,6 +95,7 @@ export const formatDate = (date: Date | string | null, timezone = "UTC") => {
 
 export const formatYear = (date: Date | string | null) => {
   const parsed = parseDate(date);
+
   if (!parsed) {
     return "не указано";
   }
@@ -103,6 +110,7 @@ export const formatDateTime = (
   timezone = "UTC"
 ) => {
   const parsed = parseDate(date);
+
   if (!parsed) {
     return "не указано";
   }

@@ -26,7 +26,7 @@ const blocks = computed<Block[]>(() => {
 
   const flush = (): void => {
     const hasContent = run.some(
-      (seg) => seg.type === "link" || (seg.type === "text" && seg.text.trim()),
+      (seg) => seg.type === "link" || (seg.type === "text" && seg.text.trim())
     );
 
     if (hasContent) {
@@ -51,7 +51,7 @@ const blocks = computed<Block[]>(() => {
 });
 
 function parseDetailLink(
-  url: string,
+  url: string
 ): { id: string; title: string | null } | null {
   try {
     const parsed = new URL(url, window.location.origin);
@@ -111,7 +111,6 @@ function parseDetailLink(
 </template>
 
 <style scoped lang="scss">
-/* Текстовый пузырь (эталон): красный отправленный / белый полученный, хвост */
 .chat-bubble {
   width: fit-content;
   max-width: 100%;

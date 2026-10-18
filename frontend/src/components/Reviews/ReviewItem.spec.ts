@@ -16,8 +16,11 @@ const review = {
 describe("Спойлеры в отзывах", () => {
   it("скрывает текст до явного раскрытия и позволяет скрыть его снова", async () => {
     const wrapper = mount(ReviewItem, { props: { review } });
+
     expect(wrapper.text()).not.toContain(review.text);
+
     const button = wrapper.get('button[aria-expanded="false"]');
+
     expect(button.text()).toBe("Показать");
     expect(button.attributes("aria-label")).toBe("Показать спойлер");
     await button.trigger("click");
@@ -31,10 +34,12 @@ describe("Спойлеры в отзывах", () => {
 
   it("не раскрывает новый текст вместо уже прочитанного спойлера", async () => {
     const wrapper = mount(ReviewItem, { props: { review } });
+
     await wrapper.get('button[aria-expanded="false"]').trigger("click");
     await wrapper.setProps({
       review: { ...review, text: "Совершенно другой финал истории" },
     });
+
     expect(wrapper.text()).not.toContain("Совершенно другой финал истории");
     wrapper.unmount();
   });
@@ -48,6 +53,7 @@ describe("Спойлеры в отзывах", () => {
       rate: review.rate,
     };
     const wrapper = mount(ReviewItem, { props: { review: oldReview } });
+
     expect(wrapper.text()).toContain(review.text);
     expect(wrapper.find("button[aria-expanded]").exists()).toBe(false);
     wrapper.unmount();

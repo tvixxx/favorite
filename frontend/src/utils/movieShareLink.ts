@@ -3,7 +3,7 @@ import type { Router } from "vue-router";
 export function buildMovieDetailAbsoluteUrl(
   router: Router,
   movieId: string,
-  movieTitle?: string,
+  movieTitle?: string
 ): string {
   const { href } = router.resolve({
     name: "detail",

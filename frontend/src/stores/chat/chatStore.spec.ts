@@ -1,4 +1,9 @@
-import { createPinia, disposePinia, getActivePinia, setActivePinia } from "pinia";
+import {
+  createPinia,
+  disposePinia,
+  getActivePinia,
+  setActivePinia,
+} from "pinia";
 import { ref } from "vue";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useChatStore } from "./chatStore";
@@ -12,9 +17,15 @@ vi.mock("@/composable", () => ({
   useAuthToken: () => token,
   FETCH_METHOD: { get: "GET" },
 }));
+
 vi.mock("../userStatus/userStatusStore", () => ({
-  useUserStatusStore: () => ({ setUserOnline: vi.fn(), setUserOffline: vi.fn(), clearStatuses: vi.fn() }),
+  useUserStatusStore: () => ({
+    setUserOnline: vi.fn(),
+    setUserOffline: vi.fn(),
+    clearStatuses: vi.fn(),
+  }),
 }));
+
 vi.mock("../notifications/notificationsStore", () => ({
   useNotificationsStore: () => ({ applyIncoming: vi.fn() }),
 }));
@@ -26,7 +37,11 @@ describe("Авторизация соединения чата", () => {
     mocks.io.mockReset();
     mocks.useFetch.mockReset();
     mocks.io.mockReturnValue({
-      on: vi.fn(), emit: vi.fn(), disconnect: vi.fn().mockReturnThis(), connect: vi.fn().mockReturnThis(), removeAllListeners: vi.fn(),
+      on: vi.fn(),
+      emit: vi.fn(),
+      disconnect: vi.fn().mockReturnThis(),
+      connect: vi.fn().mockReturnThis(),
+      removeAllListeners: vi.fn(),
     });
   });
 
@@ -34,10 +49,15 @@ describe("Авторизация соединения чата", () => {
 
   it("передаёт актуальный access при каждом подключении, без заявленного userId", () => {
     useChatStore().connect("user-id");
+
     const options = mocks.io.mock.calls[0][1];
     const handshake = () => {
       let result: unknown;
-      if (typeof options.auth === "function") options.auth((value: unknown) => { result = value; });
+
+      if (typeof options.auth === "function")
+        options.auth((value: unknown) => {
+          result = value;
+        });
       else result = options.auth;
 
       return result;
@@ -57,58 +77,136 @@ describe("Авторизация соединения чата", () => {
 
   it("добавляет сообщение с серверным id только после подтверждения", async () => {
     const store = useChatStore();
+
     store.connect("user-id");
     store.socket!.connected = true;
-    const delivered = { id: "saved-id", senderId: "user-id", receiverId: "peer-id", content: "Привет", isRead: false, createdAt: "2026-01-01" };
+
+    const delivered = {
+      id: "saved-id",
+      senderId: "user-id",
+      receiverId: "peer-id",
+      content: "Привет",
+      isRead: false,
+      createdAt: "2026-01-01",
+    };
     const emit = vi.fn((_event, _payload, ack) => ack(null, delivered));
+
     store.socket!.timeout = vi.fn(() => ({ emit })) as never;
+
     const saved = await store.sendMessage("peer-id", "Привет");
+
     expect(saved).toEqual(delivered);
     expect(store.messages.get("peer-id")).toEqual([delivered]);
-    expect(emit).toHaveBeenCalledWith("message:send", { receiverId: "peer-id", content: "Привет" }, expect.any(Function));
+    expect(emit).toHaveBeenCalledWith(
+      "message:send",
+      { receiverId: "peer-id", content: "Привет" },
+      expect.any(Function)
+    );
   });
 
   it("при таймауте не оставляет ложное отправленное сообщение", async () => {
     const store = useChatStore();
+
     store.connect("user-id");
     store.socket!.connected = true;
-    store.socket!.timeout = vi.fn(() => ({ emit: vi.fn((_event, _payload, ack) => ack(new Error("timeout"))) })) as never;
+    store.socket!.timeout = vi.fn(() => ({
+      emit: vi.fn((_event, _payload, ack) => ack(new Error("timeout"))),
+    })) as never;
+
     await expect(store.sendMessage("peer-id", "Привет")).rejects.toThrow();
     expect(store.messages.get("peer-id") ?? []).toEqual([]);
   });
 
-  it.each(["conversations", "messages"])("не возвращает %s старой сессии после выхода", async (kind) => {
-    let finish!: (value: unknown) => void;
-    mocks.useFetch.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
-    const store = useChatStore();
-    const pending = kind === "conversations" ? store.fetchConversations("user-id") : store.fetchMessages("user-id", "peer-id");
-    store.disconnect();
-    finish({ status: 200, data: [{ id: "old-session-data" }] });
-    await pending;
-    expect(store.conversations).toEqual([]);
-    expect(store.messages.size).toBe(0);
-  });
+  it.each(["conversations", "messages"])(
+    "не возвращает %s старой сессии после выхода",
+    async (kind) => {
+      let finish!: (value: unknown) => void;
+
+      mocks.useFetch.mockReturnValueOnce(
+        new Promise((resolve) => {
+          finish = resolve;
+        })
+      );
+
+      const store = useChatStore();
+      const pending =
+        kind === "conversations"
+          ? store.fetchConversations("user-id")
+          : store.fetchMessages("user-id", "peer-id");
+
+      store.disconnect();
+      finish({ status: 200, data: [{ id: "old-session-data" }] });
+      await pending;
+      expect(store.conversations).toEqual([]);
+      expect(store.messages.size).toBe(0);
+    }
+  );
 
   it("не теряет сообщение сокета при поздней загрузке истории", async () => {
     let finish!: (value: unknown) => void;
-    mocks.useFetch.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+
+    mocks.useFetch.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+    );
+
     const store = useChatStore();
+
     store.connect("user-id");
+
     const pending = store.fetchMessages("user-id", "peer-id");
-    const incoming = { id: "incoming", senderId: "peer-id", receiverId: "user-id", content: "Новое", isRead: false, createdAt: "2026-10-04T12:00:00Z" };
-    const handler = mocks.io.mock.results[0].value.on.mock.calls.find(([event]: [string]) => event === "message:received")[1];
+    const incoming = {
+      id: "incoming",
+      senderId: "peer-id",
+      receiverId: "user-id",
+      content: "Новое",
+      isRead: false,
+      createdAt: "2026-10-04T12:00:00Z",
+    };
+    const handler = mocks.io.mock.results[0].value.on.mock.calls.find(
+      ([event]: [string]) => event === "message:received"
+    )[1];
+
     await handler(incoming);
-    finish({ status: 200, data: [{ ...incoming, id: "old", createdAt: "2026-10-03T12:00:00Z" }] });
+    finish({
+      status: 200,
+      data: [{ ...incoming, id: "old", createdAt: "2026-10-03T12:00:00Z" }],
+    });
+
     await pending;
-    expect(store.messages.get("peer-id")?.map((item) => item.id)).toEqual(["old", "incoming"]);
+    expect(store.messages.get("peer-id")?.map((item) => item.id)).toEqual([
+      "old",
+      "incoming",
+    ]);
   });
 
   it("повтор доставки не увеличивает число непрочитанных", async () => {
     const store = useChatStore();
+
     store.connect("user-id");
-    const incoming = { id: "incoming", senderId: "peer-id", receiverId: "user-id", content: "Новое", isRead: false, createdAt: "2026-10-04T12:00:00Z" };
-    store.conversations = [{ otherUser: { id: "peer-id", email: "fixture@example.com" }, lastMessage: incoming, unreadCount: 0 }];
-    const handler = mocks.io.mock.results[0].value.on.mock.calls.find(([event]: [string]) => event === "message:received")[1];
+
+    const incoming = {
+      id: "incoming",
+      senderId: "peer-id",
+      receiverId: "user-id",
+      content: "Новое",
+      isRead: false,
+      createdAt: "2026-10-04T12:00:00Z",
+    };
+
+    store.conversations = [
+      {
+        otherUser: { id: "peer-id", email: "fixture@example.com" },
+        lastMessage: incoming,
+        unreadCount: 0,
+      },
+    ];
+
+    const handler = mocks.io.mock.results[0].value.on.mock.calls.find(
+      ([event]: [string]) => event === "message:received"
+    )[1];
+
     await handler(incoming);
     await handler(incoming);
     expect(store.totalUnreadCount).toBe(1);

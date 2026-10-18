@@ -15,6 +15,7 @@ const emit = defineEmits<{
 const selection = ref<ContentSelection>({ contentKind: null, isSerial: null });
 const saving = ref(false);
 const error = ref("");
+
 watch(
   [() => props.modelValue, () => props.movie.id],
   ([open]) => {
@@ -23,11 +24,13 @@ watch(
         contentKind: props.movie.contentKind ?? null,
         isSerial: props.movie.isSerial,
       };
+
       error.value = "";
     }
   },
   { immediate: true }
 );
+
 async function save(): Promise<void> {
   if (
     saving.value ||
@@ -35,7 +38,9 @@ async function save(): Promise<void> {
     selection.value.isSerial === null
   )
     return;
+
   const id = props.movie.id;
+
   saving.value = true;
   error.value = "";
   try {
@@ -45,6 +50,7 @@ async function save(): Promise<void> {
         ? { expectedUpdatedAt: props.movie.updatedAt }
         : {}),
     });
+
     if (props.modelValue && props.movie.id === id) {
       emit("saved");
       emit("update:modelValue", false);
@@ -105,12 +111,13 @@ async function save(): Promise<void> {
   padding-bottom: 20px;
 
   &__movie {
-    padding: 12px;
-    margin-bottom: 20px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
     border-radius: var(--fv-radius-md);
     background: var(--fv-color-bg-secondary);
     color: var(--fv-color-text-primary);
     font-weight: 500;
+    font-size: 15px;
     overflow-wrap: anywhere;
   }
 
@@ -123,15 +130,16 @@ async function save(): Promise<void> {
   }
 
   &__hint {
-    margin-top: 20px;
+    margin-top: 16px;
     color: var(--fv-color-text-secondary);
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.5;
     overflow-wrap: anywhere;
 
     p {
       margin: 0;
     }
+
     p + p {
       margin-top: 8px;
     }

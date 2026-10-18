@@ -34,6 +34,7 @@ watch(photoOpen, (open) => {
     editingActor.value = null;
   }
 });
+
 watch(
   () => actorsStore.actorsPageItems,
   () => {
@@ -233,6 +234,7 @@ const gradientFor = (id: string): string => {
 
 <style lang="scss" scoped>
 @use "@/styles/layout" as *;
+@use "@/styles/media" as *;
 
 .actors-page {
   width: 100%;
@@ -266,6 +268,11 @@ const gradientFor = (id: string): string => {
   gap: 20px;
   width: 100%;
   margin: 0.5rem 0 2rem;
+
+  @include mediaMax(500px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
 }
 
 .actor-card {
@@ -281,8 +288,7 @@ const gradientFor = (id: string): string => {
   background: var(--fv-color-bg-primary);
   border: 1px solid color-mix(in srgb, var(--fv-color-border) 55%, transparent);
   box-shadow: var(--fv-shadow-card);
-  transition:
-    transform var(--fv-motion-base) var(--fv-ease),
+  transition: transform var(--fv-motion-base) var(--fv-ease),
     box-shadow var(--fv-motion-base) var(--fv-ease);
 
   &:hover {
@@ -302,6 +308,7 @@ const gradientFor = (id: string): string => {
     font-weight: 500;
     font-size: 2rem;
     overflow: hidden;
+
     img {
       width: 100%;
       height: 100%;
@@ -317,6 +324,7 @@ const gradientFor = (id: string): string => {
     text-decoration: none;
     width: 100%;
   }
+
   &__photo-action {
     position: absolute;
     top: 8px;
@@ -339,6 +347,36 @@ const gradientFor = (id: string): string => {
     font-weight: 500;
     line-height: 1.25;
     color: var(--fv-color-text-primary);
+  }
+
+  @include mediaMax(500px) {
+    padding: 16px 12px;
+
+    &__link {
+      gap: 8px;
+    }
+
+    &__avatar {
+      width: 52px;
+      height: 52px;
+      font-size: 24px;
+    }
+
+    &__name {
+      min-height: 2.6em;
+      font-size: 13px;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+    }
+
+    &__photo-action {
+      top: 6px;
+      right: 6px;
+    }
   }
 }
 </style>

@@ -3,6 +3,7 @@ declare module "pdfmake/build/pdfmake.min" {
     getBlob(): Promise<Blob>;
     print(window?: Window): Promise<void>;
   }
+
   const pdfmake: {
     addVirtualFileSystem(fonts: Record<string, string>): void;
     addFonts(
@@ -14,5 +15,6 @@ declare module "pdfmake/build/pdfmake.min" {
     setUrlAccessPolicy(policy: (url: string) => boolean): void;
     createPdf(definition: Record<string, unknown>): PdfDocument;
   };
+
   export default pdfmake;
 }

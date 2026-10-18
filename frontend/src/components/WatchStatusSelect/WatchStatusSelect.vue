@@ -14,28 +14,29 @@ const modelValue = defineModel<WatchStatus>({ required: true });
 
 const { disabled = false } = defineProps<{ disabled?: boolean }>();
 
-const STATUS_ITEMS: Array<{ value: WatchStatus; label: string; dot: string }> = [
-  {
-    value: WatchStatus.NOT_STARTED,
-    label: "Не начато",
-    dot: "var(--fv-color-text-tertiary)",
-  },
-  {
-    value: WatchStatus.WATCHING,
-    label: "Смотрю",
-    dot: "var(--fv-color-accent)",
-  },
-  {
-    value: WatchStatus.COMPLETED,
-    label: "Просмотрено",
-    dot: "var(--fv-color-positive)",
-  },
-  {
-    value: WatchStatus.DROPPED,
-    label: "Брошено",
-    dot: "var(--fv-color-negative)",
-  },
-];
+const STATUS_ITEMS: Array<{ value: WatchStatus; label: string; dot: string }> =
+  [
+    {
+      value: WatchStatus.NOT_STARTED,
+      label: "Не начато",
+      dot: "var(--fv-color-text-tertiary)",
+    },
+    {
+      value: WatchStatus.WATCHING,
+      label: "Смотрю",
+      dot: "var(--fv-color-accent)",
+    },
+    {
+      value: WatchStatus.COMPLETED,
+      label: "Просмотрено",
+      dot: "var(--fv-color-positive)",
+    },
+    {
+      value: WatchStatus.DROPPED,
+      label: "Брошено",
+      dot: "var(--fv-color-negative)",
+    },
+  ];
 
 const isOpen = ref(false);
 const root = ref<HTMLElement | null>(null);
@@ -44,7 +45,7 @@ const listboxId = useId();
 const current = computed(
   () =>
     STATUS_ITEMS.find((item) => item.value === modelValue.value) ??
-    STATUS_ITEMS[0],
+    STATUS_ITEMS[0]
 );
 
 onClickOutside(root, () => {

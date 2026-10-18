@@ -94,8 +94,11 @@ const genres = computed(
 
 function choose(): void {
   const available = filtered.value.filter((movie) => !seen.value.has(movie.id));
+
   if (!available.length) return;
+
   const movie = available[Math.floor(Math.random() * available.length)];
+
   selected.value = movie;
   seen.value.add(movie.id);
 }
@@ -125,14 +128,17 @@ async function load(): Promise<void> {
   if (!main.userData?.id) return;
   controller?.abort();
   controller = new AbortController();
+
   const isCurrent = guard.begin();
   const id = main.userData.id;
+
   loading.value = true;
   error.value = false;
   loaded.value = false;
   movies.value = [];
   try {
     const result = await fetchWatchTonight(id, controller.signal);
+
     if (!isCurrent() || main.userData?.id !== id) return;
     movies.value = result;
     loaded.value = true;
@@ -151,6 +157,7 @@ watch(
   },
   { immediate: true }
 );
+
 watch(
   () => [main.sessionRevision, main.userData?.id],
   () => {
@@ -159,6 +166,7 @@ watch(
   },
   { flush: "sync" }
 );
+
 onBeforeUnmount(invalidate);
 function resetFilters(): void {
   kind.value = "any";
@@ -292,6 +300,7 @@ function navigate(path: string): void {
 
 <style scoped lang="scss">
 @use "@/styles/media" as *;
+
 .watch-tonight {
   font-family: var(--fv-font-ui);
   font-weight: var(--fv-weight-regular);
@@ -303,6 +312,7 @@ function navigate(path: string): void {
     font-size: var(--fv-text-p4-size);
     line-height: var(--fv-text-p4-lh);
   }
+
   &__meta,
   &__genres,
   &__reason,
@@ -310,19 +320,23 @@ function navigate(path: string): void {
     font-size: var(--fv-text-p3-size);
     line-height: var(--fv-text-p3-lh);
   }
+
   &__meta,
   &__reason {
     color: var(--fv-color-text-secondary);
   }
+
   &__intro {
     margin: 0;
   }
+
   &__filters {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     margin: 20px 0;
   }
+
   &__filters > div {
     display: flex;
     flex-direction: column;
@@ -332,26 +346,32 @@ function navigate(path: string): void {
     line-height: var(--fv-text-p4-lh);
     color: var(--fv-color-text-secondary);
   }
+
   &__filters :deep(.ant-select) {
     width: 100%;
   }
+
   &__count {
     margin: 0 0 14px;
   }
+
   &__suggestion {
     display: grid;
     grid-template-columns: 104px minmax(0, 1fr);
     gap: 18px;
     align-items: start;
   }
+
   &__poster {
     aspect-ratio: 2 / 3;
     height: auto;
     border-radius: 12px;
   }
+
   &__text {
     min-width: 0;
   }
+
   &__text h3 {
     font-size: var(--fv-text-h3-size);
     line-height: var(--fv-text-h3-lh);
@@ -359,49 +379,61 @@ function navigate(path: string): void {
     margin: 0 0 var(--fv-space-12);
     overflow-wrap: anywhere;
   }
+
   &__meta {
     margin: 0 0 var(--fv-space-8);
   }
+
   &__genres {
     margin: 0 0 var(--fv-space-16);
   }
+
   &__reason {
     margin: 0;
   }
+
   &__reason strong {
     display: block;
     font-weight: var(--fv-weight-medium);
     color: var(--fv-color-text-primary);
     margin-bottom: var(--fv-space-8);
   }
+
   &__availability {
     margin: var(--fv-space-24) 0 0;
   }
+
   &__state {
     text-align: center;
     padding: var(--fv-space-24) 0 0;
   }
+
   &__state h3 {
     font-size: var(--fv-text-h4-size);
     line-height: var(--fv-text-h4-lh);
     font-weight: var(--fv-weight-medium);
     margin: 0 0 var(--fv-space-12);
   }
+
   &__state p {
     margin: 0 0 var(--fv-space-20);
     color: var(--fv-color-text-secondary);
   }
+
   &__state p:last-child {
     margin-bottom: 0;
   }
+
   @include mediaMax(400px) {
     &__filters {
       grid-template-columns: minmax(0, 1fr);
     }
+
     &__suggestion {
       grid-template-columns: 80px minmax(0, 1fr);
       gap: 14px;
     }
+
     &__text h3 {
       font-size: var(--fv-text-h4-size);
       line-height: var(--fv-text-h4-lh);
@@ -412,20 +444,25 @@ function navigate(path: string): void {
 
 <style lang="scss">
 @use "@/styles/media" as *;
+
 .watch-tonight .modal__body {
   padding-bottom: var(--fv-space-24);
 }
+
 .watch-tonight .modal__footer {
   flex-wrap: wrap;
 }
+
 .watch-tonight .modal__footer > .ant-btn {
   flex: 1;
   min-width: 0;
 }
+
 @include mediaMax(480px) {
   .watch-tonight .modal__footer {
     flex-direction: column-reverse;
   }
+
   .watch-tonight .modal__footer > .ant-btn {
     flex: none;
     width: 100%;

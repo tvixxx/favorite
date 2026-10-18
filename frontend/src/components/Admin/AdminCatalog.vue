@@ -17,8 +17,9 @@ import api from "@/services/api";
 import { message } from "ant-design-vue";
 import { friendlyRequestError } from "@/utils/friendlyError";
 import { type AdminMovie } from "./admin.types";
-import {useDateTime} from '@/composable/useDateTime';
-const {dateLabel}=useDateTime();
+import { useDateTime } from "@/composable/useDateTime";
+
+const { dateLabel } = useDateTime();
 const q = useAdminQueryParam("movies_q", "", "movies_page");
 const kind = useAdminQueryParam("movies_kind", "", "movies_page", [
   "",
@@ -91,6 +92,7 @@ async function remove(): Promise<void> {
     await load(
       items.value.length === 1 && page.value > 1 ? page.value - 1 : page.value
     );
+
     message.success("Тайтл удалён из общего каталога");
   } catch (err) {
     message.error(
@@ -113,6 +115,7 @@ const columns = [
   { title: "В коллекциях", key: "count" },
   { title: "", key: "actions" },
 ];
+
 onMounted(() => void load());
 function edit(id: string | null): void {
   movieId.value = id;

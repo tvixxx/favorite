@@ -58,6 +58,11 @@ export type Actor = Prisma.ActorModel
  */
 export type UserMovie = Prisma.UserMovieModel
 /**
+ * Model WatchEntry
+ *
+ */
+export type WatchEntry = Prisma.WatchEntryModel
+/**
  * Model UserList
  * 
  */

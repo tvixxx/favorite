@@ -6,12 +6,14 @@ import { createOnboardingDriver } from "@/onboarding/createOnboardingDriver";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 
-// Список того, что покажет тур — иконки синие, как в эталоне
 const TOUR_STEPS_PREVIEW: { icon: string; text: string }[] = [
   { icon: "ph:squares-four", text: "Несколько шагов на странице коллекции" },
   { icon: "ph:magnifying-glass", text: "Каталог с подсветкой фильтров" },
   { icon: "ph:users-three", text: "Раздел «Друзья» и уведомления в шапке" },
-  { icon: "ph:sliders-horizontal", text: "Персональные настройки и дополнительные инструменты" },
+  {
+    icon: "ph:sliders-horizontal",
+    text: "Персональные настройки и дополнительные инструменты",
+  },
 ];
 
 const openModel = defineModel<boolean>("open", { required: true });
@@ -132,7 +134,6 @@ const startInteractiveTour = async (): Promise<void> => {
   }
 }
 
-/* Серый блок-список того, что покажет тур (эталон) */
 .onboarding-modal__steps {
   display: flex;
   flex-direction: column;

@@ -1,5 +1,5 @@
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { defineStore } from "pinia";
+import { ref } from "vue";
 
 export interface UserStatus {
   userId: string;
@@ -8,7 +8,7 @@ export interface UserStatus {
   lastSeenAt: string;
 }
 
-export const useUserStatusStore = defineStore('userStatus', () => {
+export const useUserStatusStore = defineStore("userStatus", () => {
   const onlineUsers = ref<Map<string, UserStatus>>(new Map());
 
   const setUserOnline = (userId: string, socketId: string) => {
@@ -22,6 +22,7 @@ export const useUserStatusStore = defineStore('userStatus', () => {
 
   const setUserOffline = (userId: string) => {
     const user = onlineUsers.value.get(userId);
+
     if (user) {
       onlineUsers.value.set(userId, {
         ...user,

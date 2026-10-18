@@ -30,5 +30,6 @@ function getErrorReqMsg(error: unknown): string {
 
 export function showErrorRequest(error: unknown): void {
   const errorMsg = getErrorReqMsg(error);
+
   message.error(errorMsg);
 }

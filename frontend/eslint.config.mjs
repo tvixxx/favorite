@@ -7,12 +7,7 @@ import vueParser from "vue-eslint-parser";
 
 export default tseslint.config(
   {
-    ignores: [
-      "dist/**",
-      "node_modules/**",
-      "coverage/**",
-      "jest.config.js",
-    ],
+    ignores: ["dist/**", "node_modules/**", "coverage/**", "jest.config.js"],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
@@ -42,15 +37,21 @@ export default tseslint.config(
       "@stylistic": stylistic,
     },
     rules: {
-      "no-console":
-        process.env.NODE_ENV === "production" ? "warn" : "off",
-      "no-debugger":
-        process.env.NODE_ENV === "production" ? "warn" : "off",
+      "no-console": process.env.NODE_ENV === "production" ? "warn" : "off",
+      "no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off",
       "@typescript-eslint/no-explicit-any": "warn",
       "@stylistic/padding-line-between-statements": [
         "warn",
         { blankLine: "always", prev: "*", next: "return" },
         { blankLine: "always", prev: "block-like", next: "*" },
+        { blankLine: "always", prev: "multiline-expression", next: "*" },
+        { blankLine: "always", prev: "*", next: ["const", "let", "var"] },
+        { blankLine: "always", prev: ["const", "let", "var"], next: "*" },
+        {
+          blankLine: "any",
+          prev: ["const", "let", "var"],
+          next: ["const", "let", "var"],
+        },
       ],
     },
   },
@@ -60,5 +61,5 @@ export default tseslint.config(
       "@typescript-eslint/no-empty-object-type": "off",
       "@typescript-eslint/no-explicit-any": "off",
     },
-  },
+  }
 );

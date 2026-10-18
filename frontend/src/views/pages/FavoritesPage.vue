@@ -33,7 +33,9 @@ const applyFavoriteScopeToStore = () => {
   userMoviesStore.setFilters({
     ...localFilters.value,
     isFavorite: true,
-    ...(activeKind.value !== "all" ? {isSerial: activeKind.value === "serials"} : {}),
+    ...(activeKind.value !== "all"
+      ? { isSerial: activeKind.value === "serials" }
+      : {}),
   });
 };
 
@@ -57,12 +59,13 @@ const setKind = (kind: FavoriteKind): void => {
 
   activeKind.value = kind;
   userMoviesStore.setCurrentPage(1);
-  void refetchFavorites().catch(() => message.error("Ошибка загрузки избранного"));
+  void refetchFavorites().catch(() =>
+    message.error("Ошибка загрузки избранного")
+  );
 };
 
 const shouldFetchFavorites = computed(
-  () =>
-    !userMoviesStore.isLoaded && mainStore.isLoggedIn && !!userId.value
+  () => !userMoviesStore.isLoaded && mainStore.isLoggedIn && !!userId.value
 );
 
 const refetchFavorites = async () => {
@@ -71,7 +74,8 @@ const refetchFavorites = async () => {
   }
 
   applyFavoriteScopeToStore();
-  if (searchQuery.value.trim()) await userMoviesStore.searchUserMovies(userId.value, searchQuery.value);
+  if (searchQuery.value.trim())
+    await userMoviesStore.searchUserMovies(userId.value, searchQuery.value);
   else await userMoviesStore.fetchUserMovies(userId.value);
 };
 
@@ -134,8 +138,8 @@ const favoritesForView = computed(() => {
 
 const visibleFavorites = computed(() => favoritesForView.value);
 
-const restCount = computed(
-  () => Math.max(0, userMoviesStore.totalCount - visibleFavorites.value.length)
+const restCount = computed(() =>
+  Math.max(0, userMoviesStore.totalCount - visibleFavorites.value.length)
 );
 
 const showMore = async (): Promise<void> => {
@@ -219,6 +223,7 @@ const removeFromFavorite = async (item: UserMovie) => {
     await userMoviesStore.updateUserMovie(userId.value, item.movieId, {
       isFavorite: false,
     });
+
     message.success(`${item.movie.title} удален из избранного`);
   } catch {
     message.error(`Не удалось убрать из избранного: ${item.movie.title}`);
@@ -323,7 +328,11 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-if="restCount > 0" class="favorites__more">
-          <a-button size="large" :loading="userMoviesStore.isLoadingMore" @click="showMore">
+          <a-button
+            size="large"
+            :loading="userMoviesStore.isLoadingMore"
+            @click="showMore"
+          >
             Показать ещё
             <span class="favorites__more-count">{{ restCount }}</span>
           </a-button>
@@ -354,7 +363,6 @@ onBeforeUnmount(() => {
     width: 100%;
   }
 
-  // Переключатель типа: активный — тёмная ink-пилюля (эталон)
   &__kinds {
     display: flex;
     gap: 8px;
@@ -376,8 +384,7 @@ onBeforeUnmount(() => {
     font-size: 15px;
     font-weight: 500;
     cursor: pointer;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover:not(&--active) {

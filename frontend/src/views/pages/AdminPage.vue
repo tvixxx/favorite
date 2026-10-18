@@ -5,6 +5,7 @@ import AdminOverview from "@/components/Admin/AdminOverview.vue";
 import AdminUsers from "@/components/Admin/AdminUsers.vue";
 import AdminCatalog from "@/components/Admin/AdminCatalog.vue";
 import AdminModeration from "@/components/Admin/AdminModeration.vue";
+
 const tab = useAdminQueryParam("tab", "users", undefined, [
   "users",
   "catalog",
@@ -53,24 +54,29 @@ const tabs = [
 @use "../../styles/layout" as *;
 @use "../../styles/card" as *;
 @use "../../styles/scrollbar" as *;
+
 .admin-page {
   @include pageContentContainer;
   width: 100%;
   padding-top: 32px;
   padding-bottom: 48px;
 }
+
 .admin-hero {
   width: 100%;
   margin-bottom: 24px;
+
   h1 {
     font-size: 32px;
     margin: 8px 0;
   }
+
   p {
     color: var(--fv-color-text-secondary);
     margin: 0;
   }
 }
+
 .admin-tabs {
   @include hideScrollbar;
   display: flex;
@@ -78,6 +84,7 @@ const tabs = [
   width: 100%;
   overflow-x: auto;
   padding: 4px 0 20px;
+
   button {
     flex-shrink: 0;
     border: 1px solid var(--fv-color-border);
@@ -88,33 +95,40 @@ const tabs = [
     font: inherit;
     font-weight: 700;
     cursor: pointer;
+
     &.is-selected {
       background: var(--fv-color-text-primary);
       color: var(--fv-color-bg-primary);
     }
   }
 }
+
 .admin-panel {
   @include elevatedPanel;
   width: 100%;
   min-width: 0;
   padding: 24px;
   margin-bottom: 24px;
+
   h2 {
     font-size: 22px;
     margin: 0;
   }
+
   h3 {
     font-size: 18px;
     margin: 0 0 12px;
   }
+
   .ant-pagination {
     margin-top: 24px;
   }
+
   .ant-table-cell {
     overflow-wrap: anywhere;
   }
 }
+
 .admin-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -123,19 +137,23 @@ const tabs = [
   gap: 12px;
   margin-bottom: 20px;
 }
+
 .admin-muted {
   color: var(--fv-color-text-secondary);
   font-size: 14px;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+
 .admin-caption {
   margin-top: 16px;
 }
+
 .admin-search {
   width: 100%;
   max-width: 100%;
 }
+
 .admin-filters {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -150,11 +168,13 @@ const tabs = [
     min-width: 0;
   }
 }
+
 @include mediaMax($desktopXS - 0.02px) {
   .admin-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
 @include mediaMax($tablet) {
   // Нижний отступ приложения должен идти после длинной страницы, а не после первого экрана.
   #app:has(.admin-page) {
@@ -182,13 +202,16 @@ const tabs = [
     scroll-padding-inline: var(--fv-gutter-mobile);
   }
 }
+
 .admin-row {
   padding: 20px 0;
   border-bottom: 1px solid var(--fv-color-border);
+
   p {
     margin: 8px 0 12px;
   }
 }
+
 .admin-excerpt {
   max-width: 440px;
   white-space: pre-wrap;
@@ -198,15 +221,18 @@ const tabs = [
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
 .admin-text {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   padding: 12px 0;
 }
+
 .admin-quality {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
+
   button {
     font: inherit;
     color: var(--fv-color-text-primary);
@@ -216,42 +242,50 @@ const tabs = [
     text-align: left;
     padding: 20px;
     cursor: pointer;
+
     b {
       display: block;
       font-size: 28px;
       margin-top: 8px;
     }
+
     &.is-selected {
       border-color: var(--fv-color-accent);
       background: var(--fv-color-accent-soft);
     }
   }
 }
+
 .admin-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin: 24px 0;
+
   > div {
     background: var(--fv-color-bg-secondary);
     border-radius: 16px;
     padding: 20px;
   }
+
   b {
     display: block;
     font-size: 30px;
     margin: 8px 0;
   }
+
   small,
   span {
     color: var(--fv-color-text-secondary);
   }
 }
+
 .admin-overview-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 32px;
 }
+
 .admin-feature {
   display: grid;
   grid-template-columns: minmax(100px, 1fr) 1fr 32px;
@@ -260,11 +294,13 @@ const tabs = [
   margin: 16px 0;
   font-size: 14px;
 }
+
 .admin-bar {
   height: 10px;
   background: var(--fv-color-bg-secondary);
   border-radius: 8px;
   overflow: hidden;
+
   span {
     display: block;
     height: 100%;
@@ -272,24 +308,29 @@ const tabs = [
     border-radius: 8px;
   }
 }
+
 .admin-registration-bars {
   @include customScrollbar;
   max-height: 300px;
   overflow-y: auto;
 }
+
 .admin-heat-section {
   margin-top: 28px;
 }
+
 .admin-heat-scroll {
   @include hideScrollbar;
   overflow-x: auto;
 }
+
 .admin-heat {
   display: grid;
   grid-template-columns: 28px repeat(24, minmax(22px, 1fr));
   min-width: 700px;
   gap: 4px;
   font-size: 12px;
+
   button {
     height: 24px;
     border: 0;
@@ -302,83 +343,104 @@ const tabs = [
     );
   }
 }
+
 .admin-mobile {
   display: none;
 }
+
 .admin-dialog {
   .modal__footer {
     flex-wrap: wrap;
   }
+
   .admin-label {
     display: block;
     font-weight: 700;
     margin: 16px 0 8px;
   }
+
   .admin-facts {
     display: grid;
     grid-template-columns: 1fr 2fr;
     gap: 12px;
+
     dt {
       color: var(--fv-color-text-secondary);
     }
+
     dd {
       margin: 0;
       overflow-wrap: anywhere;
     }
   }
+
   .admin-form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
   }
 }
+
 @include mediaMax($tablet - 0.02px) {
   .admin-hero h1 {
     font-size: 24px;
   }
+
   .admin-panel {
     padding: 20px 16px;
+
     h2 {
       font-size: 20px;
     }
   }
+
   .admin-desktop {
     display: none;
   }
+
   .admin-mobile {
     display: block;
   }
+
   .admin-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
+
     > div {
       padding: 16px;
     }
   }
+
   .admin-overview-grid {
     grid-template-columns: 1fr;
     gap: 20px;
   }
+
   .admin-quality {
     grid-template-columns: 1fr;
     gap: 8px;
+
     button {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 12px 16px;
+
       b {
         font-size: 24px;
         margin: 0;
       }
     }
   }
+
   .admin-search {
     width: 100%;
   }
+
   .admin-dialog .admin-facts {
     grid-template-columns: 1fr;
     gap: 4px;
+
     dd {
       margin-bottom: 12px;
     }

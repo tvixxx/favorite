@@ -29,12 +29,30 @@ const formState = reactive<FormState>({
 // Полевая валидация Ant → inline-ошибки под полем + aria-invalid + красная рамка
 const rules: Record<string, Rule[]> = {
   email: [
-    { required: true, whitespace: true, message: "Введите email", trigger: "blur" },
-    { pattern: EMAIL_REGEX, message: "Введите корректный email", trigger: "blur" },
+    {
+      required: true,
+      whitespace: true,
+      message: "Введите email",
+      trigger: "blur",
+    },
+    {
+      pattern: EMAIL_REGEX,
+      message: "Введите корректный email",
+      trigger: "blur",
+    },
   ],
   password: [
-    { max: 128, message: 'Пароль должен содержать не больше 128 символов', trigger: 'blur' },
-    { required: true, whitespace: true, message: "Введите пароль", trigger: "blur" },
+    {
+      max: 128,
+      message: "Пароль должен содержать не больше 128 символов",
+      trigger: "blur",
+    },
+    {
+      required: true,
+      whitespace: true,
+      message: "Введите пароль",
+      trigger: "blur",
+    },
   ],
 };
 
@@ -42,7 +60,10 @@ const rules: Record<string, Rule[]> = {
 const onFinish = async (values: FormState): Promise<void> => {
   try {
     await store.logIn({ email: values.email, password: values.password });
-    message.success(`${SUCCESS_LOGIN_TEXT}, ${store.userData?.fullName || ""}!`);
+    message.success(
+      `${SUCCESS_LOGIN_TEXT}, ${store.userData?.fullName || ""}!`
+    );
+
     router.push("/library/collection");
   } catch {
     message.error(ERROR_LOGIN_TEXT);
@@ -61,7 +82,12 @@ const onFinish = async (values: FormState): Promise<void> => {
   >
     <a-form-item name="email">
       <span class="auth-form__label">Email</span>
-      <a-input v-model:value="formState.email" :maxlength="254" placeholder="Email" size="large">
+      <a-input
+        v-model:value="formState.email"
+        :maxlength="254"
+        placeholder="Email"
+        size="large"
+      >
         <template #prefix>
           <BaseIcon name="ph:envelope-simple" :width="20" :height="20" />
         </template>
@@ -102,5 +128,9 @@ const onFinish = async (values: FormState): Promise<void> => {
     </a-form-item>
   </a-form>
 
-  <PasswordRecoveryModal v-if="isResetOpen && passwordRecoveryEnabled" v-model="isResetOpen" :email="formState.email" />
+  <PasswordRecoveryModal
+    v-if="isResetOpen && passwordRecoveryEnabled"
+    v-model="isResetOpen"
+    :email="formState.email"
+  />
 </template>

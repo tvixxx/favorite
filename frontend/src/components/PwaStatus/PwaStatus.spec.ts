@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
     onNeedReload: () => void;
   },
 }));
+
 vi.mock("virtual:pwa-register/vue", async () => {
   const { ref } = await import("vue");
 
@@ -55,13 +56,17 @@ beforeEach(() => {
   mocks.update.mockReset().mockResolvedValue(undefined);
   mocks.reload.mockReset();
 });
+
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Обновление PWA без потери формы", () => {
   it("перезагружает подтверждённую версию при смене контроллера после первой установки", async () => {
     const serviceWorker = new EventTarget();
+
     vi.stubGlobal("navigator", { serviceWorker, onLine: true });
+
     const currentWindow = window;
+
     vi.stubGlobal(
       "window",
       new Proxy(currentWindow, {
@@ -72,6 +77,7 @@ describe("Обновление PWA без потери формы", () => {
         },
       })
     );
+
     const wrapper = render();
 
     serviceWorker.dispatchEvent(new Event("controllerchange"));
@@ -80,11 +86,13 @@ describe("Обновление PWA без потери формы", () => {
       .findAll("button")
       .find((button) => button.text() === "Обновить")!
       .trigger("click");
+
     await wrapper
       .get('[role="dialog"]')
       .findAll("button")
       .find((button) => button.text() === "Обновить")!
       .trigger("click");
+
     await flushPromises();
     serviceWorker.dispatchEvent(new Event("controllerchange"));
     mocks.options.onNeedReload?.();
@@ -92,8 +100,10 @@ describe("Обновление PWA без потери формы", () => {
     wrapper.unmount();
     vi.unstubAllGlobals();
   });
+
   it("показывает восстановление после ошибки загрузки страницы", async () => {
     mocks.refresh = false;
+
     const wrapper = render();
 
     window.dispatchEvent(new Event("vite:preloadError"));
@@ -102,9 +112,11 @@ describe("Обновление PWA без потери формы", () => {
     expect(
       wrapper.findAll("button").some((button) => button.text() === "Повторить")
     ).toBe(true);
+
     expect(mocks.apply).not.toHaveBeenCalled();
     wrapper.unmount();
   });
+
   it("предлагает новую версию, но применяет её только после подтверждения", async () => {
     const wrapper = render();
 
@@ -114,15 +126,18 @@ describe("Обновление PWA без потери формы", () => {
       .findAll("button")
       .find((button) => button.text() === "Обновить")!
       .trigger("click");
+
     expect(wrapper.get('[role="dialog"]').text()).toContain(
       "Сохраните изменения"
     );
+
     expect(mocks.apply).not.toHaveBeenCalled();
     await wrapper
       .get('[role="dialog"]')
       .findAll("button")
       .find((button) => button.text() === "Обновить")!
       .trigger("click");
+
     await flushPromises();
     expect(mocks.apply).toHaveBeenCalledOnce();
     wrapper.unmount();
@@ -135,6 +150,7 @@ describe("Обновление PWA без потери формы", () => {
       .findAll("button")
       .find((button) => button.text() === "Позже")!
       .trigger("click");
+
     expect(wrapper.text()).not.toContain("Доступна новая версия");
     expect(mocks.apply).not.toHaveBeenCalled();
     wrapper.unmount();
@@ -146,6 +162,7 @@ describe("Обновление PWA без потери формы", () => {
     mocks.options.onRegisteredSW("/sw.js", {
       update: mocks.update,
     } as unknown as ServiceWorkerRegistration);
+
     window.dispatchEvent(new Event("online"));
     await flushPromises();
     expect(mocks.update).toHaveBeenCalledOnce();

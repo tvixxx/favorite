@@ -32,7 +32,7 @@ const matches = computed(() => {
   return props.options.filter(
     (o) =>
       !selected.value.includes(o.value) &&
-      (!q || o.label.toLowerCase().includes(q)),
+      (!q || o.label.toLowerCase().includes(q))
   );
 });
 
@@ -152,8 +152,7 @@ onClickOutside(root, () => {
     border-radius: var(--fv-radius-sm);
     background: var(--fv-color-bg-secondary);
     cursor: text;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       border-color var(--fv-motion-fast) var(--fv-ease);
 
     &--open {

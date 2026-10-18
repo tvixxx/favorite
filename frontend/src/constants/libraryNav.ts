@@ -8,4 +8,5 @@ export const LIBRARY_NAV_ITEMS: LibraryNavItem[] = [
   { to: "/library/catalog", label: "Каталог" },
   { to: "/library/actors", label: "Актёры" },
   { to: "/library/lists", label: "Мои списки" },
+  { to: "/library/diary", label: "Дневник" },
 ];

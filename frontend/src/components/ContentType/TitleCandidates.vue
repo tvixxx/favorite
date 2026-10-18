@@ -14,6 +14,7 @@ interface Candidate {
   countryCodes: string[];
   poster?: { url: string; thumbnailUrl?: string | null } | null;
 }
+
 const props = defineProps<{
   title: string;
   excludeId?: string | null;
@@ -25,6 +26,7 @@ const candidates = ref<Candidate[]>([]);
 const error = ref(false);
 const loading = ref(false);
 const retry = ref(0);
+
 watch(
   [() => props.title.trim(), () => props.excludeId, retry],
   ([title], _old, cleanup) => {
@@ -32,6 +34,7 @@ watch(
     error.value = false;
     loading.value = false;
     if (!title) return;
+
     const controller = new AbortController();
     let active = true;
     const timer = setTimeout(async () => {
@@ -41,6 +44,7 @@ watch(
           "/movies/title-candidates",
           { params: { title }, signal: controller.signal }
         );
+
         if (active)
           candidates.value = data.filter(
             (movie) => movie.id !== props.excludeId
@@ -51,6 +55,7 @@ watch(
         if (active) loading.value = false;
       }
     }, 300);
+
     cleanup(() => {
       active = false;
       clearTimeout(timer);
@@ -144,10 +149,12 @@ function countries(movie: Candidate): string {
   border-radius: 12px;
   background: var(--fv-color-bg-primary);
   color: var(--fv-color-text-primary);
+
   &__heading {
     margin: 0 0 12px;
     font-weight: 500;
   }
+
   &__list {
     list-style: none;
     padding: 0;
@@ -155,11 +162,13 @@ function countries(movie: Candidate): string {
     display: grid;
     gap: 16px;
   }
+
   &__item {
     display: flex;
     gap: 12px;
     align-items: flex-start;
   }
+
   &__poster {
     width: 48px;
     height: 68px;
@@ -167,23 +176,28 @@ function countries(movie: Candidate): string {
     border-radius: 6px;
     flex-shrink: 0;
   }
+
   &__text {
     min-width: 0;
     display: grid;
     gap: 4px;
     overflow-wrap: anywhere;
   }
+
   &__text a {
     color: var(--fv-color-link);
   }
+
   &__text span,
   &__hint {
     color: var(--fv-color-text-secondary);
     font-size: 14px;
   }
+
   &__hint {
     margin: 12px 0 0;
   }
+
   &__action {
     justify-self: start;
     border: 0;
@@ -195,10 +209,12 @@ function countries(movie: Candidate): string {
     cursor: pointer;
     text-align: left;
   }
+
   &__action:focus-visible {
     outline: 2px solid var(--fv-color-accent);
     outline-offset: 2px;
   }
+
   &__action:disabled {
     opacity: 0.6;
     cursor: not-allowed;

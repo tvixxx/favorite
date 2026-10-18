@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import SectionHeading from "@/components/SectionHeading/SectionHeading.vue";
 import { currentTheme, setTheme, themes, type Theme } from "@/composable";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { computed, onMounted, ref, watch } from "vue";
@@ -54,7 +55,7 @@ const stats = computed(() => {
 
   // Эталон: «Смотреть позже» в статистике не показываем (есть в аналитике/коллекции)
   const keys = (Object.keys(StatsBlockType) as StatsBlockType[]).filter(
-    (type) => type !== StatsBlockType.totalSeeLater,
+    (type) => type !== StatsBlockType.totalSeeLater
   );
 
   return keys.map((type) => ({
@@ -114,6 +115,7 @@ watch(userId, (id) => {
 
 const isFriendsEmptySocial = computed(() => {
   const s = friendsStore.stats;
+
   if (!s) {
     return false;
   }
@@ -131,10 +133,12 @@ const isFriendsEmptySocial = computed(() => {
 
 <template>
   <section class="setting-block setting-block--theme">
-    <div class="setting-block__header">
-      <BaseIcon :name="props.icon" class="setting-block__icon" />
-      <h3 class="setting-block__title">{{ props.title }}</h3>
-    </div>
+    <SectionHeading
+      class="setting-block__header"
+      :title="props.title"
+      :icon="props.icon"
+      tag="h3"
+    />
 
     <p v-if="props.description" class="setting-block__description">
       {{ props.description }}
@@ -227,10 +231,7 @@ const isFriendsEmptySocial = computed(() => {
         <div class="friends-actions">
           <a-button type="primary" size="large" block @click="goToFriendsPage">
             <template #icon>
-              <BaseIcon
-                name="ph:users"
-                class="friends-actions__icon"
-              />
+              <BaseIcon name="ph:users" class="friends-actions__icon" />
             </template>
             Управление друзьями
           </a-button>
@@ -313,23 +314,7 @@ const isFriendsEmptySocial = computed(() => {
   gap: 1rem;
 
   &__header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
     margin-bottom: 0.5rem;
-  }
-
-  &__icon {
-    width: 28px;
-    height: 28px;
-    color: var(--fv-color-accent);
-  }
-
-  &__title {
-    margin: 0;
-    font-size: 1.4rem;
-    font-weight: 500;
-    color: var(--fv-color-text-primary);
   }
 
   &__description {
@@ -383,7 +368,6 @@ const isFriendsEmptySocial = computed(() => {
     line-height: 1.55;
     color: var(--fv-color-text-secondary);
   }
-
 }
 
 // Эталон: 3 центрированных тайла в ряд (число + подпись)

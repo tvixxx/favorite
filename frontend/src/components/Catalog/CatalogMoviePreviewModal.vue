@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import SectionHeading from "@/components/SectionHeading/SectionHeading.vue";
 import { computed, ref, watch } from "vue";
+import { useMediaQuery } from "@vueuse/core";
 import axios from "axios";
 import { Menu as AMenu, MenuItem as AMenuItem, message } from "ant-design-vue";
 
@@ -7,14 +9,10 @@ import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import ReportReviewModal from "@/components/Reviews/ReportReviewModal.vue";
 import ReviewText from "@/components/Reviews/ReviewText.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import DetailSkeleton from "@/components/Skeleton/DetailSkeleton.vue";
+import CatalogPreviewHero from "./CatalogPreviewHero.vue";
+import SkeletonBar from "@/components/Skeleton/SkeletonBar.vue";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
-import { GenreLabels } from "@/components/Genres/constants/genres.constants";
-import { countriesLabelsRu } from "@/constants/countries/production-countries";
-import { FALLBACK_IMAGE_URL } from "@/constants/movies";
-import MoviePoster from "@/components/MoviePoster/MoviePoster.vue";
-import { formatAverageRating, formatYear } from "@/utils";
 import { useRouter } from "vue-router";
 
 import { useMainStore } from "@/state/state";
@@ -27,6 +25,9 @@ const modelValue = defineModel<boolean>({ required: true });
 const isAdded = ref(false);
 const reportOpen = ref(false);
 const reportedId = ref("");
+const isMobile = useMediaQuery("(max-width: 767.98px)");
+const actorsExpanded = ref(false);
+const ACTORS_PREVIEW_COUNT = 6;
 
 function report(id: string): void {
   reportedId.value = id;
@@ -43,10 +44,11 @@ const moviesStore = useMoviesStore();
 const userMoviesStore = useUserMoviesStore();
 
 const userId = computed(() => mainStore.userData?.id ?? "");
-const movie = computed(() => moviesStore.currentMovie as Movie | null);
-const posterSrc = computed(() => movie.value?.imageUrl || FALLBACK_IMAGE_URL);
-const avgLabel = computed(() =>
-  formatAverageRating(movie.value?.averageRating)
+const movie = computed<Movie | null>(
+  () =>
+    moviesStore.currentMovie ??
+    moviesStore.moviesList?.find((item) => item.id === props.movieId) ??
+    null
 );
 
 const previewReviews = computed(() => {
@@ -63,11 +65,17 @@ const previewReviews = computed(() => {
 });
 
 const hasActors = computed(() => !!movie.value?.actors?.length);
+const visibleActors = computed(() =>
+  isMobile.value && !actorsExpanded.value
+    ? movie.value?.actors?.slice(0, ACTORS_PREVIEW_COUNT)
+    : movie.value?.actors
+);
 
 watch(
   () => [modelValue.value, props.movieId] as const,
   async ([open, id]) => {
     reportOpen.value = false;
+    actorsExpanded.value = false;
     if (!open || !id) {
       return;
     }
@@ -147,154 +155,83 @@ function openFullPage(): void {
         ]"
       />
 
-      <DetailSkeleton v-else-if="moviesStore.isMovieLoading" />
-
-      <div v-else-if="movie" class="catalog-preview">
-        <div class="catalog-preview__hero">
-          <div class="catalog-preview__poster">
-            <MoviePoster
-              :src="posterSrc"
-              :seed="movie.id"
-              :title="movie.title"
-              :alt="`${movie.title} постер`"
-              class="catalog-preview__poster-img"
-              loading="lazy"
+      <div
+        v-else-if="moviesStore.isMovieLoading && !movie"
+        class="catalog-preview"
+        aria-label="Загрузка карточки"
+        aria-busy="true"
+      >
+        <CatalogPreviewHero :movie="null" loading />
+        <div
+          class="catalog-preview__section catalog-preview__placeholder"
+          aria-hidden="true"
+        >
+          <SkeletonBar width="110px" height="20px" /><SkeletonBar
+            v-for="width in ['100%', '96%', '90%', '65%']"
+            :key="width"
+            :width="width"
+            height="18px"
+            radius="5px"
+          />
+        </div>
+        <div
+          class="catalog-preview__section catalog-preview__placeholder"
+          aria-hidden="true"
+        >
+          <SkeletonBar width="80px" height="20px" />
+          <div class="catalog-preview__actors">
+            <SkeletonBar
+              v-for="index in 3"
+              :key="index"
+              width="130px"
+              height="44px"
+              radius="999px"
             />
           </div>
-
-          <div class="catalog-preview__main">
-            <h2 class="catalog-preview__title">{{ movie.title }}</h2>
-
-            <div class="catalog-preview__tags">
-              <span
-                v-for="g in movie.genres ?? []"
-                :key="g"
-                class="catalog-preview__tag"
-              >
-                {{ GenreLabels[g] ?? g }}
-              </span>
-              <span v-if="movie.publishDate" class="catalog-preview__tag">
-                {{ formatYear(movie.publishDate) }}
-              </span>
-              <span v-if="!movie.isSerial" class="catalog-preview__tag">
-                Фильм
-              </span>
-              <span
-                v-else
-                class="catalog-preview__tag catalog-preview__tag_accent"
-              >
-                Сериал
-              </span>
-            </div>
-
-            <div
-              v-if="avgLabel"
-              class="catalog-preview__rating-wrap"
-              aria-label="Средний балл по отзывам"
-            >
-              <div class="catalog-preview__rating-badge">
-                <span class="catalog-preview__rating-num">{{ avgLabel }}</span>
-                <span class="catalog-preview__rating-denom">/10</span>
-                <span class="catalog-preview__rating-note">по отзывам</span>
-              </div>
-            </div>
-            <p v-else class="catalog-preview__rating-empty">
-              Нет оценок по отзывам
-            </p>
-
-            <div class="catalog-preview__meta">
-              <div v-if="movie.publishDate" class="catalog-preview__meta-line">
-                <BaseIcon
-                  class="catalog-preview__meta-icon"
-                  name="ph:calendar-blank"
-                  :width="14"
-                  :height="14"
-                />
-                <p class="catalog-preview__meta-inline">
-                  <span class="catalog-preview__meta-k">Дата выхода</span>
-                  <span class="catalog-preview__meta-sep"> — </span>
-                  <span class="catalog-preview__meta-v">{{
-                    formatYear(movie.publishDate)
-                  }}</span>
-                </p>
-              </div>
-
-              <div
-                v-if="movie.countryCodes?.length"
-                class="catalog-preview__meta-line"
-              >
-                <BaseIcon
-                  class="catalog-preview__meta-icon"
-                  name="ph:globe"
-                  :width="14"
-                  :height="14"
-                />
-                <p class="catalog-preview__meta-inline">
-                  <span class="catalog-preview__meta-k">Страны</span>
-                  <span class="catalog-preview__meta-sep"> — </span>
-                  <span class="catalog-preview__meta-v">{{
-                    countriesLabelsRu(movie.countryCodes)
-                  }}</span>
-                </p>
-              </div>
-
-              <div
-                v-if="movie.isSerial && movie.seasonCount"
-                class="catalog-preview__meta-line"
-              >
-                <BaseIcon
-                  class="catalog-preview__meta-icon"
-                  name="ph:monitor"
-                  :width="14"
-                  :height="14"
-                />
-                <p class="catalog-preview__meta-inline">
-                  <span class="catalog-preview__meta-k">Сезонов</span>
-                  <span class="catalog-preview__meta-sep"> — </span>
-                  <span class="catalog-preview__meta-v">{{
-                    movie.seasonCount
-                  }}</span>
-                </p>
-              </div>
-
-              <div
-                v-if="movie.isSerial && movie.episodeCount"
-                class="catalog-preview__meta-line"
-              >
-                <BaseIcon
-                  class="catalog-preview__meta-icon"
-                  name="ph:playlist"
-                  :width="14"
-                  :height="14"
-                />
-                <p class="catalog-preview__meta-inline">
-                  <span class="catalog-preview__meta-k">Эпизодов</span>
-                  <span class="catalog-preview__meta-sep"> — </span>
-                  <span class="catalog-preview__meta-v">{{
-                    movie.episodeCount
-                  }}</span>
-                </p>
-              </div>
-            </div>
+        </div>
+        <div class="catalog-preview__section" aria-hidden="true">
+          <SkeletonBar width="90px" height="20px" />
+          <div class="catalog-preview__empty">
+            <SkeletonBar width="40px" height="40px" circle /><SkeletonBar
+              width="130px"
+              height="18px"
+            />
           </div>
         </div>
+      </div>
+
+      <div
+        v-else-if="movie"
+        class="catalog-preview"
+        :aria-busy="moviesStore.isMovieLoading"
+      >
+        <CatalogPreviewHero
+          :movie="movie"
+          :loading="moviesStore.isMovieLoading"
+        />
 
         <div v-if="movie.description?.trim()" class="catalog-preview__section">
-          <h3 class="catalog-preview__section-title">
-            <BaseIcon name="ph:text-align-left" :width="20" :height="20" />
-            Описание
-          </h3>
+          <SectionHeading
+            compact
+            tag="h3"
+            class="catalog-preview__section-title"
+            title="Описание"
+            icon="ph:text-align-left"
+          />
           <p class="catalog-preview__desc">{{ movie.description }}</p>
         </div>
 
         <div v-if="hasActors" class="catalog-preview__section">
-          <h3 class="catalog-preview__section-title">
-            <BaseIcon name="ph:users-three" :width="20" :height="20" />
-            Актёры
-          </h3>
-          <div class="catalog-preview__actors">
+          <SectionHeading
+            compact
+            tag="h3"
+            class="catalog-preview__section-title"
+            title="Актёры"
+            icon="ph:users-three"
+          />
+          <div id="catalog-preview-actors" class="catalog-preview__actors">
             <div
-              v-for="actor in movie.actors"
+              v-for="actor in visibleActors"
               :key="actor.id"
               class="catalog-preview__actor"
             >
@@ -304,23 +241,39 @@ function openFullPage(): void {
               <span>{{ actor.name }}</span>
             </div>
           </div>
+          <button
+            v-if="
+              isMobile && (movie.actors?.length ?? 0) > ACTORS_PREVIEW_COUNT
+            "
+            type="button"
+            class="catalog-preview__actors-toggle"
+            :aria-expanded="actorsExpanded"
+            aria-controls="catalog-preview-actors"
+            @click="actorsExpanded = !actorsExpanded"
+          >
+            {{
+              actorsExpanded
+                ? "Свернуть"
+                : `Показать всех · ${movie.actors?.length}`
+            }}
+            <BaseIcon
+              :name="actorsExpanded ? 'ph:caret-up' : 'ph:caret-down'"
+              :width="18"
+              :height="18"
+              aria-hidden="true"
+            />
+          </button>
         </div>
 
         <div class="catalog-preview__section">
-          <h3 class="catalog-preview__section-title">
-            <BaseIcon
-              name="ph:chat-text"
-              :width="20"
-              :height="20"
-            />
-            Отзывы
-            <span
-              v-if="movie._count?.reviews != null"
-              class="catalog-preview__count"
-            >
-              {{ movie._count.reviews }}
-            </span>
-          </h3>
+          <SectionHeading
+            compact
+            tag="h3"
+            class="catalog-preview__section-title"
+            title="Отзывы"
+            icon="ph:chat-text"
+            :count="movie._count?.reviews"
+          />
 
           <div v-if="previewReviews.length" class="catalog-preview__reviews">
             <article
@@ -332,9 +285,20 @@ function openFullPage(): void {
                 <span class="catalog-preview__review-rate"
                   >{{ rev.rate }}/10</span
                 >
-                <a-dropdown v-if="userId && rev.userId !== userId" :trigger="['click']">
-                  <a-button type="text" aria-label="Действия с отзывом"><BaseIcon name="ph:dots-three" :width="24" :height="24" /></a-button>
-                  <template #overlay><a-menu><a-menu-item key="report" @click="report(rev.id)">Пожаловаться</a-menu-item></a-menu></template>
+                <a-dropdown
+                  v-if="userId && rev.userId !== userId"
+                  :trigger="['click']"
+                >
+                  <a-button type="text" aria-label="Действия с отзывом"
+                    ><BaseIcon name="ph:dots-three" :width="24" :height="24"
+                  /></a-button>
+                  <template #overlay
+                    ><a-menu
+                      ><a-menu-item key="report" @click="report(rev.id)"
+                        >Пожаловаться</a-menu-item
+                      ></a-menu
+                    ></template
+                  >
                 </a-dropdown>
               </div>
               <ReviewText
@@ -347,11 +311,7 @@ function openFullPage(): void {
           </div>
 
           <div v-else class="catalog-preview__empty">
-            <BaseIcon
-              name="ph:chat-text"
-              :width="40"
-              :height="40"
-            />
+            <BaseIcon name="ph:chat-text" :width="40" :height="40" />
             <p>Отзывов пока нет.</p>
           </div>
         </div>
@@ -371,6 +331,9 @@ function openFullPage(): void {
         type="primary"
         size="large"
         class="catalog-preview__cta"
+        :disabled="
+          moviesStore.isMovieLoading || !movie || !!moviesStore.isMovieError
+        "
         @click="addToCollection"
       >
         <BaseIcon name="ph:plus-circle" :width="19" :height="19" />
@@ -385,12 +348,17 @@ function openFullPage(): void {
 @use "@/styles/media" as *;
 
 .catalog-preview {
+  padding-bottom: 24px;
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-// Отметка в футере после добавления (эталон m0433)
+.catalog-preview__placeholder {
+  display: grid;
+  gap: 8px;
+}
+
 .catalog-preview__added {
   display: inline-flex;
   align-items: center;
@@ -401,180 +369,13 @@ function openFullPage(): void {
   font-weight: 500;
 }
 
-// На мобиле CTA во всю ширину 52px (эталон)
+// На мобиле CTA во всю ширину, высота как у остальных действий формы.
 @include mediaMax($tablet - 0.02px) {
   .catalog-preview__cta {
     width: 100%;
-    height: 52px;
+    height: 44px;
+    font-size: 14px;
   }
-}
-
-.catalog-preview__hero {
-  display: grid;
-  grid-template-columns: 170px 1fr;
-  background: var(--fv-color-bg-primary);
-  border-radius: 18px;
-  box-shadow: var(--fv-shadow-low);
-  overflow: hidden;
-
-  // Эталон: ≤900px hero в одну колонку, постер сверху пропорцией 16/9
-  @include mediaMax(900px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.catalog-preview__poster {
-  aspect-ratio: 2 / 3;
-  overflow: hidden;
-  background: var(--fv-color-bg-secondary);
-
-  @include mediaMax(900px) {
-    aspect-ratio: 16 / 9;
-  }
-}
-
-.catalog-preview__poster-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
-  display: block;
-}
-
-.catalog-preview__main {
-  min-width: 0;
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-
-  @include mediaMax(900px) {
-    padding: 14px 16px;
-  }
-}
-
-.catalog-preview__title {
-  margin: 0 0 10px;
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1.25;
-  color: var(--fv-color-link);
-
-  @include mediaMax(900px) {
-    font-size: 20px;
-  }
-}
-
-.catalog-preview__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin-bottom: 12px;
-}
-
-.catalog-preview__tag {
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-  padding: 0 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  background: var(--fv-color-bg-secondary);
-  color: var(--fv-color-text-secondary);
-
-  // Тип тайтла в эталоне выделен синим
-  &_accent {
-    background: var(--fv-color-bg-active-soft);
-    color: var(--fv-color-link);
-    font-weight: 500;
-  }
-}
-
-.catalog-preview__rating-wrap {
-  margin: 0.1rem 0 0;
-}
-
-.catalog-preview__rating-badge {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: var(--fv-color-bg-secondary);
-}
-
-.catalog-preview__rating-num {
-  font-size: 1.0625rem;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  color: var(--fv-color-text-primary);
-}
-
-.catalog-preview__rating-denom {
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--fv-color-text-secondary);
-}
-
-.catalog-preview__rating-note {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: color-mix(in srgb, var(--fv-color-text-secondary) 92%, transparent);
-  letter-spacing: 0.02em;
-}
-
-.catalog-preview__rating-empty {
-  margin: 0;
-  font-size: 0.8125rem;
-  line-height: 1.4;
-  font-weight: 400;
-  color: color-mix(in srgb, var(--fv-color-text-secondary) 96%, transparent);
-}
-
-.catalog-preview__meta {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--fv-color-border);
-  font-size: 13px;
-}
-
-.catalog-preview__meta-line {
-  display: flex;
-  align-items: baseline;
-  gap: 0.45rem;
-  min-width: 0;
-}
-
-.catalog-preview__meta-icon {
-  flex-shrink: 0;
-  align-self: flex-start;
-  margin-top: 0.2rem;
-  opacity: 0.38;
-  color: var(--fv-color-text-secondary);
-}
-
-.catalog-preview__meta-inline {
-  margin: 0;
-  min-width: 0;
-  font-size: 0.8125rem;
-  line-height: 1.38;
-}
-
-.catalog-preview__meta-k {
-  color: color-mix(in srgb, var(--fv-color-text-secondary) 94%, transparent);
-  font-weight: 500;
-}
-
-.catalog-preview__meta-sep {
-  font-weight: 400;
-  color: color-mix(in srgb, var(--fv-color-text-secondary) 45%, transparent);
-}
-
-.catalog-preview__meta-v {
-  font-weight: 500;
-  color: color-mix(in srgb, var(--fv-color-text-primary) 92%, var(--fv-color-text-secondary));
 }
 
 .catalog-preview__section {
@@ -584,19 +385,7 @@ function openFullPage(): void {
 }
 
 .catalog-preview__section-title {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
   margin: 0 0 6px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--fv-color-text-primary);
-
-  svg {
-    flex-shrink: 0;
-    opacity: 0.5;
-    color: var(--fv-color-text-secondary);
-  }
 }
 
 .catalog-preview__count {
@@ -622,6 +411,29 @@ function openFullPage(): void {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.catalog-preview__actors-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 12px;
+  padding: 10px 16px;
+  border: 1px solid var(--fv-color-border);
+  border-radius: var(--fv-radius-sm);
+  background: var(--fv-color-bg-primary);
+  color: var(--fv-color-text-primary);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--fv-color-accent);
+    outline-offset: -2px;
+  }
 }
 
 .catalog-preview__actor {

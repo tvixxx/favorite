@@ -18,6 +18,7 @@ const report: CollectionReport = {
     posterUrl: null,
   })),
 };
+
 beforeEach(() => {
   vi.stubGlobal("Blob", NativeBlob);
   vi.stubGlobal(
@@ -39,6 +40,7 @@ beforeEach(() => {
     })
   );
 });
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
@@ -47,6 +49,7 @@ afterEach(() => {
 describe("PDF коллекции", () => {
   it("открывает для печати действительный PDF после подготовки файла", async () => {
     let printed: Blob | undefined;
+
     vi.stubGlobal("URL", {
       createObjectURL: (blob: Blob) => {
         printed = blob;
@@ -54,6 +57,7 @@ describe("PDF коллекции", () => {
         return "blob:print-test";
       },
     });
+
     const popup = { location: { href: "" }, close: vi.fn() };
     const result = await createCollectionPdf(
       { ...report, movies: report.movies.slice(0, 1) },
@@ -64,9 +68,12 @@ describe("PDF коллекции", () => {
         signal: new AbortController().signal,
       }
     );
+
     await result.print(popup as unknown as Window);
     expect(popup.location.href).toBe("blob:print-test");
+
     const bytes = Buffer.from(await printed!.arrayBuffer()).toString("latin1");
+
     expect(bytes).toContain("/OpenAction");
     expect(bytes).toContain("/N /Print");
   });
@@ -75,6 +82,7 @@ describe("PDF коллекции", () => {
     const requests: Array<{ url: string; referrer: string; cors: string }> = [];
     const dimensions: number[][] = [];
     const image = await readFile(resolve("public/pwa-192.png"));
+
     vi.stubGlobal(
       "Image",
       class {
@@ -91,10 +99,12 @@ describe("PDF коллекции", () => {
             referrer: this.referrerPolicy,
             cors: this.crossOrigin,
           });
+
           queueMicrotask(() => this.onload?.());
         }
       }
     );
+
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(
       function (this: HTMLCanvasElement) {
         dimensions.push([this.width, this.height]);
@@ -102,9 +112,11 @@ describe("PDF коллекции", () => {
         return { drawImage: vi.fn() } as unknown as CanvasRenderingContext2D;
       }
     );
+
     vi.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockReturnValue(
       `data:image/png;base64,${image.toString("base64")}`
     );
+
     const result = await createCollectionPdf(
       {
         ...report,
@@ -123,6 +135,7 @@ describe("PDF коллекции", () => {
       }
     );
     const bytes = Buffer.from(await result.blob.arrayBuffer());
+
     expect(bytes.toString("latin1")).toContain("/Subtype /Image");
     expect(result.missingPosters).toBe(0);
     expect(requests).toEqual([
@@ -132,8 +145,11 @@ describe("PDF коллекции", () => {
         cors: "anonymous",
       },
     ]);
+
     expect(dimensions).toEqual([[160, 160]]);
+
     let printed: Blob | undefined;
+
     vi.stubGlobal("URL", {
       createObjectURL: (blob: Blob) => {
         printed = blob;
@@ -141,11 +157,15 @@ describe("PDF коллекции", () => {
         return "blob:poster-print-test";
       },
     });
+
     const popup = { location: { href: "" }, close: vi.fn() };
+
     await result.print(popup as unknown as Window);
+
     const printBytes = Buffer.from(await printed!.arrayBuffer()).toString(
       "latin1"
     );
+
     expect(printBytes).toContain("/Subtype /Image");
     expect(printBytes).toContain("/N /Print");
   });
@@ -157,9 +177,12 @@ describe("PDF коллекции", () => {
       completedOnly: true,
       signal: new AbortController().signal,
     });
+
     expect(result.blob.type).toBe("application/pdf");
+
     const bytes = Buffer.from(await result.blob.arrayBuffer());
     const text = bytes.toString("latin1");
+
     expect(text.startsWith("%PDF-")).toBe(true);
     expect((text.match(/\/Type \/Page\b/g) ?? []).length).toBeGreaterThan(1);
     expect(text).toMatch(/\/FontFile[23]\b/);
@@ -180,13 +203,18 @@ describe("PDF коллекции", () => {
         signal: new AbortController().signal,
       }
     );
+
     expect(result.missingPosters).toBe(2);
     expect(result.blob.size).toBeGreaterThan(1000);
-    await writeFile("/private/tmp/favourite-illustrated-posters.pdf", Buffer.from(await result.blob.arrayBuffer()));
+    await writeFile(
+      "/private/tmp/favourite-illustrated-posters.pdf",
+      Buffer.from(await result.blob.arrayBuffer())
+    );
   });
 
   it("не формирует документ после отмены", async () => {
     const controller = new AbortController();
+
     controller.abort();
     await expect(
       createCollectionPdf(report, {

@@ -2,6 +2,8 @@
   /* Layout (эталон: .wrap — max-width 1200, боковой паддинг 28) */
   --fv-layout-max-width: 1200px;
   --fv-layout-gutter: 28px;
+  --fv-topbar-height: 67px;
+  --fv-mobile-tabbar-height: 82px;
 
   /* ---- Spacing scale (эталон: база 4px, шаг кратен 4) ---- */
   --fv-space-0: 0px;
@@ -71,12 +73,11 @@
   /* ---- Тени: 4 двухслойных тира (эталон). Мягкие, нейтральные ----
      low — карточки/шапки (rest); middle — hover/контролы над карточками;
      upper-middle — мобильные шторки; high — дропдауны/модалки/шторки. */
-  --fv-shadow-middle:
-    0 0 8px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.1);
-  --fv-shadow-upper-middle:
-    0 0 12px rgba(0, 0, 0, 0.08), 0 12px 32px rgba(0, 0, 0, 0.12);
-  --fv-shadow-high:
-    0 0 16px rgba(0, 0, 0, 0.08), 0 16px 48px rgba(0, 0, 0, 0.14);
+  --fv-shadow-middle: 0 0 8px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.1);
+  --fv-shadow-upper-middle: 0 0 12px rgba(0, 0, 0, 0.08),
+    0 12px 32px rgba(0, 0, 0, 0.12);
+  --fv-shadow-high: 0 0 16px rgba(0, 0, 0, 0.08),
+    0 16px 48px rgba(0, 0, 0, 0.14);
 
   /* Композитные алиасы (низ = семантический --fv-shadow-low из theme-variables) */
   --fv-shadow-card: var(--fv-shadow-low);
@@ -99,6 +100,7 @@
   line-height: var(--fv-text-h1-lh);
   letter-spacing: var(--fv-ls-h1);
 }
+
 .fv-h2 {
   font-family: var(--fv-font-display);
   font-weight: var(--fv-weight-medium);
@@ -106,48 +108,56 @@
   line-height: var(--fv-text-h2-lh);
   letter-spacing: var(--fv-ls-h2);
 }
+
 .fv-h3 {
   font-family: var(--fv-font-ui);
   font-weight: var(--fv-weight-medium);
   font-size: var(--fv-text-h3-size);
   line-height: var(--fv-text-h3-lh);
 }
+
 .fv-h4 {
   font-family: var(--fv-font-ui);
   font-weight: var(--fv-weight-medium);
   font-size: var(--fv-text-h4-size);
   line-height: var(--fv-text-h4-lh);
 }
+
 .fv-p1 {
   font-family: var(--fv-font-ui);
   font-weight: var(--fv-weight-regular);
   font-size: var(--fv-text-p1-size);
   line-height: var(--fv-text-p1-lh);
 }
+
 .fv-p2 {
   font-family: var(--fv-font-ui);
   font-weight: var(--fv-weight-regular);
   font-size: var(--fv-text-p2-size);
   line-height: var(--fv-text-p2-lh);
 }
+
 .fv-p3 {
   font-family: var(--fv-font-ui);
   font-weight: var(--fv-weight-regular);
   font-size: var(--fv-text-p3-size);
   line-height: var(--fv-text-p3-lh);
 }
+
 .fv-p4 {
   font-family: var(--fv-font-ui);
   font-weight: var(--fv-weight-regular);
   font-size: var(--fv-text-p4-size);
   line-height: var(--fv-text-p4-lh);
 }
+
 .fv-caption {
   font-family: var(--fv-font-ui);
   font-weight: var(--fv-weight-regular);
   font-size: var(--fv-text-caption-size);
   line-height: var(--fv-text-caption-lh);
 }
+
 .fv-caps {
   font-family: var(--fv-font-display);
   font-weight: var(--fv-weight-bold);

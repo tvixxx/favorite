@@ -53,12 +53,11 @@ export const useLeaderboardStore = defineStore("leaderboard", () => {
   const isError = ref<string | null>(null);
   const requests = createRequestGuard();
 
-  const currentPage = computed(
-    () => Math.floor(offset.value / PAGE_SIZE) + 1
-  );
+  const currentPage = computed(() => Math.floor(offset.value / PAGE_SIZE) + 1);
 
   const buildQuery = () => {
     const params = new URLSearchParams();
+
     params.set("limit", String(PAGE_SIZE));
     params.set("offset", String(offset.value));
     params.set("sortBy", sortBy.value);
@@ -69,6 +68,7 @@ export const useLeaderboardStore = defineStore("leaderboard", () => {
 
   const fetchTopUsers = async () => {
     const isCurrent = requests.begin();
+
     isLoading.value = true;
     isError.value = null;
 
@@ -77,6 +77,7 @@ export const useLeaderboardStore = defineStore("leaderboard", () => {
         `/leaderboard/top-users?${buildQuery()}`,
         { method: FETCH_METHOD.get }
       );
+
       if (!isCurrent()) return;
 
       if (!isSuccessStatus(status)) {
@@ -96,7 +97,10 @@ export const useLeaderboardStore = defineStore("leaderboard", () => {
     }
   };
 
-  const setSort = async (by: LeaderboardSortBy, order: LeaderboardSortOrder) => {
+  const setSort = async (
+    by: LeaderboardSortBy,
+    order: LeaderboardSortOrder
+  ) => {
     sortBy.value = by;
     sortOrder.value = order;
     offset.value = 0;

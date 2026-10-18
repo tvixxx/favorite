@@ -32,9 +32,12 @@ interface FriendlyErrorLike {
 function errorChain(error: unknown): FriendlyErrorLike[] {
   const chain: FriendlyErrorLike[] = [];
   const seen = new Set<object>();
+
   while (error && typeof error === "object" && !seen.has(error)) {
     seen.add(error);
+
     const current = error as FriendlyErrorLike;
+
     chain.push(current);
     error = current.cause;
   }
@@ -45,6 +48,7 @@ function errorChain(error: unknown): FriendlyErrorLike[] {
 export function getRequestStatus(error: unknown): number | undefined {
   for (const current of errorChain(error)) {
     const status = current.response?.status ?? current.status;
+
     if (typeof status === "number") return status;
   }
 
@@ -60,12 +64,17 @@ export interface FriendlyErrorOptions {
 
 export function friendlyRequestError(
   error: unknown,
-  options: FriendlyErrorOptions = {},
+  options: FriendlyErrorOptions = {}
 ): string {
   const status = getRequestStatus(error);
 
   if (status == null) {
-    const networkFailure = errorChain(error).some((current) => isAxiosError(current) && !current.response && current.code !== "ERR_CANCELED");
+    const networkFailure = errorChain(error).some(
+      (current) =>
+        isAxiosError(current) &&
+        !current.response &&
+        current.code !== "ERR_CANCELED"
+    );
 
     return networkFailure ? NETWORK_TEXT : options.fallback ?? DEFAULT_TEXT;
   }

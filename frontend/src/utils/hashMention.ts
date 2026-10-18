@@ -1,7 +1,7 @@
 /** Активное упоминание: от последнего `#` до каретки (без переноса строки). */
 export function findHashMention(
   text: string,
-  caret: number,
+  caret: number
 ): { hashIndex: number; query: string } | null {
   if (caret <= 0) {
     return null;

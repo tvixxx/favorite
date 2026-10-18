@@ -74,6 +74,7 @@ onMounted(() => {
   email.value = mainStore.userData?.email ?? "";
 
   const previous = router.options.history.state.back;
+
   fromUrl.value =
     typeof previous === "string"
       ? new URL(previous, window.location.origin).pathname
@@ -81,7 +82,11 @@ onMounted(() => {
 });
 
 const messageLength = computed(() => text.value.trim().length);
-const emailValid = computed(() => !email.value.trim() || (EMAIL_REGEX.test(email.value.trim()) && email.value.trim().length <= 254));
+const emailValid = computed(
+  () =>
+    !email.value.trim() ||
+    (EMAIL_REGEX.test(email.value.trim()) && email.value.trim().length <= 254)
+);
 const canSend = computed(
   () =>
     messageLength.value >= MESSAGE_MIN &&
@@ -250,7 +255,9 @@ const submit = async (): Promise<void> => {
               <BaseIcon name="ph:envelope-simple" :width="18" :height="18" />
             </template>
           </a-input>
-          <p v-if="!emailValid" id="feedback-email-error" role="alert">Введите корректный email или оставьте поле пустым.</p>
+          <p v-if="!emailValid" id="feedback-email-error" role="alert">
+            Введите корректный email или оставьте поле пустым.
+          </p>
 
           <p class="feedback-page__context">
             <BaseIcon name="ph:info" :width="16" :height="16" />

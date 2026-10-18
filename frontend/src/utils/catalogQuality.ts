@@ -79,11 +79,13 @@ export function diagnoseCatalog(
       .replace(/ё/g, "е")
       .replace(/[^\p{L}\p{N}]/gu, "")}`;
   const groups = new Map<string, Map<number | null, CatalogSummary[]>>();
+
   for (const movie of summaries) {
     const name = key(movie);
     const years =
       groups.get(name) ?? new Map<number | null, CatalogSummary[]>();
     const members = years.get(movie.year) ?? [];
+
     members.push(movie);
     years.set(movie.year, members);
     groups.set(name, years);
@@ -92,6 +94,7 @@ export function diagnoseCatalog(
   return records.flatMap((movie, index): CatalogFinding[] => {
     const summary = summaries[index];
     const issues: CatalogIssue[] = [];
+
     if (!movie.poster?.url.trim()) issues.push("poster");
     else if (!posterAddress(movie.poster.url)) issues.push("poster-url");
     if (!movie.publishDate) issues.push("date");
@@ -100,11 +103,13 @@ export function diagnoseCatalog(
     if (!movie.description.trim()) issues.push("description");
     if (!movie.genres.length) issues.push("genres");
     if (!movie.countryCodes.length) issues.push("countries");
+
     const integerIn = (
       value: number | null | undefined,
       max: number
     ): boolean =>
       Number.isInteger(value) && Number(value) > 0 && Number(value) <= max;
+
     if (
       movie.isSerial
         ? !integerIn(movie.seasonCount, 1000) ||
@@ -112,6 +117,7 @@ export function diagnoseCatalog(
         : !!movie.seasonCount || !!movie.episodeCount
     )
       issues.push("serial");
+
     const years = groups.get(key(summary))!;
     const buckets =
       summary.year === null
@@ -122,6 +128,7 @@ export function diagnoseCatalog(
       -1
     );
     const duplicates: CatalogSummary[] = [];
+
     for (const members of buckets) {
       for (const other of members) {
         if (other.id !== movie.id && duplicates.length < 5)
@@ -178,9 +185,11 @@ export function probePoster(
     };
 
     const timer = setTimeout(() => complete("timeout"), 8000);
+
     image.referrerPolicy = "no-referrer";
     image.onload = () =>
       complete(image.naturalWidth > 0 ? "loaded" : "unavailable");
+
     image.onerror = () => complete("unavailable");
     signal.addEventListener("abort", abort, { once: true });
     image.src = url;

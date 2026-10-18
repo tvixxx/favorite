@@ -5,8 +5,10 @@ export const buildSearchParams = (
   query?: string
 ): URLSearchParams => {
   const params = new URLSearchParams();
+
   if (filters.contentKind) params.set("contentKind", filters.contentKind);
-  if (filters.isSerial !== undefined) params.set("isSerial", String(filters.isSerial));
+  if (filters.isSerial !== undefined)
+    params.set("isSerial", String(filters.isSerial));
 
   if (query) {
     params.append("q", query);

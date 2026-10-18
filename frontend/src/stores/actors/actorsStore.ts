@@ -7,7 +7,7 @@ import { ACTORS_ENDPOINT } from "@/constants";
 import { createRequestGuard } from "@/utils/requestGuard";
 import api from "@/services/api";
 import type { ImageSelection } from "@/services/media";
-import { compareActorNames } from '@/utils/actor-order';
+import { compareActorNames } from "@/utils/actor-order";
 
 export interface Actor {
   id: string;
@@ -64,13 +64,13 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
     q?: string;
     limit: number;
     offset: number;
-    order?: 'ru-first';
+    order?: "ru-first";
   }): string {
     const params = new URLSearchParams();
 
     params.set("limit", String(opts.limit));
     params.set("offset", String(opts.offset));
-    if (opts.order) params.set('order', opts.order);
+    if (opts.order) params.set("order", opts.order);
     if (opts.q?.trim()) {
       params.set("q", opts.q.trim());
     }
@@ -100,6 +100,7 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
     const limit = Math.min(API_PAGE_LIMIT, Math.max(1, actorsPageSize.value));
 
     actorsPageSize.value = limit;
+
     const offset = (actorsPageCurrent.value - 1) * limit;
 
     isPageLoading.value = true;
@@ -154,7 +155,7 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
         const qs = buildListParams({
           limit: API_PAGE_LIMIT,
           offset: items.length,
-          order: 'ru-first',
+          order: "ru-first",
         });
         const { data, status } = await useFetch<ActorsListResponse>(
           `${API_BASE_URL}/actors?${qs}`
@@ -297,8 +298,9 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
   ): Promise<void> {
     await api.patch(`/actors/${actor.id}`, {
       imageAssetId: selection?.assetId ?? null,
-      imageUrl: selection?.assetId ? undefined : (selection?.url ?? null),
+      imageUrl: selection?.assetId ? undefined : selection?.url ?? null,
     });
+
     const updated = {
       ...actor,
       imageUrl: selection?.url ?? null,
@@ -309,9 +311,11 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
     actorsPageItems.value = actorsPageItems.value.map((item) =>
       item.id === actor.id ? updated : item
     );
+
     pickerActors.value = pickerActors.value.map((item) =>
       item.id === actor.id ? updated : item
     );
+
     if (detailActor.value?.id === actor.id) {
       detailActor.value = updated;
     }
@@ -323,7 +327,9 @@ export const useActorsStore = defineStore(ACTORS_STORE_NAME, () => {
     actorsPageSize,
     actorsPageCurrent,
     actorsSearchQ,
-    pickerActors: computed(() => [...pickerActors.value].sort(compareActorNames)),
+    pickerActors: computed(() =>
+      [...pickerActors.value].sort(compareActorNames)
+    ),
     detailActor,
 
     isActorsLoaded,

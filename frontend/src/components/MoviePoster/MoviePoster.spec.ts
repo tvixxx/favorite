@@ -13,19 +13,23 @@ describe("Обложка тайтла", () => {
         meta: "2020 · Фильм",
       },
     });
+
     expect(wrapper.get("img").attributes("src")).toBe(
       "https://example.test/real.jpg"
     );
+
     await wrapper.get("img").trigger("error");
     expect(wrapper.get("img").attributes("src")).toMatch(
       /^data:image\/svg\+xml/
     );
+
     expect(wrapper.text()).toContain('<img src=x onerror="alert(1)">');
     expect(wrapper.findAll("img")).toHaveLength(1);
     await wrapper.setProps({ src: "https://example.test/new.jpg" });
     expect(wrapper.get("img").attributes("src")).toBe(
       "https://example.test/new.jpg"
     );
+
     wrapper.unmount();
   });
 
@@ -37,8 +41,11 @@ describe("Обложка тайтла", () => {
     };
     const first = mount(MoviePoster, { props });
     const src = first.get("img").attributes("src");
+
     first.unmount();
+
     const second = mount(MoviePoster, { props });
+
     expect(second.get("img").attributes("src")).toBe(src);
     expect(second.text()).toContain("Длинное название");
     second.unmount();
@@ -50,7 +57,9 @@ describe("Обложка тайтла", () => {
         fallbackPosterSvg(`card-${i}`, "light")
       )
     );
+
     expect(variants.size).toBeGreaterThanOrEqual(10);
+
     const themes = [
       "light",
       "dark",
@@ -60,8 +69,10 @@ describe("Обложка тайтла", () => {
       "retro",
       "cyberpunk",
     ];
+
     for (const theme of themes) {
       const svg = fallbackPosterSvg("one-card", theme);
+
       expect(svg).toContain('<svg xmlns="http://www.w3.org/2000/svg"');
       expect(svg).not.toMatch(/<script|<image|href=|foreignObject/);
       expect(svg).toBe(fallbackPosterSvg("one-card", theme));

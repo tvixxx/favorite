@@ -15,6 +15,7 @@ const sent = ref(false);
 const error = ref("");
 const requests = createRequestGuard();
 let controller: AbortController | undefined;
+
 watch(
   () => props.modelValue,
   () => {
@@ -27,13 +28,17 @@ watch(
   },
   { immediate: true }
 );
+
 onBeforeUnmount(() => {
   requests.invalidate();
   controller?.abort();
 });
+
 async function submit() {
   if (busy.value || sent.value) return;
+
   const value = inputEmail.value.trim();
+
   if (!EMAIL_REGEX.test(value) || value.length > 254) {
     error.value = "Введите корректный email";
 
@@ -41,6 +46,7 @@ async function submit() {
   }
 
   const current = requests.begin();
+
   controller = new AbortController();
   busy.value = true;
   error.value = "";
@@ -50,6 +56,7 @@ async function submit() {
       { email: value },
       { signal: controller.signal, timeout: 15000 }
     );
+
     if (current()) sent.value = true;
   } catch (cause) {
     if (current()) error.value = friendlyRequestError(cause);
@@ -72,7 +79,12 @@ async function submit() {
         Ссылка действует 15 минут. Проверьте папку «Спам». Повторный запрос — не
         раньше чем через минуту.
       </p>
-      <form v-else class="auth-form recovery-form" novalidate @submit.prevent="submit">
+      <form
+        v-else
+        class="auth-form recovery-form"
+        novalidate
+        @submit.prevent="submit"
+      >
         <p>Укажите email аккаунта. Отправим ссылку для нового пароля.</p>
         <label for="recovery-email">Email</label>
         <AInput
@@ -108,9 +120,25 @@ async function submit() {
 <style scoped lang="scss">
 .recovery-form {
   color: var(--fv-color-text-primary);
-  p { color: var(--fv-color-text-secondary); line-height: 1.5; }
-  label { display: block; margin: 12px 0 6px; }
-  [role="alert"] { color: var(--fv-color-negative); }
+
+  p {
+    color: var(--fv-color-text-secondary);
+    line-height: 1.5;
+  }
+
+  label {
+    display: block;
+    margin: 12px 0 6px;
+  }
+
+  [role="alert"] {
+    color: var(--fv-color-negative);
+  }
 }
-.recovery-status { color: var(--fv-color-text-secondary); line-height: 1.5; margin: 0; }
+
+.recovery-status {
+  color: var(--fv-color-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
 </style>

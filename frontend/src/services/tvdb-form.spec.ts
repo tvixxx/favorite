@@ -19,9 +19,12 @@ const preview = () => ({
 });
 
 describe("Подтверждение карточки TheTVDB", () => {
-  it('требует выбрать статус просмотра при положительном прогрессе', () => {
-    expect(() => prepareTvdbImport(preview(), { title: 'Название' }, { currentEpisode: 5 })).toThrow('статус');
+  it("требует выбрать статус просмотра при положительном прогрессе", () => {
+    expect(() =>
+      prepareTvdbImport(preview(), { title: "Название" }, { currentEpisode: 5 })
+    ).toThrow("статус");
   });
+
   it("требует название для русского интерфейса и сохраняет явно помеченное английское описание", () => {
     expect(() => prepareTvdbImport(preview(), {}, {})).toThrow("название");
     expect(
@@ -35,6 +38,7 @@ describe("Подтверждение карточки TheTVDB", () => {
       collection: { watchStatus: "NOT_STARTED", seeLater: true },
     });
   });
+
   it("не пропускает пустое описание, страну или жанр", () => {
     for (const edit of [
       { description: " " },
@@ -46,6 +50,7 @@ describe("Подтверждение карточки TheTVDB", () => {
       ).toThrow();
     }
   });
+
   it("отклоняет превышающий известные пределы прогресс без тихого обрезания", () => {
     expect(() =>
       prepareTvdbImport(
@@ -55,6 +60,7 @@ describe("Подтверждение карточки TheTVDB", () => {
       )
     ).toThrow("прогресс");
   });
+
   it("при неизвестных пределах принимает общий счётчик просмотренных серий", () => {
     expect(
       prepareTvdbImport(
@@ -66,6 +72,7 @@ describe("Подтверждение карточки TheTVDB", () => {
       collection: { currentEpisode: 8, watchStatus: "WATCHING" },
     });
   });
+
   it("для существующей карточки отправляет только выбор и личные параметры", () => {
     const result = prepareTvdbImport(
       preview(),
@@ -73,6 +80,7 @@ describe("Подтверждение карточки TheTVDB", () => {
       {},
       "00000000-0000-4000-8000-000000000001"
     );
+
     expect(result).toEqual({
       id: "247824",
       type: "series",

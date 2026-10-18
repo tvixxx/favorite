@@ -13,7 +13,7 @@ const props = withDefaults(
   }>(),
   {
     compact: false,
-  },
+  }
 );
 
 const router = useRouter();
@@ -27,12 +27,15 @@ const ariaLabel = computed(() => `Скопировать ссылку на «${p
 async function copyLink(e?: Event) {
   e?.stopPropagation();
   e?.preventDefault();
+
   const url = shareUrl.value;
+
   try {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(url);
     } else {
       const ta = document.createElement("textarea");
+
       ta.value = url;
       ta.setAttribute("readonly", "");
       ta.style.position = "absolute";
@@ -40,7 +43,8 @@ async function copyLink(e?: Event) {
       document.body.appendChild(ta);
       try {
         ta.select();
-        if (!document.execCommand("copy")) throw new Error("Копирование недоступно");
+        if (!document.execCommand("copy"))
+          throw new Error("Копирование недоступно");
       } finally {
         ta.remove();
       }
@@ -81,12 +85,18 @@ async function copyLink(e?: Event) {
   margin: 0;
   border-radius: var(--fv-radius-md, 10px);
   border: 1px solid color-mix(in srgb, var(--fv-color-border) 80%, transparent);
-  background: color-mix(in srgb, var(--fv-color-bg-secondary) 40%, var(--fv-color-bg-primary));
+  background: color-mix(
+    in srgb,
+    var(--fv-color-bg-secondary) 40%,
+    var(--fv-color-bg-primary)
+  );
   color: var(--fv-color-text-secondary);
   font-size: 0.82rem;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color var(--fv-motion-slow) var(--fv-ease), color var(--fv-motion-slow) var(--fv-ease), background var(--fv-motion-slow) var(--fv-ease),
+  transition: border-color var(--fv-motion-slow) var(--fv-ease),
+    color var(--fv-motion-slow) var(--fv-ease),
+    background var(--fv-motion-slow) var(--fv-ease),
     box-shadow var(--fv-motion-slow) var(--fv-ease);
 
   &:hover {

@@ -30,7 +30,6 @@ interface MoviesPage {
 }
 
 export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
-  // Movies
   const moviesList = ref<Movie[]>([]);
   const isMoviesLoaded = ref<boolean>(false);
   const isMoviesLoading = ref(false);
@@ -40,15 +39,12 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   const loadMoreError = ref<string | null>(null);
   const nextOffset = ref(0);
 
-  // Search
   const searchResults = ref<Movie[]>([]);
   const searchQuery = ref<string>("");
   const isSearching = ref<boolean>(false);
 
-  // Filters
   const filters = ref<MoviesFilters>({});
 
-  // Movie
   const currentMovie = ref<Movie | null>(null);
   const isMovieLoading = ref(false);
   const isMovieError = ref<string | null>(null);
@@ -56,13 +52,14 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   // Порция догрузки: 20 = 4 полных ряда сетки на десктопе (5 карточек в ряд)
   const pageSize = ref(20);
 
-  // Movies stats
   const moviesStats = ref<MoviesStats | null>(null);
   const isMoviesStatsLoading = ref<boolean>(false);
   const isMoviesStatsError = ref<string | null>(null);
   const queryRequests = createRequestGuard();
   const detailRequests = createRequestGuard();
   const statsRequests = createRequestGuard();
+  let loadedQueryKey = "";
+  let freshUntil = 0;
 
   const setCurrentPage = (page: number) => {
     currentPage.value = page;
@@ -112,9 +109,12 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   };
 
   const setFilters = (newFilters: MoviesFilters) => {
-    queryRequests.invalidate();
-    isLoadingMore.value = false;
-    isMoviesLoaded.value = false;
+    if (JSON.stringify(filters.value) !== JSON.stringify(newFilters)) {
+      queryRequests.invalidate();
+      isLoadingMore.value = false;
+      isMoviesLoaded.value = false;
+    }
+
     filters.value = newFilters;
   };
 
@@ -133,7 +133,8 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   const hasActiveFilters = computed(() => {
     return (
       !!searchQuery.value ||
-      !!filters.value.contentKind || filters.value.isSerial !== undefined ||
+      !!filters.value.contentKind ||
+      filters.value.isSerial !== undefined ||
       !!filters.value.genres?.length ||
       !!filters.value.countryCodes?.length ||
       !!filters.value.publishDateFrom ||
@@ -150,11 +151,14 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
 
     if (response?.data && isSuccessStatus(response.status)) {
       const movie = mapMovieFromApi(response.data);
+
       moviesList.value = [
         movie,
         ...moviesList.value.filter((item) => item.id !== movie.id),
       ];
+
       moviesStats.value = null;
+      freshUntil = 0;
 
       return movie;
     } else {
@@ -204,6 +208,9 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
       const params = buildSearchParams(filters.value, query);
 
       params.set("limit", String(pageSize.value));
+
+      const queryKey = params.toString();
+
       params.set("offset", String(append ? nextOffset.value : 0));
 
       const endpoint = `${MOVIES_ENDPOINTS}/page?${params.toString()}`;
@@ -235,7 +242,10 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
       nextOffset.value = data.items.length
         ? data.offset + data.items.length
         : data.total;
+
       totalMovies.value = data.total;
+      loadedQueryKey = queryKey;
+      if (!append) freshUntil = Date.now() + 120000;
 
       if (query) {
         searchResults.value = items;
@@ -277,10 +287,25 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   const loadMoreMovies = (): Promise<void> =>
     fetchMovies(searchQuery.value, true);
 
+  const ensureMovies = async (): Promise<void> => {
+    const params = buildSearchParams(filters.value, searchQuery.value.trim());
+
+    params.set("limit", String(pageSize.value));
+    if (
+      isMoviesLoaded.value &&
+      !isMoviesError.value &&
+      loadedQueryKey === params.toString() &&
+      Date.now() < freshUntil
+    )
+      return;
+    await fetchMovies(searchQuery.value);
+  };
+
   const findMovie = (query: string) => fetchMovies(query);
 
   const fetchMoviesStats = async () => {
     const isCurrent = statsRequests.begin();
+
     setMoviesStatsLoading(true);
     setMoviesStatsError(null);
 
@@ -290,6 +315,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
       const { data, status } = await useFetch<MoviesStats>(
         `${MOVIES_ENDPOINTS}/stats`
       );
+
       if (!isCurrent()) return;
 
       if (status !== 200) {
@@ -314,6 +340,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     }
 
     const isCurrent = detailRequests.begin();
+
     if (currentMovie.value?.id !== movieId) currentMovie.value = null;
 
     setLoadingMovie(true);
@@ -328,6 +355,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
           method: FETCH_METHOD.get,
         }
       );
+
       if (!isCurrent()) return;
 
       if (status !== 200) {
@@ -347,7 +375,6 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   };
 
   return {
-    // Movies refs
     moviesList,
     isMoviesLoaded,
     isMoviesLoading,
@@ -357,20 +384,16 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     loadMoreError,
     loadMoreMovies,
     searchResults,
-    // Movies list refs
     currentPage,
     pageSize,
     currentMoviesList,
-    // Movies page info refs
     visibleMovies,
     hasMoreMovies,
 
-    // Movie refs
     currentMovie,
     isMovieLoading,
     isMovieError,
 
-    // Movies stats
     moviesStats,
     isMoviesStatsLoading,
     isMoviesStatsError,
@@ -379,22 +402,18 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     setCurrentPage,
     getMovieDetail,
 
-    // Movies
     fetchMovies,
+    ensureMovies,
 
-    // Movies stats
     fetchMoviesStats,
 
-    // Movie handlers
     createMovie,
 
-    // Search
     findMovie,
     clearSearch,
     searchQuery,
     isSearching,
 
-    // Filters
     filters,
     setFilters,
     hasActiveFilters,

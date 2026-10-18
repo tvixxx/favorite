@@ -27,7 +27,7 @@ const activeKey = computed(() => {
   const period = PERIODS.find(
     (p) =>
       (p.from ?? 1900) === dayjs(from).year() &&
-      (p.to ?? CURRENT_YEAR) === dayjs(to).year(),
+      (p.to ?? CURRENT_YEAR) === dayjs(to).year()
   );
 
   return period?.key ?? "";
@@ -91,8 +91,7 @@ const select = (period: Period): void => {
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover:not(&--active) {

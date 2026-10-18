@@ -4,6 +4,7 @@ import type { Router } from "vue-router";
 import { createOnboardingDriver } from "./createOnboardingDriver";
 
 const mocks = vi.hoisted(() => ({ driver: vi.fn() }));
+
 vi.mock("driver.js", () => ({ driver: mocks.driver }));
 
 let config: Config;
@@ -14,17 +15,26 @@ let moveNext: ReturnType<typeof vi.fn>;
 beforeEach(() => {
   vi.useFakeTimers();
   vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) =>
-    setTimeout(() => callback(0), 0),
+    setTimeout(() => callback(0), 0)
   );
+
   document.body.innerHTML = `<button data-tour="profile-settings"></button>
     <div class="profile-settings-modal"><div class="modal__body">
       <section data-tour="personal-settings"></section>
     </div></div>`;
+
   section = document.querySelector("section")!;
   body = document.querySelector(".modal__body")!;
   Object.defineProperty(section, "offsetParent", { get: () => body });
-  vi.spyOn(section, "getBoundingClientRect").mockReturnValue(new DOMRect(20, 200, 400, 278));
-  Object.defineProperty(body, "clientHeight", { configurable: true, value: 500 });
+  vi.spyOn(section, "getBoundingClientRect").mockReturnValue(
+    new DOMRect(20, 200, 400, 278)
+  );
+
+  Object.defineProperty(body, "clientHeight", {
+    configurable: true,
+    value: 500,
+  });
+
   section.scrollIntoView = vi.fn();
   moveNext = vi.fn();
   mocks.driver.mockImplementation((value: Config) => {
@@ -32,6 +42,7 @@ beforeEach(() => {
 
     return { moveNext } as unknown as Driver;
   });
+
   createOnboardingDriver({} as Router, { onCompleted: vi.fn() });
 });
 
@@ -60,13 +71,22 @@ describe("Подсветка персональных настроек в тур
 
   it("перед переходом к переключателям прокручивает их в видимую область", async () => {
     let scrolledBeforeHighlight = false;
+
     moveNext.mockImplementation(() => {
-      scrolledBeforeHighlight = vi.mocked(section.scrollIntoView).mock.calls.some(([options]) =>
-        typeof options === "object" && options.block === "start" && options.behavior === "instant",
-      );
+      scrolledBeforeHighlight = vi
+        .mocked(section.scrollIntoView)
+        .mock.calls.some(
+          ([options]) =>
+            typeof options === "object" &&
+            options.block === "start" &&
+            options.behavior === "instant"
+        );
     });
-    const showSettings = config.steps![7].popover!.onNextClick as () => Promise<void>;
+
+    const showSettings = config.steps![7].popover!
+      .onNextClick as () => Promise<void>;
     const transition = showSettings();
+
     await vi.runAllTimersAsync();
     await transition;
     expect(moveNext).toHaveBeenCalledOnce();

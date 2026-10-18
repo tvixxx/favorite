@@ -73,6 +73,7 @@ navigator.serviceWorker?.addEventListener(
   "controllerchange",
   reloadAfterUpdate
 );
+
 onScopeDispose(() => {
   window.removeEventListener("online", checkUpdate);
   window.removeEventListener("focus", checkUpdate);
@@ -156,14 +157,17 @@ onScopeDispose(() => {
     flex: 1;
     min-width: 160px;
   }
+
   &__actions {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
+
   &__message {
     color: var(--fv-color-text-secondary);
   }
+
   :deep(.ant-btn) {
     min-height: 44px;
   }

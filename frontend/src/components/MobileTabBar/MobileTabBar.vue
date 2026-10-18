@@ -11,7 +11,7 @@ const chatStore = useChatStore();
 // Непрочитанные сообщения для бейджа «Общение»
 const socialUnread = computed<number>(() => chatStore.totalUnreadCount);
 const socialBadge = computed<string>(() =>
-  socialUnread.value > 99 ? "99+" : String(socialUnread.value),
+  socialUnread.value > 99 ? "99+" : String(socialUnread.value)
 );
 
 interface Tab {
@@ -124,7 +124,7 @@ const go = (to: string): void => {
       aria-label="Добавить в коллекцию"
       @click="go('/create')"
     >
-      <BaseIcon name="ph:plus" :width="28" :height="28" />
+      <BaseIcon name="ph:plus" :width="24" :height="24" />
     </button>
 
     <button
@@ -155,6 +155,7 @@ const go = (to: string): void => {
 
 <style lang="scss" scoped>
 @use "../../styles/media" as *;
+
 .mobile-tabbar {
   display: none;
   position: fixed;
@@ -223,17 +224,16 @@ const go = (to: string): void => {
     flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    width: 56px;
-    height: 56px;
-    margin-top: -18px;
+    width: 52px;
+    height: 52px;
+    margin-top: -16px;
     border: 0;
     border-radius: 999px;
     background: var(--fv-color-brand);
     color: #fff;
     cursor: pointer;
     box-shadow: var(--fv-shadow-brand-md);
-    transition:
-      transform var(--fv-motion-fast) var(--fv-ease),
+    transition: transform var(--fv-motion-fast) var(--fv-ease),
       background var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
