@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useId } from "vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import SectionHeading from "@/components/SectionHeading/SectionHeading.vue";
 import NumberField from "@/components/NumberField/NumberField.vue";
@@ -6,6 +7,8 @@ import { MAX_SEASONS, MAX_EPISODES } from "@/utils/media-numbers";
 import type { MovieProgress } from "@/composable/useMovieProgress";
 
 const props = defineProps<{ progress: MovieProgress }>();
+const seasonId = useId();
+const episodeId = useId();
 const {
   currentUserMovie,
   movie,
@@ -184,8 +187,11 @@ const {
 
     <div v-else class="serial-progress serial-progress_editing">
       <div class="serial-progress__edit-item">
-        <label class="serial-progress__edit-label"> На каком сезоне </label>
+        <label :for="seasonId" class="serial-progress__edit-label">
+          На каком сезоне
+        </label>
         <NumberField
+          :id="seasonId"
           compact
           v-model="editSeason"
           label="На каком сезоне"
@@ -196,8 +202,11 @@ const {
       </div>
 
       <div class="serial-progress__edit-item">
-        <label class="serial-progress__edit-label"> На какой серии </label>
+        <label :for="episodeId" class="serial-progress__edit-label">
+          На какой серии
+        </label>
         <NumberField
+          :id="episodeId"
           compact
           v-model="editEpisode"
           label="На какой серии"
@@ -224,12 +233,10 @@ const {
 
 <style scoped lang="scss">
 @use "@/styles/media" as *;
+@use "@/styles/layout" as *;
+
 .detail-section {
-  margin-top: 22px;
-  background: var(--fv-color-bg-primary);
-  border-radius: var(--fv-radius-lg);
-  padding: 26px;
-  box-shadow: var(--fv-shadow-low);
+  @include detailSection;
 }
 
 .detail-section__title {
@@ -507,6 +514,12 @@ const {
 
   .detail-section__edit-label {
     display: none;
+  }
+}
+
+@include mediaReducedMotion {
+  .serial-progress__fill {
+    transition: none;
   }
 }
 </style>

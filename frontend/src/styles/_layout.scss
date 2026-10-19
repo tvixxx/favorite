@@ -1,5 +1,13 @@
 @use "./media" as *;
 
+@mixin detailSection {
+  margin-top: 22px;
+  background: var(--fv-color-bg-primary);
+  border-radius: var(--fv-radius-lg);
+  padding: 26px;
+  box-shadow: var(--fv-shadow-low);
+}
+
 @mixin pageShell($paddingBottom: 4rem) {
   min-height: 100vh;
   background: var(--fv-color-bg-secondary);

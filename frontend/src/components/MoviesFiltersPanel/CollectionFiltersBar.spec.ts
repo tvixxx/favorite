@@ -59,4 +59,48 @@ describe("Поиск в коллекции", () => {
     expect(wrapper.emitted("update:filters")).toBeUndefined();
     wrapper.unmount();
   });
+
+  it("ищет последнюю строку через 350 мс, а Enter не дублирует отложенный запрос", async () => {
+    vi.useFakeTimers();
+
+    const searchHandler = vi.fn().mockResolvedValue(undefined);
+    const wrapper = mount(CollectionFiltersBar, {
+      props: { searchHandler },
+      global: {
+        stubs: { BaseIcon: true, FiltersSheet: true, FiltersActiveTags: true },
+      },
+    });
+
+    await wrapper.get("input").setValue("Свет");
+    await vi.advanceTimersByTimeAsync(200);
+    await wrapper.get("input").setValue("  Светлячок  ");
+    await vi.advanceTimersByTimeAsync(349);
+    expect(searchHandler).not.toHaveBeenCalled();
+    await wrapper.get("input").trigger("keydown.enter");
+    await vi.advanceTimersByTimeAsync(350);
+    expect(searchHandler).toHaveBeenCalledExactlyOnceWith("Светлячок");
+    await wrapper.get("input").setValue("Дюна");
+    await vi.advanceTimersByTimeAsync(350);
+    expect(searchHandler).toHaveBeenLastCalledWith("Дюна");
+    wrapper.unmount();
+  });
+
+  it("внешний сброс отменяет запрос набранной строки", async () => {
+    vi.useFakeTimers();
+
+    const searchHandler = vi.fn().mockResolvedValue(undefined);
+    const wrapper = mount(CollectionFiltersBar, {
+      props: { searchHandler, searchQuery: "Старый" },
+      global: {
+        stubs: { BaseIcon: true, FiltersSheet: true, FiltersActiveTags: true },
+      },
+    });
+
+    await wrapper.get("input").setValue("Новый");
+    await wrapper.setProps({ searchQuery: "" });
+    await vi.advanceTimersByTimeAsync(350);
+    expect(wrapper.get("input").element.value).toBe("");
+    expect(searchHandler).not.toHaveBeenCalled();
+    wrapper.unmount();
+  });
 });

@@ -1,6 +1,8 @@
 import {
   computed,
+  onBeforeUnmount,
   ref,
+  watch,
   type ComputedRef,
   type Ref,
   type WritableComputedRef,
@@ -9,6 +11,7 @@ import { message } from "ant-design-vue";
 import { WatchStatus, useUserMoviesStore, type UserMovie } from "@/stores";
 import { useDateTime } from "@/composable/useDateTime";
 import { useEscapeKey } from "@/composable/useEscapeKey";
+import { createRequestGuard } from "@/utils/requestGuard";
 import {
   MAX_SEASONS,
   MAX_EPISODES,
@@ -61,6 +64,19 @@ export function useMovieProgress(
   const editSeason = ref<number | undefined>();
   const editEpisode = ref<number | undefined>();
   const isProgressSaving = ref(false);
+  const requests = createRequestGuard();
+
+  watch(
+    [userId, () => currentUserMovie.value?.movieId],
+    () => {
+      requests.invalidate();
+      isProgressSaving.value = false;
+      isEditingProgress.value = false;
+    },
+    { flush: "sync" }
+  );
+
+  onBeforeUnmount(requests.invalidate);
 
   const formatChipDate = (raw: string): string => {
     const date = new Date(raw);
@@ -187,6 +203,8 @@ export function useMovieProgress(
       return;
     }
 
+    const isCurrent = requests.begin();
+
     isProgressSaving.value = true;
 
     try {
@@ -199,14 +217,16 @@ export function useMovieProgress(
         }
       );
 
+      if (!isCurrent()) return;
+
       currentUserMovie.value = updated;
 
       isEditingProgress.value = false;
       message.success("Прогресс обновлён");
     } catch {
-      message.error("Не удалось обновить прогресс");
+      if (isCurrent()) message.error("Не удалось обновить прогресс");
     } finally {
-      isProgressSaving.value = false;
+      if (isCurrent()) isProgressSaving.value = false;
     }
   };
 
@@ -256,6 +276,8 @@ export function useMovieProgress(
       return;
     }
 
+    const isCurrent = requests.begin();
+
     isProgressSaving.value = true;
 
     try {
@@ -265,12 +287,14 @@ export function useMovieProgress(
         payload
       );
 
+      if (!isCurrent()) return;
+
       currentUserMovie.value = updated;
       message.success("Статус обновлён");
     } catch {
-      message.error("Не удалось обновить статус просмотра");
+      if (isCurrent()) message.error("Не удалось обновить статус просмотра");
     } finally {
-      isProgressSaving.value = false;
+      if (isCurrent()) isProgressSaving.value = false;
     }
   };
 
@@ -318,6 +342,8 @@ export function useMovieProgress(
       return;
     }
 
+    const isCurrent = requests.begin();
+
     isProgressSaving.value = true;
 
     try {
@@ -327,12 +353,14 @@ export function useMovieProgress(
         payload
       );
 
+      if (!isCurrent()) return;
+
       currentUserMovie.value = updated;
       message.success(successMessage);
     } catch {
-      message.error(errorMessage);
+      if (isCurrent()) message.error(errorMessage);
     } finally {
-      isProgressSaving.value = false;
+      if (isCurrent()) isProgressSaving.value = false;
     }
   };
 

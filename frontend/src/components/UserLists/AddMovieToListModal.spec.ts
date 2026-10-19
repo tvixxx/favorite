@@ -222,4 +222,78 @@ describe("Добавление произведения в пользовате�
       ).value
     ).toBe("Черновик");
   });
+
+  it("поздняя проверка присутствия не возвращает кнопку после успешного добавления", async () => {
+    let finish!: (value: {
+      status: number;
+      data: { items: { movieId: string }[] };
+    }) => void;
+
+    mocks.fetch.mockImplementation(async (url: string) => {
+      if (url.endsWith("/b"))
+        return new Promise((resolve) => {
+          finish = resolve;
+        });
+
+      return { status: 200, data: { items: [] } };
+    });
+
+    render();
+    await flushPromises();
+    await item("Семья").get("button").trigger("click");
+    await flushPromises();
+    expect(item("Семья").find("button").exists()).toBe(false);
+    finish({ status: 200, data: { items: [] } });
+    await flushPromises();
+    expect(item("Семья").find("button").exists()).toBe(false);
+  });
+
+  it("повторное открытие использует новую проверку и не применяет старый ответ", async () => {
+    let finish!: (value: {
+      status: number;
+      data: { items: { movieId: string }[] };
+    }) => void;
+
+    mocks.fetch.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+    );
+
+    render();
+    await flushPromises();
+    await wrapper.setProps({ modelValue: false });
+    mocks.fetch.mockResolvedValue({ status: 200, data: { items: [] } });
+    await wrapper.setProps({ modelValue: true });
+    await flushPromises();
+    expect(item("Вечер").find("button").exists()).toBe(true);
+    finish({ status: 200, data: { items: [{ movieId: "movie-1" }] } });
+    await flushPromises();
+    expect(item("Вечер").find("button").exists()).toBe(true);
+  });
+
+  it("перепроверяет списки при смене тайтла и не переносит результат старого добавления", async () => {
+    render();
+    await flushPromises();
+
+    let finish!: () => void;
+
+    mocks.add.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      })
+    );
+
+    await item("Семья").get("button").trigger("click");
+    mocks.fetch.mockResolvedValue({ status: 200, data: { items: [] } });
+    await wrapper.setProps({ movieId: "movie-2" });
+    await flushPromises();
+    expect(item("Вечер").find("button").exists()).toBe(true);
+    finish();
+    await flushPromises();
+    expect(item("Семья").find("button").exists()).toBe(true);
+    await item("Семья").get("button").trigger("click");
+    await flushPromises();
+    expect(mocks.add).toHaveBeenLastCalledWith("owner", "b", "movie-2");
+  });
 });
