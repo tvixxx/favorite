@@ -13,6 +13,7 @@ vi.mock("@/services/media", () => ({
   uploadImage: mocks.upload,
   discardImage: mocks.discard,
 }));
+
 vi.mock("@/state/state", () => ({ useMainStore: () => mocks.state }));
 
 describe("Выбор изображения", () => {
@@ -20,6 +21,7 @@ describe("Выбор изображения", () => {
     mocks.upload.mockReset();
     mocks.discard.mockReset().mockResolvedValue(undefined);
     mocks.state = reactive({ sessionRevision: 0 });
+
     const NativeURL = URL;
 
     vi.stubGlobal(
@@ -32,7 +34,9 @@ describe("Выбор изображения", () => {
       }
     );
   });
+
   afterEach(() => vi.unstubAllGlobals());
+
   const render = () =>
     mount(ImagePicker, {
       props: { modelValue: null, purpose: "MOVIE_POSTER" },
@@ -45,6 +49,7 @@ describe("Выбор изображения", () => {
       configurable: true,
       value: [new File(["fixture"], name, { type: "image/png" })],
     });
+
     await input.trigger("change");
   };
 
@@ -57,6 +62,7 @@ describe("Выбор изображения", () => {
       height: 1200,
       byteSize: 1024,
     });
+
     const wrapper = render();
 
     await select(wrapper, "poster.png");
@@ -65,6 +71,7 @@ describe("Выбор изображения", () => {
       assetId: "asset-id",
       url: "https://media.example.test/full.webp",
     });
+
     expect(wrapper.text()).toContain("800 × 1200");
     wrapper.unmount();
   });
@@ -76,12 +83,15 @@ describe("Выбор изображения", () => {
       .findAll("button")
       .find((button) => button.text() === "По ссылке")!
       .trigger("click");
+
     await wrapper
       .get('input[type="url"]')
       .setValue("https://images.example.test/poster.jpg");
+
     expect(wrapper.emitted("update:modelValue")?.at(-1)?.[0]).toEqual({
       url: "https://images.example.test/poster.jpg",
     });
+
     expect(mocks.upload).not.toHaveBeenCalled();
     wrapper.unmount();
   });
@@ -94,10 +104,12 @@ describe("Выбор изображения", () => {
         finish = resolve;
       })
     );
+
     mocks.upload.mockResolvedValueOnce({
       id: "new",
       url: "https://media.example.test/new.webp",
     });
+
     const wrapper = render();
 
     await select(wrapper, "old.png");
@@ -108,6 +120,7 @@ describe("Выбор изображения", () => {
     expect(wrapper.emitted("update:modelValue")?.at(-1)?.[0]).toMatchObject({
       assetId: "new",
     });
+
     wrapper.unmount();
   });
 
@@ -121,6 +134,7 @@ describe("Выбор изображения", () => {
       configurable: true,
       value: [file],
     });
+
     await input.trigger("change");
     expect(mocks.upload).not.toHaveBeenCalled();
     expect(wrapper.text()).toContain("10 МБ");
@@ -132,7 +146,9 @@ describe("Выбор изображения", () => {
       id: "previous",
       url: "https://media.example.test/previous.webp",
     });
+
     mocks.upload.mockRejectedValueOnce(new Error("network"));
+
     const wrapper = render();
 
     await select(wrapper, "previous.png");
@@ -143,6 +159,7 @@ describe("Выбор изображения", () => {
     expect(wrapper.emitted("update:modelValue")?.at(-1)?.[0]).toMatchObject({
       assetId: "previous",
     });
+
     wrapper.unmount();
   });
 
@@ -151,10 +168,12 @@ describe("Выбор изображения", () => {
       id: "previous",
       url: "https://media.example.test/previous.webp",
     });
+
     mocks.upload.mockResolvedValueOnce({
       id: "next",
       url: "https://media.example.test/next.webp",
     });
+
     const wrapper = render();
 
     await select(wrapper, "previous.png");
@@ -165,14 +184,17 @@ describe("Выбор изображения", () => {
     expect(wrapper.emitted("update:modelValue")?.at(-1)?.[0]).toMatchObject({
       assetId: "next",
     });
+
     wrapper.unmount();
   });
 
   it("отменяет загрузку и освобождает blob при закрытии формы", async () => {
     mocks.upload.mockReturnValue(new Promise(() => {}));
+
     const wrapper = render();
 
     await select(wrapper, "poster.png");
+
     const options = mocks.upload.mock.calls[0][2];
 
     wrapper.unmount();

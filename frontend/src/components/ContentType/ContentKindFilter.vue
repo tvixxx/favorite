@@ -2,6 +2,7 @@
 import { Select as ASelect } from "ant-design-vue";
 import { useId } from "vue";
 import { contentKindOptions, type ContentKind } from "@/utils/content-kind";
+
 const props = defineProps<{
   contentKind?: ContentKind;
   isSerial?: boolean;
@@ -11,6 +12,7 @@ const emit = defineEmits<{
   change: [patch: { contentKind?: ContentKind; isSerial?: boolean }];
 }>();
 const id = useId();
+
 function selectCategory(value: unknown): void {
   emit("change", {
     contentKind: contentKindOptions.find((option) => option.value === value)
@@ -60,9 +62,11 @@ function selectFormat(value: unknown): void {
   min-width: 0;
   color: var(--fv-color-text-primary);
 }
+
 .content-filter label {
   font-weight: 500;
 }
+
 .content-filter :deep(.ant-select) {
   width: 100%;
   min-width: 0;

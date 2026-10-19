@@ -20,9 +20,9 @@ export enum WatchStatus {
 export interface MovieApiResponse {
   titleEn?: string | null;
   originalTitle?: string | null;
-  descriptionLanguage?: 'ru' | 'en';
+  descriptionLanguage?: "ru" | "en";
   tvdbId?: number | null;
-  tvdbType?: 'movie' | 'series' | null;
+  tvdbType?: "movie" | "series" | null;
   contentKind?: ContentKind | null;
   id: string;
   createdById?: string | null;
@@ -52,9 +52,9 @@ export interface MovieApiResponse {
 export interface Movie {
   titleEn?: string | null;
   originalTitle?: string | null;
-  descriptionLanguage?: 'ru' | 'en';
+  descriptionLanguage?: "ru" | "en";
   tvdbId?: number | null;
-  tvdbType?: 'movie' | 'series' | null;
+  tvdbType?: "movie" | "series" | null;
   updatedAt?: string;
   contentKind?: ContentKind | null;
   id: string;

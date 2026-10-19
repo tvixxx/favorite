@@ -2,8 +2,22 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
 import {
-  AutoComplete, Avatar, Button, DatePicker, Drawer, Dropdown, Form, Input,
-  InputNumber, Pagination, Rate, Segmented, Select, Slider, Switch, Tooltip,
+  AutoComplete,
+  Avatar,
+  Button,
+  DatePicker,
+  Drawer,
+  Dropdown,
+  Form,
+  Input,
+  InputNumber,
+  Pagination,
+  Rate,
+  Segmented,
+  Select,
+  Slider,
+  Switch,
+  Tooltip,
   message,
 } from "ant-design-vue";
 import "./styles/theme-variables.scss";
@@ -22,8 +36,22 @@ const app = createApp(App);
 const pinia = createPinia();
 
 for (const component of [
-  AutoComplete, Avatar, Button, DatePicker, Drawer, Dropdown, Form, Input,
-  InputNumber, Pagination, Rate, Segmented, Select, Slider, Switch, Tooltip,
+  AutoComplete,
+  Avatar,
+  Button,
+  DatePicker,
+  Drawer,
+  Dropdown,
+  Form,
+  Input,
+  InputNumber,
+  Pagination,
+  Rate,
+  Segmented,
+  Select,
+  Slider,
+  Switch,
+  Tooltip,
 ]) {
   app.use(component);
 }

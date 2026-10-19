@@ -46,8 +46,9 @@ async function save(): Promise<void> {
   try {
     await api.patch(`/movies/${id}`, {
       posterAssetId: selected?.assetId ?? null,
-      imageUrl: selected?.assetId ? undefined : (selected?.url ?? null),
+      imageUrl: selected?.assetId ? undefined : selected?.url ?? null,
     });
+
     if (props.movie.id === id) {
       emit("saved", selected);
       emit("update:modelValue", false);

@@ -4,6 +4,7 @@ import { message } from "ant-design-vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import api from "@/services/api";
 import { friendlyRequestError } from "@/utils/friendlyError";
+
 const open = defineModel<boolean>({ required: true });
 const props = defineProps<{ reviewId: string }>();
 const reason = ref<string>();
@@ -23,6 +24,7 @@ const options = [
   { value: "SPOILER", label: "Спойлер без предупреждения" },
   { value: "OTHER", label: "Другое" },
 ];
+
 watch(open, (visible) => {
   if (visible) {
     reason.value = undefined;

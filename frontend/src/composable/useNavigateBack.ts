@@ -18,7 +18,7 @@ export function useNavigateBack() {
   const router = useRouter();
 
   async function navigateBack(
-    payload: NavigateBackPayload = {},
+    payload: NavigateBackPayload = {}
   ): Promise<void> {
     const { fallback, mode = "history", beforeNavigate } = payload;
 
@@ -52,7 +52,9 @@ export function useNavigateBack() {
 
     const state = window.history.state as { back?: unknown } | null;
     const canGoBackInApp =
-      typeof state?.back === "string" && state.back.startsWith("/") && !state.back.startsWith("//");
+      typeof state?.back === "string" &&
+      state.back.startsWith("/") &&
+      !state.back.startsWith("//");
 
     if (fallback && !canGoBackInApp) {
       await router.replace(fallback);

@@ -15,7 +15,12 @@ import { usePasswordRecoveryAvailability } from "@/composable/usePasswordRecover
 const route = useRoute();
 const router = useRouter();
 const store = useMainStore();
-const { enabled: passwordRecoveryEnabled, checking, failed, load } = usePasswordRecoveryAvailability();
+const {
+  enabled: passwordRecoveryEnabled,
+  checking,
+  failed,
+  load,
+} = usePasswordRecoveryAvailability();
 const token = computed(() => {
   const params = new URLSearchParams(route.hash.slice(1));
   const value = params.get("token") ?? "";
@@ -32,6 +37,7 @@ const error = ref("");
 const recoveryOpen = ref(false);
 const requests = createRequestGuard();
 let controller: AbortController | undefined;
+
 watch(
   () => route.hash,
   () => {
@@ -43,14 +49,22 @@ watch(
     error.value = "";
   }
 );
+
 onBeforeUnmount(() => {
   requests.invalidate();
   controller?.abort();
   password.value = "";
   confirmation.value = "";
 });
+
 async function submit() {
-  if (busy.value || done.value || !token.value || !passwordRecoveryEnabled.value) return;
+  if (
+    busy.value ||
+    done.value ||
+    !token.value ||
+    !passwordRecoveryEnabled.value
+  )
+    return;
   if (
     password.value.length < 6 ||
     password.value.length > 128 ||
@@ -69,6 +83,7 @@ async function submit() {
   }
 
   const current = requests.begin();
+
   controller = new AbortController();
   busy.value = true;
   error.value = "";
@@ -78,6 +93,7 @@ async function submit() {
       { token: token.value, password: password.value },
       { signal: controller.signal, timeout: 15000 }
     );
+
     if (!current()) return;
     password.value = "";
     confirmation.value = "";
@@ -155,7 +171,11 @@ async function submit() {
       >
     </form>
   </section>
-  <PasswordRecoveryModal v-if="recoveryOpen && passwordRecoveryEnabled" v-model="recoveryOpen" email="" />
+  <PasswordRecoveryModal
+    v-if="recoveryOpen && passwordRecoveryEnabled"
+    v-model="recoveryOpen"
+    email=""
+  />
 </template>
 
 <style scoped lang="scss">
@@ -164,22 +184,27 @@ async function submit() {
     margin: 0 0 16px;
     font-size: 24px;
   }
+
   p {
     color: var(--fv-color-text-secondary);
     line-height: 1.5;
   }
+
   label {
     display: block;
     margin: 14px 0 6px;
   }
+
   [role="alert"] {
     color: var(--fv-color-negative);
   }
+
   a {
     display: inline-block;
     margin-top: 16px;
     color: var(--fv-color-link);
   }
+
   &__request {
     margin-top: 16px;
   }

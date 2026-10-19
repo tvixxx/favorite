@@ -71,7 +71,7 @@ const onTouchMove = (e: TouchEvent): void => {
 
   dragOffset.value = Math.max(
     0,
-    (e.touches[0]?.clientY ?? 0) - dragStartY.value,
+    (e.touches[0]?.clientY ?? 0) - dragStartY.value
   );
 };
 
@@ -231,7 +231,6 @@ const onTouchEnd = (): void => {
     color: var(--fv-color-text-primary);
   }
 
-  // Счётчик применённых фильтров — синяя пилюля рядом с заголовком (эталон)
   &__count {
     display: inline-flex;
     align-items: center;
@@ -369,6 +368,7 @@ const onTouchEnd = (): void => {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -378,6 +378,7 @@ const onTouchEnd = (): void => {
   from {
     opacity: 1;
   }
+
   to {
     opacity: 0;
   }
@@ -387,6 +388,7 @@ const onTouchEnd = (): void => {
   from {
     transform: translateX(100%);
   }
+
   to {
     transform: translateX(0);
   }
@@ -396,6 +398,7 @@ const onTouchEnd = (): void => {
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(100%);
   }
@@ -405,6 +408,7 @@ const onTouchEnd = (): void => {
   from {
     transform: translateY(100%);
   }
+
   to {
     transform: translateY(0);
   }
@@ -414,6 +418,7 @@ const onTouchEnd = (): void => {
   from {
     transform: translateY(0);
   }
+
   to {
     transform: translateY(100%);
   }

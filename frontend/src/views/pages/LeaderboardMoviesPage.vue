@@ -18,7 +18,7 @@ const { items, total, isLoading, isError, currentPage } = storeToRefs(store);
 
 const router = useRouter();
 const showSkeleton = useMinLoading(
-  () => isLoading.value && !items.value.length,
+  () => isLoading.value && !items.value.length
 );
 
 const previewOpen = ref(false);
@@ -99,45 +99,45 @@ onMounted(() => {
 
     <template v-else>
       <div class="lb-list" :class="{ 'lb-list--busy': isLoading }">
-          <LeaderboardRow
-            v-for="row in items"
-            :key="row.movieId"
-            :rank="row.rank"
-            :title="row.title"
-            :subtitle="rowSubtitle(row)"
-            :metric="rowRate(row)"
-            clickable
-            @open="openPreview(row.movieId)"
-          >
-            <template #media>
-              <span class="lb-movies__poster">
-                <MoviePoster
-                  :src="row.posterUrl"
-                  :seed="row.movieId"
-                  :title="row.title"
-                  :alt="row.title"
-                  loading="lazy"
-                />
-              </span>
-            </template>
-          </LeaderboardRow>
-        </div>
-
-        <div
-          v-if="total > store.pageSize"
-          class="lb-movies__pagination"
+        <LeaderboardRow
+          v-for="row in items"
+          :key="row.movieId"
+          :rank="row.rank"
+          :title="row.title"
+          :subtitle="rowSubtitle(row)"
+          :metric="rowRate(row)"
+          clickable
+          @open="openPreview(row.movieId)"
         >
-          <a-pagination
-            :current="currentPage"
-            :page-size="store.pageSize"
-            :total="total"
-            show-less-items
-            @change="(p: number) => void store.setPage(p)"
-          />
-        </div>
+          <template #media>
+            <span class="lb-movies__poster">
+              <MoviePoster
+                :src="row.posterUrl"
+                :seed="row.movieId"
+                :title="row.title"
+                :alt="row.title"
+                loading="lazy"
+              />
+            </span>
+          </template>
+        </LeaderboardRow>
+      </div>
+
+      <div v-if="total > store.pageSize" class="lb-movies__pagination">
+        <a-pagination
+          :current="currentPage"
+          :page-size="store.pageSize"
+          :total="total"
+          show-less-items
+          @change="(p: number) => void store.setPage(p)"
+        />
+      </div>
     </template>
 
-    <CatalogMoviePreviewModal v-model="previewOpen" :movie-id="previewMovieId" />
+    <CatalogMoviePreviewModal
+      v-model="previewOpen"
+      :movie-id="previewMovieId"
+    />
   </div>
 </template>
 

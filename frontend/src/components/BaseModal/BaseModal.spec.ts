@@ -28,6 +28,7 @@ describe("BaseModal", () => {
     });
 
     const backdrop = document.querySelector(".modal-backdrop");
+
     expect(backdrop).toBeTruthy();
 
     await (backdrop as Element).dispatchEvent(

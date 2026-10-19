@@ -10,6 +10,7 @@ import { showErrorRequest } from "@/state/utils";
 import type { Review } from "@/stores";
 import { message } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import SectionHeading from "@/components/SectionHeading/SectionHeading.vue";
 import { useMainStore } from "@/state/state";
 import ReportReviewModal from "./ReportReviewModal.vue";
 
@@ -39,6 +40,7 @@ function report(id: string): void {
 }
 
 type ReviewFormExpose = { resetForm: () => void };
+
 const reviewFormRef = ref<ReviewFormExpose | null>(null);
 
 const canEditReview = (review: Review) =>
@@ -103,7 +105,9 @@ const handleSubmit = async (text: string, rate: number, isSpoiler = false) => {
   }
 
   isSaving.value = true;
+
   const submittedMovieId = movieId;
+
   try {
     if (isEditing.value && editingReview.value) {
       await updateReview(editingReview.value.id, { text, rate, isSpoiler });
@@ -138,6 +142,7 @@ const handleDelete = async (reviewId: string) => {
   }
 
   deletingIds.value.add(reviewId);
+
   const submittedMovieId = movieId;
 
   try {
@@ -162,15 +167,18 @@ const handleDelete = async (reviewId: string) => {
 
 <template>
   <section class="reviews-widget">
-    <div class="reviews-widget__header">
-      <h3 class="reviews-widget__title">
-        <BaseIcon name="ph:chats" :width="22" :height="22" />
-        Отзывы
-      </h3>
-      <span v-if="isLoaded" class="reviews-widget__count">
-        {{ totalReviews }}
-      </span>
-    </div>
+    <SectionHeading
+      class="reviews-widget__header"
+      title="Отзывы"
+      icon="ph:chats"
+      tag="h3"
+    >
+      <template #actions>
+        <span v-if="isLoaded" class="reviews-widget__count">
+          {{ totalReviews }}
+        </span>
+      </template>
+    </SectionHeading>
 
     <StateBlock
       v-if="isError"
@@ -268,30 +276,12 @@ const handleDelete = async (reviewId: string) => {
 <style scoped lang="scss">
 .reviews-widget {
   background: var(--fv-color-bg-primary);
-  // Как остальные карточки детальной (эталон .card): r24, padding 26, без рамки
   border-radius: var(--fv-radius-lg);
   padding: 26px;
   box-shadow: var(--fv-shadow-low);
 
   &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     margin-bottom: 18px;
-  }
-
-  &__title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 1.25rem;
-    font-weight: 500;
-    color: var(--fv-color-text-primary);
-    margin: 0;
-
-    svg {
-      color: var(--fv-color-accent);
-    }
   }
 
   &__count {

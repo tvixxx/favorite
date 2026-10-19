@@ -43,7 +43,8 @@ export const STATE_PRESETS = {
     variant: "empty",
     icon: "ph:user-focus",
     title: "Актёры ещё не добавлены",
-    description: "Добавьте любимых актёров, чтобы следить за их новыми работами.",
+    description:
+      "Добавьте любимых актёров, чтобы следить за их новыми работами.",
   },
   listsEmpty: {
     variant: "empty",
@@ -81,7 +82,8 @@ export const STATE_PRESETS = {
     variant: "empty",
     icon: "ph:users",
     title: "У вас пока нет друзей",
-    description: "Найдите друзей по имени или e-mail, чтобы обсуждать кино вместе.",
+    description:
+      "Найдите друзей по имени или e-mail, чтобы обсуждать кино вместе.",
   },
   friendsRequestsEmpty: {
     variant: "empty",
@@ -93,7 +95,8 @@ export const STATE_PRESETS = {
     variant: "empty",
     icon: "ph:bell",
     title: "Уведомлений нет",
-    description: "Здесь появятся ответы на комментарии, оценки и заявки в друзья.",
+    description:
+      "Здесь появятся ответы на комментарии, оценки и заявки в друзья.",
   },
 
   // ── Ошибки ─────────────────────────────────────────────────────────────
@@ -137,7 +140,8 @@ export const STATE_PRESETS = {
     variant: "error",
     icon: "ph:warning-circle",
     title: "Не удалось открыть фильм",
-    description: "Карточка не загрузилась. Вернитесь назад или попробуйте снова.",
+    description:
+      "Карточка не загрузилась. Вернитесь назад или попробуйте снова.",
   },
   chatThreadError: {
     variant: "error",
@@ -163,7 +167,8 @@ export const STATE_PRESETS = {
     variant: "error",
     icon: "ph:plugs",
     title: "Что-то пошло не так",
-    description: "Мы уже разбираемся. Попробуйте обновить страницу через минуту.",
+    description:
+      "Мы уже разбираемся. Попробуйте обновить страницу через минуту.",
     code: "ОШИБКА 500",
   },
 } as const satisfies Record<string, StatePreset>;

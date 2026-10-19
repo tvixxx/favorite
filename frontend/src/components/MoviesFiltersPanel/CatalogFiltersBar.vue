@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import dayjs, { type Dayjs } from "dayjs";
-import {releaseMonthBound,releaseDateInput} from '@/utils/releaseDate';
+import { releaseMonthBound, releaseDateInput } from "@/utils/releaseDate";
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import FiltersSheet from "@/components/MoviesFiltersPanel/FiltersSheet.vue";
@@ -32,24 +32,37 @@ const moviesStore = useMoviesStore();
 const searchValue = ref(moviesStore.searchQuery);
 const selectedGenres = computed<Genre[]>({
   get: () => moviesStore.filters.genres ?? [],
-  set: (genres) => updateFilters({ genres: genres.length ? genres : undefined }),
+  set: (genres) =>
+    updateFilters({ genres: genres.length ? genres : undefined }),
 });
 const selectedCountries = computed<string[]>({
   get: () => moviesStore.filters.countryCodes ?? [],
-  set: (countryCodes) => updateFilters({ countryCodes: countryCodes.length ? countryCodes : undefined }),
+  set: (countryCodes) =>
+    updateFilters({
+      countryCodes: countryCodes.length ? countryCodes : undefined,
+    }),
 });
 const publishDateRange = computed<[Dayjs, Dayjs] | null>({
-  get: (): [Dayjs, Dayjs] | null => moviesStore.filters.publishDateFrom && moviesStore.filters.publishDateTo
-    ? [releaseDateInput(moviesStore.filters.publishDateFrom), releaseDateInput(moviesStore.filters.publishDateTo)] : null,
-  set: (range) => updateFilters({
-    publishDateFrom: range?.[0] ? releaseMonthBound(range[0],'from') : undefined,
-    publishDateTo: range?.[1] ? releaseMonthBound(range[1],'to') : undefined,
-  }),
+  get: (): [Dayjs, Dayjs] | null =>
+    moviesStore.filters.publishDateFrom && moviesStore.filters.publishDateTo
+      ? [
+          releaseDateInput(moviesStore.filters.publishDateFrom),
+          releaseDateInput(moviesStore.filters.publishDateTo),
+        ]
+      : null,
+  set: (range) =>
+    updateFilters({
+      publishDateFrom: range?.[0]
+        ? releaseMonthBound(range[0], "from")
+        : undefined,
+      publishDateTo: range?.[1] ? releaseMonthBound(range[1], "to") : undefined,
+    }),
 });
 const isDrawerOpen = ref(false);
 
 const advancedCount = computed(() => {
   let n = 0;
+
   if (moviesStore.filters.contentKind) n += 1;
   if (moviesStore.filters.isSerial !== undefined) n += 1;
   if (selectedGenres.value.length) n += 1;
@@ -71,16 +84,26 @@ const activeTags = computed<FilterTag[]>(() => {
   selectedCountries.value.forEach((code) => {
     tags.push({ key: `country:${code}`, label: countryLabel(code) });
   });
-  const category = contentKindOptions.find(option => option.value === moviesStore.filters.contentKind);
+
+  const category = contentKindOptions.find(
+    (option) => option.value === moviesStore.filters.contentKind
+  );
+
   if (category) tags.push({ key: "contentKind", label: category.label });
-  if (moviesStore.filters.isSerial !== undefined) tags.push({ key: "format", label: moviesStore.filters.isSerial ? "Сериалы и выпуски" : "Фильмы" });
+  if (moviesStore.filters.isSerial !== undefined)
+    tags.push({
+      key: "format",
+      label: moviesStore.filters.isSerial ? "Сериалы и выпуски" : "Фильмы",
+    });
 
   const [from, to] = publishDateRange.value ?? [];
 
   if (from && to) {
     tags.push({
       key: "date",
-      label: `${dayjs(from).format("MM.YYYY")} — ${dayjs(to).format("MM.YYYY")}`,
+      label: `${dayjs(from).format("MM.YYYY")} — ${dayjs(to).format(
+        "MM.YYYY"
+      )}`,
     });
   }
 
@@ -89,6 +112,7 @@ const activeTags = computed<FilterTag[]>(() => {
 
 const removeTag = (key: string): void => {
   const [type, value] = key.split(":");
+
   if (type === "contentKind") updateFilters({ contentKind: undefined });
   if (type === "format") updateFilters({ isSerial: undefined });
 
@@ -96,7 +120,7 @@ const removeTag = (key: string): void => {
     selectedGenres.value = selectedGenres.value.filter((g) => g !== value);
   } else if (type === "country") {
     selectedCountries.value = selectedCountries.value.filter(
-      (c) => c !== value,
+      (c) => c !== value
     );
   } else if (type === "date") {
     publishDateRange.value = null;
@@ -115,23 +139,36 @@ function updateFilters(patch: MoviesFilters): void {
     ...patch,
     ...(props.lockedActorIds?.length ? { actorIds: props.lockedActorIds } : {}),
   });
+
   moviesStore.setCurrentPage(1);
   runFetch();
 }
 
 const resetAdvanced = (): void => {
-  updateFilters({ contentKind: undefined, isSerial: undefined, genres: undefined, countryCodes: undefined, publishDateFrom: undefined, publishDateTo: undefined });
+  updateFilters({
+    contentKind: undefined,
+    isSerial: undefined,
+    genres: undefined,
+    countryCodes: undefined,
+    publishDateFrom: undefined,
+    publishDateTo: undefined,
+  });
 };
 
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
+
 onBeforeUnmount(() => clearTimeout(searchTimer));
-watch(() => moviesStore.searchQuery, (query) => {
-  clearTimeout(searchTimer);
-  searchValue.value = query;
-});
+watch(
+  () => moviesStore.searchQuery,
+  (query) => {
+    clearTimeout(searchTimer);
+    searchValue.value = query;
+  }
+);
 
 const triggerSearch = (): void => {
   const q = searchValue.value.trim();
+
   moviesStore.setCurrentPage(1);
 
   if (q) {
@@ -201,7 +238,12 @@ const onSearchEnter = (): void => {
       @reset="resetAdvanced"
     >
       <GenreFilter v-model="selectedGenres" />
-      <ContentKindFilter :content-kind="moviesStore.filters.contentKind" :is-serial="moviesStore.filters.isSerial" show-format @change="updateFilters" />
+      <ContentKindFilter
+        :content-kind="moviesStore.filters.contentKind"
+        :is-serial="moviesStore.filters.isSerial"
+        show-format
+        @change="updateFilters"
+      />
       <CountryFilter v-model="selectedCountries" />
       <PeriodChips v-model="publishDateRange" />
     </FiltersSheet>
@@ -243,8 +285,8 @@ const onSearchEnter = (): void => {
     transition: border-color var(--fv-motion-fast) var(--fv-ease);
 
     @include mediaTablet {
-      flex: 0 1 460px;
-      min-width: 240px;
+      flex: 0 1 420px;
+      min-width: 220px;
     }
 
     &:focus-within {
@@ -288,8 +330,7 @@ const onSearchEnter = (): void => {
     font-weight: 500;
     cursor: pointer;
     white-space: nowrap;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
@@ -336,7 +377,6 @@ const onSearchEnter = (): void => {
     font-size: 12px;
     font-weight: 700;
 
-    // На мобильной иконке бейдж синий и вынесен в угол (эталон)
     @include mediaMax(767.98px) {
       position: absolute;
       top: -4px;

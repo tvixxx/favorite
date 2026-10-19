@@ -33,11 +33,19 @@ import MoviePoster from "@/components/MoviePoster/MoviePoster.vue";
 import type { ImageSelection } from "@/services/media";
 import ContentTypePicker from "@/components/ContentType/ContentTypePicker.vue";
 import NumberField from "@/components/NumberField/NumberField.vue";
-import { MIN_MEDIA_YEAR, maxMediaYear, MAX_SEASONS, MAX_EPISODES, isOptionalInteger, isMediaDate, progressMax } from '@/utils/media-numbers';
+import {
+  MIN_MEDIA_YEAR,
+  maxMediaYear,
+  MAX_SEASONS,
+  MAX_EPISODES,
+  isOptionalInteger,
+  isMediaDate,
+  progressMax,
+} from "@/utils/media-numbers";
 import TitleCandidates from "@/components/ContentType/TitleCandidates.vue";
 import { type ContentKind, type ContentSelection } from "@/utils/content-kind";
-import TvdbAdd from '@/components/Tvdb/TvdbAdd.vue';
-import { tvdbEnabled } from '@/services/tvdb';
+import TvdbAdd from "@/components/Tvdb/TvdbAdd.vue";
+import { tvdbEnabled } from "@/services/tvdb";
 
 const { navigateBack } = useNavigateBack();
 const moviesStore = useMoviesStore();
@@ -47,21 +55,25 @@ const mainStore = useMainStore();
 
 const userId = computed(() => mainStore.userData?.id || "");
 const catalogueEnabled = ref(false);
-const addMode = ref<'manual' | 'search'>('manual');
+const addMode = ref<"manual" | "search">("manual");
 const capabilityRequest = new AbortController();
+
 onMounted(async () => {
   const enabled = await tvdbEnabled(capabilityRequest.signal);
+
   if (capabilityRequest.signal.aborted) return;
   catalogueEnabled.value = enabled;
-  if (enabled && !formData.title.trim()) addMode.value = 'search';
+  if (enabled && !formData.title.trim()) addMode.value = "search";
 });
+
 onBeforeUnmount(() => capabilityRequest.abort());
 function addManually(title: string): void {
   if (!formData.title.trim()) formData.title = title;
-  addMode.value = 'manual';
+  addMode.value = "manual";
 }
 
 function refreshImported(): void {
+  moviesStore.isMoviesLoaded = false;
   void userMoviesStore.refreshAfterImport(userId.value);
 }
 
@@ -79,6 +91,7 @@ const handleActorSelection = async (selectedValues: string[]) => {
   const revision = ++actorSelectionRevision;
 
   isActorResolving.value = true;
+
   const processedValues: string[] = [];
 
   for (const value of selectedValues) {
@@ -152,7 +165,10 @@ const formData = reactive<CreateMovieForm>({
 const formRef = ref<FormInstance | null>(null);
 const typeError = ref("");
 const contentSelection = computed<ContentSelection>({
-  get: () => ({ contentKind: formData.contentKind, isSerial: formData.isSerial }),
+  get: () => ({
+    contentKind: formData.contentKind,
+    isSerial: formData.isSerial,
+  }),
   set: (value) => {
     formData.contentKind = value.contentKind;
     formData.isSerial = value.isSerial;
@@ -245,23 +261,40 @@ const addNewMovie = async () => {
   }
 
   if (!formData.contentKind || formData.isSerial === null) {
-    typeError.value = !formData.contentKind ? "Выберите, что добавляете" : "Уточните формат";
+    typeError.value = !formData.contentKind
+      ? "Выберите, что добавляете"
+      : "Уточните формат";
 
     return;
   }
 
-  if (!isMediaDate(formData.publishDate) || (formData.isSerial && !([
-    [formData.seasonCount, 1, MAX_SEASONS],
-    [formData.episodeCount, 1, MAX_EPISODES],
-    [formData.currentSeason, 0, progressMax(formData.seasonCount, MAX_SEASONS)],
-    [formData.currentEpisode, 0, progressMax(formData.episodeCount, MAX_EPISODES)],
-  ] as const).every(([value, min, max]) => isOptionalInteger(value, min, max)))) {
-    message.error('Проверьте год выхода и числовые поля сезонов и серий');
+  if (
+    !isMediaDate(formData.publishDate) ||
+    (formData.isSerial &&
+      !(
+        [
+          [formData.seasonCount, 1, MAX_SEASONS],
+          [formData.episodeCount, 1, MAX_EPISODES],
+          [
+            formData.currentSeason,
+            0,
+            progressMax(formData.seasonCount, MAX_SEASONS),
+          ],
+          [
+            formData.currentEpisode,
+            0,
+            progressMax(formData.episodeCount, MAX_EPISODES),
+          ],
+        ] as const
+      ).every(([value, min, max]) => isOptionalInteger(value, min, max)))
+  ) {
+    message.error("Проверьте год выхода и числовые поля сезонов и серий");
 
     return;
   }
 
   isSubmitting.value = true;
+
   const { title } = formData;
 
   try {
@@ -274,7 +307,9 @@ const addNewMovie = async () => {
         ? new Date(formData.publishDate).toISOString()
         : null,
       actorIds: formData.actorIds,
-      imageUrl: posterSelection.value?.assetId ? undefined : formData.imageUrl || undefined,
+      imageUrl: posterSelection.value?.assetId
+        ? undefined
+        : formData.imageUrl || undefined,
       posterAssetId: posterSelection.value?.assetId ?? undefined,
       isSerial: formData.isSerial,
       contentKind: formData.contentKind,
@@ -345,13 +380,37 @@ const addNewMovie = async () => {
       />
 
       <div class="create-movie__card">
-
         <h1 class="create-movie__title">Добавить в коллекцию</h1>
-        <div v-if="catalogueEnabled" class="cm-add-modes" role="group" aria-label="Способ добавления">
-          <button type="button" :aria-pressed="addMode === 'search'" @click="addMode = 'search'">Найти в TheTVDB</button>
-          <button type="button" :aria-pressed="addMode === 'manual'" @click="addMode = 'manual'">Вручную</button>
+        <div
+          v-if="catalogueEnabled"
+          class="cm-add-modes"
+          role="group"
+          aria-label="Способ добавления"
+        >
+          <button
+            type="button"
+            :aria-pressed="addMode === 'search'"
+            @click="addMode = 'search'"
+          >
+            Найти в TheTVDB
+          </button>
+          <button
+            type="button"
+            :aria-pressed="addMode === 'manual'"
+            @click="addMode = 'manual'"
+          >
+            Вручную
+          </button>
         </div>
-        <TvdbAdd v-if="catalogueEnabled" v-show="addMode === 'search'" :user-id="userId" :session-revision="mainStore.sessionRevision" :is-admin="mainStore.userData?.role === 'ADMIN'" @manual="addManually" @added="refreshImported" />
+        <TvdbAdd
+          v-if="catalogueEnabled"
+          v-show="addMode === 'search'"
+          :user-id="userId"
+          :session-revision="mainStore.sessionRevision"
+          :is-admin="mainStore.userData?.role === 'ADMIN'"
+          @manual="addManually"
+          @added="refreshImported"
+        />
 
         <a-form
           v-show="addMode === 'manual'"
@@ -512,9 +571,19 @@ const addNewMovie = async () => {
               </a-form-item>
 
               <a-form-item label="Что добавляем?" required>
-                <ContentTypePicker v-model="contentSelection" :disabled="isSubmitting" />
-                <p v-if="typeError" class="cm-type-error" role="alert">{{ typeError }}</p>
-                <TitleCandidates :title="formData.title" :disabled="isSubmitting" can-add @choose="addExisting" />
+                <ContentTypePicker
+                  v-model="contentSelection"
+                  :disabled="isSubmitting"
+                />
+                <p v-if="typeError" class="cm-type-error" role="alert">
+                  {{ typeError }}
+                </p>
+                <TitleCandidates
+                  :title="formData.title"
+                  :disabled="isSubmitting"
+                  can-add
+                  @choose="addExisting"
+                />
               </a-form-item>
 
               <div class="cm-toggles">
@@ -535,10 +604,21 @@ const addNewMovie = async () => {
                   />
                 </a-form-item>
 
-                <a-form-item :label="formData.contentKind === 'TV_SHOW' ? 'Количество выпусков' : 'Количество эпизодов'" name="episodeCount">
+                <a-form-item
+                  :label="
+                    formData.contentKind === 'TV_SHOW'
+                      ? 'Количество выпусков'
+                      : 'Количество эпизодов'
+                  "
+                  name="episodeCount"
+                >
                   <NumberField
                     v-model="formData.episodeCount"
-                    :label="formData.contentKind === 'TV_SHOW' ? 'Количество выпусков' : 'Количество эпизодов'"
+                    :label="
+                      formData.contentKind === 'TV_SHOW'
+                        ? 'Количество выпусков'
+                        : 'Количество эпизодов'
+                    "
                     :disabled="isSubmitting"
                     :min="1"
                     :max="MAX_EPISODES"
@@ -546,10 +626,7 @@ const addNewMovie = async () => {
                 </a-form-item>
               </div>
 
-              <div
-                v-if="formData.isSerial"
-                class="cm-row2"
-              >
+              <div v-if="formData.isSerial" class="cm-row2">
                 <a-form-item
                   label="На каком сезоне остановились"
                   name="currentSeason"
@@ -564,12 +641,20 @@ const addNewMovie = async () => {
                 </a-form-item>
 
                 <a-form-item
-                    :label="formData.contentKind === 'TV_SHOW' ? 'На каком выпуске остановились' : 'На какой серии остановились'"
+                  :label="
+                    formData.contentKind === 'TV_SHOW'
+                      ? 'На каком выпуске остановились'
+                      : 'На какой серии остановились'
+                  "
                   name="currentEpisode"
                 >
                   <NumberField
                     v-model="formData.currentEpisode"
-                    :label="formData.contentKind === 'TV_SHOW' ? 'На каком выпуске остановились' : 'На какой серии остановились'"
+                    :label="
+                      formData.contentKind === 'TV_SHOW'
+                        ? 'На каком выпуске остановились'
+                        : 'На какой серии остановились'
+                    "
                     :disabled="isSubmitting"
                     :min="0"
                     :max="progressMax(formData.episodeCount, MAX_EPISODES)"
@@ -652,12 +737,36 @@ const addNewMovie = async () => {
 @use "@/styles/layout" as *;
 @use "@/styles/movie-form" as *;
 
-.cm-type-error { margin: 8px 0 0; color: var(--fv-color-negative); }
+.cm-type-error {
+  margin: 8px 0 0;
+  color: var(--fv-color-negative);
+}
+
 .cm-add-modes {
-  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;
-  button { padding: 12px 18px; border: 1px solid var(--fv-color-border); border-radius: var(--fv-radius-sm); background: transparent; color: var(--fv-color-text-primary); font: inherit; cursor: pointer; }
-  button[aria-pressed="true"] { background: var(--fv-color-accent-soft); border-color: var(--fv-color-accent); }
-  button:focus-visible { outline: 2px solid var(--fv-color-accent); outline-offset: 3px; }
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+
+  button {
+    padding: 12px 18px;
+    border: 1px solid var(--fv-color-border);
+    border-radius: var(--fv-radius-sm);
+    background: transparent;
+    color: var(--fv-color-text-primary);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  button[aria-pressed="true"] {
+    background: var(--fv-color-accent-soft);
+    border-color: var(--fv-color-accent);
+  }
+
+  button:focus-visible {
+    outline: 2px solid var(--fv-color-accent);
+    outline-offset: 3px;
+  }
 }
 
 .create-movie {
@@ -680,6 +789,7 @@ const addNewMovie = async () => {
 
   &__card {
     background: var(--fv-color-bg-primary);
+
     // место под закреплённую кнопку на мобиле
     @include mediaMax(767.98px) {
       margin-bottom: 84px;
@@ -745,7 +855,6 @@ const addNewMovie = async () => {
 }
 
 /* инлайн-тумблеры */
-/* Пилюли выбора (эталон): активная — тёмная ink, «Ещё» — пунктирная */
 .cm-pills {
   display: flex;
   flex-wrap: wrap;
@@ -958,7 +1067,6 @@ const addNewMovie = async () => {
   }
 }
 
-/* поля выше — под эталон 52px */
 :deep(.ant-input),
 :deep(.ant-picker),
 :deep(.ant-select:not(.ant-select-customize-input) .ant-select-selector) {

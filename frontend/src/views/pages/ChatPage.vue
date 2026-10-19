@@ -14,14 +14,14 @@ import { useMinLoading } from "@/components/Skeleton/useMinLoading";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import { avatarGradient, avatarLetter } from "@/composable/useAvatarGradient";
-import {useDateTime} from '@/composable/useDateTime';
+import { useDateTime } from "@/composable/useDateTime";
 
 const route = useRoute();
 const router = useRouter();
 const chatStore = useChatStore();
 const userStatusStore = useUserStatusStore();
 const mainStore = useMainStore();
-const {formatInstant}=useDateTime();
+const { formatInstant } = useDateTime();
 
 const showConversationsSkeleton = useMinLoading(() => chatStore.isLoading);
 
@@ -50,7 +50,7 @@ const selectedConversation = computed(() => {
   }
 
   return chatStore.conversations.find(
-    (c) => c.otherUser.id === chatStore.currentChatUserId,
+    (c) => c.otherUser.id === chatStore.currentChatUserId
   );
 });
 
@@ -79,6 +79,7 @@ const selectConversation = async (otherUserId: string) => {
 const attachMovie = () => {
   const current = messageInput.value;
   const needsSpace = current.length > 0 && !/\s$/.test(current);
+
   messageInput.value = `${current}${needsSpace ? " " : ""}#`;
 };
 
@@ -94,13 +95,16 @@ const sendMessage = async (wireFromEnter?: string) => {
   }
 
   const draft = messageInput.value;
+
   isSending.value = true;
   try {
     await chatStore.sendMessage(chatStore.currentChatUserId, content);
     if (messageInput.value === draft) messageInput.value = "";
     scrollToBottom();
   } catch (error) {
-    message.error(error instanceof Error ? error.message : "Не удалось отправить сообщение");
+    message.error(
+      error instanceof Error ? error.message : "Не удалось отправить сообщение"
+    );
   } finally {
     isSending.value = false;
   }
@@ -139,7 +143,7 @@ watch(
   },
   () => {
     scrollToBottom();
-  },
+  }
 );
 
 onMounted(async () => {
@@ -158,10 +162,12 @@ onMounted(async () => {
   }
 
   const rememberedPeer = chatStore.currentChatUserId;
+
   if (rememberedPeer) {
     const stillPresent = chatStore.conversations.some(
-      (c) => c.otherUser.id === rememberedPeer,
+      (c) => c.otherUser.id === rememberedPeer
     );
+
     if (stillPresent) {
       await selectConversation(rememberedPeer);
 
@@ -175,7 +181,6 @@ onMounted(async () => {
     await selectConversation(chatStore.conversations[0].otherUser.id);
   }
 });
-
 </script>
 
 <template>
@@ -191,241 +196,243 @@ onMounted(async () => {
           <h2 class="chat-page__title">Сообщения</h2>
         </div>
 
-      <RowsSkeleton
-        v-if="showConversationsSkeleton"
-        :count="6"
-        :badge="false"
-      />
+        <RowsSkeleton
+          v-if="showConversationsSkeleton"
+          :count="6"
+          :badge="false"
+        />
 
-      <StateBlock
-        v-else-if="chatStore.isError"
-        variant="error"
-        icon="ph:warning-circle"
-        title="Диалоги не загрузились"
-        description="Не удалось получить список диалогов. Попробуйте обновить."
-        :actions="[
-          {
-            label: 'Обновить',
-            icon: 'ph:arrow-clockwise',
-            kind: 'primary',
-            onClick: reloadConversations,
-          },
-        ]"
-      />
-
-      <div
-        v-else-if="chatStore.conversations.length > 0"
-        class="chat-page__conversations"
-      >
-        <button
-          v-for="item in chatStore.conversations"
-          :key="item.otherUser.id"
-          type="button"
-          class="conversation-item"
-          :class="{
-            'conversation-item--active':
-              chatStore.currentChatUserId === item.otherUser.id,
-          }"
-          @click="selectConversation(item.otherUser.id)"
-        >
-          <div class="conversation-item__avatar">
-            <Badge
-              :dot="userStatusStore.isUserOnline(item.otherUser.id)"
-              color="green"
-            >
-              <span
-                class="chat-avatar"
-                :style="{ background: avatarGradient(item.otherUser.id) }"
-              >
-                {{ avatarLetter(item.otherUser.fullName) }}
-              </span>
-            </Badge>
-          </div>
-          <div class="conversation-item__content">
-            <div class="conversation-item__header">
-              <span class="conversation-item__username">{{
-                item.otherUser.fullName
-              }}</span>
-              <span class="conversation-item__time">{{
-                formatTime(item.lastMessage.createdAt)
-              }}</span>
-            </div>
-            <div class="conversation-item__message">
-              <span
-                class="conversation-item__preview"
-                :class="{
-                  'conversation-item__preview--unread': item.unreadCount > 0,
-                }"
-              >
-                {{ item.lastMessage.content }}
-              </span>
-              <span
-                v-if="item.unreadCount > 0"
-                class="conversation-item__badge"
-                >{{ item.unreadCount }}</span
-              >
-            </div>
-          </div>
-        </button>
-      </div>
-
-      <StateBlock
-        v-else
-        v-bind="STATE_PRESETS.chatListEmpty"
-        :actions="[
-          {
-            label: 'К друзьям',
-            icon: 'ph:users-three',
-            kind: 'primary',
-            onClick: goToFriends,
-          },
-        ]"
-      />
-    </div>
-
-    <div class="chat-page__main">
-      <div v-if="!chatStore.currentChatUserId" class="chat-page__empty">
         <StateBlock
-          variant="empty"
-          icon="ph:chats-circle"
-          title="Выберите диалог"
-          description="Откройте переписку слева или начните новую в разделе «Друзья»."
+          v-else-if="chatStore.isError"
+          variant="error"
+          icon="ph:warning-circle"
+          title="Диалоги не загрузились"
+          description="Не удалось получить список диалогов. Попробуйте обновить."
+          :actions="[
+            {
+              label: 'Обновить',
+              icon: 'ph:arrow-clockwise',
+              kind: 'primary',
+              onClick: reloadConversations,
+            },
+          ]"
+        />
+
+        <div
+          v-else-if="chatStore.conversations.length > 0"
+          class="chat-page__conversations"
+        >
+          <button
+            v-for="item in chatStore.conversations"
+            :key="item.otherUser.id"
+            type="button"
+            class="conversation-item"
+            :class="{
+              'conversation-item--active':
+                chatStore.currentChatUserId === item.otherUser.id,
+            }"
+            @click="selectConversation(item.otherUser.id)"
+          >
+            <div class="conversation-item__avatar">
+              <Badge
+                :dot="userStatusStore.isUserOnline(item.otherUser.id)"
+                color="green"
+              >
+                <span
+                  class="chat-avatar"
+                  :style="{ background: avatarGradient(item.otherUser.id) }"
+                >
+                  {{ avatarLetter(item.otherUser.fullName) }}
+                </span>
+              </Badge>
+            </div>
+            <div class="conversation-item__content">
+              <div class="conversation-item__header">
+                <span class="conversation-item__username">{{
+                  item.otherUser.fullName
+                }}</span>
+                <span class="conversation-item__time">{{
+                  formatTime(item.lastMessage.createdAt)
+                }}</span>
+              </div>
+              <div class="conversation-item__message">
+                <span
+                  class="conversation-item__preview"
+                  :class="{
+                    'conversation-item__preview--unread': item.unreadCount > 0,
+                  }"
+                >
+                  {{ item.lastMessage.content }}
+                </span>
+                <span
+                  v-if="item.unreadCount > 0"
+                  class="conversation-item__badge"
+                  >{{ item.unreadCount }}</span
+                >
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <StateBlock
+          v-else
+          v-bind="STATE_PRESETS.chatListEmpty"
+          :actions="[
+            {
+              label: 'К друзьям',
+              icon: 'ph:users-three',
+              kind: 'primary',
+              onClick: goToFriends,
+            },
+          ]"
         />
       </div>
 
-      <template v-else>
-        <div class="chat-page__header">
-          <button
-            type="button"
-            class="chat-page__header-back"
-            aria-label="К списку диалогов"
-            @click="chatStore.closeChat()"
-          >
-            <BaseIcon name="ph:arrow-left" :width="20" :height="20" />
-          </button>
-          <div class="chat-page__header-user">
-            <Badge :dot="isOtherUserOnline" color="green">
-              <span
-                class="chat-avatar chat-avatar--sm"
-                :style="{
-                  background: avatarGradient(
-                    selectedConversation?.otherUser.id || '',
-                  ),
-                }"
-              >
-                {{ avatarLetter(selectedConversation?.otherUser.fullName) }}
-              </span>
-            </Badge>
-            <div class="chat-page__header-info">
-              <span class="chat-page__header-username">
-                {{ selectedConversation?.otherUser.fullName }}
-              </span>
-              <span
-                class="chat-page__header-status"
-                :class="{
-                  'chat-page__header-status--online': isOtherUserOnline,
-                }"
-              >
-                {{ isOtherUserOnline ? "в сети" : "не в сети" }}
-              </span>
-            </div>
-          </div>
+      <div class="chat-page__main">
+        <div v-if="!chatStore.currentChatUserId" class="chat-page__empty">
+          <StateBlock
+            variant="empty"
+            icon="ph:chats-circle"
+            title="Выберите диалог"
+            description="Откройте переписку слева или начните новую в разделе «Друзья»."
+          />
         </div>
 
-        <div ref="messagesContainer" class="chat-page__messages">
-          <StateBlock
-            v-if="chatStore.isMessagesError"
-            v-bind="STATE_PRESETS.chatThreadError"
-            :actions="[
-              {
-                label: 'Обновить',
-                icon: 'ph:arrow-clockwise',
-                kind: 'primary',
-                onClick: reloadMessages,
-              },
-            ]"
-          />
-
-          <div
-            v-else-if="
-              chatStore.isMessagesLoading && !chatStore.currentMessages.length
-            "
-            class="chat-page__msg-skel"
-          >
-            <div
-              v-for="n in 6"
-              :key="`msg-skel-${n}`"
-              class="msg-skel"
-              :class="
-                n % 2 === 0 ? 'msg-skel--sent' : 'msg-skel--received'
-              "
+        <template v-else>
+          <div class="chat-page__header">
+            <button
+              type="button"
+              class="chat-page__header-back"
+              aria-label="К списку диалогов"
+              @click="chatStore.closeChat()"
             >
-              <SkeletonBar
-                :width="n % 2 === 0 ? '55%' : '45%'"
-                height="38px"
-                radius="16px"
-              />
+              <BaseIcon name="ph:arrow-left" :width="20" :height="20" />
+            </button>
+            <div class="chat-page__header-user">
+              <Badge :dot="isOtherUserOnline" color="green">
+                <span
+                  class="chat-avatar chat-avatar--sm"
+                  :style="{
+                    background: avatarGradient(
+                      selectedConversation?.otherUser.id || ''
+                    ),
+                  }"
+                >
+                  {{ avatarLetter(selectedConversation?.otherUser.fullName) }}
+                </span>
+              </Badge>
+              <div class="chat-page__header-info">
+                <span class="chat-page__header-username">
+                  {{ selectedConversation?.otherUser.fullName }}
+                </span>
+                <span
+                  class="chat-page__header-status"
+                  :class="{
+                    'chat-page__header-status--online': isOtherUserOnline,
+                  }"
+                >
+                  {{ isOtherUserOnline ? "в сети" : "не в сети" }}
+                </span>
+              </div>
             </div>
           </div>
 
-          <StateBlock
-            v-else-if="!chatStore.currentMessages.length"
-            v-bind="STATE_PRESETS.chatThreadEmpty"
-          />
-
-          <div
-            v-for="message in chatStore.currentMessages"
-            v-else
-            :key="message.id"
-            class="message"
-            :class="{
-              'message--sent': message.senderId === userId,
-              'message--received': message.senderId !== userId,
-            }"
-          >
-            <ChatMessageContent
-              :content="message.content"
-              :sent="message.senderId === userId"
+          <div ref="messagesContainer" class="chat-page__messages">
+            <StateBlock
+              v-if="chatStore.isMessagesError"
+              v-bind="STATE_PRESETS.chatThreadError"
+              :actions="[
+                {
+                  label: 'Обновить',
+                  icon: 'ph:arrow-clockwise',
+                  kind: 'primary',
+                  onClick: reloadMessages,
+                },
+              ]"
             />
-            <span class="message__time">
-              {{ formatTime(message.createdAt) }}
-              <span
-                v-if="message.senderId === userId && message.isRead"
-                class="message__read"
-                >✓✓</span
+
+            <div
+              v-else-if="
+                chatStore.isMessagesLoading && !chatStore.currentMessages.length
+              "
+              class="chat-page__msg-skel"
+            >
+              <div
+                v-for="n in 6"
+                :key="`msg-skel-${n}`"
+                class="msg-skel"
+                :class="n % 2 === 0 ? 'msg-skel--sent' : 'msg-skel--received'"
               >
-            </span>
+                <SkeletonBar
+                  :width="n % 2 === 0 ? '55%' : '45%'"
+                  height="38px"
+                  radius="16px"
+                />
+              </div>
+            </div>
+
+            <StateBlock
+              v-else-if="!chatStore.currentMessages.length"
+              v-bind="STATE_PRESETS.chatThreadEmpty"
+            />
+
+            <div
+              v-for="message in chatStore.currentMessages"
+              v-else
+              :key="message.id"
+              class="message"
+              :class="{
+                'message--sent': message.senderId === userId,
+                'message--received': message.senderId !== userId,
+              }"
+            >
+              <ChatMessageContent
+                :content="message.content"
+                :sent="message.senderId === userId"
+              />
+              <span class="message__time">
+                {{ formatTime(message.createdAt) }}
+                <span
+                  v-if="message.senderId === userId && message.isRead"
+                  class="message__read"
+                  >✓✓</span
+                >
+              </span>
+            </div>
           </div>
-        </div>
 
-        <div class="chat-page__input">
-          <button
-            type="button"
-            class="chat-page__attach"
-            aria-label="Прикрепить фильм из коллекции"
-            @click="attachMovie"
-          >
-            <BaseIcon name="ph:film-slate" :width="20" :height="20" />
-          </button>
+          <div class="chat-page__input">
+            <button
+              type="button"
+              class="chat-page__attach"
+              aria-label="Прикрепить фильм из коллекции"
+              @click="attachMovie"
+            >
+              <BaseIcon name="ph:film-slate" :width="20" :height="20" />
+            </button>
 
-          <ChatMessageInput
-            ref="chatInputRef"
-            v-model="messageInput"
-            :user-id="userId"
-            @send="sendMessage"
-          />
+            <ChatMessageInput
+              ref="chatInputRef"
+              v-model="messageInput"
+              :user-id="userId"
+              @send="sendMessage"
+            />
 
-          <button
-            type="button"
-            class="chat-page__send"
-            :disabled="!messageInput.trim() || isSending"
-            aria-label="Отправить"
-            @click="sendMessage()"
-          >
-            <BaseIcon name="ph:paper-plane-right-fill" :width="18" :height="18" />
-          </button>
-        </div>
-      </template>
+            <button
+              type="button"
+              class="chat-page__send"
+              :disabled="!messageInput.trim() || isSending"
+              aria-label="Отправить"
+              @click="sendMessage()"
+            >
+              <BaseIcon
+                name="ph:paper-plane-right-fill"
+                :width="18"
+                :height="18"
+              />
+            </button>
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -479,7 +486,6 @@ onMounted(async () => {
     margin: 0;
   }
 
-  // В сети — зелёным (эталон)
   &__header-status--online {
     color: var(--fv-color-positive);
   }
@@ -583,7 +589,6 @@ onMounted(async () => {
   }
 
   &__header-status {
-
     font-size: 0.875rem;
     color: var(--fv-color-text-secondary);
   }
@@ -620,7 +625,6 @@ onMounted(async () => {
       }
     }
   }
-
 
   &__input {
     padding: 12px 16px;
@@ -804,7 +808,6 @@ onMounted(async () => {
   }
 }
 
-/* Цветной аватар диалога/шапки (эталон) */
 .chat-avatar {
   display: flex;
   align-items: center;
@@ -854,5 +857,4 @@ onMounted(async () => {
     color: var(--fv-color-positive);
   }
 }
-
 </style>

@@ -21,6 +21,7 @@ defineProps<{
   /** Подложка: `default` — затемнение + blur(3px) по спеке, `blur` — усиленное blur(25px) */
   overlay?: "default" | "blur";
 }>();
+
 const emit = defineEmits<{ confirm: [] }>();
 
 // Корень — Teleport, автоматически унаследовать class Vue не может (варнинг
@@ -43,7 +44,7 @@ const dragActive = ref(false);
 const dragStyle = computed(() =>
   dragOffset.value > 0
     ? { transform: `translateY(${dragOffset.value}px)`, transition: "none" }
-    : undefined,
+    : undefined
 );
 
 function onTouchStart(e: TouchEvent): void {
@@ -52,6 +53,7 @@ function onTouchStart(e: TouchEvent): void {
   }
 
   const body = modal.value?.querySelector(".modal__body");
+
   // тянем лист только если тело прокручено к верху — иначе это обычный скролл
   dragActive.value = !body || body.scrollTop <= 0;
   dragStartY.value = e.touches[0]?.clientY ?? null;
@@ -63,6 +65,7 @@ function onTouchMove(e: TouchEvent): void {
   }
 
   const delta = (e.touches[0]?.clientY ?? 0) - dragStartY.value;
+
   dragOffset.value = Math.max(0, delta);
 }
 
@@ -88,7 +91,7 @@ function getFocusable(): HTMLElement[] {
   }
 
   return Array.from(
-    modal.value.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+    modal.value.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
   ).filter((el) => el.offsetParent !== null);
 }
 
@@ -181,7 +184,7 @@ function captureSheetOffset(el: Element): void {
   }
 
   const shift = Number(
-    /matrix\([^)]+,\s*([-\d.]+)\)/.exec(getComputedStyle(sheet).transform)?.[1],
+    /matrix\([^)]+,\s*([-\d.]+)\)/.exec(getComputedStyle(sheet).transform)?.[1]
   );
 
   if (shift > 0) {
@@ -317,8 +320,9 @@ const handleConfirm = () => {
   display: flex;
   flex-direction: column;
   z-index: 9999;
-  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
-    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  padding: max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
   overflow-y: auto;
   overflow-x: hidden;
 
@@ -497,6 +501,7 @@ const handleConfirm = () => {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -506,6 +511,7 @@ const handleConfirm = () => {
   from {
     opacity: 1;
   }
+
   to {
     opacity: 0;
   }
@@ -519,6 +525,7 @@ const handleConfirm = () => {
     opacity: 0;
     transform: translateY(12px) scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -530,6 +537,7 @@ const handleConfirm = () => {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+
   to {
     opacity: 0;
     transform: translateY(12px) scale(0.97);
@@ -540,6 +548,7 @@ const handleConfirm = () => {
   from {
     transform: translateY(100%);
   }
+
   to {
     transform: translateY(0);
   }
@@ -550,6 +559,7 @@ const handleConfirm = () => {
   from {
     transform: translateY(var(--fv-modal-drag, 0px));
   }
+
   to {
     transform: translateY(100%);
   }
@@ -586,7 +596,11 @@ const handleConfirm = () => {
   transition: all var(--fv-motion-slow) var(--fv-ease);
 
   &:hover {
-    background: color-mix(in srgb, var(--fv-color-text-primary) 8%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--fv-color-text-primary) 8%,
+      transparent
+    );
     color: var(--fv-color-text-primary);
     transform: scale(1.05);
   }
@@ -599,6 +613,7 @@ const handleConfirm = () => {
   max-height: none;
   overflow-x: hidden;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   -webkit-overflow-scrolling: touch;
 
   @include customScrollbar();

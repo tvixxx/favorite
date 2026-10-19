@@ -22,23 +22,8 @@ const props = defineProps({
 });
 
 const isIconifySource = computed(() => props.source === "iconify");
-
-// todo: расскоментировать если добавится новый вид иконок
-// const customIcon = computed(() => {
-//   if (props.source !== "iconify") {
-//     return defineAsyncComponent(
-//       () => import(`@components/icons/${props.name}.vue`)
-//     );
-//   } else {
-//     return null;
-//   }
-// });
 </script>
 
 <template>
   <Icon v-if="isIconifySource" :icon="name" :width="width" :height="height" />
-
-  <!--  <component v-else :is="customIcon" :width="width" :height="height" />-->
 </template>
-
-<style scoped></style>

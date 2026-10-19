@@ -10,7 +10,7 @@ const FOCUSABLE_SELECTOR =
 export function useFocusTrap(
   container: Ref<HTMLElement | null>,
   isOpen: Ref<boolean | undefined>,
-  onEscape: () => void,
+  onEscape: () => void
 ): void {
   let previousFocus: HTMLElement | null = null;
 
@@ -20,7 +20,7 @@ export function useFocusTrap(
     }
 
     return Array.from(
-      container.value.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+      container.value.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
     ).filter((el) => el.offsetParent !== null);
   };
 

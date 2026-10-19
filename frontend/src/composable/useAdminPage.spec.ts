@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAdminPage } from "./useAdminPage";
 
 const mocks = vi.hoisted(() => ({ get: vi.fn() }));
+
 vi.mock("@/services/api", () => ({ default: { get: mocks.get } }));
 
 describe("Страницы административных списков", () => {
@@ -12,6 +13,7 @@ describe("Страницы административных списков", () 
     mocks.get.mockResolvedValueOnce({
       data: { items: [{ id: "remaining" }], total: 20 },
     });
+
     const scope = effectScope();
     const state = scope.run(() =>
       useAdminPage<{ id: string }>("/admin/users")
@@ -23,18 +25,23 @@ describe("Страницы административных списков", () 
     expect(mocks.get).toHaveBeenLastCalledWith("/admin/users", {
       params: { limit: 20, offset: 0 },
     });
+
     scope.stop();
   });
+
   it("оставляет результат последнего запроса при обратном порядке ответов", async () => {
     let resolve!: (value: unknown) => void;
+
     mocks.get.mockReturnValueOnce(
       new Promise((done) => {
         resolve = done;
       })
     );
+
     mocks.get.mockResolvedValueOnce({
       data: { items: [{ id: "new" }], total: 50 },
     });
+
     const scope = effectScope();
     const state = scope.run(() =>
       useAdminPage<{ id: string }>("/admin/users")
@@ -54,7 +61,9 @@ describe("Страницы административных списков", () 
     mocks.get.mockResolvedValueOnce({
       data: { items: [{ id: "old" }], total: 50 },
     });
+
     mocks.get.mockRejectedValueOnce(new Error("Сеть"));
+
     const scope = effectScope();
     const state = scope.run(() =>
       useAdminPage<{ id: string }>("/admin/users")

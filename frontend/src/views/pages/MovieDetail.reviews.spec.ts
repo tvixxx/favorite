@@ -23,14 +23,17 @@ vi.mock("vue-router", () => ({
   useRoute: () => ({ params: { id: "movie-id" }, query: {} }),
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
+
 vi.mock("@/state/state", () => ({
   useMainStore: () => ({ isLoggedIn: true, userData: { id: "user-id" } }),
 }));
+
 vi.mock("@/state/utils", () => ({ showErrorRequest: vi.fn() }));
 vi.mock("@/services/api", () => ({
   getApiResponseMessage: vi.fn(),
   isApiConflictError: () => false,
 }));
+
 vi.mock("@/stores", async (original) => ({
   ...(await original<Record<string, unknown>>()),
   useUserListsStore: () => ({ lists: [], isLoading: false }),
@@ -55,6 +58,7 @@ vi.mock("@/stores", async (original) => ({
     }),
   }),
 }));
+
 vi.mock("@/composable/useReviews", () => ({
   useReviews: () => ({
     reviews,
@@ -68,11 +72,13 @@ vi.mock("@/composable/useReviews", () => ({
     deleteReview: mocks.remove,
   }),
 }));
+
 vi.mock("@/composable", () => ({
   useFetch: async () => ({ status: 200, data: [] }),
   useEscapeKey: vi.fn(),
   FETCH_METHOD: { get: "GET" },
 }));
+
 vi.mock("@/components/Skeleton/useMinLoading", () => ({
   useMinLoading: (get: () => boolean) => computed(get),
 }));
@@ -118,6 +124,7 @@ describe("Средняя оценка на странице фильма", () =>
         },
       },
     });
+
     await flushPromises();
   };
 
@@ -138,6 +145,7 @@ describe("Средняя оценка на странице фильма", () =>
       reviews.value = [ownReview];
       mocks.average = 8.7;
     });
+
     await render();
     expect(average()).toBe("5,3");
     await click("Сохранить отзыв");
@@ -150,6 +158,7 @@ describe("Средняя оценка на странице фильма", () =>
     mocks.update.mockImplementation(async () => {
       mocks.average = 6.4;
     });
+
     await render();
     await click("Редактировать мой отзыв");
     await click("Сохранить отзыв");
@@ -162,6 +171,7 @@ describe("Средняя оценка на странице фильма", () =>
       reviews.value = [];
       mocks.average = null;
     });
+
     await render();
     await click("Удалить отзыв");
     expect(average()).toBe("нет");

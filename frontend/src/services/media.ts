@@ -1,7 +1,11 @@
 import type { AxiosProgressEvent } from "axios";
 import api from "./api";
 
-export type ImagePurpose = "MOVIE_POSTER" | "USER_AVATAR" | "ACTOR_PHOTO" | "FEEDBACK_SCREENSHOT";
+export type ImagePurpose =
+  | "MOVIE_POSTER"
+  | "USER_AVATAR"
+  | "ACTOR_PHOTO"
+  | "FEEDBACK_SCREENSHOT";
 export interface ImageSelection {
   url: string;
   assetId?: string | null;
@@ -29,6 +33,7 @@ export async function uploadImage(
 
   body.append("file", file);
   body.append("purpose", purpose);
+
   const response = await api.post<UploadedImage>("/uploads/images", body, {
     headers: { "Content-Type": undefined },
     signal: options.signal,

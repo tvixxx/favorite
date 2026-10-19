@@ -16,8 +16,9 @@ import { useMainStore } from "@/state/state";
 import api from "@/services/api";
 import { friendlyRequestError } from "@/utils/friendlyError";
 import { type AdminUser } from "./admin.types";
-import {useDateTime} from '@/composable/useDateTime';
-const {dateLabel}=useDateTime();
+import { useDateTime } from "@/composable/useDateTime";
+
+const { dateLabel } = useDateTime();
 
 const q = useAdminQueryParam("users_q", "", "users_page");
 const role = useAdminQueryParam("users_role", "", "users_page", [
@@ -112,6 +113,7 @@ async function changeAccess(action: "block" | "role" = "block"): Promise<void> {
         : { blocked: !selected.value.blockedAt }),
       reason: reason.value.trim(),
     });
+
     open.value = false;
     message.success("Доступ обновлён");
     await load();

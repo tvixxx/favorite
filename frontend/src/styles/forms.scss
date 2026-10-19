@@ -40,8 +40,7 @@ textarea.ant-input {
   border: 1.5px solid transparent !important;
   border-radius: var(--fv-radius-sm) !important;
   box-shadow: none !important;
-  transition:
-    background-color var(--fv-motion-base) var(--fv-ease),
+  transition: background-color var(--fv-motion-base) var(--fv-ease),
     border-color var(--fv-motion-base) var(--fv-ease) !important;
 }
 
@@ -58,9 +57,13 @@ textarea.ant-input {
 }
 
 /* hover — лёгкое затемнение заливки, пока поле не в фокусе */
-.fv-native-field:hover:not(:focus):not(:focus-within):not([aria-invalid="true"]),
+.fv-native-field:hover:not(:focus):not(:focus-within):not(
+    [aria-invalid="true"]
+  ),
 .ant-input:hover:not(:focus),
-.ant-input-affix-wrapper:hover:not(.ant-input-affix-wrapper-focused):not(:focus-within),
+.ant-input-affix-wrapper:hover:not(.ant-input-affix-wrapper-focused):not(
+    :focus-within
+  ),
 .ant-input-number:hover:not(.ant-input-number-focused),
 .ant-picker:hover:not(.ant-picker-focused),
 .ant-select:not(.ant-select-focused):not(.ant-select-disabled)

@@ -345,6 +345,7 @@ export type MovieWhereInput = {
   actors?: Prisma.ActorListRelationFilter
   userMovies?: Prisma.UserMovieListRelationFilter
   listItems?: Prisma.UserListItemListRelationFilter
+  watchEntries?: Prisma.WatchEntryListRelationFilter
   createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }
 
@@ -375,6 +376,7 @@ export type MovieOrderByWithRelationInput = {
   actors?: Prisma.ActorOrderByRelationAggregateInput
   userMovies?: Prisma.UserMovieOrderByRelationAggregateInput
   listItems?: Prisma.UserListItemOrderByRelationAggregateInput
+  watchEntries?: Prisma.WatchEntryOrderByRelationAggregateInput
   createdBy?: Prisma.UserOrderByWithRelationInput
 }
 
@@ -409,6 +411,7 @@ export type MovieWhereUniqueInput = Prisma.AtLeast<{
   actors?: Prisma.ActorListRelationFilter
   userMovies?: Prisma.UserMovieListRelationFilter
   listItems?: Prisma.UserListItemListRelationFilter
+  watchEntries?: Prisma.WatchEntryListRelationFilter
   createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }, "id" | "posterId" | "tvdbType_tvdbId">
 
@@ -493,6 +496,7 @@ export type MovieCreateInput = {
   actors?: Prisma.ActorCreateNestedManyWithoutMoviesInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutMovieInput
   listItems?: Prisma.UserListItemCreateNestedManyWithoutMovieInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutMovieInput
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMoviesInput
 }
 
@@ -522,6 +526,7 @@ export type MovieUncheckedCreateInput = {
   actors?: Prisma.ActorUncheckedCreateNestedManyWithoutMoviesInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutMovieInput
   listItems?: Prisma.UserListItemUncheckedCreateNestedManyWithoutMovieInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutMovieInput
 }
 
 export type MovieUpdateInput = {
@@ -549,6 +554,7 @@ export type MovieUpdateInput = {
   actors?: Prisma.ActorUpdateManyWithoutMoviesNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutMovieNestedInput
   listItems?: Prisma.UserListItemUpdateManyWithoutMovieNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutMovieNestedInput
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMoviesNestedInput
 }
 
@@ -578,6 +584,7 @@ export type MovieUncheckedUpdateInput = {
   actors?: Prisma.ActorUncheckedUpdateManyWithoutMoviesNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutMovieNestedInput
   listItems?: Prisma.UserListItemUncheckedUpdateManyWithoutMovieNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutMovieNestedInput
 }
 
 export type MovieCreateManyInput = {
@@ -948,6 +955,22 @@ export type MovieUpdateOneRequiredWithoutUserMoviesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.MovieUpdateToOneWithWhereWithoutUserMoviesInput, Prisma.MovieUpdateWithoutUserMoviesInput>, Prisma.MovieUncheckedUpdateWithoutUserMoviesInput>
 }
 
+export type MovieCreateNestedOneWithoutWatchEntriesInput = {
+  create?: Prisma.XOR<Prisma.MovieCreateWithoutWatchEntriesInput, Prisma.MovieUncheckedCreateWithoutWatchEntriesInput>
+  connectOrCreate?: Prisma.MovieCreateOrConnectWithoutWatchEntriesInput
+  connect?: Prisma.MovieWhereUniqueInput
+}
+
+export type MovieUpdateOneWithoutWatchEntriesNestedInput = {
+  create?: Prisma.XOR<Prisma.MovieCreateWithoutWatchEntriesInput, Prisma.MovieUncheckedCreateWithoutWatchEntriesInput>
+  connectOrCreate?: Prisma.MovieCreateOrConnectWithoutWatchEntriesInput
+  upsert?: Prisma.MovieUpsertWithoutWatchEntriesInput
+  disconnect?: Prisma.MovieWhereInput | boolean
+  delete?: Prisma.MovieWhereInput | boolean
+  connect?: Prisma.MovieWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MovieUpdateToOneWithWhereWithoutWatchEntriesInput, Prisma.MovieUpdateWithoutWatchEntriesInput>, Prisma.MovieUncheckedUpdateWithoutWatchEntriesInput>
+}
+
 export type MovieCreateNestedOneWithoutListItemsInput = {
   create?: Prisma.XOR<Prisma.MovieCreateWithoutListItemsInput, Prisma.MovieUncheckedCreateWithoutListItemsInput>
   connectOrCreate?: Prisma.MovieCreateOrConnectWithoutListItemsInput
@@ -987,6 +1010,7 @@ export type MovieCreateWithoutCreatedByInput = {
   actors?: Prisma.ActorCreateNestedManyWithoutMoviesInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutMovieInput
   listItems?: Prisma.UserListItemCreateNestedManyWithoutMovieInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutMovieInput
 }
 
 export type MovieUncheckedCreateWithoutCreatedByInput = {
@@ -1014,6 +1038,7 @@ export type MovieUncheckedCreateWithoutCreatedByInput = {
   actors?: Prisma.ActorUncheckedCreateNestedManyWithoutMoviesInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutMovieInput
   listItems?: Prisma.UserListItemUncheckedCreateNestedManyWithoutMovieInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutMovieInput
 }
 
 export type MovieCreateOrConnectWithoutCreatedByInput = {
@@ -1093,6 +1118,7 @@ export type MovieCreateWithoutPosterInput = {
   actors?: Prisma.ActorCreateNestedManyWithoutMoviesInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutMovieInput
   listItems?: Prisma.UserListItemCreateNestedManyWithoutMovieInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutMovieInput
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMoviesInput
 }
 
@@ -1121,6 +1147,7 @@ export type MovieUncheckedCreateWithoutPosterInput = {
   actors?: Prisma.ActorUncheckedCreateNestedManyWithoutMoviesInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutMovieInput
   listItems?: Prisma.UserListItemUncheckedCreateNestedManyWithoutMovieInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutMovieInput
 }
 
 export type MovieCreateOrConnectWithoutPosterInput = {
@@ -1163,6 +1190,7 @@ export type MovieUpdateWithoutPosterInput = {
   actors?: Prisma.ActorUpdateManyWithoutMoviesNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutMovieNestedInput
   listItems?: Prisma.UserListItemUpdateManyWithoutMovieNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutMovieNestedInput
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMoviesNestedInput
 }
 
@@ -1191,6 +1219,7 @@ export type MovieUncheckedUpdateWithoutPosterInput = {
   actors?: Prisma.ActorUncheckedUpdateManyWithoutMoviesNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutMovieNestedInput
   listItems?: Prisma.UserListItemUncheckedUpdateManyWithoutMovieNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutMovieNestedInput
 }
 
 export type MovieCreateWithoutReviewsInput = {
@@ -1217,6 +1246,7 @@ export type MovieCreateWithoutReviewsInput = {
   actors?: Prisma.ActorCreateNestedManyWithoutMoviesInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutMovieInput
   listItems?: Prisma.UserListItemCreateNestedManyWithoutMovieInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutMovieInput
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMoviesInput
 }
 
@@ -1245,6 +1275,7 @@ export type MovieUncheckedCreateWithoutReviewsInput = {
   actors?: Prisma.ActorUncheckedCreateNestedManyWithoutMoviesInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutMovieInput
   listItems?: Prisma.UserListItemUncheckedCreateNestedManyWithoutMovieInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutMovieInput
 }
 
 export type MovieCreateOrConnectWithoutReviewsInput = {
@@ -1287,6 +1318,7 @@ export type MovieUpdateWithoutReviewsInput = {
   actors?: Prisma.ActorUpdateManyWithoutMoviesNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutMovieNestedInput
   listItems?: Prisma.UserListItemUpdateManyWithoutMovieNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutMovieNestedInput
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMoviesNestedInput
 }
 
@@ -1315,6 +1347,7 @@ export type MovieUncheckedUpdateWithoutReviewsInput = {
   actors?: Prisma.ActorUncheckedUpdateManyWithoutMoviesNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutMovieNestedInput
   listItems?: Prisma.UserListItemUncheckedUpdateManyWithoutMovieNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutMovieNestedInput
 }
 
 export type MovieCreateWithoutActorsInput = {
@@ -1341,6 +1374,7 @@ export type MovieCreateWithoutActorsInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutMovieInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutMovieInput
   listItems?: Prisma.UserListItemCreateNestedManyWithoutMovieInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutMovieInput
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMoviesInput
 }
 
@@ -1369,6 +1403,7 @@ export type MovieUncheckedCreateWithoutActorsInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutMovieInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutMovieInput
   listItems?: Prisma.UserListItemUncheckedCreateNestedManyWithoutMovieInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutMovieInput
 }
 
 export type MovieCreateOrConnectWithoutActorsInput = {
@@ -1416,6 +1451,7 @@ export type MovieCreateWithoutUserMoviesInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutMovieInput
   actors?: Prisma.ActorCreateNestedManyWithoutMoviesInput
   listItems?: Prisma.UserListItemCreateNestedManyWithoutMovieInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutMovieInput
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMoviesInput
 }
 
@@ -1444,6 +1480,7 @@ export type MovieUncheckedCreateWithoutUserMoviesInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutMovieInput
   actors?: Prisma.ActorUncheckedCreateNestedManyWithoutMoviesInput
   listItems?: Prisma.UserListItemUncheckedCreateNestedManyWithoutMovieInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutMovieInput
 }
 
 export type MovieCreateOrConnectWithoutUserMoviesInput = {
@@ -1486,6 +1523,7 @@ export type MovieUpdateWithoutUserMoviesInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutMovieNestedInput
   actors?: Prisma.ActorUpdateManyWithoutMoviesNestedInput
   listItems?: Prisma.UserListItemUpdateManyWithoutMovieNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutMovieNestedInput
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMoviesNestedInput
 }
 
@@ -1514,6 +1552,135 @@ export type MovieUncheckedUpdateWithoutUserMoviesInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutMovieNestedInput
   actors?: Prisma.ActorUncheckedUpdateManyWithoutMoviesNestedInput
   listItems?: Prisma.UserListItemUncheckedUpdateManyWithoutMovieNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutMovieNestedInput
+}
+
+export type MovieCreateWithoutWatchEntriesInput = {
+  id?: string
+  title: string
+  titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
+  description: string
+  countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
+  genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
+  publishDate?: Date | string | null
+  isSerial?: boolean
+  contentKind?: $Enums.ContentKind | null
+  seasonCount?: number | null
+  episodeCount?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  poster?: Prisma.MoviePosterCreateNestedOneWithoutMovieInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutMovieInput
+  actors?: Prisma.ActorCreateNestedManyWithoutMoviesInput
+  userMovies?: Prisma.UserMovieCreateNestedManyWithoutMovieInput
+  listItems?: Prisma.UserListItemCreateNestedManyWithoutMovieInput
+  createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMoviesInput
+}
+
+export type MovieUncheckedCreateWithoutWatchEntriesInput = {
+  id?: string
+  title: string
+  titleNormalized?: string
+  titleEn?: string | null
+  originalTitle?: string | null
+  titleAliases?: Prisma.MovieCreatetitleAliasesInput | string[]
+  descriptionLanguage?: string
+  tvdbId?: number | null
+  tvdbType?: string | null
+  description: string
+  countryCodes?: Prisma.MovieCreatecountryCodesInput | string[]
+  genres?: Prisma.MovieCreategenresInput | $Enums.Genre[]
+  publishDate?: Date | string | null
+  isSerial?: boolean
+  contentKind?: $Enums.ContentKind | null
+  seasonCount?: number | null
+  episodeCount?: number | null
+  posterId?: string | null
+  createdById?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutMovieInput
+  actors?: Prisma.ActorUncheckedCreateNestedManyWithoutMoviesInput
+  userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutMovieInput
+  listItems?: Prisma.UserListItemUncheckedCreateNestedManyWithoutMovieInput
+}
+
+export type MovieCreateOrConnectWithoutWatchEntriesInput = {
+  where: Prisma.MovieWhereUniqueInput
+  create: Prisma.XOR<Prisma.MovieCreateWithoutWatchEntriesInput, Prisma.MovieUncheckedCreateWithoutWatchEntriesInput>
+}
+
+export type MovieUpsertWithoutWatchEntriesInput = {
+  update: Prisma.XOR<Prisma.MovieUpdateWithoutWatchEntriesInput, Prisma.MovieUncheckedUpdateWithoutWatchEntriesInput>
+  create: Prisma.XOR<Prisma.MovieCreateWithoutWatchEntriesInput, Prisma.MovieUncheckedCreateWithoutWatchEntriesInput>
+  where?: Prisma.MovieWhereInput
+}
+
+export type MovieUpdateToOneWithWhereWithoutWatchEntriesInput = {
+  where?: Prisma.MovieWhereInput
+  data: Prisma.XOR<Prisma.MovieUpdateWithoutWatchEntriesInput, Prisma.MovieUncheckedUpdateWithoutWatchEntriesInput>
+}
+
+export type MovieUpdateWithoutWatchEntriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
+  publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contentKind?: Prisma.NullableEnumContentKindFieldUpdateOperationsInput | $Enums.ContentKind | null
+  seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  episodeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  poster?: Prisma.MoviePosterUpdateOneWithoutMovieNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutMovieNestedInput
+  actors?: Prisma.ActorUpdateManyWithoutMoviesNestedInput
+  userMovies?: Prisma.UserMovieUpdateManyWithoutMovieNestedInput
+  listItems?: Prisma.UserListItemUpdateManyWithoutMovieNestedInput
+  createdBy?: Prisma.UserUpdateOneWithoutCreatedMoviesNestedInput
+}
+
+export type MovieUncheckedUpdateWithoutWatchEntriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  titleNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  titleEn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  titleAliases?: Prisma.MovieUpdatetitleAliasesInput | string[]
+  descriptionLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  tvdbId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tvdbType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  countryCodes?: Prisma.MovieUpdatecountryCodesInput | string[]
+  genres?: Prisma.MovieUpdategenresInput | $Enums.Genre[]
+  publishDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSerial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contentKind?: Prisma.NullableEnumContentKindFieldUpdateOperationsInput | $Enums.ContentKind | null
+  seasonCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  episodeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  posterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutMovieNestedInput
+  actors?: Prisma.ActorUncheckedUpdateManyWithoutMoviesNestedInput
+  userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutMovieNestedInput
+  listItems?: Prisma.UserListItemUncheckedUpdateManyWithoutMovieNestedInput
 }
 
 export type MovieCreateWithoutListItemsInput = {
@@ -1540,6 +1707,7 @@ export type MovieCreateWithoutListItemsInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutMovieInput
   actors?: Prisma.ActorCreateNestedManyWithoutMoviesInput
   userMovies?: Prisma.UserMovieCreateNestedManyWithoutMovieInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutMovieInput
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMoviesInput
 }
 
@@ -1568,6 +1736,7 @@ export type MovieUncheckedCreateWithoutListItemsInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutMovieInput
   actors?: Prisma.ActorUncheckedCreateNestedManyWithoutMoviesInput
   userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutMovieInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutMovieInput
 }
 
 export type MovieCreateOrConnectWithoutListItemsInput = {
@@ -1610,6 +1779,7 @@ export type MovieUpdateWithoutListItemsInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutMovieNestedInput
   actors?: Prisma.ActorUpdateManyWithoutMoviesNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutMovieNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutMovieNestedInput
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMoviesNestedInput
 }
 
@@ -1638,6 +1808,7 @@ export type MovieUncheckedUpdateWithoutListItemsInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutMovieNestedInput
   actors?: Prisma.ActorUncheckedUpdateManyWithoutMoviesNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutMovieNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutMovieNestedInput
 }
 
 export type MovieCreateManyCreatedByInput = {
@@ -1688,6 +1859,7 @@ export type MovieUpdateWithoutCreatedByInput = {
   actors?: Prisma.ActorUpdateManyWithoutMoviesNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutMovieNestedInput
   listItems?: Prisma.UserListItemUpdateManyWithoutMovieNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutMovieNestedInput
 }
 
 export type MovieUncheckedUpdateWithoutCreatedByInput = {
@@ -1715,6 +1887,7 @@ export type MovieUncheckedUpdateWithoutCreatedByInput = {
   actors?: Prisma.ActorUncheckedUpdateManyWithoutMoviesNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutMovieNestedInput
   listItems?: Prisma.UserListItemUncheckedUpdateManyWithoutMovieNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutMovieNestedInput
 }
 
 export type MovieUncheckedUpdateManyWithoutCreatedByInput = {
@@ -1764,6 +1937,7 @@ export type MovieUpdateWithoutActorsInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutMovieNestedInput
   userMovies?: Prisma.UserMovieUpdateManyWithoutMovieNestedInput
   listItems?: Prisma.UserListItemUpdateManyWithoutMovieNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutMovieNestedInput
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMoviesNestedInput
 }
 
@@ -1792,6 +1966,7 @@ export type MovieUncheckedUpdateWithoutActorsInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutMovieNestedInput
   userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutMovieNestedInput
   listItems?: Prisma.UserListItemUncheckedUpdateManyWithoutMovieNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutMovieNestedInput
 }
 
 export type MovieUncheckedUpdateManyWithoutActorsInput = {
@@ -1828,6 +2003,7 @@ export type MovieCountOutputType = {
   actors: number
   userMovies: number
   listItems: number
+  watchEntries: number
 }
 
 export type MovieCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1835,6 +2011,7 @@ export type MovieCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.
   actors?: boolean | MovieCountOutputTypeCountActorsArgs
   userMovies?: boolean | MovieCountOutputTypeCountUserMoviesArgs
   listItems?: boolean | MovieCountOutputTypeCountListItemsArgs
+  watchEntries?: boolean | MovieCountOutputTypeCountWatchEntriesArgs
 }
 
 /**
@@ -1875,6 +2052,13 @@ export type MovieCountOutputTypeCountListItemsArgs<ExtArgs extends runtime.Types
   where?: Prisma.UserListItemWhereInput
 }
 
+/**
+ * MovieCountOutputType without action
+ */
+export type MovieCountOutputTypeCountWatchEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WatchEntryWhereInput
+}
+
 
 export type MovieSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1903,6 +2087,7 @@ export type MovieSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   actors?: boolean | Prisma.Movie$actorsArgs<ExtArgs>
   userMovies?: boolean | Prisma.Movie$userMoviesArgs<ExtArgs>
   listItems?: boolean | Prisma.Movie$listItemsArgs<ExtArgs>
+  watchEntries?: boolean | Prisma.Movie$watchEntriesArgs<ExtArgs>
   createdBy?: boolean | Prisma.Movie$createdByArgs<ExtArgs>
   _count?: boolean | Prisma.MovieCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["movie"]>
@@ -1990,6 +2175,7 @@ export type MovieInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   actors?: boolean | Prisma.Movie$actorsArgs<ExtArgs>
   userMovies?: boolean | Prisma.Movie$userMoviesArgs<ExtArgs>
   listItems?: boolean | Prisma.Movie$listItemsArgs<ExtArgs>
+  watchEntries?: boolean | Prisma.Movie$watchEntriesArgs<ExtArgs>
   createdBy?: boolean | Prisma.Movie$createdByArgs<ExtArgs>
   _count?: boolean | Prisma.MovieCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -2010,6 +2196,7 @@ export type $MoviePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     actors: Prisma.$ActorPayload<ExtArgs>[]
     userMovies: Prisma.$UserMoviePayload<ExtArgs>[]
     listItems: Prisma.$UserListItemPayload<ExtArgs>[]
+    watchEntries: Prisma.$WatchEntryPayload<ExtArgs>[]
     createdBy: Prisma.$UserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -2433,6 +2620,7 @@ export interface Prisma__MovieClient<T, Null = never, ExtArgs extends runtime.Ty
   actors<T extends Prisma.Movie$actorsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Movie$actorsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ActorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userMovies<T extends Prisma.Movie$userMoviesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Movie$userMoviesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserMoviePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   listItems<T extends Prisma.Movie$listItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Movie$listItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserListItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  watchEntries<T extends Prisma.Movie$watchEntriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Movie$watchEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WatchEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   createdBy<T extends Prisma.Movie$createdByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Movie$createdByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -2997,6 +3185,30 @@ export type Movie$listItemsArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.UserListItemScalarFieldEnum | Prisma.UserListItemScalarFieldEnum[]
+}
+
+/**
+ * Movie.watchEntries
+ */
+export type Movie$watchEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WatchEntry
+   */
+  select?: Prisma.WatchEntrySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WatchEntry
+   */
+  omit?: Prisma.WatchEntryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WatchEntryInclude<ExtArgs> | null
+  where?: Prisma.WatchEntryWhereInput
+  orderBy?: Prisma.WatchEntryOrderByWithRelationInput | Prisma.WatchEntryOrderByWithRelationInput[]
+  cursor?: Prisma.WatchEntryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WatchEntryScalarFieldEnum | Prisma.WatchEntryScalarFieldEnum[]
 }
 
 /**

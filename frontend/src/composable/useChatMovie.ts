@@ -15,6 +15,7 @@ function remember(id: string, movie: Movie | null): void {
   cache.set(id, movie);
   if (cache.size > CACHE_LIMIT) {
     const oldest = cache.keys().next().value;
+
     if (oldest) cache.delete(oldest);
   }
 }
@@ -25,6 +26,7 @@ async function loadMovie(id: string): Promise<Movie | null> {
   }
 
   const existing = inflight.get(id);
+
   if (existing) {
     return existing;
   }
@@ -33,15 +35,17 @@ async function loadMovie(id: string): Promise<Movie | null> {
     try {
       const { data, status } = await useFetch<MovieApiResponse>(
         `${MOVIES_ENDPOINTS}/${id}`,
-        { method: FETCH_METHOD.get },
+        { method: FETCH_METHOD.get }
       );
 
       const movie = status === 200 ? mapMovieFromApi(data) : null;
+
       if (status === 200 || status === 404) remember(id, movie);
 
       return movie;
     } catch (error) {
-      if (isAxiosError(error) && error.response?.status === 404) remember(id, null);
+      if (isAxiosError(error) && error.response?.status === 404)
+        remember(id, null);
 
       return null;
     } finally {
@@ -56,7 +60,7 @@ async function loadMovie(id: string): Promise<Movie | null> {
 
 /** Реактивно тянет (с кэшем) фильм по id из ссылки шеринга. */
 export function useChatMovie(
-  id: Ref<string | null | undefined>,
+  id: Ref<string | null | undefined>
 ): Ref<Movie | null> {
   const movie = ref<Movie | null>(null);
 
@@ -64,7 +68,11 @@ export function useChatMovie(
     id,
     async (current, _previous, onCleanup) => {
       let active = true;
-      onCleanup(() => { active = false; });
+
+      onCleanup(() => {
+        active = false;
+      });
+
       if (!current) {
         movie.value = null;
 
@@ -78,10 +86,12 @@ export function useChatMovie(
       }
 
       movie.value = null;
+
       const loaded = await loadMovie(current);
+
       if (active) movie.value = loaded;
     },
-    { immediate: true },
+    { immediate: true }
   );
 
   return movie;

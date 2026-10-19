@@ -12,11 +12,18 @@ export interface ContentSelection {
   isSerial: boolean | null;
 }
 
-export function contentTypeLabel(movie: { contentKind?: ContentKind | null; isSerial?: boolean | null }): string {
+export function contentTypeLabel(movie: {
+  contentKind?: ContentKind | null;
+  isSerial?: boolean | null;
+}): string {
   switch (movie.contentKind) {
-    case "ANIME": return movie.isSerial ? "Аниме · сериал" : "Аниме · фильм";
-    case "ANIMATION": return movie.isSerial ? "Мультсериал" : "Мультфильм";
-    case "TV_SHOW": return movie.isSerial ? "ТВ-шоу · выпуски" : "ТВ-шоу · разовая программа";
-    default: return movie.isSerial ? "Сериал" : "Фильм";
+    case "ANIME":
+      return movie.isSerial ? "Аниме · сериал" : "Аниме · фильм";
+    case "ANIMATION":
+      return movie.isSerial ? "Мультсериал" : "Мультфильм";
+    case "TV_SHOW":
+      return movie.isSerial ? "ТВ-шоу · выпуски" : "ТВ-шоу · разовая программа";
+    default:
+      return movie.isSerial ? "Сериал" : "Фильм";
   }
 }

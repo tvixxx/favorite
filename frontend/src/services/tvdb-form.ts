@@ -1,4 +1,4 @@
-import { MAX_EPISODES, MAX_SEASONS } from '@/utils/media-numbers';
+import { MAX_EPISODES, MAX_SEASONS } from "@/utils/media-numbers";
 
 export interface TvdbFormPreview {
   id: string;
@@ -31,14 +31,21 @@ export function prepareTvdbImport(
     ...collection,
   };
   const identity = { id: preview.id, type: preview.type, collection: personal };
+
   if (existingMovieId) return { ...identity, existingMovieId };
+
   const value = { ...preview, ...edits };
+
   if (!value.title.trim())
     throw new Error("Введите название для русского интерфейса");
   if (!value.description.trim()) throw new Error("Введите описание");
   if (!value.countryCodes.length || !value.genres.length)
     throw new Error("Выберите страну и хотя бы один жанр");
-  if (personal.watchStatus === 'NOT_STARTED' && ((personal.currentEpisode ?? 0) > 0 || (personal.currentSeason ?? 0) > 0)) throw new Error('Выберите статус просмотра для указанного прогресса');
+  if (
+    personal.watchStatus === "NOT_STARTED" &&
+    ((personal.currentEpisode ?? 0) > 0 || (personal.currentSeason ?? 0) > 0)
+  )
+    throw new Error("Выберите статус просмотра для указанного прогресса");
   for (const [progress, cap, max] of [
     [personal.currentEpisode, preview.episodeCount, MAX_EPISODES],
     [personal.currentSeason, preview.seasonCount, MAX_SEASONS],

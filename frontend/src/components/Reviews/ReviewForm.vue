@@ -97,7 +97,9 @@ const handleCancel = () => {
     </a-form-item>
 
     <a-form-item name="isSpoiler">
-      <ACheckbox v-model:checked="reviewForm.isSpoiler">Содержит спойлеры</ACheckbox>
+      <ACheckbox v-model:checked="reviewForm.isSpoiler"
+        >Содержит спойлеры</ACheckbox
+      >
     </a-form-item>
 
     <a-form-item class="review-form__actions">
@@ -122,6 +124,7 @@ const handleCancel = () => {
 
 <style scoped lang="scss">
 @use "../../styles/media" as *;
+
 .review-form {
   &__rating {
     :deep(.ant-rate) {
@@ -142,7 +145,6 @@ const handleCancel = () => {
     }
   }
 
-  // В режиме правки поле подсвечено синей рамкой (эталон)
   &__text_editing {
     :deep(.ant-input),
     :deep(textarea.ant-input) {

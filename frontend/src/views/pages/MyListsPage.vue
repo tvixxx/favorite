@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { parseListLabels } from "@/utils/list-labels";
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { message } from "ant-design-vue";
@@ -163,6 +164,7 @@ const removeMovieFromList = async (movieId: string): Promise<void> => {
       detailListId.value,
       movieId
     );
+
     message.success("Тайтл удалён из списка");
   } catch {
     message.error(
@@ -243,20 +245,6 @@ const formSubmitText = computed(() =>
   isEditing.value ? "Сохранить" : "Создать список"
 );
 
-const parseListLabels = (raw: string): string[] => {
-  const unique = new Set<string>();
-
-  for (const chunk of raw.split(",")) {
-    const normalized = chunk.trim();
-
-    if (normalized) {
-      unique.add(normalized);
-    }
-  }
-
-  return Array.from(unique);
-};
-
 const openCreateForm = (): void => {
   editingListId.value = null;
   formName.value = "";
@@ -319,6 +307,7 @@ const submitForm = async (): Promise<void> => {
         editingListId.value,
         payload
       );
+
       message.success("Список обновлён");
     } else {
       const created = await userListsStore.createList(userId.value, payload);
@@ -706,8 +695,7 @@ onMounted(() => {
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       color var(--fv-motion-fast) var(--fv-ease),
       border-color var(--fv-motion-fast) var(--fv-ease);
 
@@ -748,7 +736,6 @@ onMounted(() => {
   }
 }
 
-/* Карточка списка (эталон): цветная шапка + тело */
 .list-card {
   display: flex;
   flex-direction: column;
@@ -761,8 +748,7 @@ onMounted(() => {
   box-shadow: var(--fv-shadow-card);
   overflow: hidden;
   cursor: pointer;
-  transition:
-    transform var(--fv-motion-base) var(--fv-ease),
+  transition: transform var(--fv-motion-base) var(--fv-ease),
     box-shadow var(--fv-motion-base) var(--fv-ease);
 
   &:hover {
@@ -887,6 +873,54 @@ onMounted(() => {
       line-height: 1.4;
     }
   }
+
+  @include mediaMax(500px) {
+    &__band {
+      height: 100px;
+      padding: 14px;
+    }
+
+    &__icon {
+      width: 28px;
+      height: 28px;
+      top: 14px;
+      right: 14px;
+    }
+
+    &__count {
+      left: 14px;
+      bottom: 14px;
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+
+    &__body {
+      padding: 14px 16px;
+      gap: 6px;
+    }
+
+    &__name {
+      font-size: 1rem;
+    }
+
+    &__open {
+      font-size: 13px;
+    }
+
+    &--create {
+      min-height: 180px;
+      padding: 20px;
+
+      &__icon {
+        width: 44px;
+        height: 44px;
+      }
+
+      &__title {
+        font-size: 1rem;
+      }
+    }
+  }
 }
 
 /* Модалка создания / редактирования */
@@ -914,7 +948,6 @@ onMounted(() => {
     color: rgba(255, 255, 255, 0.35);
   }
 
-  // Бледно-красная плашка-название — компактная (эталон)
   &__preview-name {
     padding: 3px 12px;
     border-radius: 999px;
@@ -960,8 +993,7 @@ onMounted(() => {
     border: 2px solid transparent;
     color: #fff;
     cursor: pointer;
-    transition:
-      transform var(--fv-motion-fast) var(--fv-ease),
+    transition: transform var(--fv-motion-fast) var(--fv-ease),
       box-shadow var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
@@ -975,7 +1007,6 @@ onMounted(() => {
 }
 
 /* Модалка деталей списка */
-/* Модалка деталей списка (эталон): цветная обложка + постеры + футер */
 .list-detail-modal {
   display: flex;
   flex-direction: column;
@@ -1038,7 +1069,6 @@ onMounted(() => {
     padding: 20px 24px 8px;
   }
 
-  // Ряд постеров (эталон): компактные карточки, перенос по строкам
   &__row {
     display: flex;
     flex-wrap: wrap;
@@ -1071,8 +1101,7 @@ onMounted(() => {
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       opacity var(--fv-motion-fast) var(--fv-ease);
 
     &:disabled {

@@ -1,9 +1,10 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { describe, expect, it, vi } from "vitest";
 import AdminOverview from "./AdminOverview.vue";
-import {createPinia} from 'pinia';
+import { createPinia } from "pinia";
 
 const mocks = vi.hoisted(() => ({ get: vi.fn() }));
+
 vi.mock("@/services/api", () => ({ default: { get: mocks.get } }));
 
 describe("Регистрации в обзоре администратора", () => {
@@ -30,9 +31,10 @@ describe("Регистрации в обзоре администратора", 
         heatmap: [],
       },
     });
+
     const wrapper = mount(AdminOverview, {
       global: {
-        plugins:[createPinia()],
+        plugins: [createPinia()],
         stubs: {
           BaseModal: {
             props: ["modelValue"],
@@ -47,6 +49,7 @@ describe("Регистрации в обзоре администратора", 
 
     await flushPromises();
     await wrapper.get('[data-testid="registration-details"]').trigger("click");
+
     const dialog = wrapper.get('[role="dialog"]');
 
     expect(dialog.text()).toContain("Новые регистрации");

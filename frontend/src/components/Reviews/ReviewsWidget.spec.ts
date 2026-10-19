@@ -9,9 +9,11 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(),
   reviews: [] as Review[],
 }));
+
 vi.mock("@/state/state", () => ({
   useMainStore: () => ({ userData: { id: "user-id" }, isLoggedIn: true }),
 }));
+
 vi.mock("@/composable/useReviews", () => ({
   useReviews: () => ({
     reviews: ref(mocks.reviews),
@@ -43,6 +45,7 @@ describe("Сохранение отзыва", () => {
         isSpoiler: true,
       } as Review,
     ];
+
     const wrapper = mount(ReviewsWidget, {
       props: { movieId: "movie-id" },
       global: {
@@ -60,6 +63,7 @@ describe("Сохранение отзыва", () => {
         },
       },
     });
+
     await flushPromises();
     expect(wrapper.findComponent({ name: "ReviewForm" }).exists()).toBe(false);
     await wrapper.get("button").trigger("click");
@@ -68,27 +72,32 @@ describe("Сохранение отзыва", () => {
       initialRate: 7,
       initialIsSpoiler: true,
     });
+
     await wrapper
       .findAll("button")
       .find((button) => button.text() === "Сохранить отзыв")!
       .trigger("click");
+
     await flushPromises();
     expect(mocks.update).toHaveBeenCalledWith("own-id", {
       text: "Новый текст отзыва",
       rate: 8,
       isSpoiler: false,
     });
+
     expect(mocks.create).not.toHaveBeenCalled();
     wrapper.unmount();
   });
 
   it("не отправляет повторный submit и обрезает пробелы", async () => {
     let finish!: () => void;
+
     mocks.create.mockReturnValueOnce(
       new Promise<void>((resolve) => {
         finish = resolve;
       })
     );
+
     const wrapper = mount(ReviewsWidget, {
       props: { movieId: "movie-id" },
       global: {
@@ -107,6 +116,7 @@ describe("Сохранение отзыва", () => {
       },
     });
     const button = wrapper.get("button");
+
     await button.trigger("click");
     await button.trigger("click");
     expect(mocks.create).toHaveBeenCalledOnce();
@@ -116,6 +126,7 @@ describe("Сохранение отзыва", () => {
       movieId: "movie-id",
       isSpoiler: true,
     });
+
     finish();
     await flushPromises();
     wrapper.unmount();

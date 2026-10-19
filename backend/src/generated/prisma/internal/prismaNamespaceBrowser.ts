@@ -59,6 +59,7 @@ export const ModelName = {
   Review: 'Review',
   Actor: 'Actor',
   UserMovie: 'UserMovie',
+  WatchEntry: 'WatchEntry',
   UserList: 'UserList',
   UserListItem: 'UserListItem',
   Friendship: 'Friendship',
@@ -235,6 +236,27 @@ export const UserMovieScalarFieldEnum = {
 } as const
 
 export type UserMovieScalarFieldEnum = (typeof UserMovieScalarFieldEnum)[keyof typeof UserMovieScalarFieldEnum]
+
+
+export const WatchEntryScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  movieId: 'movieId',
+  requestId: 'requestId',
+  requestHash: 'requestHash',
+  viewedOn: 'viewedOn',
+  scope: 'scope',
+  season: 'season',
+  isRewatch: 'isRewatch',
+  rating: 'rating',
+  note: 'note',
+  revision: 'revision',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WatchEntryScalarFieldEnum = (typeof WatchEntryScalarFieldEnum)[keyof typeof WatchEntryScalarFieldEnum]
 
 
 export const UserListScalarFieldEnum = {

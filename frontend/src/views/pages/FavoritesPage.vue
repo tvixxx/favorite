@@ -16,6 +16,7 @@ import StateBlock, {
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import type { UserMovie, UserMoviesFilters } from "@/stores";
 import CollectionFiltersBar from "@/components/MoviesFiltersPanel/CollectionFiltersBar.vue";
+import LoadMoreButton from "@/components/LoadMoreButton/LoadMoreButton.vue";
 import MovieCard from "@/components/MovieCard/MovieCard.vue";
 
 const router = useRouter();
@@ -33,7 +34,9 @@ const applyFavoriteScopeToStore = () => {
   userMoviesStore.setFilters({
     ...localFilters.value,
     isFavorite: true,
-    ...(activeKind.value !== "all" ? {isSerial: activeKind.value === "serials"} : {}),
+    ...(activeKind.value !== "all"
+      ? { isSerial: activeKind.value === "serials" }
+      : {}),
   });
 };
 
@@ -57,12 +60,13 @@ const setKind = (kind: FavoriteKind): void => {
 
   activeKind.value = kind;
   userMoviesStore.setCurrentPage(1);
-  void refetchFavorites().catch(() => message.error("Ошибка загрузки избранного"));
+  void refetchFavorites().catch(() =>
+    message.error("Ошибка загрузки избранного")
+  );
 };
 
 const shouldFetchFavorites = computed(
-  () =>
-    !userMoviesStore.isLoaded && mainStore.isLoggedIn && !!userId.value
+  () => !userMoviesStore.isLoaded && mainStore.isLoggedIn && !!userId.value
 );
 
 const refetchFavorites = async () => {
@@ -71,7 +75,8 @@ const refetchFavorites = async () => {
   }
 
   applyFavoriteScopeToStore();
-  if (searchQuery.value.trim()) await userMoviesStore.searchUserMovies(userId.value, searchQuery.value);
+  if (searchQuery.value.trim())
+    await userMoviesStore.searchUserMovies(userId.value, searchQuery.value);
   else await userMoviesStore.fetchUserMovies(userId.value);
 };
 
@@ -134,8 +139,8 @@ const favoritesForView = computed(() => {
 
 const visibleFavorites = computed(() => favoritesForView.value);
 
-const restCount = computed(
-  () => Math.max(0, userMoviesStore.totalCount - visibleFavorites.value.length)
+const restCount = computed(() =>
+  Math.max(0, userMoviesStore.totalCount - visibleFavorites.value.length)
 );
 
 const showMore = async (): Promise<void> => {
@@ -219,6 +224,7 @@ const removeFromFavorite = async (item: UserMovie) => {
     await userMoviesStore.updateUserMovie(userId.value, item.movieId, {
       isFavorite: false,
     });
+
     message.success(`${item.movie.title} удален из избранного`);
   } catch {
     message.error(`Не удалось убрать из избранного: ${item.movie.title}`);
@@ -323,10 +329,11 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-if="restCount > 0" class="favorites__more">
-          <a-button size="large" :loading="userMoviesStore.isLoadingMore" @click="showMore">
-            Показать ещё
-            <span class="favorites__more-count">{{ restCount }}</span>
-          </a-button>
+          <LoadMoreButton
+            :count="restCount"
+            :loading="userMoviesStore.isLoadingMore"
+            @load-more="showMore"
+          />
         </div>
       </div>
     </div>
@@ -354,7 +361,6 @@ onBeforeUnmount(() => {
     width: 100%;
   }
 
-  // Переключатель типа: активный — тёмная ink-пилюля (эталон)
   &__kinds {
     display: flex;
     gap: 8px;
@@ -376,8 +382,7 @@ onBeforeUnmount(() => {
     font-size: 15px;
     font-weight: 500;
     cursor: pointer;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover:not(&--active) {
@@ -422,25 +427,6 @@ onBeforeUnmount(() => {
     justify-content: center;
     margin-top: 8px;
     padding: 8px 0 32px;
-
-    .ant-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      height: 46px;
-      padding: 0 22px;
-      border-radius: var(--fv-radius-control);
-      font-weight: 500;
-    }
-  }
-
-  &__more-count {
-    padding: 1px 8px;
-    border-radius: 999px;
-    background: var(--fv-color-bg-secondary);
-    color: var(--fv-color-text-secondary);
-    font-size: 13px;
-    font-variant-numeric: tabular-nums;
   }
 
   &__empty-state {

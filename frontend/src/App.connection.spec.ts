@@ -15,12 +15,14 @@ const mocks = vi.hoisted(() => ({
     fetchUser: () => Promise<void>;
   },
 }));
+
 vi.mock("@/state/state", () => ({ useMainStore: () => mocks.store }));
 vi.mock("@/composable", () => ({
   themeConfig: {},
   useTheme: vi.fn(),
   useHotThemeKeys: vi.fn(),
 }));
+
 vi.mock("@/stores/chat/chatStore", () => ({
   useChatStore: () => ({
     connect: vi.fn(),
@@ -28,6 +30,7 @@ vi.mock("@/stores/chat/chatStore", () => ({
     fetchConversations: vi.fn().mockResolvedValue([]),
   }),
 }));
+
 vi.mock("@/stores/notifications/notificationsStore", () => ({
   useNotificationsStore: () => ({
     hydrate: vi.fn().mockResolvedValue(undefined),
@@ -53,6 +56,7 @@ async function render(redirect = "/admin?tab=catalog") {
   });
 
   await router.push({ path: "/login", query: { redirect } });
+
   const wrapper = mount(App, {
     global: {
       plugins: [router],
@@ -83,6 +87,7 @@ beforeEach(() => {
     fetchUser: mocks.fetch,
   });
 });
+
 afterEach(() => vi.restoreAllMocks());
 
 describe("Восстановление PWA после отсутствия соединения", () => {
@@ -90,10 +95,12 @@ describe("Восстановление PWA после отсутствия со�
     const connection = vi
       .spyOn(navigator, "onLine", "get")
       .mockReturnValue(false);
+
     mocks.fetch.mockImplementation(async () => {
       mocks.store.authUnavailable = false;
       mocks.store.isLoggedIn = true;
     });
+
     const { wrapper, router } = await render();
 
     expect(wrapper.text()).toContain("Не удалось подключиться");
@@ -107,6 +114,7 @@ describe("Восстановление PWA после отсутствия со�
 
   it("оставляет повторную попытку доступной, если сервер всё ещё недоступен", async () => {
     mocks.fetch.mockRejectedValue(new Error("still offline"));
+
     const { wrapper, router } = await render();
 
     await wrapper.get(".stateblock__btn").trigger("click");
@@ -115,6 +123,7 @@ describe("Восстановление PWA после отсутствия со�
     expect(
       wrapper.get<HTMLButtonElement>(".stateblock__btn").element.disabled
     ).toBe(false);
+
     expect(router.currentRoute.value.path).toBe("/login");
     wrapper.unmount();
   });
@@ -124,6 +133,7 @@ describe("Восстановление PWA после отсутствия со�
       mocks.store.authUnavailable = false;
       mocks.store.isLoggedIn = true;
     });
+
     const { wrapper, router } = await render("//outside.example/path");
 
     await wrapper.get(".stateblock__btn").trigger("click");

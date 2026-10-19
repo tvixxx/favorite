@@ -8,14 +8,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useMoviesStore } from "./moviesStore";
 
 const mocks = vi.hoisted(() => ({ fetch: vi.fn() }));
+
 vi.mock("@/composable", () => ({
   useFetch: mocks.fetch,
   FETCH_METHOD: { get: "GET", post: "POST" },
 }));
+
 vi.mock("@/constants", async (original) => ({
   ...(await original<object>()),
   getDefaultLoaderDelayTime: () => 0,
 }));
+
 const movie = (id: string) => ({
   id,
   title: id,
@@ -37,21 +40,75 @@ describe("Загрузка каталога и предпросмотра", () =
     setActivePinia(createPinia());
     mocks.fetch.mockReset();
   });
+
   afterEach(() => {
     disposePinia(getActivePinia()!);
     vi.useRealTimers();
   });
 
+  it("при возврате в течение двух минут сохраняет загруженные страницы без нового запроса", async () => {
+    mocks.fetch.mockResolvedValueOnce({ status: 200, data: page(["one"], 2) });
+    mocks.fetch.mockResolvedValueOnce({
+      status: 200,
+      data: page(["two"], 2, 1),
+    });
+
+    const store = useMoviesStore();
+
+    await store.ensureMovies();
+    await vi.runAllTimersAsync();
+    await store.loadMoreMovies();
+    store.clearSearch();
+    store.setFilters({});
+    await store.ensureMovies();
+    expect(mocks.fetch).toHaveBeenCalledTimes(2);
+    expect(store.visibleMovies.map((item) => item.id)).toEqual(["one", "two"]);
+    expect(store.isMoviesLoading).toBe(false);
+  });
+
+  it("после двух минут и при смене фильтра получает свежий каталог", async () => {
+    mocks.fetch.mockResolvedValue({ status: 200, data: page(["one"]) });
+
+    const store = useMoviesStore();
+
+    await store.ensureMovies();
+    await vi.advanceTimersByTimeAsync(120000);
+    await store.ensureMovies();
+    expect(mocks.fetch).toHaveBeenCalledTimes(2);
+    store.setFilters({ isSerial: true });
+    await store.ensureMovies();
+    expect(mocks.fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it("после создания тайтла обновляет каталог сразу, не дожидаясь двух минут", async () => {
+    mocks.fetch
+      .mockResolvedValueOnce({ status: 200, data: page(["old"]) })
+      .mockResolvedValueOnce({ status: 201, data: movie("new") })
+      .mockResolvedValueOnce({ status: 200, data: page(["new", "old"]) });
+
+    const store = useMoviesStore();
+
+    await store.ensureMovies();
+    await store.createMovie({ title: "new", isSerial: false, genres: [] });
+    await store.ensureMovies();
+    expect(mocks.fetch).toHaveBeenCalledTimes(3);
+    expect(store.visibleMovies.map((item) => item.id)).toEqual(["new", "old"]);
+  });
+
   it("показывает последний поиск при обратном порядке ответов", async () => {
     let finish!: (data: unknown) => void;
+
     mocks.fetch.mockReturnValueOnce(
       new Promise((resolve) => {
         finish = (data) => resolve({ status: 200, data });
       })
     );
+
     mocks.fetch.mockResolvedValueOnce({ status: 200, data: page(["new"]) });
+
     const store = useMoviesStore();
     const pending = store.findMovie("old");
+
     await store.findMovie("new");
     finish(page(["old"]));
     await pending;
@@ -61,7 +118,9 @@ describe("Загрузка каталога и предпросмотра", () =
   it("не оставляет прежний поиск при fetchMovies с новым запросом", async () => {
     mocks.fetch.mockResolvedValueOnce({ status: 200, data: page(["old"]) });
     mocks.fetch.mockResolvedValueOnce({ status: 200, data: page(["new"]) });
+
     const store = useMoviesStore();
+
     await store.findMovie("old");
     await store.fetchMovies("new");
     expect(store.searchQuery).toBe("new");
@@ -70,13 +129,16 @@ describe("Загрузка каталога и предпросмотра", () =
 
   it("не возвращает фильм в закрытый предпросмотр поздним ответом", async () => {
     let finish!: (data: unknown) => void;
+
     mocks.fetch.mockReturnValueOnce(
       new Promise((resolve) => {
         finish = (data) => resolve({ status: 200, data });
       })
     );
+
     const store = useMoviesStore();
     const pending = store.getMovieDetail("old");
+
     store.setCurrentMovie(null);
     finish(movie("old"));
     await pending;
@@ -88,10 +150,12 @@ describe("Загрузка каталога и предпросмотра", () =
       status: 200,
       data: page(["one", "two"], 3),
     });
+
     mocks.fetch.mockResolvedValueOnce({
       status: 200,
       data: page(["three"], 3, 2),
     });
+
     const store = useMoviesStore();
 
     await store.fetchMovies();
@@ -104,12 +168,14 @@ describe("Загрузка каталога и предпросмотра", () =
       "two",
       "three",
     ]);
+
     expect(store.hasMoreMovies).toBe(false);
     expect(mocks.fetch.mock.calls[1][0]).toContain("offset=2");
   });
 
   it("сохраняет карточки после ошибки догрузки и повторяет ту же порцию", async () => {
     mocks.fetch.mockResolvedValueOnce({ status: 200, data: page(["one"], 2) });
+
     const store = useMoviesStore();
 
     await store.fetchMovies();
@@ -122,6 +188,7 @@ describe("Загрузка каталога и предпросмотра", () =
       status: 200,
       data: page(["two"], 2, 1),
     });
+
     await store.loadMoreMovies();
     expect(mocks.fetch.mock.calls[2][0]).toContain("offset=1");
     expect(store.visibleMovies).toHaveLength(2);
@@ -129,10 +196,12 @@ describe("Загрузка каталога и предпросмотра", () =
 
   it("игнорирует догрузку старого фильтра после начала нового поиска", async () => {
     mocks.fetch.mockResolvedValueOnce({ status: 200, data: page(["one"], 2) });
+
     const store = useMoviesStore();
 
     await store.fetchMovies();
     await vi.runAllTimersAsync();
+
     let finish!: (data: unknown) => void;
 
     mocks.fetch.mockReturnValueOnce(
@@ -140,6 +209,7 @@ describe("Загрузка каталога и предпросмотра", () =
         finish = (data) => resolve({ status: 200, data });
       })
     );
+
     const pending = store.loadMoreMovies();
 
     mocks.fetch.mockResolvedValueOnce({ status: 200, data: page(["new"]) });

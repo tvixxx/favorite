@@ -7,7 +7,7 @@ import {
 } from "ant-design-vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import AppDisclosure from '@/components/AppDisclosure/AppDisclosure.vue';
+import AppDisclosure from "@/components/AppDisclosure/AppDisclosure.vue";
 import api, { getApiResponseMessage } from "@/services/api";
 import { useMainStore } from "@/state/state";
 import { friendlyRequestError, getRequestStatus } from "@/utils/friendlyError";
@@ -35,6 +35,7 @@ const selectedMatches = computed(() =>
     .filter(([, movieId]) => movieId)
     .map(([row, movieId]) => ({ row: Number(row), movieId }))
 );
+
 interface Preview {
   valid: boolean;
   proof: string | null;
@@ -58,6 +59,7 @@ interface Preview {
     }[];
   }[];
 }
+
 const preview = ref<Preview | null>(null);
 let checkedInput = "";
 let controller: AbortController | undefined;
@@ -121,6 +123,7 @@ watch(
   },
   { flush: "sync" }
 );
+
 watch(
   () => main.sessionRevision,
   () => {
@@ -130,22 +133,31 @@ watch(
   },
   { flush: "sync" }
 );
+
 watch(
   () => props.modelValue,
   (value) => {
     if (!value) invalidate();
   }
 );
+
 onBeforeUnmount(() => {
   requests.invalidate();
   controller?.abort();
 });
+
 function close() {
   if (busy.value !== "import") emit("update:modelValue", false);
 }
 
 function inputKey() {
-  return format.value + "\n" + content.value + "\n" + JSON.stringify(selectedMatches.value);
+  return (
+    format.value +
+    "\n" +
+    content.value +
+    "\n" +
+    JSON.stringify(selectedMatches.value)
+  );
 }
 
 function chooseMatch(row: number, movieId: unknown): void {
@@ -153,6 +165,7 @@ function chooseMatch(row: number, movieId: unknown): void {
     ...matches.value,
     [row]: typeof movieId === "string" ? movieId : "",
   };
+
   if (preview.value) {
     preview.value.proof = null;
     preview.value.valid = false;
@@ -187,9 +200,12 @@ function validate() {
     throw new Error("Выберите файл или вставьте его содержимое");
   if (new TextEncoder().encode(content.value).length > MAX_BYTES)
     throw new Error("Файл должен быть не больше 2 МиБ");
+
   const text = content.value.replace(/^\ufeff/, "");
+
   if (format.value === "json") {
     let data: unknown;
+
     try {
       data = JSON.parse(text);
     } catch {
@@ -209,7 +225,10 @@ function validate() {
       throw new Error(
         "Ожидается JSON версии 1 (до 200 записей) или 2 (до 1000 записей) с массивом movies"
       );
-    if (data.version === 1 && new TextEncoder().encode(content.value).length > 32768)
+    if (
+      data.version === 1 &&
+      new TextEncoder().encode(content.value).length > 32768
+    )
       throw new Error("Файл версии 1 должен быть не больше 32 КБ");
   } else {
     const header = text
@@ -217,8 +236,13 @@ function validate() {
       .split(",")
       .map((value) => value.replace(/^"|"$/g, ""));
     const version2 = header.includes("formatVersion");
+
     if (text.trimEnd().split(/\r\n|\r|\n/).length > (version2 ? 1001 : 201))
-      throw new Error(version2 ? "Не более 1000 записей за один импорт" : "Не более 200 записей за один импорт");
+      throw new Error(
+        version2
+          ? "Не более 1000 записей за один импорт"
+          : "Не более 200 записей за один импорт"
+      );
     if (!version2 && new TextEncoder().encode(content.value).length > 32768)
       throw new Error("Старый CSV должен быть не больше 32 КБ");
     if (
@@ -233,19 +257,25 @@ function validate() {
 async function chooseFile(event: Event) {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
+
   input.value = "";
   if (!file || busy.value) return;
   invalidate();
+
   const current = requests.begin();
+
   busy.value = "file";
   try {
     const extension = file.name.split(".").at(-1)?.toLowerCase();
+
     if (extension !== "csv" && extension !== "json")
       throw new Error("Выберите файл .csv или .json");
     if (file.size > MAX_BYTES)
       throw new Error("Файл должен быть не больше 2 МиБ");
+
     const bytes = await file.arrayBuffer();
     const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+
     if (current()) {
       format.value = extension;
       content.value = text;
@@ -275,6 +305,7 @@ async function check() {
 
   const current = requests.begin();
   const key = inputKey();
+
   busy.value = "check";
   controller = new AbortController();
   try {
@@ -283,10 +314,13 @@ async function check() {
       {
         format: format.value,
         content: content.value,
-        ...(selectedMatches.value.length ? { matches: selectedMatches.value } : {}),
+        ...(selectedMatches.value.length
+          ? { matches: selectedMatches.value }
+          : {}),
       },
       { signal: controller.signal, timeout: 15000 }
     );
+
     if (current() && key === inputKey()) {
       preview.value = response.data;
       checkedInput = key;
@@ -312,6 +346,7 @@ async function commit() {
   }
 
   const current = requests.begin();
+
   busy.value = "import";
   error.value = "";
   controller = new AbortController();
@@ -321,14 +356,18 @@ async function commit() {
       {
         format: format.value,
         content: content.value,
-        ...(selectedMatches.value.length ? { matches: selectedMatches.value } : {}),
+        ...(selectedMatches.value.length
+          ? { matches: selectedMatches.value }
+          : {}),
         proof: preview.value!.proof,
       },
       { signal: controller.signal, timeout: 30000 }
     );
+
     if (current()) {
       result.value = response.data;
-        if(response.data.added>0)trackUsage(`/users/${main.userData.id}/movies/import`,'POST');
+      if (response.data.added > 0)
+        trackUsage(`/users/${main.userData.id}/movies/import`, "POST");
       preview.value = null;
       checkedInput = "";
       emit("imported");
@@ -354,6 +393,7 @@ function downloadExample(kind: "csv" | "json") {
     })
   );
   const link = document.createElement("a");
+
   link.href = url;
   link.download = `favorite-collection-example.${kind}`;
   link.click();
@@ -371,9 +411,10 @@ function downloadExample(kind: "csv" | "json") {
     <template #body>
       <div class="collection-import">
         <p>
-          CSV с разделителем-запятой или JSON нашего формата, UTF-8. Старые файлы: до 32 КБ и 200 записей. Выгрузка версии 2: до 2 МиБ и 1000 записей. Названия
-          сверяются с каталогом без учёта регистра и лишних пробелов. Тип и
-          указанный год должны совпадать.
+          CSV с разделителем-запятой или JSON нашего формата, UTF-8. Старые
+          файлы: до 32 КБ и 200 записей. Выгрузка версии 2: до 2 МиБ и 1000
+          записей. Названия сверяются с каталогом без учёта регистра и лишних
+          пробелов. Тип и указанный год должны совпадать.
         </p>
         <p>
           Существующие записи пропустим, сохранив ваши оценки и прогресс.
@@ -392,8 +433,15 @@ function downloadExample(kind: "csv" | "json") {
             >Скачать пример CSV</AButton
           >
         </AppDisclosure>
-        <section class="collection-import__hint" aria-label="Как заполнить файл">
-          <p>Примеры показывают формат файла. Замените названия на тайтлы из каталога Favorite. Импорт добавляет их в коллекцию, новые карточки каталога не создаёт.</p>
+        <section
+          class="collection-import__hint"
+          aria-label="Как заполнить файл"
+        >
+          <p>
+            Примеры показывают формат файла. Замените названия на тайтлы из
+            каталога Favorite. Импорт добавляет их в коллекцию, новые карточки
+            каталога не создаёт.
+          </p>
           <dl>
             <dt>Статус просмотра — <code>watchStatus</code></dt>
             <dd>
@@ -406,16 +454,26 @@ function downloadExample(kind: "csv" | "json") {
             </dd>
             <dt>Да или нет</dt>
             <dd>
-              <code>isSerial</code>, <code>isFavorite</code>, <code>seeLater</code>:
-              <code>true</code> — да, <code>false</code> — нет.
+              <code>isSerial</code>, <code>isFavorite</code>,
+              <code>seeLater</code>: <code>true</code> — да,
+              <code>false</code> — нет.
             </dd>
             <dt>Личная оценка — <code>personalRate</code></dt>
-            <dd>Целое число от 0 до 10. Значения 0 и <code>null</code> означают «без оценки». Версия 2 сохраняет исходное значение без изменения.</dd>
+            <dd>
+              Целое число от 0 до 10. Значения 0 и <code>null</code> означают
+              «без оценки». Версия 2 сохраняет исходное значение без изменения.
+            </dd>
             <dt>Необязательные поля версии 1</dt>
-            <dd><code>year</code>, <code>isFavorite</code>, <code>seeLater</code> и <code>personalRate</code>.</dd>
+            <dd>
+              <code>year</code>, <code>isFavorite</code>,
+              <code>seeLater</code> и <code>personalRate</code>.
+            </dd>
           </dl>
           <p class="collection-import__note">
-            В старом формате при статусе <code>COMPLETED</code> прогресс серий будет выставлен до конца по данным каталога. Версия 2 сохраняет прогресс и даты из файла без пересчёта. Существующие записи коллекции будут пропущены.
+            В старом формате при статусе <code>COMPLETED</code> прогресс серий
+            будет выставлен до конца по данным каталога. Версия 2 сохраняет
+            прогресс и даты из файла без пересчёта. Существующие записи
+            коллекции будут пропущены.
           </p>
         </section>
         <span class="collection-import__label">Файл коллекции</span>
@@ -509,7 +567,11 @@ function downloadExample(kind: "csv" | "json") {
             Исправьте ошибки и нажмите «Проверить» ещё раз.
           </p>
           <p v-else-if="!preview.ready">Все записи уже есть в коллекции.</p>
-          <ol class="collection-import__rows" tabindex="0" aria-label="Записи файла">
+          <ol
+            class="collection-import__rows"
+            tabindex="0"
+            aria-label="Записи файла"
+          >
             <li v-for="row in preview.rows" :key="row.row">
               <strong>{{ row.title }}</strong
               ><span>{{ statusLabels[row.status] }}</span
@@ -524,7 +586,9 @@ function downloadExample(kind: "csv" | "json") {
                 >Текущие оценка, избранное и прогресс сохранятся.</span
               >
               <div v-if="row.candidates && row.candidates.length > 1">
-                <label :for="`collection-import-match-${row.row}`">Выберите запись</label>
+                <label :for="`collection-import-match-${row.row}`"
+                  >Выберите запись</label
+                >
                 <ASelect
                   :id="`collection-import-match-${row.row}`"
                   :value="matches[row.row] || undefined"
@@ -533,10 +597,16 @@ function downloadExample(kind: "csv" | "json") {
                   placeholder="Не выбрано"
                   allow-clear
                   :disabled="!!busy"
-                  :options="row.candidates.map((candidate) => ({
-                    value: candidate.id,
-                    label: [candidate.title, candidate.year ?? 'Год не указан', contentTypeLabel(candidate)].join(' · '),
-                  }))"
+                  :options="
+                    row.candidates.map((candidate) => ({
+                      value: candidate.id,
+                      label: [
+                        candidate.title,
+                        candidate.year ?? 'Год не указан',
+                        contentTypeLabel(candidate),
+                      ].join(' · '),
+                    }))
+                  "
                   :get-popup-container="(trigger: HTMLElement) => trigger.parentElement ?? trigger"
                   @change="chooseMatch(row.row, $event)"
                 >
@@ -584,21 +654,25 @@ function downloadExample(kind: "csv" | "json") {
   > section[aria-label="Результат проверки"] {
     margin-top: 20px;
   }
+
   p {
     color: var(--fv-color-text-secondary);
     line-height: 1.5;
   }
+
   label,
   &__label {
     display: block;
     margin: 16px 0 6px;
     font-weight: 500;
   }
+
   textarea,
   input {
     font: inherit;
     max-width: 100%;
   }
+
   textarea {
     width: 100%;
     padding: 10px;
@@ -607,31 +681,37 @@ function downloadExample(kind: "csv" | "json") {
     background: var(--fv-color-bg-secondary);
     color: var(--fv-color-text-primary);
   }
+
   textarea {
     resize: vertical;
     font-family: monospace;
   }
+
   &__file {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 12px;
+
     button {
       display: inline-flex;
       align-items: center;
       gap: 8px;
     }
   }
+
   &__filename {
     font-size: 13px;
     color: var(--fv-color-text-secondary);
     overflow-wrap: anywhere;
     min-width: 0;
   }
+
   &__format,
   &__match {
     width: 100%;
   }
+
   details {
     margin: 16px 0;
 
@@ -640,6 +720,7 @@ function downloadExample(kind: "csv" | "json") {
       border-radius: var(--fv-radius-sm);
     }
   }
+
   pre {
     max-width: 100%;
     overflow-x: auto;
@@ -647,6 +728,7 @@ function downloadExample(kind: "csv" | "json") {
     background: var(--fv-color-bg-secondary);
     font-size: 12px;
   }
+
   &__hint {
     margin: 20px 0;
     font-size: 14px;
@@ -657,31 +739,38 @@ function downloadExample(kind: "csv" | "json") {
     dl {
       margin: 16px 0;
     }
+
     dt {
       margin-top: 12px;
       font-weight: 500;
       color: var(--fv-color-text-primary);
     }
+
     dd {
       margin: 4px 0 0;
     }
+
     ul {
       margin: 0;
       padding-left: 20px;
     }
+
     li + li {
       margin-top: 4px;
     }
+
     code {
       font-size: 0.9em;
     }
   }
+
   &__note {
     padding: 12px;
     margin: 16px 0 0;
     border-radius: var(--fv-radius-sm);
     background: var(--fv-color-bg-secondary);
   }
+
   &__content-head {
     display: flex;
     align-items: center;
@@ -689,10 +778,12 @@ function downloadExample(kind: "csv" | "json") {
     gap: 12px;
     flex-wrap: wrap;
     margin: 20px 0 12px;
+
     label {
       margin: 0;
     }
   }
+
   &__pretty {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
@@ -702,18 +793,22 @@ function downloadExample(kind: "csv" | "json") {
     border-radius: var(--fv-radius-sm);
     margin: 0;
   }
+
   &__error {
     color: var(--fv-color-negative) !important;
   }
+
   &__rows {
     padding-left: 24px;
     max-height: 360px;
     overflow-y: auto;
+
     li {
       padding: 12px 0;
       border-bottom: 1px solid var(--fv-color-border);
       overflow-wrap: anywhere;
     }
+
     span {
       display: block;
       margin-top: 4px;

@@ -14,6 +14,7 @@ describe("Поиск на странице актёров", () => {
   afterEach(() => vi.useRealTimers());
   it("отменяет запрос после ухода со страницы", async () => {
     vi.useFakeTimers();
+
     const fetchActorsPage = vi.fn().mockResolvedValue(undefined);
 
     mocks.store = reactive({
@@ -26,6 +27,7 @@ describe("Поиск на странице актёров", () => {
       isActorsError: null,
       fetchActorsPage,
     });
+
     const wrapper = mount(ActorsPage, {
       global: {
         stubs: {

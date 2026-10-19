@@ -114,11 +114,13 @@ export const useReviewsStore = defineStore("movieReviews", () => {
   const createReview = async (payload: CreateReviewPayload): Promise<void> => {
     const requestRevision = sessionRevision;
     const requestedMovieId = payload.movieId;
+
     try {
       const { data, status } = await useFetch<Review>(`${REVIEWS_ENDPOINT}`, {
         method: FETCH_METHOD.post,
         data: payload,
       });
+
       if (requestRevision !== sessionRevision) {
         throw new Error("Сессия изменилась");
       }
@@ -140,6 +142,7 @@ export const useReviewsStore = defineStore("movieReviews", () => {
           data,
           ...reviews.value.filter((r) => r.id !== data.id),
         ];
+
         totalReviews.value = reviews.value.length;
         isLoaded.value = true;
         isError.value = false;
@@ -155,6 +158,7 @@ export const useReviewsStore = defineStore("movieReviews", () => {
   ): Promise<void> => {
     const requestedMovieId = loadedMovieId.value;
     const requestRevision = sessionRevision;
+
     try {
       const { data, status } = await useFetch<Review>(
         `${REVIEWS_ENDPOINT}/${reviewId}`,
@@ -163,6 +167,7 @@ export const useReviewsStore = defineStore("movieReviews", () => {
           data: payload,
         }
       );
+
       if (requestRevision !== sessionRevision) {
         throw new Error("Сессия изменилась");
       }
@@ -184,6 +189,7 @@ export const useReviewsStore = defineStore("movieReviews", () => {
   const deleteReview = async (reviewId: string) => {
     const requestedMovieId = loadedMovieId.value;
     const requestRevision = sessionRevision;
+
     try {
       const { status } = await useFetch<string>(
         `${REVIEWS_ENDPOINT}/${reviewId}`,
@@ -191,6 +197,7 @@ export const useReviewsStore = defineStore("movieReviews", () => {
           method: FETCH_METHOD.delete,
         }
       );
+
       if (requestRevision !== sessionRevision) {
         throw new Error("Сессия изменилась");
       }
@@ -203,6 +210,7 @@ export const useReviewsStore = defineStore("movieReviews", () => {
         reviews.value = reviews.value.filter(
           (review) => review.id !== reviewId
         );
+
         totalReviews.value = reviews.value.length;
       }
     } catch {

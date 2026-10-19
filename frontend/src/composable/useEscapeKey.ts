@@ -7,7 +7,10 @@ import { onBeforeUnmount, watch, type Ref } from "vue";
  * Если поверх открыт диалог, Esc отдаём ему — у модалки свой обработчик,
  * иначе одно нажатие закрыло бы и окно, и правку под ним.
  */
-export function useEscapeKey(isActive: Ref<boolean>, onEscape: () => void): void {
+export function useEscapeKey(
+  isActive: Ref<boolean>,
+  onEscape: () => void
+): void {
   const onKeydown = (e: KeyboardEvent): void => {
     if (e.key !== "Escape" || document.querySelector(".modal-backdrop")) {
       return;

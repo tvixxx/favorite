@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import SectionHeading from "@/components/SectionHeading/SectionHeading.vue";
 import { useMainStore } from "@/state/state";
 import { useRouter } from "vue-router";
 
@@ -34,7 +35,7 @@ const showAnalyticsSkeleton = useMinLoading(
 
 const isModalVisible = ref(false);
 const isSaving = ref(false);
-const editForm = ref({ fullName: "", timezone:"UTC" });
+const editForm = ref({ fullName: "", timezone: "UTC" });
 const editAvatar = ref<ImageSelection | null>(null);
 const avatarUploading = ref(false);
 
@@ -50,12 +51,14 @@ watch(
     avatarFailed.value = false;
   }
 );
+
 watch(
   () => editAvatar.value?.url,
   () => {
     avatarPreviewFailed.value = false;
   }
 );
+
 const fullName = computed(() => store.userData?.fullName || "");
 const showCard = computed(() => store.isLoggedIn);
 const showContent = computed(() => showCard.value && user.value);
@@ -162,6 +165,7 @@ const saveProfile = async () => {
         ? undefined
         : editAvatar.value?.url ?? null,
     });
+
     message.success("Профиль сохранён");
     isModalVisible.value = false;
   } catch {
@@ -173,7 +177,7 @@ const saveProfile = async () => {
 
 const showEditDisplayNameModal = () => {
   editForm.value.fullName = fullName.value;
-  editForm.value.timezone = user.value?.timezone ?? 'UTC';
+  editForm.value.timezone = user.value?.timezone ?? "UTC";
   editAvatar.value = user.value?.avatarUrl
     ? {
         url: user.value.avatarUrl,
@@ -181,6 +185,7 @@ const showEditDisplayNameModal = () => {
         assetId: user.value.avatarAssetId,
       }
     : null;
+
   isModalVisible.value = true;
 };
 
@@ -242,7 +247,9 @@ onMounted(async () => {
                 />
                 {{ user.email }}
               </span>
-              <span class="profile-hero__meta-item">Часовой пояс: {{ user.timezone ?? 'UTC' }}</span>
+              <span class="profile-hero__meta-item"
+                >Часовой пояс: {{ user.timezone ?? "UTC" }}</span
+              >
               <span
                 class="profile-hero__meta-item profile-hero__meta-item--muted"
               >
@@ -264,8 +271,15 @@ onMounted(async () => {
             title="Настройки профиля"
             @click="showEditDisplayNameModal"
           >
-            <BaseIcon name="ph:gear" class="profile-hero__settings-icon" />
-            <span class="profile-hero__settings-label">Настройки</span>
+            <span class="profile-hero__settings-content">
+              <BaseIcon
+                name="ph:gear"
+                class="profile-hero__settings-icon"
+                :width="18"
+                :height="18"
+              />
+              <span class="profile-hero__settings-label">Настройки</span>
+            </span>
           </button>
         </section>
 
@@ -282,10 +296,12 @@ onMounted(async () => {
               </article>
 
               <article class="badges-card">
-                <div class="badges-card__header">
-                  <BaseIcon name="ph:trophy" class="badges-card__icon" />
-                  <h3 class="badges-card__title">Достижения</h3>
-                </div>
+                <SectionHeading
+                  class="badges-card__header"
+                  title="Достижения"
+                  icon="ph:trophy"
+                  tag="h3"
+                />
 
                 <RowsSkeleton
                   v-if="showBadgesSkeleton"
@@ -357,13 +373,12 @@ onMounted(async () => {
             </div>
 
             <article class="analytics-card">
-              <div class="analytics-card__header">
-                <BaseIcon
-                  name="ph:chart-line-up"
-                  class="analytics-card__icon"
-                />
-                <h3 class="analytics-card__title">Персональная аналитика</h3>
-              </div>
+              <SectionHeading
+                class="analytics-card__header"
+                title="Персональная аналитика"
+                icon="ph:chart-line-up"
+                tag="h3"
+              />
 
               <div v-if="showAnalyticsSkeleton" class="analytics-card__skel">
                 <SkeletonBar
@@ -519,7 +534,11 @@ onMounted(async () => {
     </div>
   </div>
 
-  <BaseModal v-model="isModalVisible" layout="form" class="profile-settings-modal">
+  <BaseModal
+    v-model="isModalVisible"
+    layout="form"
+    class="profile-settings-modal"
+  >
     <template #title>Настройки</template>
 
     <template #body>
@@ -874,12 +893,25 @@ onMounted(async () => {
   }
 
   &__settings-label {
+    text-box-trim: trim-both;
+    text-box-edge: cap alphabetic;
+
     @include mediaMax(640px) {
       display: none;
     }
   }
 
+  &__settings-content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    line-height: 1;
+  }
+
   &__settings-icon {
+    display: block;
+    flex: none;
     width: 18px;
     height: 18px;
   }
@@ -967,23 +999,7 @@ onMounted(async () => {
   }
 
   &__header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
     margin-bottom: 1.5rem;
-  }
-
-  &__icon {
-    width: 28px;
-    height: 28px;
-    color: var(--fv-color-accent);
-  }
-
-  &__title {
-    font-size: 1.5rem;
-    font-weight: 500;
-    margin: 0;
-    color: var(--fv-color-text-primary);
   }
 
   &__loading {
@@ -1076,25 +1092,6 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-
-  &__header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  &__icon {
-    width: 22px;
-    height: 22px;
-    color: var(--fv-color-accent);
-  }
-
-  &__title {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: var(--fv-color-text-primary);
-  }
 
   &__loading,
   &__error {

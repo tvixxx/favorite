@@ -34,3 +34,10 @@ export const LIBRARY_HERO_LISTS: LibraryHeroMeta = {
   badgeText: "Медиатека",
   iconName: "ph:bookmarks-simple",
 };
+
+export const LIBRARY_HERO_DIARY: LibraryHeroMeta = {
+  title: "Дневник просмотров",
+  subtitle: "Что посмотрели, когда и с каким впечатлением",
+  badgeText: "Медиатека",
+  iconName: "ph:book-open-text",
+};

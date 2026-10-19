@@ -10,7 +10,9 @@ async function ensurePath(router: Router, path: string): Promise<void> {
   const current = router.currentRoute.value.path;
   const normalized = path.endsWith("/") ? path.slice(0, -1) : path;
   const cur =
-    current.endsWith("/") && current.length > 1 ? current.slice(0, -1) : current;
+    current.endsWith("/") && current.length > 1
+      ? current.slice(0, -1)
+      : current;
 
   if (cur === normalized || cur.startsWith(`${normalized}/`)) {
     await nextTick();
@@ -50,7 +52,7 @@ export type OnboardingDriverCallbacks = {
  */
 export function createOnboardingDriver(
   router: Router,
-  callbacks: OnboardingDriverCallbacks,
+  callbacks: OnboardingDriverCallbacks
 ): Driver {
   // Ждём, пока страница отрисуется, и пересчитываем подсветку
   const settleLayout = async (): Promise<void> => {
@@ -81,9 +83,12 @@ export function createOnboardingDriver(
 
   const showSettings = (move: () => void) => async (): Promise<void> => {
     const button = qs('[data-tour="profile-settings"]');
+
     if (button instanceof HTMLElement) button.click();
     await sleep(240);
+
     const section = qs('[data-tour="personal-settings"]');
+
     if (section instanceof HTMLElement) {
       section.scrollIntoView({ block: "start", behavior: "instant" });
     }
@@ -93,7 +98,8 @@ export function createOnboardingDriver(
   };
 
   const hideSettings = (move: () => void) => async (): Promise<void> => {
-    const button = qs('.profile-settings-modal .modal__close');
+    const button = qs(".profile-settings-modal .modal__close");
+
     if (button instanceof HTMLElement) button.click();
     await settleLayout();
     move();
@@ -191,7 +197,8 @@ export function createOnboardingDriver(
       element: () => qs('[data-tour="profile-settings"]') ?? document.body,
       popover: {
         title: "Настройки профиля",
-        description: "Здесь можно настроить интерфейс под себя. Откроем раздел с переключателями.",
+        description:
+          "Здесь можно настроить интерфейс под себя. Откроем раздел с переключателями.",
         side: "bottom",
         align: "end",
         onNextClick: showSettings(() => tourRef.moveNext()),
@@ -202,7 +209,12 @@ export function createOnboardingDriver(
       element: () => {
         const section = qs('[data-tour="personal-settings"]');
         const body = section?.closest(".modal__body");
-        if (body instanceof HTMLElement && section && section.getBoundingClientRect().height > body.clientHeight) {
+
+        if (
+          body instanceof HTMLElement &&
+          section &&
+          section.getBoundingClientRect().height > body.clientHeight
+        ) {
           return body;
         }
 
@@ -210,7 +222,8 @@ export function createOnboardingDriver(
       },
       popover: {
         title: "Персональные настройки",
-        description: "Быстрый ввод включён по умолчанию. Подбор на сегодня и импорт/экспорт — выключены. Переключатели сохраняются сразу для вашего аккаунта. Ниже можно настроить уведомления. Всё можно изменить позже: Профиль → Настройки.",
+        description:
+          "Быстрый ввод включён по умолчанию. Подбор на сегодня и импорт/экспорт — выключены. Переключатели сохраняются сразу для вашего аккаунта. Ниже можно настроить уведомления. Всё можно изменить позже: Профиль → Настройки.",
         side: "left",
         align: "start",
         onNextClick: hideSettings(() => tourRef.moveNext()),

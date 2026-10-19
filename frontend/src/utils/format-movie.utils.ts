@@ -22,7 +22,8 @@ interface MovieCardLike {
 
 /** Заголовок карточки: название + пометка «(сериал)» */
 export function movieCardTitle(movie: MovieCardLike): string {
-  if (movie.contentKind && movie.contentKind !== "GENERAL") return `${movie.title} (${contentTypeLabel(movie).toLowerCase()})`;
+  if (movie.contentKind && movie.contentKind !== "GENERAL")
+    return `${movie.title} (${contentTypeLabel(movie).toLowerCase()})`;
 
   return `${movie.title}${movie.isSerial ? " (сериал)" : ""}`;
 }

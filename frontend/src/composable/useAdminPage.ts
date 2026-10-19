@@ -39,7 +39,9 @@ export function useAdminPage<T>(
     nextPage = pageKey ? urlPage() : page.value
   ): Promise<void> {
     const request = ++revision;
+
     clearTimeout(timer);
+
     const params = paramsFor(nextPage);
 
     requestedKey = JSON.stringify(params);

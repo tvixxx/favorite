@@ -44,13 +44,16 @@ function forceLogoutAndRedirectToLogin(): void {
 function isAuthMutation(config: InternalAxiosRequestConfig): boolean {
   const path = (config.url ?? "").split("?")[0];
 
-  return /\/auth\/(login|register|refresh|logout|password\/(request|reset))\/?$/.test(path);
+  return /\/auth\/(login|register|refresh|logout|password\/(request|reset))\/?$/.test(
+    path
+  );
 }
 
 type SessionRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
   _authRevision?: number;
 };
+
 let refreshRequest: { revision: number; promise: Promise<string> } | null =
   null;
 
@@ -86,6 +89,7 @@ function getRefreshedAccessToken(revision: number): Promise<string> {
       stopWatching();
       if (refreshRequest?.promise === request) refreshRequest = null;
     });
+
     refreshRequest = { revision, promise: request };
   }
 
@@ -107,7 +111,9 @@ api.interceptors.request.use(
 
     const store = useMainStore();
     const sessionConfig = config as SessionRequestConfig;
+
     sessionConfig._authRevision ??= store.sessionRevision;
+
     const token = store.accessToken;
 
     if (token) {
@@ -122,6 +128,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     const revision = (response.config as SessionRequestConfig)._authRevision;
+
     if (revision !== undefined && revision !== useMainStore().sessionRevision) {
       throw new CanceledError("Сессия изменилась");
     }
@@ -142,6 +149,7 @@ api.interceptors.response.use(
 
     const revision =
       originalRequest._authRevision ?? useMainStore().sessionRevision;
+
     if (revision !== useMainStore().sessionRevision)
       return Promise.reject(error);
 
@@ -155,6 +163,7 @@ api.interceptors.response.use(
 
     try {
       const newToken = await getRefreshedAccessToken(revision);
+
       if (revision !== useMainStore().sessionRevision)
         return Promise.reject(error);
       originalRequest.headers = originalRequest.headers ?? {};

@@ -6,7 +6,7 @@ const props = defineProps<{
   modelValue: ContentSelection;
   disabled?: boolean;
   legacy?: boolean;
-  lockedFormat?: 'movie' | 'series';
+  lockedFormat?: "movie" | "series";
 }>();
 const emit = defineEmits<{ "update:modelValue": [value: ContentSelection] }>();
 const choices = [
@@ -55,7 +55,11 @@ function chooseFormat(isSerial: boolean): void {
         :key="choice.value"
         type="button"
         :aria-pressed="selected === choice.value"
-        :disabled="disabled || (choice.value === 'FILM' && lockedFormat === 'series') || (choice.value === 'SERIES' && lockedFormat === 'movie')"
+        :disabled="
+          disabled ||
+          (choice.value === 'FILM' && lockedFormat === 'series') ||
+          (choice.value === 'SERIES' && lockedFormat === 'movie')
+        "
         class="content-type__choice"
         @click="choose(choice.value)"
       >
@@ -98,18 +102,22 @@ function chooseFormat(isSerial: boolean): void {
     flex-wrap: wrap;
     gap: 8px;
   }
+
   &__choice {
-    min-height: 44px;
+    min-height: 40px;
     max-width: 100%;
-    padding: 9px 16px;
+    padding: 8px 12px;
     border: 1px solid var(--fv-color-border);
     border-radius: 12px;
     background: var(--fv-color-bg-primary);
     color: var(--fv-color-text-primary);
     font: inherit;
+    font-size: 14px;
+    line-height: 1.35;
     font-weight: 500;
     cursor: pointer;
     overflow-wrap: anywhere;
+
     &[aria-pressed="true"] {
       border-color: var(--fv-color-accent);
       color: var(--fv-color-text-primary);
@@ -119,23 +127,29 @@ function chooseFormat(isSerial: boolean): void {
         var(--fv-color-bg-primary)
       );
     }
+
     &:focus-visible {
       outline: 2px solid var(--fv-color-accent);
       outline-offset: 3px;
     }
+
     &:disabled {
       cursor: not-allowed;
       opacity: 0.6;
     }
   }
+
   &__format {
     margin-top: 16px;
   }
+
   &__label {
     display: block;
     margin-bottom: 8px;
     font-weight: 500;
+    font-size: 14px;
   }
+
   &__hint {
     margin: 10px 0 0;
     color: var(--fv-color-text-secondary);

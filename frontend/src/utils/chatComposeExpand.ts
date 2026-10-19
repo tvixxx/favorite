@@ -62,7 +62,9 @@ export function expandMessageWithMovieUrls(
   }
 
   return text.replace(/«([^»]+)»/g, (full, titleInner: string) => {
-    const chip = ambiguousTitles.has(titleInner) ? undefined : byTitle.get(titleInner);
+    const chip = ambiguousTitles.has(titleInner)
+      ? undefined
+      : byTitle.get(titleInner);
 
     if (!chip) {
       return full;
@@ -90,6 +92,7 @@ export function stripMovieUrlsFromText(text: string): {
       try {
         const u = new URL(urlStr, window.location.origin);
         const m = u.pathname.match(/^\/detail\/([^/]+)\/?$/);
+
         if (m && !extracted.some((e) => e.movieId === m[1])) {
           extracted.push({ movieId: m[1], title });
         }

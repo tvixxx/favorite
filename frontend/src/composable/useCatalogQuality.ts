@@ -26,6 +26,7 @@ export function useCatalogQuality(filters: () => Record<string, string>) {
 
   function cancel(): void {
     const previous = controller;
+
     controller = undefined;
     previous?.abort();
     if (status.value === "running") status.value = "cancelled";
@@ -49,12 +50,14 @@ export function useCatalogQuality(filters: () => Record<string, string>) {
     }
 
     const current = new AbortController();
+
     controller = current;
     status.value = "running";
     progress.value = { loaded: 0, total: 0, posters: 0, posterTotal: 0 };
     try {
       const records: CatalogRecord[] = [];
       let expected: number | undefined;
+
       do {
         const { data } = await api.get<{
           items: CatalogRecord[];
@@ -70,6 +73,7 @@ export function useCatalogQuality(filters: () => Record<string, string>) {
           },
           signal: current.signal,
         });
+
         if (controller !== current) return;
         if (
           !Number.isSafeInteger(data.total) ||
@@ -79,6 +83,7 @@ export function useCatalogQuality(filters: () => Record<string, string>) {
         ) {
           error.value =
             "Каталог изменился во время проверки. Запустите её заново.";
+
           throw new Error(error.value);
         }
 
@@ -94,24 +99,31 @@ export function useCatalogQuality(filters: () => Record<string, string>) {
       if (new Set(records.map((record) => record.id)).size !== expected) {
         error.value =
           "Каталог изменился во время проверки. Запустите её заново.";
+
         throw new Error(error.value);
       }
 
       const posters: Record<string, PosterCheck> = {};
+
       if (checkPosters) {
         const urls = new Map<string, string[]>();
+
         for (const movie of records) {
           const address =
             movie.poster && !movie.poster.assetId
               ? posterAddress(movie.poster.url)
               : null;
+
           if (!address || address.origin === location.origin) continue;
+
           const ids = urls.get(address.href) ?? [];
+
           ids.push(movie.id);
           urls.set(address.href, ids);
         }
 
         const entries = [...urls];
+
         progress.value = { ...progress.value, posterTotal: entries.length };
         for (let index = 0; index < entries.length; index += 3) {
           if (!navigator.onLine) {
@@ -122,6 +134,7 @@ export function useCatalogQuality(filters: () => Record<string, string>) {
           await Promise.all(
             entries.slice(index, index + 3).map(async ([url, ids]) => {
               const result = await probePoster(url, current.signal);
+
               for (const id of ids) posters[id] = result;
               if (controller === current)
                 progress.value = {

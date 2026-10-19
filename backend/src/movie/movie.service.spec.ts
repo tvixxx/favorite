@@ -12,6 +12,7 @@ describe('Права на общие и пользовательские фил�
   let service: MovieService;
   let posterExists: boolean;
   let posterFailure: boolean;
+  let linkedHistory: boolean;
   let progress: { currentSeason: number | null; currentEpisode: number | null };
 
   beforeEach(() => {
@@ -23,6 +24,7 @@ describe('Права на общие и пользовательские фил�
     };
     posterExists = true;
     posterFailure = false;
+    linkedHistory = false;
     progress = { currentSeason: null, currentEpisode: null };
     const tx = {
       adminAuditLog: { create: jest.fn().mockResolvedValue({}) },
@@ -63,6 +65,12 @@ describe('Права на общие и пользовательские фил�
           Promise.resolve(Object.assign(movie, data)),
         ),
         delete: jest.fn(() => {
+          if (linkedHistory)
+            return Promise.reject(
+              Object.assign(new Error('Foreign key constraint'), {
+                code: 'P2003',
+              }),
+            );
           const old = movie;
 
           movie = null!;
@@ -254,6 +262,17 @@ describe('Права на общие и пользовательские фил�
     await expect(
       service.delete('movie-id', { id: 'user-id', role: 'USER' }),
     ).rejects.toThrow('Ошибка удаления постера');
+    expect(movie.id).toBe('movie-id');
+    expect(posterExists).toBe(true);
+  });
+
+  it('возвращает понятный конфликт при удалении тайтла с историей, сохраняя тайтл и постер', async () => {
+    movie.createdById = 'user-id';
+    movie.posterId = 'poster-id';
+    linkedHistory = true;
+    await expect(
+      service.delete('movie-id', { id: 'user-id', role: 'USER' }),
+    ).rejects.toMatchObject({ status: 409 });
     expect(movie.id).toBe('movie-id');
     expect(posterExists).toBe(true);
   });

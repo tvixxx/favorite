@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useFriendsStore, useUserStatusStore, useChatStore } from '@/stores';
-import { useMainStore } from '@/state/state';
-import { FriendshipType } from '@/stores/friends/friendsStore';
-import { useRouter } from 'vue-router';
-import SocialHubTabs from '@/components/SocialHubTabs/SocialHubTabs.vue';
-import BaseModal from '@/components/BaseModal/BaseModal.vue';
-import BaseIcon from '@/components/BaseIcon/BaseIcon.vue';
-import BaseRadio from '@/components/BaseRadio/BaseRadio.vue';
-import StateBlock from '@/components/StateBlock/StateBlock.vue';
-import { STATE_PRESETS } from '@/components/StateBlock/stateBlockPresets';
-import SkeletonBar from '@/components/Skeleton/SkeletonBar.vue';
-import { useMinLoading } from '@/components/Skeleton/useMinLoading';
-import { useFetch, FETCH_METHOD } from '@/composable';
-import { isSuccessStatus } from '@/utils';
-import { friendlyRequestError } from '@/utils/friendlyError';
-import { avatarGradient, avatarLetter } from '@/composable/useAvatarGradient';
-import { Button, Input, message } from 'ant-design-vue';
+import { ref, onMounted, computed } from "vue";
+import { useFriendsStore, useUserStatusStore, useChatStore } from "@/stores";
+import { useMainStore } from "@/state/state";
+import { FriendshipType } from "@/stores/friends/friendsStore";
+import { useRouter } from "vue-router";
+import SocialHubTabs from "@/components/SocialHubTabs/SocialHubTabs.vue";
+import BaseModal from "@/components/BaseModal/BaseModal.vue";
+import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
+import BaseRadio from "@/components/BaseRadio/BaseRadio.vue";
+import StateBlock from "@/components/StateBlock/StateBlock.vue";
+import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
+import SkeletonBar from "@/components/Skeleton/SkeletonBar.vue";
+import { useMinLoading } from "@/components/Skeleton/useMinLoading";
+import { useFetch, FETCH_METHOD } from "@/composable";
+import { isSuccessStatus } from "@/utils";
+import { friendlyRequestError } from "@/utils/friendlyError";
+import { avatarGradient, avatarLetter } from "@/composable/useAvatarGradient";
+import { Button, Input, message } from "ant-design-vue";
 
 const router = useRouter();
 const friendsStore = useFriendsStore();
@@ -25,37 +25,39 @@ type FriendsTab = "friends" | "requests" | "subscribers" | "subscriptions";
 
 const activeTab = ref<FriendsTab>("friends");
 
-const tabs = computed<{ key: FriendsTab; label: string; count: number }[]>(() => [
-  {
-    key: "friends",
-    label: "Друзья",
-    count: friendsStore.stats?.friendsCount ?? 0,
-  },
-  {
-    key: "requests",
-    label: "Запросы",
-    count: friendsStore.pendingRequestsCount,
-  },
-  {
-    key: "subscribers",
-    label: "Подписчики",
-    count: friendsStore.stats?.subscribersCount ?? 0,
-  },
-  {
-    key: "subscriptions",
-    label: "Подписки",
-    count: friendsStore.stats?.subscriptionsCount ?? 0,
-  },
-]);
+const tabs = computed<{ key: FriendsTab; label: string; count: number }[]>(
+  () => [
+    {
+      key: "friends",
+      label: "Друзья",
+      count: friendsStore.stats?.friendsCount ?? 0,
+    },
+    {
+      key: "requests",
+      label: "Запросы",
+      count: friendsStore.pendingRequestsCount,
+    },
+    {
+      key: "subscribers",
+      label: "Подписчики",
+      count: friendsStore.stats?.subscribersCount ?? 0,
+    },
+    {
+      key: "subscriptions",
+      label: "Подписки",
+      count: friendsStore.stats?.subscriptionsCount ?? 0,
+    },
+  ]
+);
 const chatStore = useChatStore();
 const userStatusStore = useUserStatusStore();
 const mainStore = useMainStore();
 
-const userId = computed(() => mainStore.userData?.id || '');
-const searchQuery = ref('');
+const userId = computed(() => mainStore.userData?.id || "");
+const searchQuery = ref("");
 const isAddModalVisible = ref(false);
 const isLoading = ref(false);
-const newFriendEmail = ref('');
+const newFriendEmail = ref("");
 const requestType = ref<FriendshipType>(FriendshipType.FRIEND_REQUEST);
 const submitError = ref<string | null>(null);
 
@@ -66,15 +68,16 @@ const filteredFriends = computed(() => {
 
   const query = searchQuery.value.toLowerCase();
 
-  return friendsStore.friends.filter(f =>
-    f.friend.fullName.toLowerCase().includes(query) ||
-    f.friend.email.toLowerCase().includes(query)
+  return friendsStore.friends.filter(
+    (f) =>
+      f.friend.fullName.toLowerCase().includes(query) ||
+      f.friend.email.toLowerCase().includes(query)
   );
 });
 
 const openAddModal = () => {
   isAddModalVisible.value = true;
-  newFriendEmail.value = '';
+  newFriendEmail.value = "";
   requestType.value = FriendshipType.FRIEND_REQUEST;
   submitError.value = null;
 };
@@ -99,36 +102,44 @@ const sendFriendRequest = async () => {
 
   try {
     // Найти пользователя по email
-    const searchResponse = await useFetch<{ id: string; email: string; fullName: string }>(
+    const searchResponse = await useFetch<{
+      id: string;
+      email: string;
+      fullName: string;
+    }>(
       `/users/search?email=${encodeURIComponent(newFriendEmail.value.trim())}`,
       { method: FETCH_METHOD.get }
     );
 
     if (!isSuccessStatus(searchResponse.status)) {
       submitError.value =
-        'Пользователь с таким email не найден. Проверьте адрес и попробуйте снова.';
+        "Пользователь с таким email не найден. Проверьте адрес и попробуйте снова.";
 
       return;
     }
 
     const addresseeId = searchResponse.data.id;
 
-    await friendsStore.sendRequest(userId.value, addresseeId, requestType.value);
+    await friendsStore.sendRequest(
+      userId.value,
+      addresseeId,
+      requestType.value
+    );
 
     message.success(
       requestType.value === FriendshipType.FRIEND_REQUEST
-        ? 'Запрос в друзья отправлен'
-        : 'Вы подписались на пользователя'
+        ? "Запрос в друзья отправлен"
+        : "Вы подписались на пользователя"
     );
 
     closeAddModal();
   } catch (error) {
     submitError.value = friendlyRequestError(error, {
       byStatus: {
-        404: 'Пользователь с таким email не найден. Проверьте адрес и попробуйте снова.',
-        409: 'Вы уже отправили запрос этому пользователю или уже добавили его.',
+        404: "Пользователь с таким email не найден. Проверьте адрес и попробуйте снова.",
+        409: "Вы уже отправили запрос этому пользователю или уже добавили его.",
       },
-      fallback: 'Не удалось отправить запрос. Попробуйте ещё раз.',
+      fallback: "Не удалось отправить запрос. Попробуйте ещё раз.",
     });
   } finally {
     isLoading.value = false;
@@ -138,10 +149,10 @@ const sendFriendRequest = async () => {
 const acceptRequest = async (friendshipId: string) => {
   try {
     await friendsStore.acceptRequest(userId.value, friendshipId);
-    message.success('Запрос принят');
+    message.success("Запрос принят");
   } catch (error) {
     message.error(
-      friendlyRequestError(error, { fallback: 'Не удалось принять запрос' })
+      friendlyRequestError(error, { fallback: "Не удалось принять запрос" })
     );
   }
 };
@@ -149,10 +160,10 @@ const acceptRequest = async (friendshipId: string) => {
 const rejectRequest = async (friendshipId: string) => {
   try {
     await friendsStore.rejectRequest(userId.value, friendshipId);
-    message.success('Запрос отклонён');
+    message.success("Запрос отклонён");
   } catch (error) {
     message.error(
-      friendlyRequestError(error, { fallback: 'Не удалось отклонить запрос' })
+      friendlyRequestError(error, { fallback: "Не удалось отклонить запрос" })
     );
   }
 };
@@ -160,10 +171,10 @@ const rejectRequest = async (friendshipId: string) => {
 const removeFriend = async (friendshipId: string) => {
   try {
     await friendsStore.removeFriendship(userId.value, friendshipId);
-    message.success('Удалено');
+    message.success("Удалено");
   } catch (error) {
     message.error(
-      friendlyRequestError(error, { fallback: 'Не удалось удалить' })
+      friendlyRequestError(error, { fallback: "Не удалось удалить" })
     );
   }
 };
@@ -403,7 +414,9 @@ onMounted(loadAll);
               />
             </div>
             <div class="user-card__info">
-              <span class="user-card__name">{{ item.subscriber.fullName }}</span>
+              <span class="user-card__name">{{
+                item.subscriber.fullName
+              }}</span>
               <span class="user-card__meta">{{ item.subscriber.email }}</span>
             </div>
             <div class="user-card__actions">
@@ -447,7 +460,9 @@ onMounted(loadAll);
               />
             </div>
             <div class="user-card__info">
-              <span class="user-card__name">{{ item.subscribedTo.fullName }}</span>
+              <span class="user-card__name">{{
+                item.subscribedTo.fullName
+              }}</span>
               <span class="user-card__meta">{{ item.subscribedTo.email }}</span>
             </div>
             <div class="user-card__actions">
@@ -485,42 +500,42 @@ onMounted(loadAll);
       <template #title>Добавить пользователя</template>
 
       <template #body>
-      <StateBlock
-        v-if="submitError"
-        compact
-        variant="error"
-        icon="ph:warning-circle"
-        title="Не удалось отправить"
-        :description="submitError"
-      />
-      <div v-else class="add-modal">
-        <div class="add-modal__field">
-          <span class="add-modal__label">Email пользователя</span>
-          <Input
-            v-model:value="newFriendEmail"
-            placeholder="name@mail.ru"
-            size="large"
+        <StateBlock
+          v-if="submitError"
+          compact
+          variant="error"
+          icon="ph:warning-circle"
+          title="Не удалось отправить"
+          :description="submitError"
+        />
+        <div v-else class="add-modal">
+          <div class="add-modal__field">
+            <span class="add-modal__label">Email пользователя</span>
+            <Input
+              v-model:value="newFriendEmail"
+              placeholder="name@mail.ru"
+              size="large"
+            />
+          </div>
+
+          <span class="add-friend__label">Тип запроса</span>
+          <BaseRadio
+            :model-value="requestType"
+            :options="[
+              {
+                value: FriendshipType.FRIEND_REQUEST,
+                label: 'Запрос в друзья',
+                hint: '— требует подтверждения',
+              },
+              {
+                value: FriendshipType.SUBSCRIPTION,
+                label: 'Подписаться',
+                hint: '— без подтверждения',
+              },
+            ]"
+            @update:model-value="requestType = $event as FriendshipType"
           />
         </div>
-
-        <span class="add-friend__label">Тип запроса</span>
-        <BaseRadio
-          :model-value="requestType"
-          :options="[
-            {
-              value: FriendshipType.FRIEND_REQUEST,
-              label: 'Запрос в друзья',
-              hint: '— требует подтверждения',
-            },
-            {
-              value: FriendshipType.SUBSCRIPTION,
-              label: 'Подписаться',
-              hint: '— без подтверждения',
-            },
-          ]"
-          @update:model-value="requestType = $event as FriendshipType"
-        />
-      </div>
       </template>
 
       <template #footer>
@@ -831,8 +846,7 @@ onMounted(loadAll);
   background: var(--fv-color-bg-secondary);
   color: var(--fv-color-text-secondary);
   cursor: pointer;
-  transition:
-    background var(--fv-motion-fast) var(--fv-ease),
+  transition: background var(--fv-motion-fast) var(--fv-ease),
     color var(--fv-motion-fast) var(--fv-ease);
 
   &:hover {
@@ -849,11 +863,7 @@ onMounted(loadAll);
     color: var(--fv-color-positive);
 
     &:hover {
-      background: color-mix(
-        in srgb,
-        var(--fv-color-positive) 22%,
-        transparent
-      );
+      background: color-mix(in srgb, var(--fv-color-positive) 22%, transparent);
       color: var(--fv-color-positive);
     }
   }

@@ -19,7 +19,7 @@ const progressPercent = computed(() => {
 });
 
 const hasProgress = computed(
-  () => !props.badge.isUnlocked && props.badge.progress !== undefined,
+  () => !props.badge.isUnlocked && props.badge.progress !== undefined
 );
 </script>
 
@@ -30,7 +30,10 @@ const hasProgress = computed(
     :mouse-enter-delay="0.4"
     :mouse-leave-delay="0.1"
   >
-    <div class="badge-item" :class="{ 'badge-item--locked': !badge.isUnlocked }">
+    <div
+      class="badge-item"
+      :class="{ 'badge-item--locked': !badge.isUnlocked }"
+    >
       <span class="badge-item__icon">
         <BaseIcon
           :name="badge.isUnlocked ? 'ph:film-slate-fill' : 'ph:lock-simple'"

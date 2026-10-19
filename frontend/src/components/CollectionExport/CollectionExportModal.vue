@@ -8,7 +8,7 @@ import {
 } from "ant-design-vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import AppDisclosure from '@/components/AppDisclosure/AppDisclosure.vue';
+import AppDisclosure from "@/components/AppDisclosure/AppDisclosure.vue";
 import { useMainStore } from "@/state/state";
 import { useUserMoviesStore } from "@/stores";
 import { buildUserSearchParams } from "@/stores/userMovies/build-user-search-params";
@@ -59,6 +59,7 @@ watch(
     if (!open) invalidate();
   }
 );
+
 watch(
   () => [main.sessionRevision, main.userData?.id],
   () => {
@@ -67,6 +68,7 @@ watch(
   },
   { flush: "sync" }
 );
+
 watch(format, (value, previous) => {
   if (value === "pdf") scope.value = "completed";
   else if (previous === "pdf" && scope.value === "completed")
@@ -74,6 +76,7 @@ watch(format, (value, previous) => {
   error.value = "";
   notice.value = "";
 });
+
 onBeforeUnmount(invalidate);
 
 async function save(print = false): Promise<void> {
@@ -94,7 +97,9 @@ async function save(print = false): Promise<void> {
   }
 
   const isCurrent = guard.begin();
+
   controller = new AbortController();
+
   const signal = controller.signal;
   const userId = main.userData.id;
   const selectedFormat = format.value;
@@ -102,11 +107,13 @@ async function save(print = false): Promise<void> {
     scope.value === "filtered"
       ? new URLSearchParams(filterParams.value)
       : new URLSearchParams();
+
   params.set("format", selectedFormat);
   params.set("scope", scope.value);
   busy.value = true;
   try {
     const data = await fetchCollectionFile(userId, params, signal);
+
     if (!isCurrent() || main.userData?.id !== userId) return;
     if (data === null) {
       notice.value = "В выбранной выборке нет тайтлов.";
@@ -118,6 +125,7 @@ async function save(print = false): Promise<void> {
 
     if (selectedFormat === "pdf") {
       const report = data as CollectionReport;
+
       if (!Array.isArray(report.movies))
         throw new Error("Некорректный ответ сервера");
       if (!report.movies.length) {
@@ -135,6 +143,7 @@ async function save(print = false): Promise<void> {
         completedOnly: scope.value === "completed",
         signal,
       });
+
       if (!isCurrent() || signal.aborted) return;
       if (print && printWindow) {
         await pdf.print(printWindow);
@@ -157,6 +166,7 @@ async function save(print = false): Promise<void> {
           .toISOString()
           .slice(0, 10)}.${selectedFormat}`
       );
+
       notice.value = "Скачивание началось.";
     }
   } catch (cause) {
@@ -229,7 +239,10 @@ async function save(print = false): Promise<void> {
         </p>
       </template>
       <template v-else>
-        <AppDisclosure class="collection-export__details" label="Что войдёт в файл">
+        <AppDisclosure
+          class="collection-export__details"
+          label="Что войдёт в файл"
+        >
           <ul>
             <li>Название, год, вид и формат</li>
             <li>Статус, оценка, избранное и «Посмотреть позже»</li>
@@ -282,18 +295,21 @@ async function save(print = false): Promise<void> {
     margin: 0 0 22px;
     min-width: 0;
   }
+
   &__group legend {
     margin-bottom: 12px;
     color: var(--fv-color-text-secondary);
     font-size: 14px;
     font-weight: 500;
   }
+
   &__formats {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
     width: 100%;
   }
+
   &__format {
     display: flex;
     align-items: flex-start;
@@ -303,6 +319,7 @@ async function save(print = false): Promise<void> {
     border-radius: 12px;
     white-space: normal;
   }
+
   &__format:has(input:checked) {
     border-color: var(--fv-color-brand);
     background: color-mix(
@@ -311,10 +328,12 @@ async function save(print = false): Promise<void> {
       var(--fv-color-bg-primary)
     );
   }
+
   &__format strong {
     display: block;
     font-weight: 600;
   }
+
   &__formats small,
   &__scopes small {
     display: block;
@@ -322,30 +341,36 @@ async function save(print = false): Promise<void> {
     font-size: 12px;
     margin-top: 4px;
   }
+
   &__scopes {
     display: flex;
     flex-direction: column;
     gap: 14px;
   }
+
   &__details {
     border-top: 1px solid var(--fv-color-border);
     padding-top: 16px;
   }
+
   &__details ul {
     padding-left: 20px;
     margin-top: 12px;
     color: var(--fv-color-text-secondary);
   }
+
   &__hint {
     color: var(--fv-color-text-secondary);
     font-size: 13px;
     line-height: 1.5;
     margin: 16px 0 22px;
   }
+
   &__error {
     color: var(--fv-color-negative);
     margin: 16px 0 22px;
   }
+
   @include mediaMax(400px) {
     &__formats {
       grid-template-columns: 1fr;
@@ -360,11 +385,13 @@ async function save(print = false): Promise<void> {
 .collection-export .modal__footer {
   flex-wrap: wrap;
 }
+
 @include mediaMax(480px) {
   .collection-export .modal__footer > .ant-btn {
     flex: 1 1 calc(50% - 6px);
     min-width: 0;
   }
+
   .collection-export .modal__footer > .ant-btn-primary {
     flex-basis: 100%;
     order: -1;

@@ -11,6 +11,7 @@ beforeEach(() =>
     removeListener: vi.fn(),
   }))
 );
+
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Отметка спойлера в форме отзыва", () => {
@@ -19,12 +20,14 @@ describe("Отметка спойлера в форме отзыва", () => {
       props: { initialText: "Текст с раскрытием финала", initialRate: 8 },
       global: { plugins: [Antd], stubs: { BaseIcon: true } },
     });
+
     await wrapper.get('input[type="checkbox"]').setValue(true);
     await wrapper.get("form").trigger("submit");
     await flushPromises();
     expect(wrapper.emitted("submit")).toEqual([
       ["Текст с раскрытием финала", 8, true],
     ]);
+
     wrapper.unmount();
   });
 
@@ -37,16 +40,19 @@ describe("Отметка спойлера в форме отзыва", () => {
       },
       global: { plugins: [Antd], stubs: { BaseIcon: true } },
     });
+
     expect(
       (wrapper.get('input[type="checkbox"]').element as HTMLInputElement)
         .checked
     ).toBe(true);
+
     await wrapper.get('input[type="checkbox"]').setValue(false);
     await wrapper.get("form").trigger("submit");
     await flushPromises();
     expect(wrapper.emitted("submit")).toEqual([
       ["Текст без раскрытия финала", 8, false],
     ]);
+
     wrapper.unmount();
   });
 });

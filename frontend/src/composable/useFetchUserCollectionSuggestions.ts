@@ -12,7 +12,7 @@ import { formatUserMovieShareTitle } from "@/utils/movieShareTitle";
 export async function fetchUserCollectionSuggestions(
   userId: string,
   query: string,
-  limit = 10,
+  limit = 10
 ): Promise<UserMovie[]> {
   const q = query.trim();
 
@@ -20,10 +20,14 @@ export async function fetchUserCollectionSuggestions(
     return [];
   }
 
-  const params = new URLSearchParams({ q, limit: String(Math.min(Math.max(limit, 1), 25)), offset: "0" });
-  const { data, status } = await useFetch<{items: UserMovieApiResponse[]}>(
+  const params = new URLSearchParams({
+    q,
+    limit: String(Math.min(Math.max(limit, 1), 25)),
+    offset: "0",
+  });
+  const { data, status } = await useFetch<{ items: UserMovieApiResponse[] }>(
     `/users/${userId}/movies/page?${params.toString()}`,
-    { method: FETCH_METHOD.get },
+    { method: FETCH_METHOD.get }
   );
 
   if (status !== 200 || !Array.isArray(data?.items)) {
@@ -36,7 +40,7 @@ export async function fetchUserCollectionSuggestions(
 /** Точное совпадение строки «title» с карточкой в коллекции (после поиска). */
 export async function findUserMovieByQuotedTitle(
   userId: string,
-  quotedTitle: string,
+  quotedTitle: string
 ): Promise<UserMovie | null> {
   const q = quotedTitle.trim();
 
@@ -46,7 +50,9 @@ export async function findUserMovieByQuotedTitle(
 
   const list = await fetchUserCollectionSuggestions(userId, q, 25);
 
-  const matches = list.filter((um) => formatUserMovieShareTitle(um) === quotedTitle);
+  const matches = list.filter(
+    (um) => formatUserMovieShareTitle(um) === quotedTitle
+  );
 
   return list.length < 25 && matches.length === 1 ? matches[0] : null;
 }

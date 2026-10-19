@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, useId } from "vue";
 import { Select as ASelect, Button as AButton } from "ant-design-vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import api from "@/services/api";
+
 const model = defineModel<string>({ default: "UTC" });
 const props = defineProps<{ disabled?: boolean }>();
 const id = useId();
@@ -17,9 +18,12 @@ const options = computed(() =>
     label: value.replaceAll("_", " "),
   }))
 );
+
 async function load() {
   controller?.abort();
+
   const request = new AbortController();
+
   controller = request;
   loading.value = true;
   error.value = "";
@@ -28,6 +32,7 @@ async function load() {
       signal: request.signal,
       timeout: 5000,
     });
+
     if (
       !Array.isArray(data) ||
       data.length > 1000 ||
@@ -83,20 +88,24 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 8px;
   min-width: 0;
+
   label {
     font-size: 14px;
     font-weight: 500;
     color: var(--fv-color-text-secondary);
   }
+
   p {
     margin: 0;
     font-size: 13px;
     line-height: 1.5;
     color: var(--fv-color-text-secondary);
   }
+
   [role="alert"]p {
     color: var(--fv-color-negative);
   }
+
   .ant-select {
     width: 100%;
   }

@@ -18,6 +18,7 @@ describe("Фильтры админки в адресной строке", () =>
     });
 
     await router.push("/admin");
+
     const wrapper = mount(component, { global: { plugins: [router] } });
 
     await wrapper.get("input").setValue("");
@@ -26,6 +27,7 @@ describe("Фильтры админки в адресной строке", () =>
     expect(wrapper.get("input").element.value).toBe("");
     wrapper.unmount();
   });
+
   it("восстанавливает фильтр, сохраняет соседние параметры и сбрасывает его страницу", async () => {
     const component = defineComponent({
       setup() {
@@ -45,6 +47,7 @@ describe("Фильтры админки в адресной строке", () =>
     });
 
     await router.push("/admin?users_role=USER&users_page=3&movies_kind=serial");
+
     const wrapper = mount(component, { global: { plugins: [router] } });
 
     expect(wrapper.get("input").element.value).toBe("USER");
@@ -54,6 +57,7 @@ describe("Фильтры админки в адресной строке", () =>
       users_role: "ADMIN",
       movies_kind: "serial",
     });
+
     expect(router.currentRoute.value.query.users_page).toBeUndefined();
     await router.push("/admin?users_role=USER");
     await flushPromises();

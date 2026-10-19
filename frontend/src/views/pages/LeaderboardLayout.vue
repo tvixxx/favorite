@@ -18,7 +18,7 @@ const segmentOptions = [
 const activeSegment = computed<string>(() =>
   route.path.startsWith(LEADERBOARD_PATHS.movies)
     ? LEADERBOARD_PATHS.movies
-    : LEADERBOARD_PATHS.users,
+    : LEADERBOARD_PATHS.users
 );
 
 const onSegmentChange = (value: string | number): void => {

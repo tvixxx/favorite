@@ -35,12 +35,10 @@ const movie = useChatMovie(detailId);
 
 const displayTitle = computed(() => movie.value?.title || props.title);
 
-const posterSrc = computed(
-  () => movie.value?.imageUrl || "",
-);
+const posterSrc = computed(() => movie.value?.imageUrl || "");
 
-const label = computed(() =>
-  `${contentTypeLabel(movie.value ?? {})} · FAVORITE`,
+const label = computed(
+  () => `${contentTypeLabel(movie.value ?? {})} · FAVORITE`
 );
 
 const meta = computed(() => {
@@ -123,8 +121,7 @@ const rating = computed(() => {
   color: var(--fv-color-text-primary);
   text-decoration: none;
   box-shadow: var(--fv-shadow-low);
-  transition:
-    transform var(--fv-motion-fast) var(--fv-ease),
+  transition: transform var(--fv-motion-fast) var(--fv-ease),
     box-shadow var(--fv-motion-fast) var(--fv-ease);
 
   &:hover {

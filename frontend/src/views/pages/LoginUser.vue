@@ -62,6 +62,7 @@ const mode = ref<AuthMode>("login");
 
 <style lang="scss">
 @use "../../styles/media" as *;
+
 .auth-page {
   display: flex;
   align-items: center;
@@ -120,7 +121,6 @@ const mode = ref<AuthMode>("login");
   }
 }
 
-/* Сегмент «Вход | Регистрация» (эталон .authtab) */
 .auth-tabs {
   display: flex;
   gap: 4px;
@@ -140,8 +140,7 @@ const mode = ref<AuthMode>("login");
     font-weight: 500;
     color: var(--fv-color-text-secondary);
     cursor: pointer;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       color var(--fv-motion-fast) var(--fv-ease);
 
     &--on {
@@ -157,7 +156,6 @@ const mode = ref<AuthMode>("login");
   }
 }
 
-/* Поля и кнопка обеих форм (эталон .fld 52px / .btnp) */
 .auth-form {
   .ant-form-item {
     margin-bottom: 14px;

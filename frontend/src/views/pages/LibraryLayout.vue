@@ -17,6 +17,7 @@ import { useMainStore } from "@/state/state";
 import { useActorsStore, useUserMoviesStore } from "@/stores";
 import { PLURAL, pluralize } from "@/utils";
 import { getUserPreference } from "@/utils/userPreferences";
+import type { DiaryStats } from "@/services/watch-diary";
 
 const route = useRoute();
 const router = useRouter();
@@ -31,21 +32,32 @@ const isCollection = computed(() => route.name === "library-collection");
 const importOpen = ref(false);
 const exportOpen = ref(false);
 const filesButton = ref<HTMLButtonElement | null>(null);
-const showCollectionFiles = computed(() => getUserPreference(mainStore.userData, "collectionFilesEnabled"));
+const showCollectionFiles = computed(() =>
+  getUserPreference(mainStore.userData, "collectionFilesEnabled")
+);
+
 watch(showCollectionFiles, (visible) => {
   if (!visible) {
     importOpen.value = false;
     exportOpen.value = false;
   }
 });
+
 watch(isCollection, (value) => {
   if (!value) {
     importOpen.value = false;
     exportOpen.value = false;
   }
 });
+
 const isActors = computed(() => route.name === "library-actors");
 const isLists = computed(() => route.name === "library-lists");
+const isDiary = computed(() => route.name === "library-diary");
+const diaryStats = ref<DiaryStats | null>(null);
+
+watch([userId, () => route.name], () => {
+  diaryStats.value = null;
+});
 
 // «Новый список» в шапке открывает модалку создания в MyListsPage через query-флаг
 const openNewList = (): void => {
@@ -99,6 +111,7 @@ const heroMeta = computed((): LibraryHeroMeta | undefined => {
   }
 
   const raw = route.meta.libraryHero;
+
   if (raw && typeof raw === "object") {
     return raw as LibraryHeroMeta;
   }
@@ -112,6 +125,7 @@ const collectionCount = computed(
 
 const heroSubtitle = computed(() => {
   const meta = heroMeta.value;
+
   if (!meta) {
     return "";
   }
@@ -132,11 +146,24 @@ interface HeroStat {
 }
 
 const heroStats = computed<HeroStat[]>(() => {
+  if (isDiary.value) {
+    const stats = diaryStats.value;
+
+    return stats
+      ? [
+          { value: stats.entries, label: "Записи", accent: true },
+          { value: stats.titles, label: "Произведения" },
+          { value: stats.rewatches, label: "Пересмотры" },
+        ]
+      : [];
+  }
+
   if (!isCollection.value) {
     return [];
   }
 
   const s = userMoviesStore.stats;
+
   if (!s) {
     return [];
   }
@@ -287,10 +314,13 @@ function isLibraryNavActive(to: string): boolean {
         v-model="importOpen"
         @imported="userMoviesStore.refreshAfterImport(userId)"
       />
-      <CollectionExportModal v-if="isCollection && showCollectionFiles" v-model="exportOpen" />
+      <CollectionExportModal
+        v-if="isCollection && showCollectionFiles"
+        v-model="exportOpen"
+      />
 
       <main class="library-app-layout__main">
-        <RouterView />
+        <RouterView @diary-stats="diaryStats = $event" />
       </main>
     </div>
   </div>
@@ -303,6 +333,15 @@ function isLibraryNavActive(to: string): boolean {
 
 .library-app-layout {
   @include pageShell(4rem);
+  min-height: calc(100dvh - var(--fv-topbar-height));
+
+  @include mediaMax($tablet) {
+    min-height: calc(
+      100dvh - var(--fv-topbar-height) - var(--fv-mobile-tabbar-height) -
+        env(safe-area-inset-bottom, 0px)
+    );
+    padding-bottom: 16px;
+  }
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -322,7 +361,6 @@ function isLibraryNavActive(to: string): boolean {
   }
 }
 
-// Hero-карточка медиатеки (эталон): eyebrow + заголовок + подзаголовок + статы
 .library-hero {
   @include pageContentContainer;
 
@@ -344,6 +382,11 @@ function isLibraryNavActive(to: string): boolean {
       gap: 16px;
       padding: 1.5rem;
     }
+
+    @include mediaMax(500px) {
+      gap: 12px;
+      padding: 20px;
+    }
   }
 
   &__text {
@@ -358,6 +401,11 @@ function isLibraryNavActive(to: string): boolean {
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--fv-color-text-tertiary);
+
+    @include mediaMax(500px) {
+      font-size: 10px;
+      margin-bottom: 6px;
+    }
   }
 
   &__title {
@@ -367,12 +415,22 @@ function isLibraryNavActive(to: string): boolean {
     font-weight: 500;
     line-height: 1.1;
     color: var(--fv-color-text-primary);
+
+    @include mediaMax(500px) {
+      font-size: 22px;
+    }
   }
 
   &__subtitle {
     margin: 8px 0 0;
     color: var(--fv-color-text-secondary);
     font-size: 0.95rem;
+
+    @include mediaMax(500px) {
+      margin-top: 6px;
+      font-size: 14px;
+      line-height: 1.35;
+    }
   }
 
   &__stats {
@@ -382,6 +440,7 @@ function isLibraryNavActive(to: string): boolean {
 
     @include mediaMax(640px) {
       width: 100%;
+      gap: 8px;
     }
   }
 
@@ -398,6 +457,11 @@ function isLibraryNavActive(to: string): boolean {
     @include mediaMax(640px) {
       flex: 1;
       min-width: 0;
+      padding: 12px 4px;
+    }
+
+    @include mediaMax(500px) {
+      padding-block: 10px;
     }
   }
 
@@ -408,6 +472,14 @@ function isLibraryNavActive(to: string): boolean {
     line-height: 1;
     color: var(--fv-color-text-primary);
 
+    @include mediaMax(640px) {
+      font-size: 20px;
+    }
+
+    @include mediaMax(500px) {
+      font-size: 18px;
+    }
+
     &--accent {
       color: var(--fv-color-accent);
     }
@@ -416,6 +488,19 @@ function isLibraryNavActive(to: string): boolean {
   &__stat-label {
     font-size: 0.82rem;
     color: var(--fv-color-text-secondary);
+    text-align: center;
+
+    @include mediaMax(640px) {
+      font-size: 12px;
+    }
+
+    @include mediaMax(500px) {
+      font-size: 11px;
+    }
+
+    @include mediaMax(360px) {
+      font-size: 10.5px;
+    }
   }
 
   // Актёры: поиск справа в шапке
@@ -454,7 +539,6 @@ function isLibraryNavActive(to: string): boolean {
     }
   }
 
-  // Мои списки: кнопка «Новый список» справа в шапке (эталон, brand-акцент)
   &__new-list {
     display: inline-flex;
     align-items: center;
@@ -489,35 +573,47 @@ function isLibraryNavActive(to: string): boolean {
   flex-direction: row;
   align-items: center;
   gap: 12px;
-  @include mediaMax(960px) {
+  min-height: 44px;
+
+  @include mediaMax(768px) {
     flex-direction: column;
     align-items: stretch;
   }
 }
+
 .library-actions__mobile-label {
   display: none;
 }
+
 .library-actions {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+
   @include mediaMax(960px) {
     justify-content: flex-end;
   }
+
   @include mediaMax(768px) {
-    &--without-files { display: none; }
+    &--without-files {
+      display: none;
+    }
+
     &__import {
       width: 100%;
     }
+
     &__desktop-label {
       display: none;
     }
+
     &__mobile-label {
       display: inline;
     }
   }
 }
+
 .library-actions__import {
   display: inline-flex;
   align-items: center;
@@ -532,19 +628,21 @@ function isLibraryNavActive(to: string): boolean {
   font: inherit;
   font-weight: 500;
   cursor: pointer;
+
   &:hover {
     background: var(--fv-color-bg-secondary);
   }
+
   &:focus-visible {
     outline: 2px solid var(--fv-color-accent);
     outline-offset: 3px;
   }
+
   @include mediaMax(400px) {
     padding: 0 12px;
   }
 }
 
-/* Подразделы медиатеки — строка чипов (эталон): активный = тёмная ink-плашка */
 .library-subnav {
   flex: 1;
   min-width: 0;
@@ -553,14 +651,14 @@ function isLibraryNavActive(to: string): boolean {
   flex-wrap: wrap;
   gap: 0.5rem;
   width: 100%;
-  @include mediaMax(960px) {
+
+  @include mediaMax(768px) {
     flex: none;
   }
 
-  // Мобилка: чипы в один ряд с горизонтальным скроллом (без переноса, эталон)
-  @include mediaMax(768px) {
+  @include mediaMax(767.98px) {
     flex-wrap: nowrap;
-    overflow-x: auto;
+    @include edgeScrollContainer;
 
     @include hideScrollbar();
   }
@@ -588,6 +686,12 @@ function isLibraryNavActive(to: string): boolean {
         var(--fv-color-text-primary) 6%,
         var(--fv-color-bg-secondary)
       );
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--fv-color-accent);
+      outline-offset: -3px;
+      box-shadow: none;
     }
 
     &--active {
@@ -630,9 +734,11 @@ function isLibraryNavActive(to: string): boolean {
 .collection-files-menu {
   min-width: 220px;
   max-width: calc(100vw - 32px);
+
   .ant-dropdown-menu-item {
     white-space: nowrap;
   }
+
   .ant-dropdown-menu-title-content {
     display: inline-flex;
     align-items: center;

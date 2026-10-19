@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { AdminEngagementData } from "./admin.types";
-const props = withDefaults(defineProps<{ data: AdminEngagementData; days: number; timezone?:string }>(),{timezone:'UTC'});
+
+const props = withDefaults(
+  defineProps<{ data: AdminEngagementData; days: number; timezone?: string }>(),
+  { timezone: "UTC" }
+);
 const activities = computed(() => [
   {
     label: "За сутки",
@@ -98,10 +102,10 @@ const weekLabel = (week: string) =>
     <section aria-label="Недельное удержание">
       <h3>Недельное удержание</h3>
       <p class="admin-muted">
-        Последние 8 полных недель регистрации, {{timezone}}. Вернувшимся считается
-        пользователь с хотя бы одним учтённым действием на следующей календарной
-        неделе. Процент появится после завершения всей недели наблюдения при
-        достаточной истории.
+        Последние 8 полных недель регистрации, {{ timezone }}. Вернувшимся
+        считается пользователь с хотя бы одним учтённым действием на следующей
+        календарной неделе. Процент появится после завершения всей недели
+        наблюдения при достаточной истории.
       </p>
       <div role="list">
         <article
@@ -132,17 +136,21 @@ const weekLabel = (week: string) =>
   </div>
 </template>
 <style scoped lang="scss">
-@use '../../styles/media' as *;
+@use "../../styles/media" as *;
+
 .admin-engagement {
   display: grid;
   gap: 28px;
   margin: 28px 0;
+
   h3 {
     margin: 0 0 12px;
   }
+
   &__funnel .admin-bar {
     margin-top: 12px;
   }
+
   &__cohort {
     display: grid;
     grid-template-columns: minmax(120px, 1.2fr) repeat(3, minmax(0, 1fr));
@@ -151,27 +159,36 @@ const weekLabel = (week: string) =>
     padding: 16px 0;
     border-bottom: 1px solid var(--fv-color-border);
     font-variant-numeric: tabular-nums;
+
     span {
       display: block;
       font-size: 12px;
       color: var(--fv-color-text-secondary);
       margin-bottom: 6px;
     }
+
     b {
       font-size: 18px;
     }
   }
+
   &__state {
     grid-column: span 2;
   }
+
   @include mediaMax(640px) {
-    &__funnel { grid-template-columns: minmax(0,1fr); }
+    &__funnel {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
     &__cohort {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+
       strong {
         grid-column: 1/-1;
       }
     }
+
     &__state {
       grid-column: auto;
     }

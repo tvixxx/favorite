@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import dayjs, { type Dayjs } from "dayjs";
-import {releaseMonthBound,releaseDateInput} from '@/utils/releaseDate';
+import { releaseMonthBound, releaseDateInput } from "@/utils/releaseDate";
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import FiltersSheet from "@/components/MoviesFiltersPanel/FiltersSheet.vue";
@@ -37,7 +37,7 @@ const props = withDefaults(
     searchPlaceholder: "Поиск по коллекции",
     filters: () => ({}),
     searchQuery: "",
-  },
+  }
 );
 
 const emit = defineEmits<{
@@ -57,37 +57,63 @@ const STATUSES: { key: StatusKey; label: string }[] = [
 const DEFAULT_RATE: [number, number] = [0, 10];
 
 const searchValue = ref(props.searchQuery);
-const activeStatus = computed<StatusKey>(() => props.filters.seeLater
-  ? "later" : props.filters.watchStatus === WatchStatus.WATCHING
-    ? "watching" : props.filters.watchStatus === WatchStatus.COMPLETED ? "watched" : "all");
+const activeStatus = computed<StatusKey>(() =>
+  props.filters.seeLater
+    ? "later"
+    : props.filters.watchStatus === WatchStatus.WATCHING
+    ? "watching"
+    : props.filters.watchStatus === WatchStatus.COMPLETED
+    ? "watched"
+    : "all"
+);
 const selectedGenres = computed<Genre[]>({
   get: () => props.filters.genres ?? [],
-  set: (genres) => updateFilters({ genres: genres.length ? genres : undefined }),
+  set: (genres) =>
+    updateFilters({ genres: genres.length ? genres : undefined }),
 });
 const selectedCountries = computed<string[]>({
   get: () => props.filters.countryCodes ?? [],
-  set: (countryCodes) => updateFilters({ countryCodes: countryCodes.length ? countryCodes : undefined }),
+  set: (countryCodes) =>
+    updateFilters({
+      countryCodes: countryCodes.length ? countryCodes : undefined,
+    }),
 });
 const publishDateRange = computed<[Dayjs, Dayjs] | null>({
-  get: (): [Dayjs, Dayjs] | null => props.filters.publishDateFrom && props.filters.publishDateTo
-    ? [releaseDateInput(props.filters.publishDateFrom), releaseDateInput(props.filters.publishDateTo)] : null,
-  set: (range) => updateFilters({
-    publishDateFrom: range?.[0] ? releaseMonthBound(range[0],'from') : undefined,
-    publishDateTo: range?.[1] ? releaseMonthBound(range[1],'to') : undefined,
-  }),
+  get: (): [Dayjs, Dayjs] | null =>
+    props.filters.publishDateFrom && props.filters.publishDateTo
+      ? [
+          releaseDateInput(props.filters.publishDateFrom),
+          releaseDateInput(props.filters.publishDateTo),
+        ]
+      : null,
+  set: (range) =>
+    updateFilters({
+      publishDateFrom: range?.[0]
+        ? releaseMonthBound(range[0], "from")
+        : undefined,
+      publishDateTo: range?.[1] ? releaseMonthBound(range[1], "to") : undefined,
+    }),
 });
 const rateRange = computed<[number, number]>({
-  get: (): [number, number] => [props.filters.personalRateMin ?? 0, props.filters.personalRateMax ?? 10],
-  set: ([min, max]) => updateFilters({ personalRateMin: min > 0 ? min : undefined, personalRateMax: max < 10 ? max : undefined }),
+  get: (): [number, number] => [
+    props.filters.personalRateMin ?? 0,
+    props.filters.personalRateMax ?? 10,
+  ],
+  set: ([min, max]) =>
+    updateFilters({
+      personalRateMin: min > 0 ? min : undefined,
+      personalRateMax: max < 10 ? max : undefined,
+    }),
 });
 const isDrawerOpen = ref(false);
 
 const rateActive = computed(
-  () => rateRange.value[0] > 0 || rateRange.value[1] < 10,
+  () => rateRange.value[0] > 0 || rateRange.value[1] < 10
 );
 
 const advancedCount = computed(() => {
   let n = 0;
+
   if (props.filters.contentKind) n += 1;
   if (selectedGenres.value.length) n += 1;
   if (selectedCountries.value.length) n += 1;
@@ -144,7 +170,10 @@ const togglePreset = (key: PresetKey): void => {
 
   publishDateRange.value = isActive
     ? null
-    : [dayjs(`${FRESH_FROM_YEAR}-01-01`), releaseDateInput(new Date().toISOString())];
+    : [
+        dayjs(`${FRESH_FROM_YEAR}-01-01`),
+        releaseDateInput(new Date().toISOString()),
+      ];
 };
 
 const countryLabel = (code: string): string =>
@@ -159,7 +188,11 @@ const activeTags = computed<FilterTag[]>(() => {
   selectedCountries.value.forEach((code) => {
     tags.push({ key: `country:${code}`, label: countryLabel(code) });
   });
-  const category = contentKindOptions.find(option => option.value === props.filters.contentKind);
+
+  const category = contentKindOptions.find(
+    (option) => option.value === props.filters.contentKind
+  );
+
   if (category) tags.push({ key: "contentKind", label: category.label });
 
   const [from, to] = publishDateRange.value ?? [];
@@ -167,7 +200,9 @@ const activeTags = computed<FilterTag[]>(() => {
   if (from && to) {
     tags.push({
       key: "date",
-      label: `${dayjs(from).format("MM.YYYY")} — ${dayjs(to).format("MM.YYYY")}`,
+      label: `${dayjs(from).format("MM.YYYY")} — ${dayjs(to).format(
+        "MM.YYYY"
+      )}`,
     });
   }
 
@@ -183,13 +218,14 @@ const activeTags = computed<FilterTag[]>(() => {
 
 const removeTag = (key: string): void => {
   const [type, value] = key.split(":");
+
   if (type === "contentKind") updateFilters({ contentKind: undefined });
 
   if (type === "genre") {
     selectedGenres.value = selectedGenres.value.filter((g) => g !== value);
   } else if (type === "country") {
     selectedCountries.value = selectedCountries.value.filter(
-      (c) => c !== value,
+      (c) => c !== value
     );
   } else if (type === "date") {
     publishDateRange.value = null;
@@ -208,21 +244,38 @@ const setStatus = (key: StatusKey): void => {
   }
 
   updateFilters({
-    watchStatus: key === "watching" ? WatchStatus.WATCHING : key === "watched" ? WatchStatus.COMPLETED : undefined,
+    watchStatus:
+      key === "watching"
+        ? WatchStatus.WATCHING
+        : key === "watched"
+        ? WatchStatus.COMPLETED
+        : undefined,
     seeLater: key === "later" ? true : undefined,
   });
 };
 
 const resetAdvanced = (): void => {
-  updateFilters({ contentKind: undefined, genres: undefined, countryCodes: undefined, publishDateFrom: undefined, publishDateTo: undefined, personalRateMin: undefined, personalRateMax: undefined });
+  updateFilters({
+    contentKind: undefined,
+    genres: undefined,
+    countryCodes: undefined,
+    publishDateFrom: undefined,
+    publishDateTo: undefined,
+    personalRateMin: undefined,
+    personalRateMax: undefined,
+  });
 };
 
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
+
 onBeforeUnmount(() => clearTimeout(searchTimer));
-watch(() => props.searchQuery, (query) => {
-  clearTimeout(searchTimer);
-  searchValue.value = query;
-});
+watch(
+  () => props.searchQuery,
+  (query) => {
+    clearTimeout(searchTimer);
+    searchValue.value = query;
+  }
+);
 
 const onSearchInput = (): void => {
   clearTimeout(searchTimer);
@@ -301,7 +354,10 @@ const onSearchEnter = (): void => {
       @reset="resetAdvanced"
     >
       <GenreFilter v-model="selectedGenres" />
-      <ContentKindFilter :content-kind="props.filters.contentKind" @change="updateFilters" />
+      <ContentKindFilter
+        :content-kind="props.filters.contentKind"
+        @change="updateFilters"
+      />
       <CountryFilter v-model="selectedCountries" />
       <PeriodChips v-model="publishDateRange" />
 
@@ -331,6 +387,7 @@ const onSearchEnter = (): void => {
 <style lang="scss" scoped>
 @use "@/styles/media" as *;
 @use "@/styles/scrollbar" as *;
+@use "@/styles/layout" as *;
 
 .collection-filters {
   margin-top: 16px;
@@ -339,7 +396,7 @@ const onSearchEnter = (): void => {
   &__row {
     // До планшета: поиск и кнопка-иконка в одной строке, статусы — во второй
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "search filter"
       "status status";
@@ -405,6 +462,10 @@ const onSearchEnter = (): void => {
     overflow-x: auto;
 
     @include hideScrollbar();
+
+    @include mediaMax(767.98px) {
+      @include edgeScrollContainer;
+    }
   }
 
   // Пилюли статуса: как чипы сабнава (активная = тёмная ink-плашка)
@@ -420,8 +481,7 @@ const onSearchEnter = (): void => {
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       color var(--fv-motion-fast) var(--fv-ease),
       border-color var(--fv-motion-fast) var(--fv-ease);
 
@@ -435,7 +495,7 @@ const onSearchEnter = (): void => {
 
     &:focus-visible {
       outline: 2px solid var(--fv-color-accent);
-      outline-offset: 2px;
+      outline-offset: -3px;
     }
 
     &--active {
@@ -471,8 +531,7 @@ const onSearchEnter = (): void => {
     font-weight: 500;
     cursor: pointer;
     white-space: nowrap;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
@@ -561,7 +620,6 @@ const onSearchEnter = (): void => {
     font-size: 12px;
     font-weight: 700;
 
-    // На мобильной иконке бейдж синий и вынесен в угол (эталон)
     @include mediaMax(767.98px) {
       position: absolute;
       top: -4px;

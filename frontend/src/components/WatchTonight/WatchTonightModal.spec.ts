@@ -5,9 +5,11 @@ import WatchTonightModal from "./WatchTonightModal.vue";
 
 const mocks = vi.hoisted(() => ({ get: vi.fn(), push: vi.fn() }));
 const main = reactive({ userData: { id: "owner" }, sessionRevision: 0 });
+
 vi.mock("@/services/api", () => ({ default: { get: mocks.get } }));
 vi.mock("@/state/state", () => ({ useMainStore: () => main }));
 vi.mock("vue-router", () => ({ useRouter: () => ({ push: mocks.push }) }));
+
 const row = (id: string, extra = {}) => ({
   userId: "owner",
   movieId: id,
@@ -45,6 +47,7 @@ const open = async () => {
       },
     },
   });
+
   await wrapper.setProps({ modelValue: true });
   await flushPromises();
 };
@@ -54,6 +57,7 @@ const click = async (label: string) => {
     .findAll("button")
     .find((b) => b.text() === label)!
     .trigger("click");
+
   await flushPromises();
 };
 
@@ -64,6 +68,7 @@ beforeEach(() => {
   main.sessionRevision = 0;
   vi.spyOn(Math, "random").mockReturnValue(0.4);
 });
+
 afterEach(() => {
   wrapper?.unmount();
   vi.restoreAllMocks();
@@ -74,20 +79,26 @@ describe("Что посмотреть сегодня", () => {
     mocks.get
       .mockResolvedValueOnce({ data: { total: 2, items: [row("a")] } })
       .mockResolvedValueOnce({ data: { total: 2, items: [row("b")] } });
+
     await open();
     expect(mocks.get).toHaveBeenCalledTimes(2);
+
     const queries = mocks.get.mock.calls.map(
       (call) => new URL(call[0], "http://localhost").searchParams
     );
+
     expect(Object.fromEntries(queries[0])).toEqual({
       seeLater: "true",
       watchStatus: "NOT_STARTED",
       limit: "100",
       offset: "0",
     });
+
     expect(queries[1].get("offset")).toBe("1");
     expect(wrapper.text()).toContain("Подходят 2 тайтла");
+
     const names = [wrapper.get("h3").text()];
+
     await click("Другой вариант");
     names.push(wrapper.get("h3").text());
     expect(new Set(names)).toEqual(new Set(["Тайтл a", "Тайтл b"]));
@@ -106,9 +117,11 @@ describe("Что посмотреть сегодня", () => {
         })
       ),
     ];
+
     mocks.get.mockResolvedValue({
       data: { total: movies.length, items: movies },
     });
+
     await open();
     for (const [value, title] of [
       ["film", "film"],
@@ -137,6 +150,7 @@ describe("Что посмотреть сегодня", () => {
         .find((b) => b.text() === "Другой вариант")!
         .attributes("disabled")
     ).toBeDefined();
+
     await click("Открыть карточку");
     expect(mocks.push).toHaveBeenCalledWith("/detail/only");
     expect(wrapper.emitted("update:modelValue")).toContainEqual([false]);
@@ -155,6 +169,7 @@ describe("Что посмотреть сегодня", () => {
     mocks.get
       .mockResolvedValueOnce({ data: { total: 2, items: [row("a")] } })
       .mockResolvedValueOnce({ data: { total: 3, items: [row("b")] } });
+
     await open();
     expect(wrapper.text()).toContain("Не удалось загрузить список");
     mocks.get.mockResolvedValue({ data: { total: 1, items: [row("good")] } });
@@ -166,11 +181,13 @@ describe("Что посмотреть сегодня", () => {
     "не показывает поздний ответ: %s",
     async (action) => {
       let finish!: (value: unknown) => void;
+
       mocks.get.mockReturnValue(
         new Promise((resolve) => {
           finish = resolve;
         })
       );
+
       await open();
       if (action === "закрытие") await wrapper.setProps({ modelValue: false });
       else main.sessionRevision++;
@@ -189,6 +206,7 @@ describe("Что посмотреть сегодня", () => {
         issue === "чужая запись"
           ? [row("private", { userId: "another-owner" })]
           : [row("same"), row("same")];
+
       mocks.get.mockResolvedValue({ data: { total: items.length, items } });
       await open();
       expect(wrapper.text()).toContain("Не удалось загрузить список");
@@ -212,6 +230,7 @@ describe("Что посмотреть сегодня", () => {
         ],
       },
     });
+
     await open();
     expect(wrapper.get("h3").text()).toBe("Тайтл eligible");
     expect(wrapper.text()).toContain("Это единственный подходящий тайтл");

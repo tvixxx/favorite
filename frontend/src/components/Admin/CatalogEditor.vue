@@ -3,7 +3,7 @@ import { computed, ref, watch } from "vue";
 import { Alert as AAlert, message } from "ant-design-vue";
 import AdminDataRegion from "./AdminDataRegion.vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
-import AppDisclosure from '@/components/AppDisclosure/AppDisclosure.vue';
+import AppDisclosure from "@/components/AppDisclosure/AppDisclosure.vue";
 import ImagePicker from "@/components/ImagePicker/ImagePicker.vue";
 import api, { getApiResponseMessage } from "@/services/api";
 import { friendlyRequestError } from "@/utils/friendlyError";
@@ -17,7 +17,13 @@ import type { ImageSelection } from "@/services/media";
 import { catalogPublishDate } from "./catalog-editor.utils";
 import ContentTypePicker from "@/components/ContentType/ContentTypePicker.vue";
 import NumberField from "@/components/NumberField/NumberField.vue";
-import { MIN_MEDIA_YEAR, maxMediaYear, MAX_SEASONS, MAX_EPISODES, isOptionalInteger } from '@/utils/media-numbers';
+import {
+  MIN_MEDIA_YEAR,
+  maxMediaYear,
+  MAX_SEASONS,
+  MAX_EPISODES,
+  isOptionalInteger,
+} from "@/utils/media-numbers";
 import TitleCandidates from "@/components/ContentType/TitleCandidates.vue";
 import type { ContentKind, ContentSelection } from "@/utils/content-kind";
 
@@ -35,7 +41,10 @@ const contentKind = ref<ContentKind | null>(null);
 const distinctReason = ref("");
 const contentSelection = computed<ContentSelection>({
   get: () => ({ contentKind: contentKind.value, isSerial: isSerial.value }),
-  set: (value) => { contentKind.value = value.contentKind; isSerial.value = value.isSerial; },
+  set: (value) => {
+    contentKind.value = value.contentKind;
+    isSerial.value = value.isSerial;
+  },
 });
 const year = ref<number | null>(null);
 const originalDate = ref<string | null>(null);
@@ -74,8 +83,11 @@ const valid = computed(
     isSerial.value !== null &&
     (props.movieId || contentKind.value) &&
     isOptionalInteger(year.value, MIN_MEDIA_YEAR, maxMediaYear()) &&
-    (!isSerial.value || (isOptionalInteger(seasonCount.value, 1, MAX_SEASONS) && isOptionalInteger(episodeCount.value, 1, MAX_EPISODES))) &&
-    (!distinctReason.value.trim() || distinctReason.value.trim().length >= 10) &&
+    (!isSerial.value ||
+      (isOptionalInteger(seasonCount.value, 1, MAX_SEASONS) &&
+        isOptionalInteger(episodeCount.value, 1, MAX_EPISODES))) &&
+    (!distinctReason.value.trim() ||
+      distinctReason.value.trim().length >= 10) &&
     !loading.value &&
     !uploading.value
 );
@@ -154,6 +166,7 @@ watch(open, async (visible) => {
       year.value = data.publishDate
         ? new Date(data.publishDate).getUTCFullYear()
         : null;
+
       seasonCount.value = data.seasonCount ?? null;
       episodeCount.value = data.episodeCount ?? null;
       image.value = data.poster?.url
@@ -181,6 +194,7 @@ async function save(): Promise<void> {
   }
 
   saving.value = true;
+
   const id = props.movieId;
   const payload = {
     title: title.value.trim(),
@@ -190,7 +204,9 @@ async function save(): Promise<void> {
     actorIds: actorIds.value,
     isSerial: isSerial.value,
     ...(contentKind.value ? { contentKind: contentKind.value } : {}),
-    ...(distinctReason.value.trim() ? { distinctReason: distinctReason.value.trim() } : {}),
+    ...(distinctReason.value.trim()
+      ? { distinctReason: distinctReason.value.trim() }
+      : {}),
     publishDate: catalogPublishDate(year.value, originalDate.value),
     ...(id ? { expectedUpdatedAt: expectedUpdatedAt.value } : {}),
     seasonCount: isSerial.value ? seasonCount.value ?? undefined : undefined,
@@ -211,7 +227,8 @@ async function save(): Promise<void> {
     message.success(id ? "Тайтл обновлён" : "Тайтл добавлен в каталог");
   } catch (err) {
     message.error(
-      getApiResponseMessage(err) ?? friendlyRequestError(err, { fallback: "Не удалось сохранить тайтл" })
+      getApiResponseMessage(err) ??
+        friendlyRequestError(err, { fallback: "Не удалось сохранить тайтл" })
     );
   } finally {
     saving.value = false;
@@ -276,8 +293,16 @@ async function save(): Promise<void> {
             />
           </a-form-item>
           <a-form-item label="Тип" :required="!movieId">
-            <ContentTypePicker v-model="contentSelection" :legacy="!!movieId" :disabled="saving || loading" />
-            <TitleCandidates :title="title" :exclude-id="movieId" :disabled="saving" />
+            <ContentTypePicker
+              v-model="contentSelection"
+              :legacy="!!movieId"
+              :disabled="saving || loading"
+            />
+            <TitleCandidates
+              :title="title"
+              :exclude-id="movieId"
+              :disabled="saving"
+            />
           </a-form-item>
           <div
             class="catalog-editor__numbers"
@@ -306,7 +331,10 @@ async function save(): Promise<void> {
                 :max="MAX_SEASONS"
               />
             </a-form-item>
-            <a-form-item v-if="isSerial" :label="contentKind === 'TV_SHOW' ? 'Выпусков' : 'Эпизодов'">
+            <a-form-item
+              v-if="isSerial"
+              :label="contentKind === 'TV_SHOW' ? 'Выпусков' : 'Эпизодов'"
+            >
               <NumberField
                 :model-value="episodeCount ?? undefined"
                 @update:model-value="episodeCount = $event ?? null"
@@ -317,11 +345,22 @@ async function save(): Promise<void> {
               />
             </a-form-item>
           </div>
-          <AppDisclosure class="catalog-editor__distinction" label="Подтвердить, что это другая запись">
+          <AppDisclosure
+            class="catalog-editor__distinction"
+            label="Подтвердить, что это другая запись"
+          >
             <a-form-item label="Пояснение администратора">
-              <a-textarea v-model:value="distinctReason" :rows="3" :maxlength="500" placeholder="Чем отличаются произведения: режиссёр, оригинальное название или другие проверенные сведения. Минимум 10 символов." />
+              <a-textarea
+                v-model:value="distinctReason"
+                :rows="3"
+                :maxlength="500"
+                placeholder="Чем отличаются произведения: режиссёр, оригинальное название или другие проверенные сведения. Минимум 10 символов."
+              />
             </a-form-item>
-            <p class="admin-muted">Позволяет сохранить отдельную карточку при совпадении названия, формата и года. Пояснение останется в журнале действий.</p>
+            <p class="admin-muted">
+              Позволяет сохранить отдельную карточку при совпадении названия,
+              формата и года. Пояснение останется в журнале действий.
+            </p>
           </AppDisclosure>
           <p class="admin-muted">
             Изменяется общий каталог. Личные оценки и прогресс пользователей
@@ -358,8 +397,10 @@ async function save(): Promise<void> {
   }
 }
 
-.catalog-editor__distinction { margin: 16px 0; overflow-wrap: anywhere; }
-
+.catalog-editor__distinction {
+  margin: 16px 0;
+  overflow-wrap: anywhere;
+}
 </style>
 
 <style lang="scss">

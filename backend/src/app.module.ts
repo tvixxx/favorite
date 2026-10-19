@@ -32,6 +32,7 @@ import { HealthController } from './health/health.controller';
 import { AdminModule } from './admin/admin.module';
 import { PasswordRecoveryModule } from './password-recovery/password-recovery.module';
 import { TvdbModule } from './tvdb/tvdb.module';
+import { WatchDiaryModule } from './watch-diary/watch-diary.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { TvdbModule } from './tvdb/tvdb.module';
     AuthModule,
     PasswordRecoveryModule,
     TvdbModule,
+    WatchDiaryModule,
     UserMovieModule,
     BadgeModule,
     FriendshipModule,

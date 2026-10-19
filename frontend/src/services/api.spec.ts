@@ -19,9 +19,11 @@ const mocks = vi.hoisted(() => ({
     replace: vi.fn(),
   },
 }));
+
 vi.mock("@/composable", () => ({
   useAuthToken: () => ({ value: mocks.store.accessToken }),
 }));
+
 vi.mock("@/state/state", () => ({ useMainStore: () => mocks.store }));
 vi.mock("@/router", () => ({ default: mocks.router }));
 
@@ -45,6 +47,7 @@ const unauthorized = (config: InternalAxiosRequestConfig) =>
 
 describe("Повтор HTTP-запросов после refresh", () => {
   let oldAdapter: AxiosAdapter | undefined;
+
   beforeEach(() => {
     oldAdapter = axios.defaults.adapter as AxiosAdapter;
     mocks.store.accessToken = "fixture-old-access";
@@ -58,8 +61,10 @@ describe("Повтор HTTP-запросов после refresh", () => {
         return true;
       }
     );
+
     mocks.router.replace.mockClear();
   });
+
   afterEach(() => {
     axios.defaults.adapter = oldAdapter;
   });
@@ -70,11 +75,13 @@ describe("Повтор HTTP-запросов после refresh", () => {
     api.defaults.baseURL = "/api";
     api.defaults.adapter = (config) =>
       Promise.resolve(response(config, axios.getUri(config)));
+
     try {
       expect((await api.get("/api/auth/@me")).data).toBe("/api/auth/@me");
       expect((await api.get("/admin/overview")).data).toBe(
         "/api/admin/overview"
       );
+
       expect((await api.get("/apiary/example")).data).toBe(
         "/api/apiary/example"
       );
@@ -93,15 +100,18 @@ describe("Повтор HTTP-запросов после refresh", () => {
         complete = (data) => resolve(response(config, data));
       });
     });
+
     axios.defaults.adapter = refresh;
     api.defaults.adapter = (config) =>
       config.headers.get("Authorization") === "Bearer fixture-new-access"
         ? Promise.resolve(response(config, "saved"))
         : unauthorized(config);
+
     const pending = Promise.all([
       api.get("/users/user-id/movies"),
       api.get("/users/user-id/lists"),
     ]);
+
     await flushPromises();
     expect(refresh).toHaveBeenCalledOnce();
     expect(refreshConfig.withCredentials).toBe(true);
@@ -116,11 +126,13 @@ describe("Повтор HTTP-запросов после refresh", () => {
     const refresh = vi.fn((config: InternalAxiosRequestConfig) =>
       Promise.resolve(response(config, { accessToken: "unexpected" }))
     );
+
     axios.defaults.adapter = refresh;
     api.defaults.adapter = unauthorized;
     await expect(api.post("/auth/login", {})).rejects.toBeInstanceOf(
       AxiosError
     );
+
     expect(refresh).not.toHaveBeenCalled();
     expect(mocks.router.replace).not.toHaveBeenCalled();
   });
@@ -128,7 +140,9 @@ describe("Повтор HTTP-запросов после refresh", () => {
   it("не завершает сессию, если при обновлении токена пропала сеть", async () => {
     axios.defaults.adapter = (config) =>
       Promise.reject(new AxiosError("Network Error", "ERR_NETWORK", config));
+
     api.defaults.adapter = unauthorized;
+
     const logout = vi.fn();
 
     window.addEventListener("auth:logout", logout);
@@ -136,6 +150,7 @@ describe("Повтор HTTP-запросов после refresh", () => {
       await expect(api.get("/users/user-id/movies")).rejects.toMatchObject({
         code: "ERR_NETWORK",
       });
+
       expect(logout).not.toHaveBeenCalled();
       expect(mocks.router.replace).not.toHaveBeenCalled();
       expect(mocks.store.accessToken).toBe("fixture-old-access");
@@ -147,6 +162,7 @@ describe("Повтор HTTP-запросов после refresh", () => {
   it("завершает сессию, когда сервер отклонил обновление токена", async () => {
     axios.defaults.adapter = unauthorized;
     api.defaults.adapter = unauthorized;
+
     const logout = vi.fn();
 
     window.addEventListener("auth:logout", logout);
@@ -154,6 +170,7 @@ describe("Повтор HTTP-запросов после refresh", () => {
       await expect(api.get("/users/user-id/movies")).rejects.toBeInstanceOf(
         AxiosError
       );
+
       expect(logout).toHaveBeenCalledOnce();
       expect(mocks.router.replace).toHaveBeenCalledWith("/login");
     } finally {
@@ -163,13 +180,16 @@ describe("Повтор HTTP-запросов после refresh", () => {
 
   it("не отдаёт успешный ответ предыдущей сессии после выхода", async () => {
     let complete!: () => void;
+
     api.defaults.adapter = (config) =>
       new Promise<AxiosResponse>((resolve) => {
         complete = () => resolve(response(config, { privateData: "fixture" }));
       });
+
     const pending = api
       .get("/users/user-id/movies")
       .catch((error: unknown) => error);
+
     await flushPromises();
     mocks.store.sessionRevision++;
     complete();
@@ -178,14 +198,18 @@ describe("Повтор HTTP-запросов после refresh", () => {
 
   it("не применяет поздний refresh предыдущего аккаунта и не разлогинивает новую сессию", async () => {
     let complete!: (data: unknown) => void;
+
     axios.defaults.adapter = (config) =>
       new Promise<AxiosResponse>((resolve) => {
         complete = (data) => resolve(response(config, data));
       });
+
     api.defaults.adapter = unauthorized;
+
     const pending = api
       .get("/users/user-id/movies")
       .catch((error: unknown) => error);
+
     await flushPromises();
     mocks.store.sessionRevision++;
     mocks.store.accessToken = "fixture-another-account";

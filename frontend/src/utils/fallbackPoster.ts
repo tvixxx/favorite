@@ -18,8 +18,10 @@ export function fallbackPosterSvg(
   theme: Theme | string = "light"
 ): string {
   let hash = 2166136261;
+
   for (const char of seed)
     hash = Math.imul(hash ^ char.codePointAt(0)!, 16777619) >>> 0;
+
   const hues: Record<string, number> = {
     light: 192,
     dark: 205,

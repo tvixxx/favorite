@@ -13,6 +13,7 @@ import {
   LIBRARY_HERO_CATALOG,
   LIBRARY_HERO_COLLECTION,
   LIBRARY_HERO_LISTS,
+  LIBRARY_HERO_DIARY,
 } from "@/router/libraryHeroMeta";
 
 const routes: Array<RouteRecordRaw> = [
@@ -109,6 +110,12 @@ const routes: Array<RouteRecordRaw> = [
         meta: {
           libraryHero: LIBRARY_HERO_LISTS,
         },
+      },
+      {
+        path: "diary",
+        name: "library-diary",
+        component: () => import("@/views/pages/WatchDiaryPage.vue"),
+        meta: { libraryHero: LIBRARY_HERO_DIARY },
       },
     ],
   },
@@ -210,7 +217,11 @@ const router = createRouter({
       return { el: to.hash, behavior: "smooth" };
     }
 
-    if (to.name === 'admin' && from.name === 'admin' && to.query.tab === from.query.tab) {
+    if (
+      to.name === "admin" &&
+      from.name === "admin" &&
+      to.query.tab === from.query.tab
+    ) {
       return false;
     }
 

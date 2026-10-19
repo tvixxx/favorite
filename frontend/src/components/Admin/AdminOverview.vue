@@ -10,8 +10,9 @@ import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import AdminDataRegion from "./AdminDataRegion.vue";
 import AdminEngagement from "./AdminEngagement.vue";
 import type { AdminEngagementData } from "./admin.types";
-import {useDateTime} from '@/composable/useDateTime';
-const {formatDate}=useDateTime();
+import { useDateTime } from "@/composable/useDateTime";
+
+const { formatDate } = useDateTime();
 
 interface Overview {
   users: number;
@@ -31,6 +32,7 @@ interface Overview {
   heatmap: { day: number; hour: number; users: number }[];
   engagement?: AdminEngagementData;
 }
+
 const days = ref(30);
 const data = ref<Overview | null>(null);
 const loading = ref(false);
@@ -104,6 +106,7 @@ onMounted(() => void load());
 onScopeDispose(() => {
   revision += 1;
 });
+
 watch(days, () => void load());
 </script>
 <template>
@@ -167,7 +170,7 @@ watch(days, () => void load());
               >
             </div>
             <p class="admin-muted">
-              За {{ days }} дней · сохранившиеся аккаунты · {{data.timezone}}
+              За {{ days }} дней · сохранившиеся аккаунты · {{ data.timezone }}
             </p>
             <div
               v-if="data.registrations.length"
@@ -232,11 +235,16 @@ watch(days, () => void load());
             </p>
           </section>
         </div>
-        <AdminEngagement v-if="data.engagement" :data="data.engagement" :days="days" :timezone="data.timezone" />
+        <AdminEngagement
+          v-if="data.engagement"
+          :data="data.engagement"
+          :days="days"
+          :timezone="data.timezone"
+        />
         <section v-if="data.startedAt" class="admin-heat-section">
           <h3>Активность по времени</h3>
           <p class="admin-muted">
-            Уникальные пользователи · день недели × час · {{data.timezone}}
+            Уникальные пользователи · день недели × час · {{ data.timezone }}
           </p>
           <div
             class="admin-heat-scroll"
@@ -284,8 +292,7 @@ watch(days, () => void load());
           </p>
           <p class="admin-muted">
             История доступна с
-            {{ formatDate(data.startedAt) }}. До этой
-            даты данных нет.
+            {{ formatDate(data.startedAt) }}. До этой даты данных нет.
           </p>
         </section>
       </template>
@@ -314,7 +321,8 @@ watch(days, () => void load());
             Всего за период: <b>{{ registrationTotal }}</b>
           </p>
           <p class="admin-muted">
-            Сохранившиеся аккаунты · {{data.timezone}}. Текущий день ещё не завершён.
+            Сохранившиеся аккаунты · {{ data.timezone }}. Текущий день ещё не
+            завершён.
           </p>
           <div
             class="admin-registration-list"
@@ -359,16 +367,19 @@ watch(days, () => void load());
     max-width: min(94vw, 640px);
   }
 }
+
 .admin-registration-total {
   margin: 24px 0 8px;
   font-size: 18px;
 }
+
 .admin-registration-list {
   @include customScrollbar;
   max-height: 360px;
   overflow-y: auto;
   padding-right: 8px;
 }
+
 .admin-registration-row {
   display: grid;
   grid-template-columns: 90px minmax(32px, 1fr) minmax(28px, max-content);

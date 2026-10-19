@@ -20,7 +20,7 @@ withDefaults(
     options: RadioOption[];
     variant?: "card" | "plain";
   }>(),
-  { variant: "card" },
+  { variant: "card" }
 );
 
 const emit = defineEmits<{ "update:modelValue": [RadioValue] }>();
@@ -110,8 +110,7 @@ const emit = defineEmits<{ "update:modelValue": [RadioValue] }>();
     border: 1.5px solid var(--fv-color-border);
     border-radius: 14px;
     background: var(--fv-color-bg-primary);
-    transition:
-      border-color var(--fv-motion-fast) var(--fv-ease),
+    transition: border-color var(--fv-motion-fast) var(--fv-ease),
       background var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {

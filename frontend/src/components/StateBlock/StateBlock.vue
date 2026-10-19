@@ -40,7 +40,11 @@ const {
     <div v-if="code" class="stateblock__code">{{ code }}</div>
 
     <div class="stateblock__ico">
-      <BaseIcon :name="icon" :width="compact ? 34 : 42" :height="compact ? 34 : 42" />
+      <BaseIcon
+        :name="icon"
+        :width="compact ? 34 : 42"
+        :height="compact ? 34 : 42"
+      />
     </div>
 
     <h3 class="stateblock__title">{{ title }}</h3>
@@ -56,7 +60,11 @@ const {
         :disabled="action.loading || action.disabled"
         @click="action.onClick"
       >
-        <span v-if="action.loading" class="stateblock__spin" aria-hidden="true" />
+        <span
+          v-if="action.loading"
+          class="stateblock__spin"
+          aria-hidden="true"
+        />
         <BaseIcon
           v-else-if="action.icon"
           :name="action.icon"
@@ -168,8 +176,7 @@ const {
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       opacity var(--fv-motion-fast) var(--fv-ease);
 
     &:disabled {

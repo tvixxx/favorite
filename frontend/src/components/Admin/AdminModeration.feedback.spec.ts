@@ -3,9 +3,10 @@ import { Select as ASelect, message } from "ant-design-vue";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AdminModeration from "./AdminModeration.vue";
-import {createPinia} from 'pinia';
+import { createPinia } from "pinia";
 
 const api = vi.hoisted(() => ({ get: vi.fn(), patch: vi.fn() }));
+
 vi.mock("@/services/api", () => ({ default: api }));
 
 const entry = {
@@ -30,10 +31,11 @@ async function render(realSelect = false) {
   });
 
   await router.push("/admin?moderation=feedback");
+
   const wrapper = mount(AdminModeration, {
     attachTo: document.body,
     global: {
-      plugins: [router,createPinia()],
+      plugins: [router, createPinia()],
       components: { ASelect },
       stubs: {
         BaseModal: {
@@ -45,15 +47,17 @@ async function render(realSelect = false) {
           props: ["disabled", "loading"],
           template: '<button :disabled="disabled || loading"><slot/></button>',
         },
-        ASelect: realSelect ? false : {
-          props: ["value", "options"],
-          emits: ["update:value"],
-          template:
-            '<select :value="value" @change="$emit(\'update:value\', $event.target.value)"><option v-for="item in options" :key="item.value" :value="item.value">{{item.label}}</option></select>',
-        },
+        ASelect: realSelect
+          ? false
+          : {
+              props: ["value", "options"],
+              emits: ["update:value"],
+              template:
+                '<select :value="value" @change="$emit(\'update:value\', $event.target.value)"><option v-for="item in options" :key="item.value" :value="item.value">{{item.label}}</option></select>',
+            },
         AInput: true,
         ATable: true,
-        ATag: { template: '<span><slot/></span>' },
+        ATag: { template: "<span><slot/></span>" },
         AEmpty: true,
         AAlert: true,
         ARadioGroup: true,
@@ -78,6 +82,7 @@ beforeEach(() => {
   api.get.mockReset().mockResolvedValue({ data: { items: [entry], total: 1 } });
   api.patch.mockReset();
 });
+
 afterEach(() => {
   message.destroy();
   document.body.innerHTML = "";
@@ -99,21 +104,26 @@ describe("Работа с обращением в админке", () => {
     api.patch
       .mockRejectedValueOnce({ response: { status: 503 } })
       .mockResolvedValueOnce({ data: { ...entry, status: "DONE" } });
+
     const wrapper = await render();
 
     await wrapper.get("#feedback-status").setValue("DONE");
+
     const save = wrapper
       .findAll("button")
       .find((button) => button.text() === "Сохранить статус")!;
+
     await save.trigger("click");
     await flushPromises();
     expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
     expect(
       wrapper.get<HTMLSelectElement>("#feedback-status").element.value
     ).toBe("DONE");
+
     expect(wrapper.get('[role="dialog"]').text()).toContain(
       entry.message.trim()
     );
+
     await save.trigger("click");
     await flushPromises();
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
@@ -123,28 +133,57 @@ describe("Работа с обращением в админке", () => {
   it("сохраняет выбранное через список решение и показывает его после повторной загрузки обращения", async () => {
     const saved = { ...entry };
     let request: unknown;
-    api.get.mockImplementation(async () => ({ data: { items: [{ ...saved }], total: 1 } }));
-    api.patch.mockImplementation(async (url: string, body: { status: string }) => {
-      request = { url, body };
-      saved.status = body.status;
 
-      return { data: { ...saved } };
-    });
+    api.get.mockImplementation(async () => ({
+      data: { items: [{ ...saved }], total: 1 },
+    }));
+
+    api.patch.mockImplementation(
+      async (url: string, body: { status: string }) => {
+        request = { url, body };
+        saved.status = body.status;
+
+        return { data: { ...saved } };
+      }
+    );
+
     const wrapper = await render(true);
-    await wrapper.get('[role="dialog"] .ant-select-selector').trigger("mousedown");
+
+    await wrapper
+      .get('[role="dialog"] .ant-select-selector')
+      .trigger("mousedown");
+
     await flushPromises();
-    const option = [...document.querySelectorAll<HTMLElement>('.ant-select-item-option')]
-      .find(element => element.textContent?.trim() === "Решено");
-    expect(option, 'В открытом списке должен быть вариант Решено').toBeDefined();
+
+    const option = [
+      ...document.querySelectorAll<HTMLElement>(".ant-select-item-option"),
+    ].find((element) => element.textContent?.trim() === "Решено");
+
+    expect(
+      option,
+      "В открытом списке должен быть вариант Решено"
+    ).toBeDefined();
+
     await new DOMWrapper(option!).trigger("click");
     await flushPromises();
-    expect(wrapper.get('[role="dialog"] .ant-select-selection-item').text()).toBe("Решено");
-    await wrapper.findAll("button").find(button => button.text() === "Сохранить статус")!.trigger("click");
+    expect(
+      wrapper.get('[role="dialog"] .ant-select-selection-item').text()
+    ).toBe("Решено");
+
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text() === "Сохранить статус")!
+      .trigger("click");
+
     await flushPromises();
 
-    expect(request).toEqual({ url: "/feedback/feedback-id/status", body: { status: "DONE" } });
+    expect(request).toEqual({
+      url: "/feedback/feedback-id/status",
+      body: { status: "DONE" },
+    });
+
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
-    expect(wrapper.get('.admin-mobile .admin-row').text()).toContain("Решено");
+    expect(wrapper.get(".admin-mobile .admin-row").text()).toContain("Решено");
     wrapper.unmount();
   });
 });

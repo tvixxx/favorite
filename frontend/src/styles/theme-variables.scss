@@ -28,9 +28,13 @@
   --fv-color-text-secondary: var(--fv-palette-grey-600);
   --fv-color-text-tertiary: var(--fv-palette-grey-400); // eyebrow, caption
   --fv-color-border: var(--fv-palette-stroke);
-  --fv-color-brand: var(--fv-palette-red-500); // лого, CTA, сердечки, нотификации
+  --fv-color-brand: var(
+    --fv-palette-red-500
+  ); // лого, CTA, сердечки, нотификации
   --fv-color-brand-hover: var(--fv-palette-red-600);
-  --fv-color-accent: var(--fv-palette-blue-500); // функц.: ссылки, active, прогресс
+  --fv-color-accent: var(
+    --fv-palette-blue-500
+  ); // функц.: ссылки, active, прогресс
   --fv-color-positive: var(--fv-palette-green-500);
   --fv-color-negative: var(--fv-palette-orange-500);
   --fv-color-warning: var(--fv-palette-yellow-500);
@@ -58,10 +62,26 @@
   --fv-skeleton-sweep: rgba(255, 255, 255, 0.6);
 
   /* мягкие «soft»-подложки — адаптируются к теме через семантику */
-  --fv-color-accent-soft: color-mix(in srgb, var(--fv-color-accent) 12%, transparent);
-  --fv-color-positive-soft: color-mix(in srgb, var(--fv-color-positive) 16%, transparent);
-  --fv-color-negative-soft: color-mix(in srgb, var(--fv-color-negative) 14%, transparent);
-  --fv-color-warning-soft: color-mix(in srgb, var(--fv-color-warning) 20%, transparent);
+  --fv-color-accent-soft: color-mix(
+    in srgb,
+    var(--fv-color-accent) 12%,
+    transparent
+  );
+  --fv-color-positive-soft: color-mix(
+    in srgb,
+    var(--fv-color-positive) 16%,
+    transparent
+  );
+  --fv-color-negative-soft: color-mix(
+    in srgb,
+    var(--fv-color-negative) 14%,
+    transparent
+  );
+  --fv-color-warning-soft: color-mix(
+    in srgb,
+    var(--fv-color-warning) 20%,
+    transparent
+  );
 }
 
 /* ---- Прочие темы: переопределяют только семантику ---- */

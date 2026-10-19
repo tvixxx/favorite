@@ -1,2 +1,2 @@
-export { useBadgesStore } from './badgesStore';
-export type { Badge } from './badgesStore';
+export { useBadgesStore } from "./badgesStore";
+export type { Badge } from "./badgesStore";

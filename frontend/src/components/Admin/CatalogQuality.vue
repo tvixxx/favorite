@@ -12,8 +12,9 @@ import {
 import { useCatalogQuality } from "@/composable/useCatalogQuality";
 import { contentTypeLabel } from "@/utils/content-kind";
 import { catalogIssueLabels, type CatalogIssue } from "@/utils/catalogQuality";
-import {useDateTime} from '@/composable/useDateTime';
-const {formatInstant,timezone}=useDateTime();
+import { useDateTime } from "@/composable/useDateTime";
+
+const { formatInstant, timezone } = useDateTime();
 
 const props = defineProps<{
   filters: Record<string, string>;
@@ -59,6 +60,7 @@ const percent = computed(() =>
       )
     : 0
 );
+
 function start(): void {
   checkedPosters.value = checkPosters.value;
   issue.value = "";
@@ -68,6 +70,7 @@ function start(): void {
 watch([issue, findings], () => {
   page.value = 1;
 });
+
 watch(() => props.revision, reset);
 </script>
 
@@ -123,7 +126,7 @@ watch(() => props.revision, reset);
     <template v-if="status === 'done'">
       <p class="admin-caption" aria-live="polite">
         Проверено {{ progress.loaded }} карточек ·
-        {{ formatInstant(checkedAt??null) }} ({{timezone}}). С замечаниями:
+        {{ formatInstant(checkedAt ?? null) }} ({{ timezone }}). С замечаниями:
         {{ findings.length }}.
       </p>
       <p v-if="!checkedPosters" class="admin-muted">
@@ -195,11 +198,13 @@ watch(() => props.revision, reset);
   width: 100%;
   margin: 16px 0;
 }
+
 .catalog-quality__list {
   list-style: none;
   margin: 0;
   padding: 0;
 }
+
 .catalog-quality__item {
   display: flex;
   flex-wrap: wrap;
@@ -208,16 +213,19 @@ watch(() => props.revision, reset);
   border-top: 1px solid var(--fv-color-border);
   padding: 20px 0;
 }
+
 .catalog-quality__content {
   flex: 1 1 240px;
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
 .catalog-quality__tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
+
 .catalog-quality__duplicates {
   display: flex;
   flex-wrap: wrap;
@@ -225,6 +233,7 @@ watch(() => props.revision, reset);
   gap: 4px;
   margin-top: 12px;
 }
+
 .catalog-quality__duplicates :deep(.ant-btn) {
   max-width: 100%;
   height: auto;

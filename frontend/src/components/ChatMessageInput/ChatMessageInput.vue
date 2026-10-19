@@ -62,18 +62,22 @@ function getNativeTextarea(): HTMLTextAreaElement | null {
   }
 
   const fromResize = vm.resizableTextArea?.textArea;
+
   if (fromResize instanceof HTMLTextAreaElement) {
     return fromResize;
   }
 
   const root = vm.$el;
+
   if (root instanceof HTMLElement) {
     const found = root.querySelector("textarea");
+
     if (found instanceof HTMLTextAreaElement) {
       return found;
     }
 
     const active = document.activeElement;
+
     if (active instanceof HTMLTextAreaElement && root.contains(active)) {
       return active;
     }
@@ -95,6 +99,7 @@ function closeMention() {
 
 function syncMentionFromValue(text: string, caret: number) {
   const m = findHashMention(text, caret);
+
   if (!m) {
     closeMention();
 
@@ -105,6 +110,7 @@ function syncMentionFromValue(text: string, caret: number) {
   activeIndex.value = 0;
 
   const q = m.query.trim();
+
   mentionQueryNonEmpty.value = q.length >= 1;
 
   if (debounceTimer) {
@@ -122,6 +128,7 @@ function syncMentionFromValue(text: string, caret: number) {
   mentionLoading.value = true;
   debounceTimer = setTimeout(async () => {
     const seq = ++searchSeq;
+
     try {
       const list = await fetchUserCollectionSuggestions(props.userId, q);
 
@@ -161,6 +168,7 @@ watch(
     nextTick(() => {
       const ta = getNativeTextarea();
       const caret = ta?.selectionStart ?? v.length;
+
       syncMentionFromValue(v, caret);
       if (v.includes("«")) {
         scheduleEnrichMissing(v);
@@ -178,19 +186,20 @@ async function enrichMissingChips(text: string) {
   const uniqueTitles = new Set<string>();
   const re = /«([^»]+)»/g;
   let m: RegExpExecArray | null;
+
   while ((m = re.exec(text)) !== null) {
     uniqueTitles.add(m[1]);
   }
 
   // Резолвим недостающие тайтлы параллельно (был последовательный водопад запросов)
   const missingTitles = [...uniqueTitles].filter(
-    (title) => !chips.value.some((c) => c.title === title),
+    (title) => !chips.value.some((c) => c.title === title)
   );
 
   const resolved = await Promise.all(
     missingTitles.map((title) =>
-      findUserMovieByQuotedTitle(props.userId, title),
-    ),
+      findUserMovieByQuotedTitle(props.userId, title)
+    )
   );
 
   const additions: MovieChip[] = [];
@@ -236,8 +245,15 @@ function pickSuggestion(um: UserMovie) {
   const before = text.slice(0, state.hashIndex);
   const after = text.slice(caret);
   const title = formatUserMovieShareTitle(um);
-  if (chips.value.some(chip => chip.title === title && chip.movieId !== um.movieId)) {
-    message.warning("Одноимённые произведения с одинаковой подписью отправляйте отдельными сообщениями.");
+
+  if (
+    chips.value.some(
+      (chip) => chip.title === title && chip.movieId !== um.movieId
+    )
+  ) {
+    message.warning(
+      "Одноимённые произведения с одинаковой подписью отправляйте отдельными сообщениями."
+    );
 
     return;
   }
@@ -247,6 +263,7 @@ function pickSuggestion(um: UserMovie) {
   const mergedPool = chips.value.some((c) => c.movieId === um.movieId)
     ? chips.value
     : [...chips.value, { movieId: um.movieId, title }];
+
   chips.value = alignChipsToQuotedTitles(next, mergedPool);
   emit("update:modelValue", next);
   closeMention();
@@ -254,6 +271,7 @@ function pickSuggestion(um: UserMovie) {
   nextTick(() => {
     const el = getNativeTextarea();
     const pos = before.length + insert.length;
+
     el?.focus();
     el?.setSelectionRange(pos, pos);
   });
@@ -261,6 +279,7 @@ function pickSuggestion(um: UserMovie) {
 
 function removeChipAt(displayIndex: number) {
   const chip = chips.value[displayIndex];
+
   if (!chip) {
     chips.value = alignChipsToQuotedTitles(props.modelValue, chips.value);
 
@@ -272,6 +291,7 @@ function removeChipAt(displayIndex: number) {
     new RegExp(`«${escaped}»\\s*`, "g"),
     ""
   );
+
   emit("update:modelValue", newText);
 }
 
@@ -307,6 +327,7 @@ function onPaste(e: ClipboardEvent) {
 
   nextTick(() => {
     const el = getNativeTextarea();
+
     el?.focus();
     el?.setSelectionRange(newCaret, newCaret);
     void enrichMissingChips(cleaned);
@@ -319,6 +340,7 @@ function emitSend() {
     chips.value,
     router
   );
+
   emit("send", wire);
 }
 

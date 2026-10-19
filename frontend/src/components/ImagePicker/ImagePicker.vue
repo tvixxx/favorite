@@ -32,7 +32,7 @@ const mode = ref<"file" | "url">(
   props.modelValue?.url && !props.modelValue.assetId ? "url" : "file"
 );
 const urlText = ref(
-  props.modelValue?.assetId ? "" : (props.modelValue?.url ?? "")
+  props.modelValue?.assetId ? "" : props.modelValue?.url ?? ""
 );
 const uploading = ref(false);
 const processing = ref(false);
@@ -47,7 +47,9 @@ let generation = 0;
 let controller: AbortController | null = null;
 let temporaryId: string | null = null;
 const privateImage = computed(() => props.purpose === "FEEDBACK_SCREENSHOT");
-const maxMb = computed(() => (props.purpose === "USER_AVATAR" || privateImage.value ? 5 : 10));
+const maxMb = computed(() =>
+  props.purpose === "USER_AVATAR" || privateImage.value ? 5 : 10
+);
 const preview = computed(
   () =>
     localPreview.value ||
@@ -133,6 +135,7 @@ async function chooseFile(event: Event): Promise<void> {
 
   stop();
   freePreview();
+
   const request = generation;
 
   controller = new AbortController();
@@ -158,6 +161,7 @@ async function chooseFile(event: Event): Promise<void> {
         progress.value = total
           ? Math.min(100, Math.round((loaded / total) * 100))
           : 0;
+
         processing.value = !!total && loaded >= total;
       },
     });
@@ -171,6 +175,7 @@ async function chooseFile(event: Event): Promise<void> {
     temporaryId = result.id;
     info.value = result;
     previewFailed.value = false;
+
     const selection = {
       assetId: result.id,
       url: result.url,
@@ -185,15 +190,17 @@ async function chooseFile(event: Event): Promise<void> {
     }
 
     freePreview();
+
     const status = getRequestStatus(cause);
 
     error.value = [400, 422, 429].includes(status ?? 0)
-      ? (getApiResponseMessage(cause) ?? friendlyRequestError(cause))
+      ? getApiResponseMessage(cause) ?? friendlyRequestError(cause)
       : friendlyRequestError(cause, {
           fallback:
             "Не удалось загрузить изображение. Можно повторить или вставить ссылку.",
           byStatus: { 413: `Выберите изображение до ${maxMb.value} МБ` },
         });
+
     emit("update:modelValue", lastValid.value);
   } finally {
     if (request === generation) {
@@ -264,9 +271,11 @@ watch(
     }
   }
 );
+
 watch(preview, () => {
   previewFailed.value = false;
 });
+
 watch(
   () => main.sessionRevision,
   () => {
@@ -277,6 +286,7 @@ watch(
     emit("update:modelValue", null);
   }
 );
+
 onBeforeUnmount(() => {
   stop();
   freePreview();
@@ -354,9 +364,15 @@ onBeforeUnmount(() => {
     <div
       v-if="showPreview && preview"
       class="image-picker__preview"
-      :class="{ 'image-picker__preview--avatar': purpose === 'USER_AVATAR', 'image-picker__preview--screenshot': privateImage }"
+      :class="{
+        'image-picker__preview--avatar': purpose === 'USER_AVATAR',
+        'image-picker__preview--screenshot': privateImage,
+      }"
     >
-      <ProtectedImage v-if="privateImage && modelValue?.assetId && !localPreview" :asset-id="modelValue.assetId" />
+      <ProtectedImage
+        v-if="privateImage && modelValue?.assetId && !localPreview"
+        :asset-id="modelValue.assetId"
+      />
       <img
         v-else-if="!previewFailed"
         :src="preview"
@@ -402,18 +418,22 @@ onBeforeUnmount(() => {
   input {
     font: inherit;
   }
+
   button {
     cursor: pointer;
   }
+
   button:disabled {
     opacity: 0.5;
     cursor: default;
   }
+
   &__methods {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
+
   &__methods button {
     padding: 9px 16px;
     border: 1px solid var(--fv-color-border);
@@ -421,17 +441,20 @@ onBeforeUnmount(() => {
     background: var(--fv-color-bg-primary);
     color: var(--fv-color-text-primary);
   }
+
   &__methods button[aria-pressed="true"] {
     background: var(--fv-color-text-primary);
     color: var(--fv-color-bg-primary);
     border-color: transparent;
   }
+
   &__file {
     display: flex;
     flex-direction: column;
     gap: 8px;
     min-width: 0;
   }
+
   &__upload {
     position: relative;
     display: inline-flex;
@@ -444,14 +467,17 @@ onBeforeUnmount(() => {
     cursor: pointer;
     background: var(--fv-color-bg-secondary);
     color: var(--fv-color-text-primary);
+
     &:focus-within {
       outline: 2px solid var(--fv-color-accent);
       outline-offset: 3px;
     }
+
     &--disabled {
       opacity: 0.5;
       cursor: default;
     }
+
     input {
       position: absolute;
       width: 1px;
@@ -460,20 +486,24 @@ onBeforeUnmount(() => {
       overflow: hidden;
     }
   }
+
   &__hint,
   &__filename,
   &__result {
     font-size: 0.82rem;
     color: var(--fv-color-text-secondary);
   }
+
   &__filename {
     overflow-wrap: anywhere;
   }
+
   &__url {
     display: flex;
     gap: 8px;
     min-width: 0;
   }
+
   &__url input {
     width: 0;
     flex: 1;
@@ -484,6 +514,7 @@ onBeforeUnmount(() => {
     background: var(--fv-color-bg-secondary);
     color: var(--fv-color-text-primary);
   }
+
   &__url button {
     flex-shrink: 0;
     padding: 8px 12px;
@@ -492,6 +523,7 @@ onBeforeUnmount(() => {
     background: var(--fv-color-bg-primary);
     color: var(--fv-color-text-primary);
   }
+
   &__progress {
     display: flex;
     flex-wrap: wrap;
@@ -499,10 +531,12 @@ onBeforeUnmount(() => {
     gap: 8px;
     font-size: 0.85rem;
   }
+
   &__progress progress {
     width: 100%;
     accent-color: var(--fv-color-brand);
   }
+
   &__progress button,
   &__result button {
     padding: 4px 0;
@@ -510,11 +544,13 @@ onBeforeUnmount(() => {
     background: none;
     color: var(--fv-color-link);
   }
+
   &__error {
     margin: 0;
     color: var(--fv-color-brand);
     font-size: 0.85rem;
   }
+
   &__preview {
     width: min(100%, 180px);
     aspect-ratio: 2 / 3;
@@ -525,25 +561,35 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
   }
+
   &__preview--avatar {
     aspect-ratio: 1;
   }
+
   &__preview--screenshot {
     width: min(100%, 480px);
     aspect-ratio: auto;
     min-height: 80px;
-    :deep(img) { width: 100%; height: auto; max-height: 320px; }
+
+    :deep(img) {
+      width: 100%;
+      height: auto;
+      max-height: 320px;
+    }
   }
+
   &__preview img {
     width: 100%;
     height: 100%;
     object-fit: contain;
   }
+
   &__preview span {
     padding: 12px;
     font-size: 0.85rem;
     color: var(--fv-color-text-secondary);
   }
+
   &__result {
     display: flex;
     flex-wrap: wrap;

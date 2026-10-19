@@ -20,6 +20,7 @@ function checkCancelled(signal: AbortSignal): void {
 function base64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   let text = "";
+
   for (let offset = 0; offset < bytes.length; offset += 32768) {
     text += String.fromCharCode(...bytes.subarray(offset, offset + 32768));
   }
@@ -33,6 +34,7 @@ async function font(url: string, signal: AbortSignal): Promise<string> {
     credentials: "omit",
     referrerPolicy: "no-referrer",
   });
+
   if (!response.ok) throw new Error("Не удалось загрузить шрифт PDF");
 
   return base64(await response.arrayBuffer());
@@ -43,7 +45,9 @@ function poster(
   signal: AbortSignal
 ): Promise<string | null> {
   if (!raw) return Promise.resolve(null);
+
   let url: URL;
+
   try {
     url = new URL(raw, location.href);
   } catch {
@@ -85,20 +89,25 @@ function poster(
       finish(null);
       image.src = "";
     }, 5000);
+
     image.crossOrigin = "anonymous";
     image.referrerPolicy = "no-referrer";
     image.onload = () => {
       try {
         if (!image.naturalWidth || !image.naturalHeight) return finish(null);
+
         const scale = Math.min(
           160 / image.naturalWidth,
           240 / image.naturalHeight,
           1
         );
         const canvas = document.createElement("canvas");
+
         canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
         canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+
         const context = canvas.getContext("2d");
+
         if (!context) return finish(null);
         context.drawImage(image, 0, 0, canvas.width, canvas.height);
         finish(canvas.toDataURL("image/jpeg", 0.8));
@@ -123,16 +132,19 @@ export async function createCollectionPdf(
   missingPosters: number;
 }> {
   checkCancelled(options.signal);
+
   const [{ default: pdfmake }, regular, bold] = await Promise.all([
     import("pdfmake/build/pdfmake.min"),
     font(regularFontUrl, options.signal),
     font(boldFontUrl, options.signal),
   ]);
+
   checkCancelled(options.signal);
   pdfmake.addVirtualFileSystem({
     "Favorite-Regular.woff": regular,
     "Favorite-Bold.woff": bold,
   });
+
   pdfmake.addFonts({
     Favorite: {
       normal: "Favorite-Regular.woff",
@@ -141,16 +153,22 @@ export async function createCollectionPdf(
       bolditalics: "Favorite-Bold.woff",
     },
   });
+
   pdfmake.setUrlAccessPolicy(() => false);
+
   const images: Array<string | null> = Array(report.movies.length).fill(null);
+
   if (options.posters) {
     let next = 0;
     const deadline = Date.now() + 15000;
+
     await Promise.all(
       Array.from({ length: Math.min(4, report.movies.length) }, async () => {
         while (next < report.movies.length && Date.now() < deadline) {
           checkCancelled(options.signal);
+
           const index = next++;
+
           images[index] = await poster(
             report.movies[index].posterUrl,
             options.signal
@@ -161,6 +179,7 @@ export async function createCollectionPdf(
   }
 
   checkCancelled(options.signal);
+
   const date = (value: string | null): string =>
     value
       ? formatInstant(value, options.timezone, {
@@ -278,6 +297,7 @@ export async function createCollectionPdf(
       }),
     });
   const blob = await createDocument().getBlob();
+
   checkCancelled(options.signal);
 
   return {

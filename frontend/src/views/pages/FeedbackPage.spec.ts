@@ -4,13 +4,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import FeedbackPage from "./FeedbackPage.vue";
 
 const mocks = vi.hoisted(() => ({ fetch: vi.fn() }));
+
 vi.mock("@/composable", () => ({
   useFetch: mocks.fetch,
   FETCH_METHOD: { post: "POST" },
 }));
+
 vi.mock("@/state/state", () => ({
   useMainStore: () => ({ userData: { email: "qa@example.test" } }),
 }));
+
 vi.mock("@/composable/useNavigateBack", () => ({
   useNavigateBack: () => ({ navigateBack: vi.fn() }),
 }));
@@ -22,6 +25,7 @@ async function render() {
   });
 
   await router.push("/feedback");
+
   const wrapper = mount(FeedbackPage, {
     global: {
       plugins: [router],
@@ -68,6 +72,7 @@ beforeEach(() => mocks.fetch.mockReset());
 describe("Отправка обратной связи", () => {
   it("не отправляет короткий текст и очищает сообщение только после успешной отправки", async () => {
     mocks.fetch.mockResolvedValue({ status: 201, data: { id: "feedback-id" } });
+
     const wrapper = await render();
     const send = wrapper
       .findAll("button")
@@ -88,6 +93,7 @@ describe("Отправка обратной связи", () => {
         }),
       })
     );
+
     expect(wrapper.get<HTMLTextAreaElement>("textarea").element.value).toBe("");
     wrapper.unmount();
   });
@@ -96,6 +102,7 @@ describe("Отправка обратной связи", () => {
     mocks.fetch
       .mockRejectedValueOnce({ response: { status: 429 } })
       .mockResolvedValueOnce({ status: 201, data: { id: "feedback-id" } });
+
     const wrapper = await render();
 
     await wrapper.get("textarea").setValue("Подробное описание проблемы");
@@ -103,36 +110,47 @@ describe("Отправка обратной связи", () => {
       .findAll("button")
       .find((button) => button.text() === "Отправить")!
       .trigger("click");
+
     await flushPromises();
     expect(wrapper.get<HTMLTextAreaElement>("textarea").element.value).toBe(
       "Подробное описание проблемы"
     );
+
     expect(wrapper.get('[role="alert"]').text()).toContain(
       "Слишком много обращений"
     );
+
     await wrapper.get('[role="alert"] button').trigger("click");
     await flushPromises();
     expect(wrapper.get<HTMLTextAreaElement>("textarea").element.value).toBe("");
     expect(wrapper.find('[role="alert"]').exists()).toBe(false);
     wrapper.unmount();
   });
+
   it("ждёт загрузку скриншота, отправляет только ID и сохраняет вложение при ошибке до успешного повтора", async () => {
     mocks.fetch
       .mockRejectedValueOnce({ response: { status: 503 } })
       .mockResolvedValueOnce({ status: 201, data: { id: "feedback-id" } });
+
     const wrapper = await render();
+
     await wrapper.get("textarea").setValue("Описание со скриншотом");
+
     const picker = wrapper.getComponent({ name: "ImagePicker" });
+
     picker.vm.$emit("busy", true);
     await flushPromises();
+
     const send = wrapper
       .findAll("button")
       .find((button) => button.text() === "Отправить")!;
+
     expect(send.attributes("disabled")).toBeDefined();
     picker.vm.$emit("update:modelValue", {
       assetId: "11111111-1111-4111-8111-111111111111",
       url: "/uploads/images/fixture/full.webp",
     });
+
     picker.vm.$emit("busy", false);
     await flushPromises();
     await send.trigger("click");
@@ -140,10 +158,12 @@ describe("Отправка обратной связи", () => {
     expect(mocks.fetch.mock.calls[0][1].data.screenshotAssetId).toBe(
       "11111111-1111-4111-8111-111111111111"
     );
+
     expect(mocks.fetch.mock.calls[0][1].data).not.toHaveProperty("url");
     expect(picker.props("modelValue")).toMatchObject({
       assetId: "11111111-1111-4111-8111-111111111111",
     });
+
     await wrapper.get('[role="alert"] button').trigger("click");
     await flushPromises();
     expect(picker.props("modelValue")).toBeNull();

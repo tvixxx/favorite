@@ -14,7 +14,7 @@ const props = withDefaults(
   {
     label: "Назад",
     mode: "history",
-  },
+  }
 );
 
 const { navigateBack } = useNavigateBack();
@@ -55,8 +55,7 @@ async function onClick() {
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  transition:
-    color var(--fv-motion-slow) var(--fv-ease),
+  transition: color var(--fv-motion-slow) var(--fv-ease),
     transform var(--fv-motion-slow) var(--fv-ease),
     box-shadow var(--fv-motion-slow) var(--fv-ease);
 

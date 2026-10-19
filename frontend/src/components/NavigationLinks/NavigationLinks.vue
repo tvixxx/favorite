@@ -15,8 +15,9 @@ import type { NotificationDto } from "@/stores/notifications/types";
 import { currentTheme, setTheme, themes, type Theme } from "@/composable";
 import { createOnboardingDriver } from "@/onboarding/createOnboardingDriver";
 import { setOnboardingDone } from "@/composable/useOnboarding";
-import {useDateTime} from '@/composable/useDateTime';
-const {formatInstant}=useDateTime();
+import { useDateTime } from "@/composable/useDateTime";
+
+const { formatInstant } = useDateTime();
 
 const router = useRouter();
 const route = useRoute();
@@ -69,7 +70,6 @@ const THEME_LABELS: Record<Theme, string> = {
   cyberpunk: "Cyberpunk",
 };
 
-// Свотч показывает канву темы и точкой — её акцент (эталон)
 const THEME_SWATCHES: Record<Theme, { bg: string; accent: string }> = {
   light: { bg: "#ffffff", accent: "#ff0032" },
   dark: { bg: "#141414", accent: "#ff3355" },
@@ -382,7 +382,6 @@ const handleMarkAllRead = async () => {
           </template>
         </a-dropdown>
 
-        <!-- Аватар → меню аккаунта (Профиль · Помощь · Цветовая тема · Выйти) -->
         <a-dropdown
           v-model:open="accountMenuOpen"
           trigger="click"
@@ -438,7 +437,11 @@ const handleMarkAllRead = async () => {
                 <BaseIcon name="ph:user" :width="18" :height="18" />
                 <span>Профиль</span>
               </button>
-              <button v-if="store.userData?.role === 'ADMIN'" class="acctmenu__item" @click="goTo('/admin')">
+              <button
+                v-if="store.userData?.role === 'ADMIN'"
+                class="acctmenu__item"
+                @click="goTo('/admin')"
+              >
                 <BaseIcon name="ph:shield-check" :width="18" :height="18" />
                 <span>Администрирование</span>
               </button>
@@ -488,7 +491,6 @@ const handleMarkAllRead = async () => {
           </template>
         </a-dropdown>
 
-        <!-- Бургер для мобильных -->
         <button
           type="button"
           class="topbar__burger"
@@ -573,7 +575,7 @@ const handleMarkAllRead = async () => {
     gap: 24px;
     width: 100%;
     max-width: calc(var(--fv-layout-max-width) + var(--fv-layout-gutter) * 2);
-    height: 66px;
+    height: calc(var(--fv-topbar-height) - 1px);
     margin: 0 auto;
     padding: 0 var(--fv-layout-gutter);
   }
@@ -614,7 +616,7 @@ const handleMarkAllRead = async () => {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    height: 66px;
+    height: calc(var(--fv-topbar-height) - 1px);
     padding: 0 2px;
     border: 0;
     border-bottom: 2px solid transparent;
@@ -671,8 +673,7 @@ const handleMarkAllRead = async () => {
     background: none;
     color: var(--fv-color-text-secondary);
     cursor: pointer;
-    transition:
-      background var(--fv-motion-fast) var(--fv-ease),
+    transition: background var(--fv-motion-fast) var(--fv-ease),
       color var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
@@ -854,7 +855,6 @@ const handleMarkAllRead = async () => {
     border-radius: 9px;
     border: 1px solid var(--fv-color-border);
 
-    // Точка акцента в правом нижнем углу — как в эталоне
     &::after {
       content: "";
       position: absolute;
@@ -1001,13 +1001,13 @@ const handleMarkAllRead = async () => {
   &__signout {
     margin-top: 12px;
   }
+
   &__divider {
     height: 1px;
     margin: 8px 4px;
     background: var(--fv-color-border);
   }
 
-  // Пункт с иконкой (эталон: последний пункт бургера)
   &__link_feedback {
     display: flex;
     align-items: center;

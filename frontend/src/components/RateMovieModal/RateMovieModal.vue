@@ -88,10 +88,12 @@ const save = async (): Promise<void> => {
       trimmed,
       trimmed ? isSpoiler.value : undefined
     );
+
     emit("saved", updated);
     void reviewsStore
       .fetchReviews(props.movieId, 100, true)
       .catch(() => undefined);
+
     message.success("Оценка сохранена");
     open.value = false;
   } catch {
@@ -108,7 +110,13 @@ const save = async (): Promise<void> => {
 
     <template #body>
       <div class="rate-modal__movie">
-        <MoviePoster class="rate-modal__poster" :src="poster" :seed="movieId" :title="title" :alt="title" />
+        <MoviePoster
+          class="rate-modal__poster"
+          :src="poster"
+          :seed="movieId"
+          :title="title"
+          :alt="title"
+        />
         <div class="rate-modal__movie-info">
           <span class="rate-modal__movie-title">{{ title }}</span>
           <span class="rate-modal__movie-meta">{{ year }} · {{ kind }}</span>
@@ -171,7 +179,6 @@ const save = async (): Promise<void> => {
     flex-wrap: wrap;
   }
 
-  // Пропорции кнопок футера как в эталоне
   .modal__footer .ant-btn {
     flex: 2;
   }

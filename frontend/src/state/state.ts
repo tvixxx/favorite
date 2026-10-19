@@ -27,7 +27,10 @@ import { useFriendsStore } from "@/stores/friends/friendsStore";
 import { useBadgesStore } from "@/stores/badges/badgesStore";
 import { useChatStore } from "@/stores/chat/chatStore";
 import { useReviewsStore } from "@/composable/useReviews";
-import { getUserPreferences, type UserPreferences } from "@/utils/userPreferences";
+import {
+  getUserPreferences,
+  type UserPreferences,
+} from "@/utils/userPreferences";
 
 function profileData(profile: UserProfileResponse): UserData {
   return {
@@ -81,13 +84,16 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     await updateProfile({ fullName: displayName });
   }
 
-  async function updateProfile(payload: Partial<UserPreferences> & {
-    fullName?: string;
-    timezone?: string;
-    avatarUrl?: string | null;
-    avatarAssetId?: string | null;
-  }): Promise<void> {
+  async function updateProfile(
+    payload: Partial<UserPreferences> & {
+      fullName?: string;
+      timezone?: string;
+      avatarUrl?: string | null;
+      avatarAssetId?: string | null;
+    }
+  ): Promise<void> {
     if (isUpdatingProfile.value) throw new Error("Профиль уже сохраняется");
+
     const id = user.value.data?.id;
 
     if (!id) {
@@ -95,6 +101,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     }
 
     const requestRevision = sessionRevision.value;
+
     isUpdatingProfile.value = true;
     try {
       const userProfileData = await useFetch<UserProfileResponse>(
@@ -118,7 +125,8 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
         throw new Error("Не удалось сохранить профиль");
       }
     } finally {
-      if (requestRevision === sessionRevision.value) isUpdatingProfile.value = false;
+      if (requestRevision === sessionRevision.value)
+        isUpdatingProfile.value = false;
     }
   }
 
@@ -132,6 +140,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     name: string;
   }): Promise<void> {
     clearAuthState();
+
     const requestRevision = sessionRevision.value;
     const response = await useFetch<AuthResponse>(REGISTER_USER_ENDPOINT, {
       method: FETCH_METHOD.post,
@@ -163,6 +172,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     password: string;
   }): Promise<void> {
     clearAuthState();
+
     const requestRevision = sessionRevision.value;
     const response = await useFetch<AuthResponse>(AUTH_USER_ENDPOINT, {
       method: FETCH_METHOD.post,
@@ -248,10 +258,13 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
       authUnavailable.value =
         isAxiosError(error) &&
         (!error.response || error.response.status >= 500);
+
       userDataRaw.value = null;
       state.value.user.data = null;
       state.value.user.loggedIn = false;
-      throw new Error("Не удалось получить данные пользователя", { cause: error });
+      throw new Error("Не удалось получить данные пользователя", {
+        cause: error,
+      });
     } finally {
       if (requestRevision === sessionRevision.value) {
         state.value.user.isAuthLoaded = true;

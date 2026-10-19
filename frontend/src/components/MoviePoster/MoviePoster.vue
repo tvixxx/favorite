@@ -3,6 +3,7 @@ import { computed, ref, watch } from "vue";
 import { currentTheme } from "@/composable/useTheme";
 import { fallbackPosterSvg } from "@/utils/fallbackPoster";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
+
 const props = withDefaults(
   defineProps<{
     src?: string | null;
@@ -16,17 +17,16 @@ const props = withDefaults(
 );
 const emit = defineEmits<{ error: [] }>();
 const failed = ref(false);
+
 watch(
   () => props.src,
   () => {
     failed.value = false;
   }
 );
+
 const fallback = computed(
-  () =>
-    failed.value ||
-    !props.src ||
-    props.src === FALLBACK_IMAGE_URL
+  () => failed.value || !props.src || props.src === FALLBACK_IMAGE_URL
 );
 const source = computed(() =>
   fallback.value
@@ -35,6 +35,7 @@ const source = computed(() =>
       )}`
     : props.src!
 );
+
 function onError(): void {
   if (!fallback.value) {
     failed.value = true;
@@ -64,17 +65,20 @@ function onError(): void {
   width: 100%;
   height: 100%;
 }
+
 .movie-poster {
   display: block;
   position: relative;
   overflow: hidden;
   container-type: inline-size;
+
   > img {
     width: 100%;
     height: 100%;
     display: block;
     object-fit: cover;
   }
+
   &__caption {
     position: absolute;
     inset: auto 0 0;
@@ -87,6 +91,7 @@ function onError(): void {
     color: #fff;
     text-align: left;
   }
+
   &__caption strong {
     flex-shrink: 0;
     font-size: clamp(12px, 6cqw, 24px);
@@ -98,6 +103,7 @@ function onError(): void {
     -webkit-box-orient: vertical;
     overflow-wrap: anywhere;
   }
+
   &__caption > span {
     flex-shrink: 0;
     font-size: clamp(9px, 3.5cqw, 14px);
@@ -107,16 +113,19 @@ function onError(): void {
     white-space: nowrap;
     color: #dbe3e8;
   }
+
   @container (max-width: 175px) {
     &__caption {
       padding-top: 3%;
       padding-bottom: 3%;
       gap: 2px;
     }
+
     &__caption strong {
       -webkit-line-clamp: 1;
     }
   }
+
   @container (max-width: 96px) {
     &__caption {
       display: none;

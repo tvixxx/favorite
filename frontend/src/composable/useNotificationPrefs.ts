@@ -13,14 +13,21 @@ export function useNotificationPrefs(): NotificationPrefs {
   const store = useMainStore();
 
   return {
-    newMessages: computed(() => getUserPreference(store.userData, "notifyNewMessages")),
-    friendRequests: computed(() => getUserPreference(store.userData, "notifyFriendRequests")),
-    recommendations: computed(() => getUserPreference(store.userData, "notifyRecommendations")),
+    newMessages: computed(() =>
+      getUserPreference(store.userData, "notifyNewMessages")
+    ),
+    friendRequests: computed(() =>
+      getUserPreference(store.userData, "notifyFriendRequests")
+    ),
+    recommendations: computed(() =>
+      getUserPreference(store.userData, "notifyRecommendations")
+    ),
   };
 }
 
 export function isNotificationTypeEnabled(type: NotificationType): boolean {
   const user = useMainStore().userData;
+
   switch (type) {
     case "CHAT_MESSAGE":
       return getUserPreference(user, "notifyNewMessages");

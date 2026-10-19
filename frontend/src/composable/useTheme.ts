@@ -111,12 +111,21 @@ function getInitialTheme(): Theme {
 // useStorage применит дефолт только при отсутствии ключа: системная тема
 // подхватится лишь на первом заходе, дальше уважается выбор пользователя.
 const initialTheme = getInitialTheme();
-export const currentTheme = useStorage<Theme>("app-theme", initialTheme, undefined, {
-  serializer: {
-    read: (value) => (themes as readonly string[]).includes(value) ? value as Theme : initialTheme,
-    write: (value) => value,
-  },
-});
+
+export const currentTheme = useStorage<Theme>(
+  "app-theme",
+  initialTheme,
+  undefined,
+  {
+    serializer: {
+      read: (value) =>
+        (themes as readonly string[]).includes(value)
+          ? (value as Theme)
+          : initialTheme,
+      write: (value) => value,
+    },
+  }
+);
 
 export const setTheme = (theme: Theme) => {
   currentTheme.value = theme;

@@ -12,11 +12,19 @@ import { getApiResponseMessage } from "@/services/api";
 import MoviePoster from "@/components/MoviePoster/MoviePoster.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import NumberField from "@/components/NumberField/NumberField.vue";
-import { MIN_MEDIA_YEAR, maxMediaYear, isOptionalInteger } from '@/utils/media-numbers';
+import {
+  MIN_MEDIA_YEAR,
+  maxMediaYear,
+  isOptionalInteger,
+} from "@/utils/media-numbers";
 import TvdbImportForm from "./TvdbImportForm.vue";
-import { Button as AButton, Select as ASelect } from 'ant-design-vue';
+import { Button as AButton, Select as ASelect } from "ant-design-vue";
 
-const props = defineProps<{ userId: string; sessionRevision: number; isAdmin?: boolean }>();
+const props = defineProps<{
+  userId: string;
+  sessionRevision: number;
+  isAdmin?: boolean;
+}>();
 const emit = defineEmits<{ manual: [title: string]; added: [] }>();
 const query = ref("");
 const type = ref("");
@@ -31,6 +39,7 @@ const searched = ref(false);
 const error = ref("");
 let revision = 0;
 let controller: AbortController | undefined;
+
 function cancel(): void {
   revision++;
   controller?.abort();
@@ -48,15 +57,18 @@ watch(
     error.value = "";
     searched.value = false;
   },
-  { flush: 'sync' }
+  { flush: "sync" }
 );
+
 onBeforeUnmount(cancel);
 async function run(
   action: (signal: AbortSignal) => Promise<void>
 ): Promise<void> {
   cancel();
   if (!props.userId) return;
+
   const requestRevision = revision;
+
   controller = new AbortController();
   busy.value = true;
   error.value = "";
@@ -87,6 +99,7 @@ async function search(): Promise<void> {
       year.value || undefined,
       signal
     );
+
     if (signal.aborted) return;
     results.value = data;
     searched.value = true;
@@ -106,6 +119,7 @@ async function select(candidate: TvdbCandidate): Promise<void> {
 
   await run(async (signal) => {
     const data = await previewTvdb(candidate, signal);
+
     if (!signal.aborted) preview.value = data;
   });
 }
@@ -113,6 +127,7 @@ async function select(candidate: TvdbCandidate): Promise<void> {
 async function confirm(payload: Record<string, unknown>): Promise<void> {
   await run(async (signal) => {
     const result = await importTvdb(payload, signal);
+
     if (signal.aborted) return;
     success.value = result;
     preview.value = null;
@@ -121,6 +136,7 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
         ? { ...item, localMovieId: result.movieId, inCollection: true }
         : item
     );
+
     emit("added");
   });
 }
@@ -141,9 +157,17 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
         }}
       </h2>
       <div class="tvdb-success__actions">
-        <RouterLink class="tvdb-success__open" :to="{ name: 'detail', params: { id: success.movieId } }">
+        <RouterLink
+          class="tvdb-success__open"
+          :to="{ name: 'detail', params: { id: success.movieId } }"
+        >
           Открыть карточку
-          <BaseIcon name="ph:arrow-right" :width="18" :height="18" aria-hidden="true" />
+          <BaseIcon
+            name="ph:arrow-right"
+            :width="18"
+            :height="18"
+            aria-hidden="true"
+          />
         </RouterLink>
         <button type="button" class="tvdb-link" @click="success = null">
           Добавить ещё
@@ -170,7 +194,8 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
       >
         <label class="tvdb-field tvdb-search__query"
           >Название
-          <input class="fv-native-field"
+          <input
+            class="fv-native-field"
             v-model="query"
             aria-label="Название для поиска"
             placeholder="Например: Дюна или Dune"
@@ -181,8 +206,22 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
         </label>
         <div class="tvdb-field">
           <label for="tvdb-search-format">Формат</label>
-          <ASelect id="tvdb-search-format" v-model:value="type" class="tvdb-search__format" aria-label="Формат" size="large" :disabled="busy" :options="[{ value: '', label: 'Все форматы' }, { value: 'movie', label: 'Фильмы' }, { value: 'series', label: 'Сериалы и выпуски' }]">
-            <template #suffixIcon><BaseIcon name="ph:caret-down" :width="16" :height="16" /></template>
+          <ASelect
+            id="tvdb-search-format"
+            v-model:value="type"
+            class="tvdb-search__format"
+            aria-label="Формат"
+            size="large"
+            :disabled="busy"
+            :options="[
+              { value: '', label: 'Все форматы' },
+              { value: 'movie', label: 'Фильмы' },
+              { value: 'series', label: 'Сериалы и выпуски' },
+            ]"
+          >
+            <template #suffixIcon
+              ><BaseIcon name="ph:caret-down" :width="16" :height="16"
+            /></template>
           </ASelect>
         </div>
         <div class="tvdb-field">
@@ -199,7 +238,14 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
             :disabled="busy"
           />
         </div>
-        <AButton class="tvdb-search__submit" type="primary" html-type="submit" size="large" :loading="busy" :disabled="busy">
+        <AButton
+          class="tvdb-search__submit"
+          type="primary"
+          html-type="submit"
+          size="large"
+          :loading="busy"
+          :disabled="busy"
+        >
           {{ busy ? "Ищем…" : "Найти" }}
         </AButton>
       </form>
@@ -256,16 +302,23 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
     <p class="tvdb-attribution">
       Данные предоставлены
       <a href="https://thetvdb.com" target="_blank" rel="noopener noreferrer"
-        >TheTVDB <BaseIcon name="ph:arrow-up-right" :width="14" :height="14" aria-hidden="true" /></a
+        >TheTVDB
+        <BaseIcon
+          name="ph:arrow-up-right"
+          :width="14"
+          :height="14"
+          aria-hidden="true" /></a
       >.
     </p>
   </section>
 </template>
 
 <style lang="scss">
-@use '@/styles/media' as *;
+@use "@/styles/media" as *;
+
 .tvdb {
   color: var(--fv-color-text-primary);
+
   .tvdb-field {
     display: flex;
     flex-direction: column;
@@ -276,9 +329,11 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
     font-size: 14px;
     font-weight: 500;
   }
+
   textarea {
     resize: vertical;
   }
+
   button,
   a,
   summary {
@@ -287,14 +342,35 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
       outline-offset: 3px;
     }
   }
+
   button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
   }
-  .tvdb-search__submit { height: 52px; margin-top: 28px; padding: 0 22px; border-radius: var(--fv-radius-sm); font-weight: 500; }
-  .tvdb-search__format.ant-select-single.ant-select-lg .ant-select-selector { height: 52px; padding: 0 14px; font-size: 15px; }
-  .tvdb-search__format.ant-select-single.ant-select-lg .ant-select-selection-item { line-height: 49px; }
-  .tvdb-search__format .ant-select-arrow { color: var(--fv-color-text-secondary); }
+
+  .tvdb-search__submit {
+    height: 52px;
+    margin-top: 28px;
+    padding: 0 22px;
+    border-radius: var(--fv-radius-sm);
+    font-weight: 500;
+  }
+
+  .tvdb-search__format.ant-select-single.ant-select-lg .ant-select-selector {
+    height: 52px;
+    padding: 0 14px;
+    font-size: 15px;
+  }
+
+  .tvdb-search__format.ant-select-single.ant-select-lg
+    .ant-select-selection-item {
+    line-height: 49px;
+  }
+
+  .tvdb-search__format .ant-select-arrow {
+    color: var(--fv-color-text-secondary);
+  }
+
   .tvdb-link {
     display: inline-block;
     color: var(--fv-color-accent);
@@ -304,27 +380,37 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
     font: inherit;
     cursor: pointer;
   }
+
   .tvdb-hint,
   .tvdb-attribution {
     color: var(--fv-color-text-secondary);
     line-height: 1.6;
   }
+
   .tvdb-attribution {
     margin-top: 28px;
     font-size: 13px;
+
     a {
       display: inline-flex;
       align-items: center;
       gap: 4px;
       color: inherit;
       text-decoration: none;
-      &:hover { color: var(--fv-color-accent); text-decoration: underline; text-underline-offset: 3px; }
+
+      &:hover {
+        color: var(--fv-color-accent);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
     }
   }
+
   .tvdb-error {
     color: var(--fv-color-negative);
     line-height: 1.6;
   }
+
   .tvdb-search {
     display: grid;
     grid-template-columns: minmax(180px, 2fr) minmax(160px, 1fr) 155px auto;
@@ -332,15 +418,18 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
     align-items: start;
     margin-bottom: 28px;
   }
+
   .tvdb-search .tvdb-field {
     margin-bottom: 0;
     line-height: 20px;
   }
+
   .tvdb-results {
     list-style: none;
     padding: 0;
     margin: 0;
   }
+
   .tvdb-results li {
     display: grid;
     grid-template-columns: 68px minmax(0, 1fr) auto;
@@ -349,19 +438,23 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
     padding: 20px 0;
     border-top: 1px solid var(--fv-color-border);
   }
+
   .tvdb-results .movie-poster {
     height: 102px;
     border-radius: var(--fv-radius-sm);
   }
+
   .tvdb-results h2 {
     font-size: 18px;
     margin: 0 0 6px;
     overflow-wrap: anywhere;
   }
+
   .tvdb-results p {
     margin: 4px 0;
     color: var(--fv-color-text-secondary);
   }
+
   .tvdb-results button {
     padding: 10px 16px;
     border: 1px solid var(--fv-color-border);
@@ -371,6 +464,7 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
     font: inherit;
     cursor: pointer;
   }
+
   .tvdb-badge {
     display: inline-block;
     padding: 4px 8px;
@@ -379,17 +473,20 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
     border-radius: 6px;
     font-size: 12px;
   }
+
   .tvdb-success {
     padding: 20px;
     border: 1px solid var(--fv-color-border);
     border-radius: var(--fv-radius-sm);
   }
+
   .tvdb-success__actions {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 8px 20px;
   }
+
   .tvdb-success__open {
     display: inline-flex;
     align-items: center;
@@ -398,25 +495,36 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
     color: var(--fv-color-text-primary);
     font-weight: 500;
     text-decoration: none;
-    &:hover { color: var(--fv-color-accent); }
+
+    &:hover {
+      color: var(--fv-color-accent);
+    }
   }
+
   @include mediaMax(850px) {
     .tvdb-search {
       grid-template-columns: 1fr 1fr;
     }
+
     .tvdb-search__query {
       grid-column: 1 / -1;
     }
-    .tvdb-search__submit { margin-top: 0; }
+
+    .tvdb-search__submit {
+      margin-top: 0;
+    }
   }
+
   @include mediaMax(420px) {
     .tvdb-search {
       grid-template-columns: 1fr;
     }
+
     .tvdb-results li {
       grid-template-columns: 56px minmax(0, 1fr);
       gap: 12px;
     }
+
     .tvdb-results button {
       grid-column: 2;
       justify-self: start;

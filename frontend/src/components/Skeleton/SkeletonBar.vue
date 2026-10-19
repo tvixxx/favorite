@@ -31,7 +31,7 @@ const {
 
 <style scoped lang="scss">
 @use "../../styles/media" as *;
-/* Примитив-плейсхолдер загрузки (эталон): бегущий шиммер */
+
 .skel {
   display: block;
   position: relative;

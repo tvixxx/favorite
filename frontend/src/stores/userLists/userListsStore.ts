@@ -15,7 +15,9 @@ export const useUserListsStore = defineStore("userLists", () => {
   const currentList = ref<UserListDetail | null>(null);
   const isListLoading = ref(false);
   const isDetailLoading = ref(false);
-  const isLoading = computed(() => isListLoading.value || isDetailLoading.value);
+  const isLoading = computed(
+    () => isListLoading.value || isDetailLoading.value
+  );
   const isError = ref<string | null>(null);
   const listRequests = createRequestGuard();
   const detailRequests = createRequestGuard();
@@ -37,13 +39,18 @@ export const useUserListsStore = defineStore("userLists", () => {
     }
 
     const isCurrent = listRequests.begin();
+
     isListLoading.value = true;
     setError(null);
 
     try {
-      const response = await useFetch<UserListSummary[]>(`/users/${userId}/lists`, {
-        method: FETCH_METHOD.get,
-      });
+      const response = await useFetch<UserListSummary[]>(
+        `/users/${userId}/lists`,
+        {
+          method: FETCH_METHOD.get,
+        }
+      );
+
       if (!isCurrent()) return [];
 
       if (!isSuccessStatus(response.status)) {
@@ -55,7 +62,10 @@ export const useUserListsStore = defineStore("userLists", () => {
       return response.data;
     } catch (error: unknown) {
       if (!isCurrent()) return [];
-      const text = error instanceof Error ? error.message : "Ошибка загрузки списков";
+
+      const text =
+        error instanceof Error ? error.message : "Ошибка загрузки списков";
+
       setError(text);
       throw error;
     } finally {
@@ -69,6 +79,7 @@ export const useUserListsStore = defineStore("userLists", () => {
     }
 
     const isCurrent = detailRequests.begin();
+
     if (currentList.value?.id !== listId) currentList.value = null;
     isDetailLoading.value = true;
     setError(null);
@@ -80,6 +91,7 @@ export const useUserListsStore = defineStore("userLists", () => {
           method: FETCH_METHOD.get,
         }
       );
+
       if (!isCurrent()) return null;
 
       if (!isSuccessStatus(response.status)) {
@@ -91,7 +103,10 @@ export const useUserListsStore = defineStore("userLists", () => {
       return response.data;
     } catch (error: unknown) {
       if (!isCurrent()) return null;
-      const text = error instanceof Error ? error.message : "Ошибка загрузки списка";
+
+      const text =
+        error instanceof Error ? error.message : "Ошибка загрузки списка";
+
       setError(text);
       throw error;
     } finally {
@@ -105,7 +120,9 @@ export const useUserListsStore = defineStore("userLists", () => {
       method: FETCH_METHOD.post,
       data: payload,
     });
-    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
+
+    if (requestRevision !== sessionRevision)
+      throw new Error("Сессия изменилась");
 
     if (!isSuccessStatus(response.status)) {
       throw new Error("Не удалось создать список");
@@ -129,18 +146,26 @@ export const useUserListsStore = defineStore("userLists", () => {
     payload: UpdateUserListPayload
   ) => {
     const requestRevision = sessionRevision;
-    const response = await useFetch<UserListSummary>(`/users/${userId}/lists/${listId}`, {
-      method: FETCH_METHOD.patch,
-      data: payload,
-    });
-    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
+    const response = await useFetch<UserListSummary>(
+      `/users/${userId}/lists/${listId}`,
+      {
+        method: FETCH_METHOD.patch,
+        data: payload,
+      }
+    );
+
+    if (requestRevision !== sessionRevision)
+      throw new Error("Сессия изменилась");
 
     if (!isSuccessStatus(response.status)) {
       throw new Error("Не удалось обновить список");
     }
 
     const updated = response.data;
-    lists.value = lists.value.map((item) => (item.id === updated.id ? updated : item));
+
+    lists.value = lists.value.map((item) =>
+      item.id === updated.id ? updated : item
+    );
 
     if (currentList.value?.id === updated.id) {
       currentList.value = {
@@ -158,10 +183,15 @@ export const useUserListsStore = defineStore("userLists", () => {
 
   const deleteList = async (userId: string, listId: string) => {
     const requestRevision = sessionRevision;
-    const response = await useFetch<boolean>(`/users/${userId}/lists/${listId}`, {
-      method: FETCH_METHOD.delete,
-    });
-    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
+    const response = await useFetch<boolean>(
+      `/users/${userId}/lists/${listId}`,
+      {
+        method: FETCH_METHOD.delete,
+      }
+    );
+
+    if (requestRevision !== sessionRevision)
+      throw new Error("Сессия изменилась");
 
     if (!isSuccessStatus(response.status)) {
       throw new Error("Не удалось удалить список");
@@ -176,13 +206,19 @@ export const useUserListsStore = defineStore("userLists", () => {
     return true;
   };
 
-  const addMovieToList = async (userId: string, listId: string, movieId: string) => {
+  const addMovieToList = async (
+    userId: string,
+    listId: string,
+    movieId: string
+  ) => {
     const requestRevision = sessionRevision;
     const response = await useFetch(`/users/${userId}/lists/${listId}/movies`, {
       method: FETCH_METHOD.post,
       data: { movieId },
     });
-    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
+
+    if (requestRevision !== sessionRevision)
+      throw new Error("Сессия изменилась");
 
     if (!isSuccessStatus(response.status)) {
       throw new Error("Не удалось добавить тайтл в список");
@@ -217,7 +253,9 @@ export const useUserListsStore = defineStore("userLists", () => {
         method: FETCH_METHOD.delete,
       }
     );
-    if (requestRevision !== sessionRevision) throw new Error("Сессия изменилась");
+
+    if (requestRevision !== sessionRevision)
+      throw new Error("Сессия изменилась");
 
     if (!isSuccessStatus(response.status)) {
       throw new Error("Не удалось удалить фильм из списка");
@@ -226,13 +264,23 @@ export const useUserListsStore = defineStore("userLists", () => {
     if (currentList.value?.id === listId) {
       currentList.value = {
         ...currentList.value,
-        items: currentList.value.items.filter((item) => item.movieId !== movieId),
+        items: currentList.value.items.filter(
+          (item) => item.movieId !== movieId
+        ),
       };
     }
 
-    lists.value = lists.value.map((list) => list.id === listId ? {
-      ...list, _count: { ...list._count, items: Math.max(0, list._count.items - 1) },
-    } : list);
+    lists.value = lists.value.map((list) =>
+      list.id === listId
+        ? {
+            ...list,
+            _count: {
+              ...list._count,
+              items: Math.max(0, list._count.items - 1),
+            },
+          }
+        : list
+    );
 
     return true;
   };
