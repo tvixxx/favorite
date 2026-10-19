@@ -24,7 +24,7 @@ const entry = {
   createdAt: "2026-10-13T15:00:00Z",
 };
 
-async function render(realSelect = false) {
+async function render(realSelect = false, open = true) {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [{ path: "/admin", component: AdminModeration }],
@@ -70,16 +70,23 @@ async function render(realSelect = false) {
   });
 
   await flushPromises();
-  await wrapper
-    .findAll("button")
-    .find((button) => button.text() === "Открыть обращение")!
-    .trigger("click");
+  if (open)
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text() === "Открыть обращение")!
+      .trigger("click");
 
   return wrapper;
 }
 
 beforeEach(() => {
-  api.get.mockReset().mockResolvedValue({ data: { items: [entry], total: 1 } });
+  api.get.mockReset().mockImplementation(async (url: string) => ({
+    data:
+      url === "/feedback/capabilities"
+        ? { feedback: true }
+        : { items: [entry], total: 1 },
+  }));
+
   api.patch.mockReset();
 });
 
@@ -90,6 +97,25 @@ afterEach(() => {
 });
 
 describe("Работа с обращением в админке", () => {
+  it("скрывает обращения и не загружает их по сохранённой ссылке при выключенной функции", async () => {
+    api.get.mockImplementation(async (url: string) => ({
+      data:
+        url === "/feedback/capabilities"
+          ? { feedback: false }
+          : { items: [], total: 0 },
+    }));
+
+    const wrapper = await render(false, false);
+
+    expect(wrapper.find('[value="feedback"]').exists()).toBe(false);
+    expect(api.get.mock.calls.some(([url]) => url === "/feedback")).toBe(false);
+    expect(api.get.mock.calls.some(([url]) => url === "/admin/reviews")).toBe(
+      true
+    );
+
+    wrapper.unmount();
+  });
+
   it("показывает полный текст и удалённого автора без выполнения разметки", async () => {
     const wrapper = await render();
     const dialog = wrapper.get('[role="dialog"]');
@@ -134,8 +160,11 @@ describe("Работа с обращением в админке", () => {
     const saved = { ...entry };
     let request: unknown;
 
-    api.get.mockImplementation(async () => ({
-      data: { items: [{ ...saved }], total: 1 },
+    api.get.mockImplementation(async (url: string) => ({
+      data:
+        url === "/feedback/capabilities"
+          ? { feedback: true }
+          : { items: [{ ...saved }], total: 1 },
     }));
 
     api.patch.mockImplementation(

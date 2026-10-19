@@ -19,13 +19,24 @@ import AdminDateFilters from "./AdminDateFilters.vue";
 import AdminDataRegion from "./AdminDataRegion.vue";
 import { type AdminReview, type AdminFeedback } from "./admin.types";
 import { useDateTime } from "@/composable/useDateTime";
+import { useFeedbackAvailability } from "@/composable/useFeedbackAvailability";
 
 const { dateLabel } = useDateTime();
 
-const tab = useAdminQueryParam("moderation", "reviews", undefined, [
+const { enabled: feedbackEnabled } = useFeedbackAvailability();
+const requestedTab = useAdminQueryParam("moderation", "reviews", undefined, [
   "reviews",
   "feedback",
 ]);
+const tab = computed({
+  get: () =>
+    requestedTab.value === "feedback" && feedbackEnabled.value
+      ? "feedback"
+      : "reviews",
+  set: (value: string) => {
+    requestedTab.value = value;
+  },
+});
 const scope = useAdminQueryParam("reviews_scope", "reported", "reviews_page", [
   "",
   "reported",
@@ -205,7 +216,9 @@ async function saveStatus(): Promise<void> {
       <h2>Модерация и обращения</h2>
       <a-radio-group v-model:value="tab">
         <a-radio-button value="reviews">Отзывы</a-radio-button>
-        <a-radio-button value="feedback">Обратная связь</a-radio-button>
+        <a-radio-button v-if="feedbackEnabled" value="feedback"
+          >Обратная связь</a-radio-button
+        >
       </a-radio-group>
     </div>
     <template v-if="tab === 'reviews'">

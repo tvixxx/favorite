@@ -14,6 +14,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ConfigService } from '@nestjs/config';
+import { assertFeedbackEnabled } from '../common/utils/feedback-availability';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -44,7 +46,10 @@ class UploadImageDto {
 @ApiTags('Media')
 @Controller('uploads')
 export class MediaController {
-  constructor(private readonly media: MediaService) {}
+  constructor(
+    private readonly media: MediaService,
+    private readonly config: ConfigService,
+  ) {}
 
   @Get('image-policy')
   public policy() {
@@ -78,6 +83,9 @@ export class MediaController {
     @Body() dto: UploadImageDto,
     @Authorized() user: User,
   ) {
+    if (dto.purpose === 'FEEDBACK_SCREENSHOT') {
+      assertFeedbackEnabled(this.config);
+    }
     return this.media.upload(
       file?.buffer ?? Buffer.alloc(0),
       dto.purpose,
@@ -104,6 +112,7 @@ export class MediaController {
     @Param('filename') filename: string,
     @Authorized() user: User,
   ): Promise<StreamableFile> {
+    assertFeedbackEnabled(this.config);
     const bytes = await this.media.privateImage(id, filename, user);
     return new StreamableFile(bytes, {
       type: 'image/webp',
