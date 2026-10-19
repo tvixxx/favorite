@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { parseListLabels } from "@/utils/list-labels";
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { message } from "ant-design-vue";
@@ -243,20 +244,6 @@ const formTitle = computed(() =>
 const formSubmitText = computed(() =>
   isEditing.value ? "Сохранить" : "Создать список"
 );
-
-const parseListLabels = (raw: string): string[] => {
-  const unique = new Set<string>();
-
-  for (const chunk of raw.split(",")) {
-    const normalized = chunk.trim();
-
-    if (normalized) {
-      unique.add(normalized);
-    }
-  }
-
-  return Array.from(unique);
-};
 
 const openCreateForm = (): void => {
   editingListId.value = null;

@@ -12,6 +12,7 @@ import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import CatalogFiltersBar from "@/components/MoviesFiltersPanel/CatalogFiltersBar.vue";
 import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
 import CatalogMoviePreviewModal from "@/components/Catalog/CatalogMoviePreviewModal.vue";
+import LoadMoreButton from "@/components/LoadMoreButton/LoadMoreButton.vue";
 import MovieCard from "@/components/MovieCard/MovieCard.vue";
 import { FALLBACK_IMAGE_URL } from "@/constants/movies";
 import { ERROR_FETCH_MOVIES_TEXT } from "@/state/constants";
@@ -243,16 +244,14 @@ async function resetCatalogFilters(): Promise<void> {
         v-if="showPaginator && moviesStore.hasMoreMovies"
         class="catalog-page__more"
       >
-        <a-button
-          size="large"
+        <LoadMoreButton
+          :count="restCount"
           :loading="moviesStore.isLoadingMore"
-          @click="showMore"
-        >
-          {{
-            moviesStore.loadMoreError ? "Повторить загрузку" : "Показать ещё"
-          }}
-          <span class="catalog-page__more-count">{{ restCount }}</span>
-        </a-button>
+          :label="
+            moviesStore.loadMoreError ? 'Повторить загрузку' : 'Показать ещё'
+          "
+          @load-more="showMore"
+        />
       </div>
     </div>
 
@@ -308,25 +307,6 @@ async function resetCatalogFilters(): Promise<void> {
     @include mediaMax($tablet) {
       padding-bottom: 0;
     }
-
-    .ant-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      height: 46px;
-      padding: 0 22px;
-      border-radius: var(--fv-radius-control);
-      font-weight: 500;
-    }
-  }
-
-  &__more-count {
-    padding: 1px 8px;
-    border-radius: 999px;
-    background: var(--fv-color-bg-secondary);
-    color: var(--fv-color-text-secondary);
-    font-size: 13px;
-    font-variant-numeric: tabular-nums;
   }
 
   &__empty-state {

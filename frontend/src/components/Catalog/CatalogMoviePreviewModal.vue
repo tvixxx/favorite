@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ExpandableActors from "@/components/ExpandableActors/ExpandableActors.vue";
 import SectionHeading from "@/components/SectionHeading/SectionHeading.vue";
 import { computed, ref, watch } from "vue";
 import { useMediaQuery } from "@vueuse/core";
@@ -26,8 +27,6 @@ const isAdded = ref(false);
 const reportOpen = ref(false);
 const reportedId = ref("");
 const isMobile = useMediaQuery("(max-width: 767.98px)");
-const actorsExpanded = ref(false);
-const ACTORS_PREVIEW_COUNT = 6;
 
 function report(id: string): void {
   reportedId.value = id;
@@ -65,17 +64,11 @@ const previewReviews = computed(() => {
 });
 
 const hasActors = computed(() => !!movie.value?.actors?.length);
-const visibleActors = computed(() =>
-  isMobile.value && !actorsExpanded.value
-    ? movie.value?.actors?.slice(0, ACTORS_PREVIEW_COUNT)
-    : movie.value?.actors
-);
 
 watch(
   () => [modelValue.value, props.movieId] as const,
   async ([open, id]) => {
     reportOpen.value = false;
-    actorsExpanded.value = false;
     if (!open || !id) {
       return;
     }
@@ -229,40 +222,12 @@ function openFullPage(): void {
             title="Актёры"
             icon="ph:users-three"
           />
-          <div id="catalog-preview-actors" class="catalog-preview__actors">
-            <div
-              v-for="actor in visibleActors"
-              :key="actor.id"
-              class="catalog-preview__actor"
-            >
-              <div class="catalog-preview__actor-avatar">
-                <BaseIcon name="ph:user" :width="18" :height="18" />
-              </div>
-              <span>{{ actor.name }}</span>
-            </div>
-          </div>
-          <button
-            v-if="
-              isMobile && (movie.actors?.length ?? 0) > ACTORS_PREVIEW_COUNT
-            "
-            type="button"
-            class="catalog-preview__actors-toggle"
-            :aria-expanded="actorsExpanded"
-            aria-controls="catalog-preview-actors"
-            @click="actorsExpanded = !actorsExpanded"
-          >
-            {{
-              actorsExpanded
-                ? "Свернуть"
-                : `Показать всех · ${movie.actors?.length}`
-            }}
-            <BaseIcon
-              :name="actorsExpanded ? 'ph:caret-up' : 'ph:caret-down'"
-              :width="18"
-              :height="18"
-              aria-hidden="true"
-            />
-          </button>
+          <ExpandableActors
+            :actors="movie.actors ?? []"
+            :reset-key="movie.id + ':' + modelValue"
+            variant="preview"
+            :collapsible="isMobile"
+          />
         </div>
 
         <div class="catalog-preview__section">
@@ -411,53 +376,6 @@ function openFullPage(): void {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-}
-
-.catalog-preview__actors-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 44px;
-  margin-top: 12px;
-  padding: 10px 16px;
-  border: 1px solid var(--fv-color-border);
-  border-radius: var(--fv-radius-sm);
-  background: var(--fv-color-bg-primary);
-  color: var(--fv-color-text-primary);
-  font: inherit;
-  font-size: 14px;
-  cursor: pointer;
-
-  &:focus-visible {
-    outline: 2px solid var(--fv-color-accent);
-    outline-offset: -2px;
-  }
-}
-
-.catalog-preview__actor {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 13px 0 7px;
-  border-radius: 999px;
-  background: var(--fv-color-bg-primary);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.catalog-preview__actor-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--fv-color-bg-secondary);
-  color: var(--fv-color-text-secondary);
 }
 
 .catalog-preview__reviews {

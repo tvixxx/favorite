@@ -16,6 +16,7 @@ import StateBlock, {
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import type { UserMovie, UserMoviesFilters } from "@/stores";
 import CollectionFiltersBar from "@/components/MoviesFiltersPanel/CollectionFiltersBar.vue";
+import LoadMoreButton from "@/components/LoadMoreButton/LoadMoreButton.vue";
 import MovieCard from "@/components/MovieCard/MovieCard.vue";
 
 const router = useRouter();
@@ -328,14 +329,11 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-if="restCount > 0" class="favorites__more">
-          <a-button
-            size="large"
+          <LoadMoreButton
+            :count="restCount"
             :loading="userMoviesStore.isLoadingMore"
-            @click="showMore"
-          >
-            Показать ещё
-            <span class="favorites__more-count">{{ restCount }}</span>
-          </a-button>
+            @load-more="showMore"
+          />
         </div>
       </div>
     </div>
@@ -429,25 +427,6 @@ onBeforeUnmount(() => {
     justify-content: center;
     margin-top: 8px;
     padding: 8px 0 32px;
-
-    .ant-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      height: 46px;
-      padding: 0 22px;
-      border-radius: var(--fv-radius-control);
-      font-weight: 500;
-    }
-  }
-
-  &__more-count {
-    padding: 1px 8px;
-    border-radius: 999px;
-    background: var(--fv-color-bg-secondary);
-    color: var(--fv-color-text-secondary);
-    font-size: 13px;
-    font-variant-numeric: tabular-nums;
   }
 
   &__empty-state {

@@ -6,6 +6,7 @@ import {
 } from "pinia";
 import { computed, nextTick, reactive } from "vue";
 import { mount, flushPromises } from "@vue/test-utils";
+import { Button } from "ant-design-vue";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import MovieList from "./MovieList.vue";
 import { useUserMoviesStore } from "@/stores/userMovies/userMoviesStore";
@@ -87,6 +88,49 @@ describe("Загрузка коллекции после прямого откр
     wrapper?.unmount();
     disposePinia(getActivePinia()!);
     vi.useRealTimers();
+  });
+
+  it("догружает карточки по кнопке и скрывает её после последней порции", async () => {
+    mocks.fetch
+      .mockResolvedValueOnce({
+        status: 200,
+        data: { items: [row("1")], total: 2 },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        data: { items: [row("2")], total: 2 },
+      });
+
+    wrapper = mount(MovieList, {
+      global: {
+        components: { AButton: Button },
+        stubs: {
+          MovieCard: {
+            props: ["title"],
+            template: '<div class="test-movie">{{ title }}</div>',
+          },
+          BaseIcon: true,
+          PosterGridSkeleton: true,
+          StateBlock: true,
+          CollectionFiltersBar: true,
+          ConfirmDialog: true,
+          WatchTonightModal: true,
+          "a-auto-complete": true,
+          "a-input": true,
+        },
+      },
+    });
+
+    await flushPromises();
+    await vi.runAllTimersAsync();
+    await flushPromises();
+    expect(wrapper.findAll(".test-movie")).toHaveLength(1);
+    expect(wrapper.get(".movie-list__more").text()).toContain("1");
+    await wrapper.get(".movie-list__more button").trigger("click");
+    await flushPromises();
+    expect(mocks.fetch.mock.calls[1][0]).toContain("offset=1");
+    expect(wrapper.findAll(".test-movie")).toHaveLength(2);
+    expect(wrapper.find(".movie-list__more").exists()).toBe(false);
   });
 
   it("показывает только включённые плавающие инструменты и убирает их без пустой панели", async () => {
