@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import {
   type INestApplication,
   type ExecutionContext,
@@ -22,11 +23,17 @@ describe('HTTP границы обратной связи', () => {
     updateStatus: jest.fn().mockResolvedValue({ id, status: 'DONE' }),
   };
 
+  let flag: string | undefined;
+
   beforeEach(async () => {
+    flag = 'true';
     jest.clearAllMocks();
     const module = await Test.createTestingModule({
       controllers: [FeedbackController],
-      providers: [{ provide: FeedbackService, useValue: feedback }],
+      providers: [
+        { provide: FeedbackService, useValue: feedback },
+        { provide: ConfigService, useValue: { get: () => flag } },
+      ],
     })
       .overrideGuard(JwtGuard)
       .useValue({
@@ -58,6 +65,41 @@ describe('HTTP границы обратной связи', () => {
   });
 
   afterEach(async () => app.close());
+
+  it.each([undefined, 'false', 'TRUE', '1'])(
+    'закрывает обращения при выключенном или некорректном флаге %s даже администратору',
+    async (value) => {
+      flag = value;
+      await request(app.getHttpServer())
+        .get('/feedback/capabilities')
+        .expect('Cache-Control', 'no-store')
+        .expect(200, { feedback: false });
+      await request(app.getHttpServer())
+        .post('/feedback')
+        .set('Authorization', 'ADMIN')
+        .send({ type: 'BUG', message: 'Текст обращения' })
+        .expect(503);
+      await request(app.getHttpServer())
+        .get('/feedback')
+        .set('Authorization', 'ADMIN')
+        .expect(503);
+      await request(app.getHttpServer())
+        .patch(`/feedback/${id}/status`)
+        .set('Authorization', 'ADMIN')
+        .send({ status: 'DONE' })
+        .expect(503);
+      expect(feedback.create).not.toHaveBeenCalled();
+      expect(feedback.findAll).not.toHaveBeenCalled();
+      expect(feedback.updateStatus).not.toHaveBeenCalled();
+    },
+  );
+
+  it('сообщает о включённой обратной связи без авторизации', async () => {
+    await request(app.getHttpServer())
+      .get('/feedback/capabilities')
+      .expect('Cache-Control', 'no-store')
+      .expect(200, { feedback: true });
+  });
 
   it('принимает запросы на собственном IPv4 loopback без автоматической перепривязки', async () => {
     const server = app.getHttpServer();

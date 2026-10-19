@@ -4,6 +4,7 @@ import {
   type RouteRecordRaw,
 } from "vue-router";
 import { useMainStore } from "@/state/state";
+import { fetchFeedbackAvailability } from "@/composable/useFeedbackAvailability";
 import {
   LEADERBOARD_HERO_MOVIES,
   LEADERBOARD_HERO_USERS,
@@ -175,6 +176,8 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/feedback",
     name: "feedback",
+    beforeEnter: async () =>
+      (await fetchFeedbackAvailability()) || "/library/collection",
     component: () => import("@/views/pages/FeedbackPage.vue"),
     meta: {
       requiresAuth: true,

@@ -16,8 +16,10 @@ import { currentTheme, setTheme, themes, type Theme } from "@/composable";
 import { createOnboardingDriver } from "@/onboarding/createOnboardingDriver";
 import { setOnboardingDone } from "@/composable/useOnboarding";
 import { useDateTime } from "@/composable/useDateTime";
+import { useFeedbackAvailability } from "@/composable/useFeedbackAvailability";
 
 const { formatInstant } = useDateTime();
+const { enabled: feedbackEnabled } = useFeedbackAvailability();
 
 const router = useRouter();
 const route = useRoute();
@@ -449,7 +451,11 @@ const handleMarkAllRead = async () => {
                 <BaseIcon name="ph:question" :width="18" :height="18" />
                 <span>Помощь и онбординг</span>
               </button>
-              <button class="acctmenu__item" @click="goTo('/feedback')">
+              <button
+                v-if="feedbackEnabled"
+                class="acctmenu__item"
+                @click="goTo('/feedback')"
+              >
                 <BaseIcon name="ph:megaphone" :width="18" :height="18" />
                 <span>Обратная связь</span>
               </button>
@@ -529,6 +535,7 @@ const handleMarkAllRead = async () => {
 
         <button
           type="button"
+          v-if="feedbackEnabled"
           class="drawer-nav__link drawer-nav__link_feedback"
           :class="{ 'is-active': route.path.startsWith('/feedback') }"
           @click="goTo('/feedback')"

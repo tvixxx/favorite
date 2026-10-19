@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Param,
@@ -11,6 +12,11 @@ import {
   Query,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { ConfigService } from '@nestjs/config';
+import {
+  assertFeedbackEnabled,
+  isFeedbackEnabled,
+} from '../common/utils/feedback-availability';
 import {
   ApiCreatedResponse,
   ApiOkResponse,
@@ -26,7 +32,16 @@ import { FeedbackQueryDto } from '../common/dto/list-query.dto';
 @ApiTags('Feedback')
 @Controller('feedback')
 export class FeedbackController {
-  constructor(private readonly feedbackService: FeedbackService) {}
+  constructor(
+    private readonly feedbackService: FeedbackService,
+    private readonly config: ConfigService,
+  ) {}
+
+  @Get('capabilities')
+  @Header('Cache-Control', 'no-store')
+  public capabilities(): { feedback: boolean } {
+    return { feedback: isFeedbackEnabled(this.config) };
+  }
 
   @ApiOperation({
     summary: 'Отправить обращение',
@@ -43,6 +58,7 @@ export class FeedbackController {
     @Body() dto: CreateFeedbackDto,
     @Authorized() user: User,
   ): Promise<{ id: string }> {
+    assertFeedbackEnabled(this.config);
     return this.feedbackService.create(user.id, dto);
   }
 
@@ -58,6 +74,7 @@ export class FeedbackController {
     @Query() query: FeedbackQueryDto,
     @Authorized() user: User,
   ) {
+    assertFeedbackEnabled(this.config);
     return this.feedbackService.findAll(query, user.timezone);
   }
 
@@ -72,6 +89,7 @@ export class FeedbackController {
     @Body() dto: UpdateFeedbackStatusDto,
     @Authorized() user: User,
   ) {
+    assertFeedbackEnabled(this.config);
     return this.feedbackService.updateStatus(id, dto.status, user.id);
   }
 }
