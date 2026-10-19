@@ -1,6 +1,6 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { computed, reactive, ref } from "vue";
-import { Button } from "ant-design-vue";
+import { Button, message } from "ant-design-vue";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WatchStatus, type UserMovie } from "@/stores";
 import MovieDetail from "./MovieDetail.vue";
@@ -147,6 +147,7 @@ describe("Прогресс просмотра в карточке произве
     route.params.id = "movie-id";
     mocks.update.mockReset();
     mocks.fetch.mockReset();
+    vi.mocked(message.error).mockClear();
   });
 
   afterEach(() => {
@@ -452,5 +453,96 @@ describe("Прогресс просмотра в карточке произве
         .get('input[aria-label="На какой серии"]')
         .attributes("aria-valuemax")
     ).toBe("5000");
+  });
+
+  it.each(["быстрое действие", "редактор", "статус"])(
+    "не возвращает прежнюю карточку поздним ответом: %s",
+    async (action) => {
+      await render();
+
+      let finish!: (value: UserMovie) => void;
+
+      mocks.update.mockReturnValueOnce(
+        new Promise<UserMovie>((resolve) => {
+          finish = resolve;
+        })
+      );
+
+      if (action === "редактор") {
+        await edit();
+        await save();
+      } else if (action === "статус") await selectStatus(WatchStatus.COMPLETED);
+      else await button("Увеличить эпизод").trigger("click");
+
+      const next = createMovie({ movieId: "second", currentEpisode: 7 });
+
+      next.movie = { ...next.movie, id: "second", title: "Второй сериал" };
+      mocks.fetch.mockResolvedValueOnce(next);
+      route.params.id = "second";
+      await flushPromises();
+      finish(createMovie({ currentEpisode: 4 }));
+      await flushPromises();
+      expect(wrapper.get("h1").text()).toBe("Второй сериал");
+      expect(wrapper.findAll(".serial-progress__label-value")[1].text()).toBe(
+        "7 / 12"
+      );
+
+      expect(button("Увеличить эпизод").attributes("disabled")).toBeUndefined();
+    }
+  );
+
+  it("поздняя ошибка старого тайтла не мешает сохранению нового", async () => {
+    await render();
+
+    let fail!: (reason: Error) => void;
+    let finishNext!: (value: UserMovie) => void;
+
+    mocks.update.mockReturnValueOnce(
+      new Promise<UserMovie>((_resolve, reject) => {
+        fail = reject;
+      })
+    );
+
+    await button("Увеличить эпизод").trigger("click");
+
+    const next = createMovie({ movieId: "second", currentEpisode: 7 });
+
+    next.movie = { ...next.movie, id: "second", title: "Второй сериал" };
+    mocks.fetch.mockResolvedValueOnce(next);
+    route.params.id = "second";
+    await flushPromises();
+    expect(button("Увеличить эпизод").attributes("disabled")).toBeUndefined();
+    mocks.update.mockReturnValueOnce(
+      new Promise<UserMovie>((resolve) => {
+        finishNext = resolve;
+      })
+    );
+
+    await button("Увеличить эпизод").trigger("click");
+    fail(new Error("late failure"));
+    await flushPromises();
+    expect(message.error).not.toHaveBeenCalled();
+    expect(button("Увеличить эпизод").attributes("disabled")).toBeDefined();
+    finishNext({ ...next, currentEpisode: 8 });
+    await flushPromises();
+    expect(wrapper.findAll(".serial-progress__label-value")[1].text()).toBe(
+      "8 / 12"
+    );
+  });
+
+  it("связывает видимые подписи с уникальными числовыми полями", async () => {
+    await render();
+    await edit();
+
+    const labels = wrapper.findAll("label.serial-progress__edit-label");
+    const ids = labels.map((label) => label.attributes("for"));
+
+    expect(ids.every(Boolean)).toBe(true);
+    expect(new Set(ids).size).toBe(2);
+    labels.forEach((label) => {
+      const input = wrapper.get(`input[id="${label.attributes("for")}"]`);
+
+      expect(input.attributes("aria-label")).toBe(label.text());
+    });
   });
 });

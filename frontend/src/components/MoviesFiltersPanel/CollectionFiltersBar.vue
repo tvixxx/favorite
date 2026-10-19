@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, ref } from "vue";
+import { useDebouncedSearch } from "@/composable/useDebouncedSearch";
 import dayjs, { type Dayjs } from "dayjs";
 import { releaseMonthBound, releaseDateInput } from "@/utils/releaseDate";
 
@@ -56,7 +57,6 @@ const STATUSES: { key: StatusKey; label: string }[] = [
 
 const DEFAULT_RATE: [number, number] = [0, 10];
 
-const searchValue = ref(props.searchQuery);
 const activeStatus = computed<StatusKey>(() =>
   props.filters.seeLater
     ? "later"
@@ -266,28 +266,10 @@ const resetAdvanced = (): void => {
   });
 };
 
-let searchTimer: ReturnType<typeof setTimeout> | undefined;
-
-onBeforeUnmount(() => clearTimeout(searchTimer));
-watch(
+const { searchValue, onSearchInput, onSearchEnter } = useDebouncedSearch(
   () => props.searchQuery,
-  (query) => {
-    clearTimeout(searchTimer);
-    searchValue.value = query;
-  }
+  (query) => props.searchHandler(query)
 );
-
-const onSearchInput = (): void => {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
-    void props.searchHandler(searchValue.value.trim()).catch(() => {});
-  }, 350);
-};
-
-const onSearchEnter = (): void => {
-  clearTimeout(searchTimer);
-  void props.searchHandler(searchValue.value.trim()).catch(() => {});
-};
 </script>
 
 <template>

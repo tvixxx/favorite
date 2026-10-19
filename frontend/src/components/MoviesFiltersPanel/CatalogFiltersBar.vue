@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, ref } from "vue";
+import { useDebouncedSearch } from "@/composable/useDebouncedSearch";
 import dayjs, { type Dayjs } from "dayjs";
 import { releaseMonthBound, releaseDateInput } from "@/utils/releaseDate";
 
@@ -29,7 +30,6 @@ const props = defineProps<{
 
 const moviesStore = useMoviesStore();
 
-const searchValue = ref(moviesStore.searchQuery);
 const selectedGenres = computed<Genre[]>({
   get: () => moviesStore.filters.genres ?? [],
   set: (genres) =>
@@ -155,20 +155,7 @@ const resetAdvanced = (): void => {
   });
 };
 
-let searchTimer: ReturnType<typeof setTimeout> | undefined;
-
-onBeforeUnmount(() => clearTimeout(searchTimer));
-watch(
-  () => moviesStore.searchQuery,
-  (query) => {
-    clearTimeout(searchTimer);
-    searchValue.value = query;
-  }
-);
-
-const triggerSearch = (): void => {
-  const q = searchValue.value.trim();
-
+const triggerSearch = (q: string): void => {
   moviesStore.setCurrentPage(1);
 
   if (q) {
@@ -179,15 +166,10 @@ const triggerSearch = (): void => {
   }
 };
 
-const onSearchInput = (): void => {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(triggerSearch, 350);
-};
-
-const onSearchEnter = (): void => {
-  clearTimeout(searchTimer);
-  triggerSearch();
-};
+const { searchValue, onSearchInput, onSearchEnter } = useDebouncedSearch(
+  () => moviesStore.searchQuery,
+  triggerSearch
+);
 </script>
 
 <template>

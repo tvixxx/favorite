@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { message } from "ant-design-vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import RowsSkeleton from "@/components/Skeleton/RowsSkeleton.vue";
@@ -13,6 +13,7 @@ import { FETCH_METHOD, useFetch } from "@/composable";
 import { PLURAL, pluralize } from "@/utils";
 import { parseListLabels } from "@/utils/list-labels";
 import type { UserListDetail, UserListSummary } from "@/stores/userLists/types";
+import { createRequestGuard } from "@/utils/requestGuard";
 
 const open = defineModel<boolean>({ required: true });
 const props = defineProps<{ userId: string; movieId: string | null }>();
@@ -22,6 +23,9 @@ const newListLabelsInput = ref("");
 const newListColor = ref<string>(DEFAULT_LIST_COLOR);
 const isListActionLoading = ref(false);
 const listIdsWithCurrentMovie = ref<Set<string>>(new Set());
+const presenceRequests = createRequestGuard();
+const addedListIds = new Set<string>();
+let contextRevision = 0;
 const availableUserLists = computed<UserListSummary[]>(() => {
   return userListsStore.sortedLists;
 });
@@ -38,16 +42,23 @@ const loadLists = async (): Promise<void> => {
     return;
   }
 
+  const revision = contextRevision;
+
   try {
     await userListsStore.fetchLists(props.userId);
+    if (revision !== contextRevision) return;
     await refreshMoviePresenceInLists();
   } catch {
-    message.error(userListsStore.isError || "Не удалось загрузить списки");
+    if (revision === contextRevision)
+      message.error(userListsStore.isError || "Не удалось загрузить списки");
   }
 };
 
 const refreshMoviePresenceInLists = async (): Promise<void> => {
-  if (!props.userId || !props.movieId) {
+  const { userId, movieId } = props;
+  const isCurrent = presenceRequests.begin();
+
+  if (!userId || !movieId) {
     listIdsWithCurrentMovie.value = new Set();
 
     return;
@@ -59,7 +70,7 @@ const refreshMoviePresenceInLists = async (): Promise<void> => {
     availableUserLists.value.map(async (list) => {
       try {
         const response = await useFetch<UserListDetail>(
-          `/users/${props.userId}/lists/${list.id}`,
+          `/users/${userId}/lists/${list.id}`,
           {
             method: FETCH_METHOD.get,
           }
@@ -70,7 +81,7 @@ const refreshMoviePresenceInLists = async (): Promise<void> => {
         }
 
         const containsMovie = response.data.items.some(
-          (item) => item.movieId === props.movieId
+          (item) => item.movieId === movieId
         );
 
         if (containsMovie) {
@@ -82,7 +93,9 @@ const refreshMoviePresenceInLists = async (): Promise<void> => {
     })
   );
 
-  listIdsWithCurrentMovie.value = nextPresence;
+  if (isCurrent()) {
+    listIdsWithCurrentMovie.value = new Set([...nextPresence, ...addedListIds]);
+  }
 };
 
 const createListFromModal = async (): Promise<void> => {
@@ -94,6 +107,8 @@ const createListFromModal = async (): Promise<void> => {
 
   isListActionLoading.value = true;
 
+  const revision = contextRevision;
+
   try {
     const created = await userListsStore.createList(props.userId, {
       name: newListName.value.trim(),
@@ -101,17 +116,22 @@ const createListFromModal = async (): Promise<void> => {
       labels: parseListLabels(newListLabelsInput.value),
     });
 
+    if (revision !== contextRevision) return;
+
     newListName.value = "";
     newListLabelsInput.value = "";
     newListColor.value = DEFAULT_LIST_COLOR;
     await refreshMoviePresenceInLists();
-    message.success(`Список «${created.name}» создан`);
+    if (revision === contextRevision)
+      message.success(`Список «${created.name}» создан`);
   } catch (error: unknown) {
+    if (revision !== contextRevision) return;
+
     const text = getApiResponseMessage(error);
 
     message.error(text || "Не удалось создать список");
   } finally {
-    isListActionLoading.value = false;
+    if (revision === contextRevision) isListActionLoading.value = false;
   }
 };
 
@@ -122,18 +142,27 @@ const addMovieToList = async (listId: string): Promise<void> => {
 
   isListActionLoading.value = true;
 
+  const revision = contextRevision;
+  const { userId, movieId } = props;
+
   try {
-    await userListsStore.addMovieToList(props.userId, listId, props.movieId);
+    await userListsStore.addMovieToList(userId, listId, movieId);
+
+    if (revision !== contextRevision) return;
+    addedListIds.add(listId);
 
     listIdsWithCurrentMovie.value = new Set([
       ...listIdsWithCurrentMovie.value,
       listId,
     ]);
 
-    await userListsStore.fetchLists(props.userId);
-    message.success("Тайтл добавлен в список");
+    await userListsStore.fetchLists(userId);
+    if (revision === contextRevision)
+      message.success("Тайтл добавлен в список");
   } catch (error: unknown) {
+    if (revision !== contextRevision) return;
     if (isApiConflictError(error)) {
+      addedListIds.add(listId);
       listIdsWithCurrentMovie.value = new Set([
         ...listIdsWithCurrentMovie.value,
         listId,
@@ -148,17 +177,30 @@ const addMovieToList = async (listId: string): Promise<void> => {
 
     message.error(text || "Не удалось добавить фильм в список");
   } finally {
-    isListActionLoading.value = false;
+    if (revision === contextRevision) isListActionLoading.value = false;
   }
 };
 
 watch(
-  open,
-  (value) => {
+  [open, () => props.userId, () => props.movieId],
+  ([value, userId, movieId], previous) => {
+    contextRevision++;
+    presenceRequests.invalidate();
+    addedListIds.clear();
+    isListActionLoading.value = false;
+    if (userId !== previous?.[1] || movieId !== previous?.[2]) {
+      listIdsWithCurrentMovie.value = new Set();
+    }
+
     if (value) void loadLists();
   },
-  { immediate: true }
+  { immediate: true, flush: "sync" }
 );
+
+onBeforeUnmount(() => {
+  contextRevision++;
+  presenceRequests.invalidate();
+});
 </script>
 
 <template>

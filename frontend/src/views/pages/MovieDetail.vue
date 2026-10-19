@@ -1917,11 +1917,7 @@ const openListsModal = (): void => {
 }
 
 .detail-section {
-  margin-top: 22px;
-  background: var(--fv-color-bg-primary);
-  border-radius: var(--fv-radius-lg);
-  padding: 26px;
-  box-shadow: var(--fv-shadow-low);
+  @include detailSection;
 
   &__header {
     display: flex;
