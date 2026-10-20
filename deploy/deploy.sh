@@ -5,6 +5,11 @@
 #   ./deploy.sh --no-pull  # собрать из того, что уже лежит на сервере
 set -euo pipefail
 
+if command -v flock >/dev/null 2>&1 && [[ "${FAVKINO_MANUAL_DEPLOY_LOCKED:-}" != 1 ]]; then
+  exec flock --close -w 900 /run/lock/favkino-deploy-backup.lock \
+    env FAVKINO_MANUAL_DEPLOY_LOCKED=1 /bin/bash "${BASH_SOURCE[0]}" "$@"
+fi
+
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 require_media_config
 

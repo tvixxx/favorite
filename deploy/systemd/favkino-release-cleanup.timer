@@ -1,0 +1,11 @@
+[Unit]
+Description=Check Favkino release retention every 15 minutes
+
+[Timer]
+OnCalendar=*-*-* *:10/15:00
+RandomizedDelaySec=60
+Persistent=true
+Unit=favkino-release-cleanup.service
+
+[Install]
+WantedBy=timers.target

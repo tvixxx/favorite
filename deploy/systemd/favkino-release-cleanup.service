@@ -1,0 +1,10 @@
+[Unit]
+Description=Rotate Favkino release archives and unused application images
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+UMask=0077
+TimeoutStartSec=20min
+ExecStart=/usr/bin/flock --close -w 900 /run/lock/favkino-deploy-backup.lock /usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /usr/bin/node /usr/local/lib/favkino-maintenance/rotate-releases.cjs --apply
