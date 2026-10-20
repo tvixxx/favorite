@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Blob as NativeBlob } from "node:buffer";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -187,10 +187,6 @@ describe("PDF коллекции", () => {
     expect((text.match(/\/Type \/Page\b/g) ?? []).length).toBeGreaterThan(1);
     expect(text).toMatch(/\/FontFile[23]\b/);
     expect(result.missingPosters).toBe(0);
-    await writeFile(
-      "/private/tmp/favourite-collection-pdf-verified.pdf",
-      bytes
-    );
   });
 
   it("сохраняет документ с иллюстрированными обложками, если постеров нет", async () => {
@@ -206,10 +202,6 @@ describe("PDF коллекции", () => {
 
     expect(result.missingPosters).toBe(2);
     expect(result.blob.size).toBeGreaterThan(1000);
-    await writeFile(
-      "/private/tmp/favourite-illustrated-posters.pdf",
-      Buffer.from(await result.blob.arrayBuffer())
-    );
   });
 
   it("не формирует документ после отмены", async () => {
