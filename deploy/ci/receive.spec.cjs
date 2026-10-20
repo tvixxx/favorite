@@ -86,11 +86,19 @@ test("успех скачивает только digest, проверяет об
   receive(f.request, f.execute, f.files);
   const pulls = f.calls.filter((call) => call.includes("pull"));
   assert.equal(pulls.length, 3);
-  assert.ok(
-    pulls.every(
-      (call) =>
-        call.at(-1).startsWith("ghcr.io/tvixxx/favorite-") &&
-        call.at(-1).includes("@sha256:"),
+  const expectedImages = {
+    backend: "ghcr.io/tvixxx/favkino-private-backend@" + f.request.images.backend,
+    migrate: "ghcr.io/tvixxx/favkino-private-migrate@" + f.request.images.migrate,
+    web: "ghcr.io/tvixxx/favkino-private-web@" + f.request.images.web,
+  };
+  assert.deepEqual(pulls.map((call) => call.at(-1)), Object.values(expectedImages));
+  const imageConfig = f.writes.find((write) =>
+    write.file.endsWith("ci-images.json.tmp"),
+  );
+  assert.deepEqual(
+    JSON.parse(imageConfig.value).services,
+    Object.fromEntries(
+      Object.entries(expectedImages).map(([service, image]) => [service, { image }]),
     ),
   );
   const snapshot = f.calls.findIndex(

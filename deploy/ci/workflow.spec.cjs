@@ -22,6 +22,18 @@ test("workflow допускает production только из main после �
   assert.equal(w.jobs.deploy.concurrency.queue, "max");
 });
 
+test("публикация использует новые пакеты вместо прежних публичных", () => {
+  const images = w.jobs.images.steps.filter((step) => step.with?.push);
+  assert.deepEqual(
+    Object.fromEntries(images.map((step) => [step.id, step.with.tags])),
+    {
+      migrate: "ghcr.io/tvixxx/favkino-private-migrate:${{ github.sha }}",
+      backend: "ghcr.io/tvixxx/favkino-private-backend:${{ github.sha }}",
+      web: "ghcr.io/tvixxx/favkino-private-web:${{ github.sha }}",
+    },
+  );
+});
+
 test("frontend-зависимости PostgreSQL-тестов доступны до backend lint", () => {
   const steps = w.jobs.checks.steps;
   const installFrontend = steps.findIndex((step) =>

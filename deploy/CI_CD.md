@@ -29,6 +29,31 @@ Actions закреплены за SHA, токен публикации имее�
 токен задания деплоя имеет только `contents:read` и `packages:read`.
 Production env приложения, S3-ключи и закрытый GPG-ключ в GitHub не передаются.
 
+## Имена пакетов и приватность
+
+Workflow публикует образы в `ghcr.io/tvixxx`:
+`favkino-private-backend`, `favkino-private-migrate`, `favkino-private-web`.
+Обработчик деплоя скачивает только эти имена по digest.
+Имена контейнеров `favorite-backend` и `favorite-web` сохраняются.
+
+Прежние `favorite-backend`, `favorite-migrate`, `favorite-web` оказались
+публичными. Этот переход не удаляет и не закрывает их.
+Слово `private` в новом имени не задаёт видимость. Для нового пакета GitHub
+по умолчанию использует Private, но перед публикацией нужно проверить, что имя
+свободно или уже приватное, а после публикации подтвердить Private и связь
+с `tvixxx/favorite`. Public обратно в Private не переключается.
+Для скачивания приватных образов сохраняется существующий временный
+`GITHUB_TOKEN`, постоянный PAT не требуется.
+
+При переходе на новые имена оставить repository variable
+`DEPLOY_ENABLED=false` до проверки пакетов и обновления обработчика на VPS.
+Установленная root-owned копия `/usr/local/lib/favkino-deploy/receive.cjs`
+не обновляется через git pull. Оператор должен отдельно сверить её с прежней
+версией, сохранить закрытую резервную копию и установить проверенный новый
+`deploy/ci/receive.cjs` с правами `0600 root:root` при неработающем
+`favkino-deploy.service`. Затем сверить SHA-256 и выполнить `node --check`.
+Entrypoint, sudoers и systemd unit при этой смене имён не меняются.
+
 ## Доступ и временные данные
 
 Отдельный SSH-ключ CI добавляется с фиксированной командой:
@@ -96,8 +121,8 @@ Docker login использует stdin и отдельный root-only RuntimeD
    GHCR хранение и трафик сейчас бесплатны, минуты Actions зависят от
    публичности репозитория, типа runner и плана аккаунта.
    Workflow не создаёт Actions artifacts или постоянные caches.
-9. До первого push проверить имена GHCR-пакетов `favorite-backend`,
-   `favorite-migrate`, `favorite-web` владельца tvixxx. Они должны отсутствовать
+9. До первого push проверить имена GHCR-пакетов `favkino-private-backend`,
+   `favkino-private-migrate`, `favkino-private-web` владельца tvixxx. Они должны отсутствовать
    или быть приватными. При существующем public-пакете остановиться и отдельно
    согласовать другие имена в workflow и receiver.
    Только после отдельного решения оператора закоммитить и опубликовать код.

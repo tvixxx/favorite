@@ -99,7 +99,7 @@ function receive(request, execute = execFileSync, files = fs) {
   const images = Object.fromEntries(
     SERVICES.map((service) => [
       service,
-      "ghcr.io/tvixxx/favorite-" + service + "@" + request.images[service],
+      "ghcr.io/tvixxx/favkino-private-" + service + "@" + request.images[service],
     ]),
   );
   try {
