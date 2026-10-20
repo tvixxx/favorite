@@ -13,12 +13,18 @@ export default defineConfig(({ command }) => ({
       : []),
     VitePWA({
       registerType: "prompt",
-      includeAssets: ["pwa-192.png", "pwa-512.png"],
+      includeAssets: [
+        "favicon.ico",
+        "favicon.svg",
+        "apple-touch-icon.png",
+        "pwa-192.png",
+        "pwa-512.png",
+      ],
       manifest: {
         name: "Favorite — медиатека и журнал просмотров",
         short_name: "Favorite",
         description: "Личная медиатека, коллекция, списки и журнал просмотров.",
-        theme_color: "#1677ff",
+        theme_color: "#ff0032",
         background_color: "#ffffff",
         display: "standalone",
         scope: "/",

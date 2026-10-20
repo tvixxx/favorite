@@ -1,0 +1,4 @@
+interface:
+  display_name: "Деплой FavouriteApp"
+  short_description: "Запуск и проверка production-деплоя FavouriteApp"
+  default_prompt: "Используй $favkino-deploy, чтобы задеплоить опубликованный main FavouriteApp и проверить результат."
