@@ -1,0 +1,14 @@
+[Unit]
+Description=Deploy verified Favkino main images
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/favorite/deploy
+UMask=0077
+RuntimeDirectory=favkino-deploy-job
+RuntimeDirectoryMode=0700
+TimeoutStartSec=60min
+ExecStart=/usr/bin/flock --close -w 900 /run/lock/favkino-deploy-backup.lock /usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /usr/bin/node /usr/local/lib/favkino-deploy/receive.cjs apply
+ExecStopPost=/usr/bin/rm -f /run/favkino-deploy-request.json

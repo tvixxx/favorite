@@ -21,6 +21,7 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const { randomBytes } = require('node:crypto');
+const { parseStamp, pickKeepers } = require('./retention.cjs');
 
 const BACKEND_DIR = path.resolve(__dirname, '..', '..');
 
@@ -75,12 +76,6 @@ function stamp(date) {
   const iso = date.toISOString();
 
   return `${iso.slice(0, 10)}T${iso.slice(11, 13)}${iso.slice(14, 16)}Z`;
-}
-
-function parseStamp(fileName) {
-  const m = fileName.match(/(\d{4}-\d{2}-\d{2})T(\d{2})(\d{2})Z/);
-
-  return m ? new Date(`${m[1]}T${m[2]}:${m[3]}:00Z`) : null;
 }
 
 function dump(target) {
@@ -141,58 +136,12 @@ function upload(file) {
   return uri;
 }
 
-/**
- * Ротация «дед-отец-сын»: держим все дампы за последние KEEP_HOURLY часов,
- * затем по одному (самому свежему) на день, неделю и месяц.
- */
-function pickKeepers(files) {
-  const now = Date.now();
-  const keep = new Set();
-  const newestPer = new Map();
-
-  const dated = files
-    .map((name) => ({ name, at: parseStamp(name) }))
-    .filter((f) => f.at)
-    .sort((a, b) => b.at - a.at);
-
-  for (const file of dated) {
-    const ageHours = (now - file.at.getTime()) / 36e5;
-
-    if (ageHours <= CONFIG.keep.hourly) {
-      keep.add(file.name);
-    }
-
-    const iso = file.at.toISOString();
-    const day = iso.slice(0, 10);
-    const month = iso.slice(0, 7);
-    // Номер недели считаем от эпохи — достаточно, чтобы группировать по 7 дней
-    const week = Math.floor(file.at.getTime() / (7 * 864e5));
-
-    for (const [bucket, key, limit] of [
-      ['day', day, CONFIG.keep.daily],
-      ['week', week, CONFIG.keep.weekly],
-      ['month', month, CONFIG.keep.monthly],
-    ]) {
-      const seen = newestPer.get(bucket) ?? new Map();
-
-      if (!seen.has(key) && seen.size < limit) {
-        seen.set(key, file.name);
-        keep.add(file.name);
-      }
-
-      newestPer.set(bucket, seen);
-    }
-  }
-
-  return keep;
-}
-
 function rotate() {
   const files = fs
     .readdirSync(CONFIG.dir)
     .filter((name) => name.startsWith(`${CONFIG.db}-`) && parseStamp(name));
 
-  const keep = pickKeepers(files);
+  const keep = pickKeepers(files, CONFIG.keep);
   const removed = [];
 
   for (const name of files) {

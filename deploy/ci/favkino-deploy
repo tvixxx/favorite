@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+[[ "$#" -eq 0 ]]
+exec /usr/bin/flock --close -n /run/favkino-ci-submit.lock \
+  /usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+  /usr/bin/node /usr/local/lib/favkino-deploy/receive.cjs submit

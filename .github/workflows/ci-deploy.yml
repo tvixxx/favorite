@@ -1,0 +1,171 @@
+name: CI and production deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci_only_not_production
+          POSTGRES_DB: ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci -d ci"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://ci:ci_only_not_production@127.0.0.1:5432/ci
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22.23.3
+      - name: Install Yarn Classic
+        run: npm install --global yarn@1.22.22 --force
+      - name: Backend dependencies, Prisma and empty database migrations
+        run: |
+          yarn --cwd backend install --frozen-lockfile --non-interactive
+          yarn --cwd backend prisma generate
+          yarn --cwd backend prisma migrate deploy
+      - name: Backend checks
+        run: |
+          yarn --cwd backend lint:check
+          yarn --cwd backend test --runInBand
+          yarn --cwd backend build
+      - name: Frontend checks
+        run: |
+          yarn --cwd frontend install --frozen-lockfile --non-interactive
+          yarn --cwd frontend lint
+          yarn --cwd frontend test:unit --run
+          yarn --cwd frontend build
+      - name: Deployment and backup regressions
+        run: |
+          node --test deploy/*.spec.cjs deploy/ci/*.spec.cjs backend/scripts/backup/*.spec.cjs
+          for script in deploy/*.sh deploy/ci/favkino-deploy; do bash -n "$script"; done
+
+  images:
+    needs: checks
+    if: github.repository == 'tvixxx/favorite' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      backend: ${{ steps.backend.outputs.digest }}
+      migrate: ${{ steps.migrate.outputs.digest }}
+      web: ${{ steps.web.outputs.digest }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Migration image
+        id: migrate
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: backend
+          target: build
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/tvixxx/favorite-migrate:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/tvixxx/favorite
+            org.opencontainers.image.revision=${{ github.sha }}
+      - name: Backend image
+        id: backend
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: backend
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/tvixxx/favorite-backend:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/tvixxx/favorite
+            org.opencontainers.image.revision=${{ github.sha }}
+      - name: Web image
+        id: web
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: frontend
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/tvixxx/favorite-web:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/tvixxx/favorite
+            org.opencontainers.image.revision=${{ github.sha }}
+
+  deploy:
+    needs: images
+    if: github.repository == 'tvixxx/favorite' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    environment:
+      name: production
+      url: https://favkino.ru
+    permissions:
+      contents: read
+      packages: read
+    concurrency:
+      group: favkino-production-deploy
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - name: Submit verified images over SSH
+        shell: bash
+        env:
+          CI_SSH_KEY: ${{ secrets.FAVKINO_SSH_KEY }}
+          CI_KNOWN_HOSTS: ${{ vars.FAVKINO_KNOWN_HOSTS }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ACTOR: ${{ github.actor }}
+          RELEASE_SHA: ${{ github.sha }}
+          BACKEND_DIGEST: ${{ needs.images.outputs.backend }}
+          MIGRATE_DIGEST: ${{ needs.images.outputs.migrate }}
+          WEB_DIGEST: ${{ needs.images.outputs.web }}
+        run: |
+          set -euo pipefail
+          test -n "$CI_SSH_KEY"
+          test -n "$CI_KNOWN_HOSTS"
+          work="$(mktemp -d)"
+          trap 'rm -rf "$work"' EXIT
+          chmod 700 "$work"
+          printf '%s\n' "$CI_SSH_KEY" > "$work/key"
+          printf '%s\n' "$CI_KNOWN_HOSTS" > "$work/known_hosts"
+          chmod 600 "$work/key" "$work/known_hosts"
+          unset CI_SSH_KEY
+          ssh-keygen -y -P "" -f "$work/key" >/dev/null
+          node -e '
+            process.stdout.write(JSON.stringify({
+              sha: process.env.RELEASE_SHA,
+              actor: process.env.GH_ACTOR,
+              token: process.env.GH_TOKEN,
+              images: {
+                backend: process.env.BACKEND_DIGEST,
+                migrate: process.env.MIGRATE_DIGEST,
+                web: process.env.WEB_DIGEST
+              }
+            }));
+          ' | ssh -T -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$work/known_hosts" \
+            -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=10 \
+            -i "$work/key" deploy@201.24.62.199 \
+            /usr/bin/sudo -n /usr/local/sbin/favkino-deploy
