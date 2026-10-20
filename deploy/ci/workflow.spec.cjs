@@ -22,6 +22,24 @@ test("workflow допускает production только из main после �
   assert.equal(w.jobs.deploy.concurrency.queue, "max");
 });
 
+test("frontend-зависимости PostgreSQL-тестов доступны до backend lint", () => {
+  const steps = w.jobs.checks.steps;
+  const installFrontend = steps.findIndex((step) =>
+    step.run?.includes("yarn --cwd frontend install"),
+  );
+  const lintBackend = steps.findIndex((step) =>
+    step.run?.includes("yarn --cwd backend lint:check"),
+  );
+  assert.ok(
+    installFrontend >= 0,
+    "В CI должна быть установка frontend-зависимостей",
+  );
+  assert.ok(
+    lintBackend > installFrontend,
+    "backend/test импортирует socket.io-client из frontend/node_modules до запуска линтера",
+  );
+});
+
 test("права токена ограничены заданиями, actions закреплены за commit SHA", () => {
   assert.equal(w.permissions.contents, "read");
   assert.equal(w.jobs.deploy.permissions.packages, "read");

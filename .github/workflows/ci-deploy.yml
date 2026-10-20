@@ -41,6 +41,8 @@ jobs:
           yarn --cwd backend install --frozen-lockfile --non-interactive
           yarn --cwd backend prisma generate
           yarn --cwd backend prisma migrate deploy
+      - name: Frontend dependencies
+        run: yarn --cwd frontend install --frozen-lockfile --non-interactive
       - name: Backend checks
         run: |
           yarn --cwd backend lint:check
@@ -48,7 +50,6 @@ jobs:
           yarn --cwd backend build
       - name: Frontend checks
         run: |
-          yarn --cwd frontend install --frozen-lockfile --non-interactive
           yarn --cwd frontend lint
           yarn --cwd frontend test:unit --run
           yarn --cwd frontend build
