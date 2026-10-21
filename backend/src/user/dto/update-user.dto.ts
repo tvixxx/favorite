@@ -18,6 +18,18 @@ import { Transform } from 'class-transformer';
 import { PlainText } from '../../common/validation/plain-text';
 
 export class UpdateUserDto {
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string'
+      ? value.trim().replace(/^@/, '').toLowerCase() || null
+      : value,
+  )
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z0-9_]{3,32}$/, {
+    message: 'Логин: 3–32 латинские буквы, цифры или знак _',
+  })
+  username?: string | null;
+
   @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
   @IsBoolean()
   quickAddEnabled?: boolean;

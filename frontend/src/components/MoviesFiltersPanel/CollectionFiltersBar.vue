@@ -30,7 +30,7 @@ const props = withDefaults(
     /** Показывать статус-пилюли (коллекция — да; избранное — нет) */
     showStatus?: boolean;
     searchPlaceholder?: string;
-    /** Сколько тайтлов сейчас показано — число в кнопке «Показать» */
+    /** Сколько произведений сейчас показано — число в кнопке «Показать» */
     resultCount?: number;
   }>(),
   {
@@ -375,6 +375,11 @@ const { searchValue, onSearchInput, onSearchEnter } = useDebouncedSearch(
   margin-top: 16px;
   width: 100%;
 
+  // driver.js обрезает родителя подсветки, но строка статусов выходит до края экрана.
+  &:has(> .collection-filters__row.driver-active-element) {
+    overflow: visible !important;
+  }
+
   &__row {
     // До планшета: поиск и кнопка-иконка в одной строке, статусы — во второй
     display: grid;
@@ -385,6 +390,10 @@ const { searchValue, onSearchInput, onSearchEnter } = useDebouncedSearch(
     align-items: center;
     gap: 10px;
     width: 100%;
+
+    @include mediaMax(767.98px) {
+      @include edgeContainer;
+    }
 
     @include mediaTablet {
       display: flex;

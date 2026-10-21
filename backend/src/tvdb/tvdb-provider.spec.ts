@@ -35,6 +35,47 @@ describe('Источник TheTVDB', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it.each([undefined, ''])(
+    'при настроенном ключе включает поиск без отдельного флага %s',
+    async (flag) => {
+      mockFetch((url) =>
+        url.endsWith('/login')
+          ? envelope({ token: 'test-token' })
+          : envelope([
+              {
+                tvdb_id: '6187',
+                type: 'movie',
+                name: 'Dune',
+                translations: { rus: 'Дюна' },
+              },
+            ]),
+      );
+      const provider = new TvdbProvider(
+        configuration({
+          TVDB_API_KEY: 'test-key',
+          ...(flag === undefined ? {} : { CATALOG_TVDB_ENABLED: flag }),
+        }),
+      );
+      expect(await provider.search('Дюна', 'movie')).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: '6187' })]),
+      );
+    },
+  );
+
+  it('явный запрет сохраняет выключенный поиск даже при наличии ключа', async () => {
+    const fetch = jest.spyOn(globalThis, 'fetch');
+    const provider = new TvdbProvider(
+      configuration({
+        TVDB_API_KEY: 'test-key',
+        CATALOG_TVDB_ENABLED: 'false',
+      }),
+    );
+    await expect(provider.search('Дюна', 'movie')).rejects.toMatchObject({
+      status: 503,
+    });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it('не принимает ошибочный флаг и включение без ключа', () => {
     expect(
       () => new TvdbProvider(configuration({ CATALOG_TVDB_ENABLED: 'yes' })),

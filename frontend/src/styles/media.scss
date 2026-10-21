@@ -13,6 +13,12 @@
   }
 }
 
+@mixin mediaCoarsePointer {
+  @media (pointer: coarse) {
+    @content;
+  }
+}
+
 @mixin mediaHover {
   @media (hover: hover) {
     @content;

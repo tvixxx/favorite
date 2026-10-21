@@ -77,6 +77,17 @@ export class MessageGateway
     return Promise.resolve();
   }
 
+  public emitFriendshipChanged(userIds: string[]): void {
+    try {
+      for (const id of new Set(userIds))
+        this.server.to(`user:${id}`).emit('friendship:changed');
+    } catch {
+      this.logger.warn(
+        'Связь сохранена, обновление списка друзей по WebSocket не доставлено',
+      );
+    }
+  }
+
   public disconnectUser(userId: string): void {
     this.server.in(`user:${userId}`).disconnectSockets(true);
   }
@@ -132,20 +143,20 @@ export class MessageGateway
       }
 
       const sockets = this.connections.get(userId) ?? new Set<string>();
-      const wasOnline = sockets.size > 0;
 
       sockets.add(client.id);
       this.connections.set(userId, sockets);
       await this.updatePresence(userId);
 
-      if (wasOnline || !this.connections.has(userId)) {
+      if (!this.connections.has(userId)) {
         return;
       }
 
-      // Уведомить друзей что пользователь онлайн (один запрос вместо N+1)
-      const friends = await this.friendshipService.getFriends(userId);
-      const onlineFriends = await this.userStatusService.getOnlineFriends(
-        friends.map((f) => f.friend.id),
+      const onlineFriends = await this.onlineFriends(userId);
+      if (!client.connected) return;
+      client.emit(
+        'presence:snapshot',
+        onlineFriends.map((status) => status.userId),
       );
 
       for (const status of onlineFriends) {
@@ -205,6 +216,30 @@ export class MessageGateway
     } catch {
       this.logger.warn('Не удалось обновить статус чата');
     }
+  }
+
+  private async onlineFriends(userId: string) {
+    const friends = await this.friendshipService.getFriends(userId);
+    return this.userStatusService.getOnlineFriends(
+      friends.map((friend) => friend.friend.id),
+    );
+  }
+
+  @SubscribeMessage('presence:sync')
+  public async syncPresence(@ConnectedSocket() client: ChatSocket) {
+    if (
+      !client.data.userId ||
+      !this.allowEvent(`${client.data.userId}:presence`, 30)
+    )
+      return;
+    const userId = await this.getAuthorizedUserId(client);
+    if (!userId) return;
+    const friends = await this.onlineFriends(userId);
+    if (client.connected)
+      client.emit(
+        'presence:snapshot',
+        friends.map((status) => status.userId),
+      );
   }
 
   @SubscribeMessage('message:send')

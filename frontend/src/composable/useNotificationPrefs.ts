@@ -33,6 +33,7 @@ export function isNotificationTypeEnabled(type: NotificationType): boolean {
       return getUserPreference(user, "notifyNewMessages");
     case "FRIEND_REQUEST":
     case "FRIEND_ACCEPTED":
+    case "FRIEND_REJECTED":
       return getUserPreference(user, "notifyFriendRequests");
     default:
       return true;

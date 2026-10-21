@@ -22,6 +22,8 @@ import { avatarGradient } from "@/composable/useAvatarGradient";
 import ImagePicker from "@/components/ImagePicker/ImagePicker.vue";
 import type { ImageSelection } from "@/services/media";
 import TimezoneSelect from "@/components/TimezoneSelect/TimezoneSelect.vue";
+import { timezoneLabel } from "@/utils/timezoneLabel";
+import { getApiResponseMessage } from "@/services/api";
 
 const store = useMainStore();
 const router = useRouter();
@@ -35,7 +37,7 @@ const showAnalyticsSkeleton = useMinLoading(
 
 const isModalVisible = ref(false);
 const isSaving = ref(false);
-const editForm = ref({ fullName: "", timezone: "UTC" });
+const editForm = ref({ fullName: "", username: "", timezone: "UTC" });
 const editAvatar = ref<ImageSelection | null>(null);
 const avatarUploading = ref(false);
 
@@ -73,14 +75,6 @@ const initials = computed(() => {
     .split(" ")
     .map((n) => n.charAt(0).toUpperCase())
     .join("");
-});
-
-const shortId = computed(() => {
-  if (user.value?.id) {
-    return user.value?.id.split("-")[0];
-  }
-
-  return user.value?.id;
 });
 
 const analytics = computed(() => userMoviesStore.analytics);
@@ -159,6 +153,8 @@ const saveProfile = async () => {
   try {
     await store.updateProfile({
       fullName: name,
+      username:
+        editForm.value.username.trim().replace(/^@/, "").toLowerCase() || null,
       timezone: editForm.value.timezone,
       avatarAssetId: editAvatar.value?.assetId ?? null,
       avatarUrl: editAvatar.value?.assetId
@@ -168,8 +164,10 @@ const saveProfile = async () => {
 
     message.success("Профиль сохранён");
     isModalVisible.value = false;
-  } catch {
-    message.error("Не удалось сохранить профиль");
+  } catch (error) {
+    message.error(
+      getApiResponseMessage(error) ?? "Не удалось сохранить профиль"
+    );
   } finally {
     isSaving.value = false;
   }
@@ -177,6 +175,7 @@ const saveProfile = async () => {
 
 const showEditDisplayNameModal = () => {
   editForm.value.fullName = fullName.value;
+  editForm.value.username = user.value?.username ?? "";
   editForm.value.timezone = user.value?.timezone ?? "UTC";
   editAvatar.value = user.value?.avatarUrl
     ? {
@@ -240,6 +239,9 @@ onMounted(async () => {
               {{ fullName }}
             </h1>
             <div v-if="user" class="profile-hero__meta">
+              <span v-if="user.username" class="profile-hero__meta-item">{{
+                user.username
+              }}</span>
               <span class="profile-hero__meta-item">
                 <BaseIcon
                   name="ph:envelope-simple"
@@ -248,19 +250,8 @@ onMounted(async () => {
                 {{ user.email }}
               </span>
               <span class="profile-hero__meta-item"
-                >Часовой пояс: {{ user.timezone ?? "UTC" }}</span
+                >Часовой пояс: {{ timezoneLabel(user.timezone ?? "UTC") }}</span
               >
-              <span
-                class="profile-hero__meta-item profile-hero__meta-item--muted"
-              >
-                <BaseIcon
-                  name="ph:identification-card"
-                  class="profile-hero__meta-icon"
-                />
-                <ATooltip :title="user.id" placement="top">
-                  <span class="profile-hero__short-id">{{ shortId }}</span>
-                </ATooltip>
-              </span>
             </div>
           </div>
           <button
@@ -569,6 +560,25 @@ onMounted(async () => {
 
         <div class="settings-modal__fields">
           <TimezoneSelect v-model="editForm.timezone" :disabled="isSaving" />
+          <label class="settings-modal__field">
+            <span class="settings-modal__label">Уникальный ник</span>
+            <a-input
+              v-model:value="editForm.username"
+              :maxlength="33"
+              :disabled="isSaving"
+              autocomplete="off"
+              autocapitalize="none"
+              :spellcheck="false"
+              placeholder="Например: movie_fan"
+              aria-label="Уникальный ник"
+              size="large"
+            />
+            <span class="settings-modal__label"
+              >Необязательно. Уникальный ник для поиска друзей, 3–32 латинские
+              буквы, цифры или _. Имя может повторяться, ник — нет. Для входа
+              используется почта.</span
+            >
+          </label>
           <label class="settings-modal__field">
             <span class="settings-modal__label">Имя</span>
             <a-input

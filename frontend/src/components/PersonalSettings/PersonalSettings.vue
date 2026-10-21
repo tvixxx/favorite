@@ -22,7 +22,8 @@ const groups: Array<{
       {
         key: "quickAddEnabled",
         label: "Быстрый ввод",
-        description: "Плавающая кнопка для добавления тайтлов из каталога.",
+        description:
+          "Кнопка «Из каталога» для быстрого добавления фильмов и сериалов в коллекцию.",
       },
       {
         key: "watchTonightEnabled",
@@ -38,6 +39,7 @@ const groups: Array<{
   },
   {
     title: "Уведомления",
+    tour: "notification-settings",
     items: [
       { key: "notifyNewMessages", label: "Новые сообщения" },
       { key: "notifyFriendRequests", label: "Запросы в друзья" },
@@ -84,6 +86,7 @@ async function savePreference(
         <div
           v-for="item in group.items"
           :key="item.key"
+          :data-tour="`setting-${item.key}`"
           class="personal-settings__row"
         >
           <div class="personal-settings__text">

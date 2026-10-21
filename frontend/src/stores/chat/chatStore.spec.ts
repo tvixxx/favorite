@@ -7,6 +7,8 @@ import {
 import { ref } from "vue";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useChatStore } from "./chatStore";
+import { useUserStatusStore } from "../userStatus/userStatusStore";
+import { useFriendsStore } from "../friends/friendsStore";
 
 const mocks = vi.hoisted(() => ({ io: vi.fn(), useFetch: vi.fn() }));
 const token = ref<string | null>("first-access");
@@ -18,16 +20,11 @@ vi.mock("@/composable", () => ({
   FETCH_METHOD: { get: "GET" },
 }));
 
-vi.mock("../userStatus/userStatusStore", () => ({
-  useUserStatusStore: () => ({
-    setUserOnline: vi.fn(),
-    setUserOffline: vi.fn(),
-    clearStatuses: vi.fn(),
-  }),
-}));
-
 vi.mock("../notifications/notificationsStore", () => ({
-  useNotificationsStore: () => ({ applyIncoming: vi.fn() }),
+  useNotificationsStore: () => ({
+    applyIncoming: vi.fn(),
+    hydrate: vi.fn().mockResolvedValue(undefined),
+  }),
 }));
 
 describe("Авторизация соединения чата", () => {
@@ -45,7 +42,171 @@ describe("Авторизация соединения чата", () => {
     });
   });
 
-  afterEach(() => disposePinia(getActivePinia()!));
+  afterEach(() => {
+    disposePinia(getActivePinia()!);
+    vi.restoreAllMocks();
+  });
+
+  it("при возвращении во вкладку подтягивает пропущенные сообщения и обновляет присутствие", async () => {
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+
+    const missed = {
+      id: "missed",
+      senderId: "peer-id",
+      receiverId: "user-id",
+      content: "Пока вас не было",
+      isRead: false,
+      createdAt: "2026-10-20T12:00:00Z",
+    };
+
+    mocks.useFetch.mockImplementation(async (url: string) => ({
+      status: 200,
+      data: url.includes("/messages/peer-id") ? [missed] : [],
+    }));
+
+    const store = useChatStore();
+
+    store.connect("user-id");
+    store.socket!.connected = true;
+    store.currentChatUserId = "peer-id";
+    document.dispatchEvent(new Event("visibilitychange"));
+    await vi.waitFor(() =>
+      expect(store.currentMessages.map((item) => item.id)).toEqual(["missed"])
+    );
+
+    expect(store.socket!.emit).toHaveBeenCalledWith("presence:sync");
+  });
+
+  it("возврат из фона не ждёт зависший запрос предыдущего подключения", async () => {
+    let visibility: DocumentVisibilityState = "visible";
+
+    vi.spyOn(document, "visibilityState", "get").mockImplementation(
+      () => visibility
+    );
+
+    let finish!: (value: unknown) => void;
+    let messagesRequested = 0;
+    const fresh = {
+      id: "fresh",
+      senderId: "peer-id",
+      receiverId: "user-id",
+      content: "После возврата",
+      isRead: false,
+      createdAt: "2026-10-21T12:00:00Z",
+    };
+
+    mocks.useFetch.mockImplementation((url: string) => {
+      if (url.includes("/messages/peer-id") && ++messagesRequested === 1)
+        return new Promise((resolve) => {
+          finish = resolve;
+        });
+
+      return Promise.resolve({
+        status: 200,
+        data: url.includes("/messages/peer-id") ? [fresh] : [],
+      });
+    });
+
+    const store = useChatStore();
+
+    store.connect("user-id");
+    store.socket!.connected = true;
+    store.currentChatUserId = "peer-id";
+    document.dispatchEvent(new Event("visibilitychange"));
+    await vi.waitFor(() => expect(messagesRequested).toBe(1));
+    visibility = "hidden";
+    document.dispatchEvent(new Event("visibilitychange"));
+    visibility = "visible";
+    document.dispatchEvent(new Event("visibilitychange"));
+    await vi.waitFor(() =>
+      expect(store.currentMessages.map((item) => item.id)).toEqual(["fresh"])
+    );
+
+    finish({ status: 200, data: [] });
+  });
+
+  it("не читает сообщение автоматически, когда открытый чат скрыт", async () => {
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+
+    const store = useChatStore();
+
+    store.connect("user-id");
+    store.socket!.connected = true;
+    store.currentChatUserId = "peer-id";
+
+    const incoming = {
+      id: "new",
+      senderId: "peer-id",
+      receiverId: "user-id",
+      content: "Привет",
+      isRead: false,
+      createdAt: "2026-10-20T12:00:00Z",
+    };
+
+    store.conversations = [
+      {
+        otherUser: { id: "peer-id", email: "" },
+        lastMessage: incoming,
+        unreadCount: 0,
+      },
+    ];
+
+    const handler = mocks.io.mock.results[0].value.on.mock.calls.find(
+      ([event]: [string]) => event === "message:received"
+    )[1];
+
+    await handler(incoming);
+    expect(store.totalUnreadCount).toBe(1);
+    expect(store.currentMessages[0].isRead).toBe(false);
+    expect(store.socket!.emit).not.toHaveBeenCalledWith(
+      "message:read",
+      expect.anything()
+    );
+  });
+
+  it("обновляет входящие заявки без перехода на другую страницу", async () => {
+    mocks.useFetch.mockImplementation(async (url: string) => ({
+      status: 200,
+      data: url.endsWith("/friends/requests")
+        ? [{ id: "repeated-request" }]
+        : [],
+    }));
+
+    const store = useChatStore();
+
+    store.connect("user-id");
+    store.socket!.connected = true;
+
+    const handler = mocks.io.mock.results[0].value.on.mock.calls.find(
+      ([event]: [string]) => event === "friendship:changed"
+    )[1];
+
+    handler();
+    await vi.waitFor(() =>
+      expect(useFriendsStore().requests.map((item) => item.id)).toEqual([
+        "repeated-request",
+      ])
+    );
+
+    expect(useFriendsStore().pendingRequestsCount).toBe(1);
+  });
+
+  it("снимок присутствия убирает устаревший статус после переподключения", () => {
+    const store = useChatStore();
+    const statuses = useUserStatusStore();
+
+    statuses.setUserOnline("old-peer", "");
+    store.connect("user-id");
+
+    const handler = mocks.io.mock.results[0].value.on.mock.calls.find(
+      ([event]: [string]) => event === "presence:snapshot"
+    )?.[1];
+
+    expect(handler).toBeTypeOf("function");
+    handler(["new-peer"]);
+    expect(statuses.isUserOnline("old-peer")).toBe(false);
+    expect(statuses.isUserOnline("new-peer")).toBe(true);
+  });
 
   it("передаёт актуальный access при каждом подключении, без заявленного userId", () => {
     useChatStore().connect("user-id");

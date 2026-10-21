@@ -40,7 +40,7 @@ async function asset(index = 1, purpose = 'FEEDBACK_SCREENSHOT') {
   }>;
 }
 beforeAll(async () => {
-  fixture = await performanceFixture(false);
+  fixture = await performanceFixture(false, { feedbackEnabled: true });
   await fixture.app.listen(0, '127.0.0.1');
   base = await fixture.app.getUrl();
   png = await sharp({

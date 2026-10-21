@@ -102,7 +102,6 @@ export class TvdbImportDto extends TvdbIdentityDto {
   public contentKind?: ContentKind;
   @ValidateIf((_o, v: unknown) => v !== undefined)
   @IsArray()
-  @ArrayMinSize(1)
   @ArrayMaxSize(50)
   @IsIn([...PRODUCTION_COUNTRY_CODES], { each: true })
   public countryCodes?: string[];

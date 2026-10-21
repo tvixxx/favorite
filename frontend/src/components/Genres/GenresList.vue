@@ -1,5 +1,9 @@
 <script lang="ts" setup>
 import {
+  blurAfterTouchSelect,
+  selectPopupContainer,
+} from "@/utils/touchSelect";
+import {
   Genre,
   GenreLabels,
   GenreValues,
@@ -20,6 +24,9 @@ const filterOption = (input: string, option: { label: string }) => {
 
 <template>
   <a-select
+    @select="blurAfterTouchSelect"
+    :get-popup-container="selectPopupContainer"
+    :list-height="160"
     v-model:value="currentGenre"
     :allow-clear="true"
     :filter-option="filterOption"

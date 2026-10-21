@@ -158,7 +158,7 @@ const addMovieToList = async (listId: string): Promise<void> => {
 
     await userListsStore.fetchLists(userId);
     if (revision === contextRevision)
-      message.success("Тайтл добавлен в список");
+      message.success("Произведение добавлено в список");
   } catch (error: unknown) {
     if (revision !== contextRevision) return;
     if (isApiConflictError(error)) {
@@ -168,7 +168,7 @@ const addMovieToList = async (listId: string): Promise<void> => {
         listId,
       ]);
 
-      message.warning("Тайтл уже есть в этом списке");
+      message.warning("Произведение уже есть в этом списке");
 
       return;
     }
@@ -224,7 +224,7 @@ onBeforeUnmount(() => {
           />
           <a-input
             v-model:value="newListLabelsInput"
-            placeholder="Метки через запятую (например: уютно, с друзьями)"
+            placeholder="Метки списка через запятую"
             :maxlength="140"
             size="large"
           />

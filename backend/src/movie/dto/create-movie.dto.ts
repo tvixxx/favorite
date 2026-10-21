@@ -103,7 +103,6 @@ export class CreateMovieRequest {
     isArray: true,
   })
   @IsArray()
-  @ArrayMinSize(1, { message: 'Укажите хотя бы одну страну' })
   @IsIn([...PRODUCTION_COUNTRY_CODES], {
     each: true,
     message: 'Недопустимый код страны',

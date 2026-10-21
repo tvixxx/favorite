@@ -18,6 +18,7 @@ const publicUserSelect = {
   id: true,
   email: true,
   fullName: true,
+  username: true,
   timezone: true,
   role: true,
   tags: true,
@@ -67,6 +68,30 @@ export class UserService {
     return user;
   }
 
+  public async search(query: string, currentUserId: string) {
+    const name = query.replace(/^@/, '').toLowerCase();
+    const conditions: Prisma.UserWhereInput[] =
+      query.includes('@') && !query.startsWith('@')
+        ? [{ email: { equals: query, mode: 'insensitive' } }]
+        : query.startsWith('@')
+          ? [{ username: name }]
+          : [
+              { fullName: { contains: query, mode: 'insensitive' } },
+              { username: { contains: name, mode: 'insensitive' } },
+            ];
+    return this.prismaService.user.findMany({
+      where: { id: { not: currentUserId }, blockedAt: null, OR: conditions },
+      select: {
+        id: true,
+        fullName: true,
+        username: true,
+        avatarThumbnailUrl: true,
+      },
+      orderBy: [{ fullName: 'asc' }, { id: 'asc' }],
+      take: 20,
+    });
+  }
+
   public async findByEmail(email: string) {
     const user = await this.prismaService.user.findUnique({
       where: { email },
@@ -109,62 +134,73 @@ export class UserService {
     dto: Partial<UpdateUserDto>,
     options?: { allowTags?: boolean; actorId?: string },
   ) {
-    const result = await this.prismaService.$transaction(async (tx) => {
-      await lockResource(tx, `user:${id}`);
-      const current = await tx.user.findUnique({
-        where: { id },
-        select: publicUserSelect,
-      });
+    const result = await this.prismaService
+      .$transaction(async (tx) => {
+        await lockResource(tx, `user:${id}`);
+        const current = await tx.user.findUnique({
+          where: { id },
+          select: publicUserSelect,
+        });
 
-      if (!current) {
-        throw new NotFoundException('Пользователь не найден');
-      }
+        if (!current) {
+          throw new NotFoundException('Пользователь не найден');
+        }
 
-      const data: Prisma.UserUpdateInput = {
-        fullName: dto.fullName,
-        quickAddEnabled: dto.quickAddEnabled,
-        watchTonightEnabled: dto.watchTonightEnabled,
-        collectionFilesEnabled: dto.collectionFilesEnabled,
-        notifyNewMessages: dto.notifyNewMessages,
-        notifyFriendRequests: dto.notifyFriendRequests,
-        notifyRecommendations: dto.notifyRecommendations,
-      };
-      if (dto.timezone !== undefined)
-        data.timezone = new ZonedCalendar(dto.timezone).zone;
+        const data: Prisma.UserUpdateInput = {
+          fullName: dto.fullName,
+          username: dto.username,
+          quickAddEnabled: dto.quickAddEnabled,
+          watchTonightEnabled: dto.watchTonightEnabled,
+          collectionFilesEnabled: dto.collectionFilesEnabled,
+          notifyNewMessages: dto.notifyNewMessages,
+          notifyFriendRequests: dto.notifyFriendRequests,
+          notifyRecommendations: dto.notifyRecommendations,
+        };
+        if (dto.timezone !== undefined)
+          data.timezone = new ZonedCalendar(dto.timezone).zone;
 
-      if (options?.allowTags && dto.tags !== undefined) {
-        data.tags = dto.tags;
-      }
+        if (options?.allowTags && dto.tags !== undefined) {
+          data.tags = dto.tags;
+        }
 
-      if (dto.avatarAssetId !== undefined || dto.avatarUrl !== undefined) {
-        const selected = await this.media.select(
-          tx,
-          { assetId: dto.avatarAssetId, url: dto.avatarUrl },
-          options?.actorId ?? id,
-          'USER_AVATAR',
-          current.avatarAssetId,
-        );
+        if (dto.avatarAssetId !== undefined || dto.avatarUrl !== undefined) {
+          const selected = await this.media.select(
+            tx,
+            { assetId: dto.avatarAssetId, url: dto.avatarUrl },
+            options?.actorId ?? id,
+            'USER_AVATAR',
+            current.avatarAssetId,
+          );
 
-        data.avatarUrl = selected.url;
-        data.avatarThumbnailUrl = selected.thumbnailUrl;
-        data.avatarAsset = selected.assetId
-          ? { connect: { id: selected.assetId } }
-          : { disconnect: true };
-        const updated = await tx.user.update({
+          data.avatarUrl = selected.url;
+          data.avatarThumbnailUrl = selected.thumbnailUrl;
+          data.avatarAsset = selected.assetId
+            ? { connect: { id: selected.assetId } }
+            : { disconnect: true };
+          const updated = await tx.user.update({
+            where: { id },
+            data,
+            select: profileUserSelect,
+          });
+
+          if (current.avatarAssetId !== selected.assetId) {
+            await this.media.release(tx, current.avatarAssetId);
+          }
+
+          return updated;
+        }
+
+        return tx.user.update({
           where: { id },
           data,
           select: profileUserSelect,
         });
-
-        if (current.avatarAssetId !== selected.assetId) {
-          await this.media.release(tx, current.avatarAssetId);
-        }
-
-        return updated;
-      }
-
-      return tx.user.update({ where: { id }, data, select: profileUserSelect });
-    });
+      })
+      .catch((error: unknown) => {
+        if ((error as { code?: string }).code === 'P2002')
+          throw new ConflictException('Этот ник уже занят. Выберите другой.');
+        throw error;
+      });
     invalidateDataCache(this.prismaService);
     return result;
   }

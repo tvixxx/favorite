@@ -165,10 +165,10 @@ const removeMovieFromList = async (movieId: string): Promise<void> => {
       movieId
     );
 
-    message.success("Тайтл удалён из списка");
+    message.success("Произведение удалено из списка");
   } catch {
     message.error(
-      userListsStore.isError || "Не удалось удалить тайтл из списка"
+      userListsStore.isError || "Не удалось удалить произведение из списка"
     );
   } finally {
     isItemRemoving.value = false;
@@ -213,7 +213,7 @@ const deleteConfirmDescription = computed(() => {
   }
 
   return list.items.length
-    ? `«${list.name}» и тайтлы в нём. Тайтлы останутся в коллекции, но пропадут из списка.`
+    ? `«${list.name}» и произведения в нём. Произведения останутся в коллекции, но пропадут из списка.`
     : `«${list.name}» будет удалён безвозвратно.`;
 });
 
@@ -450,7 +450,7 @@ onMounted(() => {
           </span>
           <span class="list-card--create__title">Создать список</span>
           <span class="list-card--create__hint">
-            Соберите свою подборку фильмов и сериалов
+            Назовите подборку, затем добавьте в неё произведения
           </span>
         </button>
       </div>
@@ -510,7 +510,7 @@ onMounted(() => {
             </span>
             <a-input
               v-model:value="formLabelsInput"
-              placeholder="уютно, с друзьями"
+              placeholder="Метки списка через запятую"
               :maxlength="140"
               size="large"
             />

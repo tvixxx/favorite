@@ -83,6 +83,21 @@ describe('HTTP контракт TheTVDB', () => {
       .set('Authorization', 'Bearer test')
       .expect(503);
   });
+  it('принимает неизвестную страну и отклоняет фиктивный код', async () => {
+    await request(app.getHttpServer() as Server)
+      .post('/catalog/tvdb/import')
+      .set('Authorization', 'Bearer test')
+      .set('Origin', 'http://localhost:8080')
+      .send({ id: '6187', type: 'movie', countryCodes: [] })
+      .expect(201);
+    await request(app.getHttpServer() as Server)
+      .post('/catalog/tvdb/import')
+      .set('Authorization', 'Bearer test')
+      .set('Origin', 'http://localhost:8080')
+      .send({ id: '6187', type: 'movie', countryCodes: ['UNKNOWN'] })
+      .expect(400);
+  });
+
   it('запрещает изменение с чужого origin', async () => {
     await request(app.getHttpServer() as Server)
       .post('/catalog/tvdb/import')

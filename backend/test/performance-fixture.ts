@@ -27,7 +27,10 @@ import { createRequire } from 'node:module';
 import { ImageProcessor } from '../src/media/image-processor.service';
 import { FeedbackModule } from '../src/feedback/feedback.module';
 
-export async function performanceFixture(initialize = true) {
+export async function performanceFixture(
+  initialize = true,
+  options: { feedbackEnabled?: boolean } = {},
+) {
   const db = await featuresDatabase();
   const mediaDir = await mkdtemp('/private/tmp/favourite-performance-media-');
   const users = Array.from({ length: 100 }, () => randomUUID());
@@ -96,6 +99,7 @@ export async function performanceFixture(initialize = true) {
       COOKIE_DOMAIN: '127.0.0.1',
       NODE_ENV: 'development',
       CORS_ORIGINS: 'http://127.0.0.1:8096',
+      FEEDBACK_ENABLED: String(options.feedbackEnabled ?? false),
       MEDIA_STORAGE: 'local',
       MEDIA_LOCAL_DIR: mediaDir,
       MEDIA_PUBLIC_BASE_URL: 'http://127.0.0.1:8096/api/media',

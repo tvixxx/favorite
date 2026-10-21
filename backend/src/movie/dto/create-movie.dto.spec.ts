@@ -50,6 +50,27 @@ describe('Контракт жанра научной фантастики', () =
     },
   );
 
+  it('принимает неизвестную страну как пустой список, но отклоняет выдуманный код', async () => {
+    await expect(
+      pipe.transform(
+        { ...payload('DRAMA'), countryCodes: [] },
+        {
+          type: 'body',
+          metatype: CreateMovieRequest,
+        },
+      ),
+    ).resolves.toMatchObject({ countryCodes: [] });
+    await expect(
+      pipe.transform(
+        { ...payload('DRAMA'), countryCodes: ['UNKNOWN'] },
+        {
+          type: 'body',
+          metatype: CreateMovieRequest,
+        },
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it('сохраняет строгую проверку неизвестных жанров', async () => {
     await expect(
       pipe.transform(payload('INVALID_GENRE'), {

@@ -221,7 +221,7 @@ export const useUserListsStore = defineStore("userLists", () => {
       throw new Error("Сессия изменилась");
 
     if (!isSuccessStatus(response.status)) {
-      throw new Error("Не удалось добавить тайтл в список");
+      throw new Error("Не удалось добавить произведение в список");
     }
 
     lists.value = lists.value.map((list) => {

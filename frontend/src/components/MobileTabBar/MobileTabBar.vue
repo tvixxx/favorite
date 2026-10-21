@@ -121,10 +121,11 @@ const go = (to: string): void => {
     <button
       type="button"
       class="mobile-tabbar__fab"
-      aria-label="Добавить в коллекцию"
+      aria-label="Добавить произведение"
+      data-tour="create-movie"
       @click="go('/create')"
     >
-      <BaseIcon name="ph:plus" :width="24" :height="24" />
+      <BaseIcon name="ph:plus" :width="28" :height="28" />
     </button>
 
     <button
@@ -165,8 +166,11 @@ const go = (to: string): void => {
   z-index: 90;
   align-items: flex-start;
   justify-content: space-around;
-  height: calc(82px + env(safe-area-inset-bottom, 0px));
-  padding: 10px 8px env(safe-area-inset-bottom, 0px);
+  height: calc(
+    var(--fv-mobile-tabbar-height) + env(safe-area-inset-bottom, 0px)
+  );
+  padding: 4px 8px env(safe-area-inset-bottom, 0px);
+  box-sizing: border-box;
   background: var(--fv-color-bg-primary);
   border-top: 1px solid var(--fv-color-border);
 
@@ -178,6 +182,7 @@ const go = (to: string): void => {
   &__tab {
     display: flex;
     flex: 1;
+    min-height: 44px;
     flex-direction: column;
     align-items: center;
     gap: 3px;
@@ -226,7 +231,7 @@ const go = (to: string): void => {
     justify-content: center;
     width: 52px;
     height: 52px;
-    margin-top: -16px;
+    margin-top: -12px;
     border: 0;
     border-radius: 999px;
     background: var(--fv-color-brand);

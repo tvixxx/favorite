@@ -6,6 +6,7 @@ import { useUserMoviesStore } from "@/stores";
 import type { MovieApiResponse } from "@/stores/movies/types";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { useEscapeKey } from "@/composable/useEscapeKey";
+import { blurAfterTouchSelect } from "@/utils/touchSelect";
 import { formatYear } from "@/utils";
 import { contentTypeLabel } from "@/utils/content-kind";
 import { getApiResponseMessage, isApiConflictError } from "@/services/api";
@@ -165,24 +166,27 @@ const handleQuickAddSearch = (value: string): void => {
 };
 
 const handleQuickAddSelect = async (movieId: string): Promise<void> => {
+  void blurAfterTouchSelect();
   if (!props.userId) {
     return;
   }
 
   try {
     await userMoviesStore.addUserMovie(props.userId, movieId, {});
-    message.success("Тайтл добавлен в коллекцию");
+    message.success("Произведение добавлено в коллекцию");
     closeQuickAddPanel();
   } catch (error: unknown) {
     if (isApiConflictError(error)) {
       message.warning(
-        getApiResponseMessage(error) ?? "Этот тайтл уже есть в коллекции"
+        getApiResponseMessage(error) ?? "Это произведение уже есть в коллекции"
       );
 
       return;
     }
 
-    message.error(getApiResponseMessage(error) ?? "Не удалось добавить тайтл");
+    message.error(
+      getApiResponseMessage(error) ?? "Не удалось добавить произведение"
+    );
   }
 };
 
@@ -225,7 +229,7 @@ onBeforeUnmount(() => {
         <div class="quick-add-fab__panel-head">
           <h3 class="quick-add-fab__panel-title">Быстрый ввод</h3>
           <span class="quick-add-fab__panel-hint">
-            Добавление тайтла из каталога
+            Найдите фильм или сериал и выберите его, чтобы добавить в коллекцию
           </span>
         </div>
         <a-auto-complete
@@ -246,7 +250,7 @@ onBeforeUnmount(() => {
           <a-input
             size="large"
             :maxlength="120"
-            placeholder="Например: Рекрут, Интерстеллар, Dark..."
+            placeholder="Название фильма или сериала"
           >
             <template #prefix>
               <BaseIcon name="ph:magnifying-glass" :width="16" :height="16" />
@@ -286,11 +290,11 @@ onBeforeUnmount(() => {
         @click.stop="toggleQuickAddPanel"
       >
         <BaseIcon
-          :name="isQuickAddPanelOpen ? 'ph:x' : 'ph:plus'"
+          :name="isQuickAddPanelOpen ? 'ph:x' : 'ph:magnifying-glass'"
           :width="22"
           :height="22"
         />
-        <span class="quick-add-fab__button-text">Быстрый ввод</span>
+        <span class="quick-add-fab__button-text">Из каталога</span>
       </button>
     </div>
   </div>
@@ -416,14 +420,15 @@ onBeforeUnmount(() => {
 
   @include mediaMax(768px) {
     right: 0.85rem;
-    // поднимаем над мобильным таб-баром (82px + safe-area)
-    bottom: calc(82px + env(safe-area-inset-bottom, 0px) + 0.85rem);
+    bottom: calc(
+      var(--fv-mobile-tabbar-height) + env(safe-area-inset-bottom, 0px) +
+        0.85rem
+    );
 
     &__button {
       padding: 0.55rem 0.8rem;
     }
 
-    &__button-text,
     &__watch-label {
       display: none;
     }

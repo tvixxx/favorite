@@ -47,14 +47,33 @@ export class NotificationService {
     userId: string,
     limit = 30,
     types?: NotificationType[],
+    unreadOnly = false,
   ): Promise<NotificationDto[]> {
     const rows = await this.prismaService.notification.findMany({
-      where: { userId, ...(types ? { type: { in: types } } : {}) },
-      orderBy: { createdAt: 'desc' },
+      where: {
+        userId,
+        ...(unreadOnly ? { readAt: null } : {}),
+        ...(types ? { type: { in: types } } : {}),
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: Math.min(Math.max(limit, 1), 50),
     });
 
     return rows.map((r) => this.toDto(r));
+  }
+
+  public async page(userId: string, limit: number, offset: number) {
+    const where = { userId };
+    const [rows, total] = await Promise.all([
+      this.prismaService.notification.findMany({
+        where,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit,
+        skip: offset,
+      }),
+      this.prismaService.notification.count({ where }),
+    ]);
+    return { items: rows.map((row) => this.toDto(row)), total };
   }
 
   async unreadCount(
@@ -67,6 +86,22 @@ export class NotificationService {
         readAt: null,
         ...(types ? { type: { in: types } } : {}),
       },
+    });
+  }
+
+  public async resolveFriendRequest(
+    userId: string,
+    friendshipId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<void> {
+    await tx.notification.updateMany({
+      where: {
+        userId,
+        type: NotificationType.FRIEND_REQUEST,
+        readAt: null,
+        payload: { path: ['friendshipId'], equals: friendshipId },
+      },
+      data: { readAt: new Date() },
     });
   }
 

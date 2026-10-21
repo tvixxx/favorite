@@ -142,7 +142,7 @@ describe("Добавление произведения в пользовате�
       .setValue("  Мой вечер  ");
 
     await wrapper
-      .get('input[placeholder^="Метки через запятую"]')
+      .get('input[placeholder^="Метки списка через запятую"]')
       .setValue(" друзья, драма,друзья, ");
 
     const color = "#007CFF";
@@ -172,7 +172,7 @@ describe("Добавление произведения в пользовате�
 
     expect(
       (
-        wrapper.get('input[placeholder^="Метки через запятую"]')
+        wrapper.get('input[placeholder^="Метки списка через запятую"]')
           .element as HTMLInputElement
       ).value
     ).toBe("");
@@ -272,7 +272,7 @@ describe("Добавление произведения в пользовате�
     expect(item("Вечер").find("button").exists()).toBe(true);
   });
 
-  it("перепроверяет списки при смене тайтла и не переносит результат старого добавления", async () => {
+  it("перепроверяет списки при смене произведения и не переносит результат старого добавления", async () => {
     render();
     await flushPromises();
 

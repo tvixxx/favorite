@@ -193,7 +193,10 @@ async function resetCatalogFilters(): Promise<void> {
 </script>
 
 <template>
-  <div class="catalog-page">
+  <div
+    class="catalog-page"
+    :aria-busy="showSkeleton || moviesStore.isMoviesLoading"
+  >
     <div class="catalog-page__content">
       <div v-if="actorId" class="catalog-page__back-wrap">
         <AppBackButton
@@ -209,6 +212,7 @@ async function resetCatalogFilters(): Promise<void> {
 
       <StateBlock
         v-if="moviesStore.isMoviesError"
+        data-tour="catalog-empty"
         v-bind="STATE_PRESETS.catalogError"
         :actions="[
           {
@@ -222,7 +226,11 @@ async function resetCatalogFilters(): Promise<void> {
 
       <PosterGridSkeleton v-else-if="showSkeleton" :count="12" />
 
-      <StateBlock v-else-if="!hasMovies" v-bind="catalogEmptyState" />
+      <StateBlock
+        v-else-if="!hasMovies"
+        v-bind="catalogEmptyState"
+        data-tour="catalog-empty"
+      />
 
       <div v-else class="catalog-page__grid" data-tour="catalog-grid">
         <MovieCard

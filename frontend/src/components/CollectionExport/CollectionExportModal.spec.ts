@@ -106,7 +106,7 @@ describe("Выгрузка коллекции", () => {
   it("объясняет пустую выборку и не скачивает пустой файл", async () => {
     mocks.get.mockResolvedValueOnce({ status: 204, data: "", headers: {} });
     await click("Скачать JSON");
-    expect(wrapper.text()).toContain("В выбранной выборке нет тайтлов");
+    expect(wrapper.text()).toContain("Нет произведений для выбранных условий");
     expect(mocks.blobs).toHaveLength(0);
   });
 

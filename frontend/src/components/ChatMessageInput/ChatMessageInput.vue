@@ -191,7 +191,7 @@ async function enrichMissingChips(text: string) {
     uniqueTitles.add(m[1]);
   }
 
-  // Резолвим недостающие тайтлы параллельно (был последовательный водопад запросов)
+  // Резолвим недостающие произведения параллельно (был последовательный водопад запросов)
   const missingTitles = [...uniqueTitles].filter(
     (title) => !chips.value.some((c) => c.title === title)
   );

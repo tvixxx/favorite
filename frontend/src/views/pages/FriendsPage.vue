@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useFriendsStore, useUserStatusStore, useChatStore } from "@/stores";
 import { useMainStore } from "@/state/state";
-import { FriendshipType } from "@/stores/friends/friendsStore";
-import { useRouter } from "vue-router";
+import { FriendshipType, type FriendUser } from "@/stores/friends/friendsStore";
+import UserSearchInput from "@/components/Friends/UserSearchInput.vue";
+import { useRoute, useRouter } from "vue-router";
 import SocialHubTabs from "@/components/SocialHubTabs/SocialHubTabs.vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
@@ -12,18 +13,29 @@ import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import SkeletonBar from "@/components/Skeleton/SkeletonBar.vue";
 import { useMinLoading } from "@/components/Skeleton/useMinLoading";
-import { useFetch, FETCH_METHOD } from "@/composable";
-import { isSuccessStatus } from "@/utils";
 import { friendlyRequestError } from "@/utils/friendlyError";
 import { avatarGradient, avatarLetter } from "@/composable/useAvatarGradient";
 import { Button, Input, message } from "ant-design-vue";
 
 const router = useRouter();
+const route = useRoute();
 const friendsStore = useFriendsStore();
 
 type FriendsTab = "friends" | "requests" | "subscribers" | "subscriptions";
 
 const activeTab = ref<FriendsTab>("friends");
+
+watch(
+  () => route.query.tab,
+  (value) => {
+    if (
+      typeof value === "string" &&
+      ["friends", "requests", "subscribers", "subscriptions"].includes(value)
+    )
+      activeTab.value = value as FriendsTab;
+  },
+  { immediate: true }
+);
 
 const tabs = computed<{ key: FriendsTab; label: string; count: number }[]>(
   () => [
@@ -57,7 +69,10 @@ const userId = computed(() => mainStore.userData?.id || "");
 const searchQuery = ref("");
 const isAddModalVisible = ref(false);
 const isLoading = ref(false);
-const newFriendEmail = ref("");
+const selectedFriend = ref<Pick<
+  FriendUser,
+  "id" | "fullName" | "username"
+> | null>(null);
 const requestType = ref<FriendshipType>(FriendshipType.FRIEND_REQUEST);
 const submitError = ref<string | null>(null);
 
@@ -71,13 +86,14 @@ const filteredFriends = computed(() => {
   return friendsStore.friends.filter(
     (f) =>
       f.friend.fullName.toLowerCase().includes(query) ||
-      f.friend.email.toLowerCase().includes(query)
+      f.friend.email.toLowerCase().includes(query) ||
+      (f.friend.username ?? "").toLowerCase().includes(query.replace(/^@/, ""))
   );
 });
 
 const openAddModal = () => {
   isAddModalVisible.value = true;
-  newFriendEmail.value = "";
+  selectedFriend.value = null;
   requestType.value = FriendshipType.FRIEND_REQUEST;
   submitError.value = null;
 };
@@ -87,13 +103,13 @@ const closeAddModal = () => {
   submitError.value = null;
 };
 
-// «Повторить» из состояния ошибки — возвращаемся к форме (email сохранён)
+// «Повторить» возвращает к выбору пользователя.
 const dismissSubmitError = () => {
   submitError.value = null;
 };
 
 const sendFriendRequest = async () => {
-  if (!newFriendEmail.value.trim()) {
+  if (!selectedFriend.value || isLoading.value) {
     return;
   }
 
@@ -101,24 +117,7 @@ const sendFriendRequest = async () => {
   isLoading.value = true;
 
   try {
-    // Найти пользователя по email
-    const searchResponse = await useFetch<{
-      id: string;
-      email: string;
-      fullName: string;
-    }>(
-      `/users/search?email=${encodeURIComponent(newFriendEmail.value.trim())}`,
-      { method: FETCH_METHOD.get }
-    );
-
-    if (!isSuccessStatus(searchResponse.status)) {
-      submitError.value =
-        "Пользователь с таким email не найден. Проверьте адрес и попробуйте снова.";
-
-      return;
-    }
-
-    const addresseeId = searchResponse.data.id;
+    const addresseeId = selectedFriend.value.id;
 
     await friendsStore.sendRequest(
       userId.value,
@@ -224,7 +223,7 @@ onMounted(loadAll);
         <Input
           v-model:value="searchQuery"
           class="friends-page__hero-search"
-          placeholder="Найти пользователя"
+          placeholder="Поиск среди друзей"
         >
           <template #prefix>
             <BaseIcon name="ph:magnifying-glass" :width="18" :height="18" />
@@ -238,7 +237,7 @@ onMounted(loadAll);
           @click="openAddModal"
         >
           <BaseIcon name="ph:user-plus" :width="18" :height="18" />
-          Добавить
+          Добавить друга
         </Button>
       </div>
     </div>
@@ -509,14 +508,7 @@ onMounted(loadAll);
           :description="submitError"
         />
         <div v-else class="add-modal">
-          <div class="add-modal__field">
-            <span class="add-modal__label">Email пользователя</span>
-            <Input
-              v-model:value="newFriendEmail"
-              placeholder="name@mail.ru"
-              size="large"
-            />
-          </div>
+          <UserSearchInput v-model="selectedFriend" :disabled="isLoading" />
 
           <span class="add-friend__label">Тип запроса</span>
           <BaseRadio
@@ -555,7 +547,7 @@ onMounted(loadAll);
           type="primary"
           html-type="button"
           :loading="isLoading"
-          :disabled="!newFriendEmail.trim()"
+          :disabled="!selectedFriend"
           @click="sendFriendRequest"
         >
           Отправить

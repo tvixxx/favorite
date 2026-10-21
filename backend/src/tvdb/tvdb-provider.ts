@@ -28,13 +28,14 @@ export class TvdbProvider {
   private readonly previews = new TtlCache<TvdbPreview>(5 * 60 * 1000);
 
   constructor(config: ConfigService) {
-    const flag = config.get<string>('CATALOG_TVDB_ENABLED') ?? 'false';
+    const configuredKey = (config.get<string>('TVDB_API_KEY') ?? '').trim();
+    const flag =
+      config.get<string>('CATALOG_TVDB_ENABLED')?.trim() ||
+      (configuredKey ? 'true' : 'false');
     if (!['true', 'false'].includes(flag))
       throw new Error('CATALOG_TVDB_ENABLED должен быть true или false');
     this.enabled = flag === 'true';
-    this.key = this.enabled
-      ? (config.get<string>('TVDB_API_KEY') ?? '').trim()
-      : '';
+    this.key = this.enabled ? configuredKey : '';
     if (this.enabled && !this.key)
       throw new Error('Настройте TVDB_API_KEY для TheTVDB');
   }

@@ -2,7 +2,7 @@
 export type PluralForms = readonly [string, string, string];
 
 export const PLURAL = {
-  title: ["тайтл", "тайтла", "тайтлов"],
+  title: ["произведение", "произведения", "произведений"],
   movie: ["фильм", "фильма", "фильмов"],
   serial: ["сериал", "сериала", "сериалов"],
   season: ["сезон", "сезона", "сезонов"],

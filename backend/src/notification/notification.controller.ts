@@ -18,7 +18,7 @@ import { AuthProtected, Authorized } from '../common/decorators';
 import type { User } from '../generated/prisma/client';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '../generated/prisma/enums';
-import { queryInteger } from '../common/utils/query-value';
+import { queryBoolean, queryInteger } from '../common/utils/query-value';
 
 function notificationTypes(
   raw?: string | string[],
@@ -59,6 +59,7 @@ export class NotificationController {
     @Authorized() user: User,
     @Query('limit') limitRaw?: unknown,
     @Query('types') types?: string | string[],
+    @Query('unreadOnly') unreadOnly?: unknown,
   ) {
     this.ensureSelf(userId, user);
 
@@ -68,6 +69,23 @@ export class NotificationController {
       userId,
       limit,
       notificationTypes(types),
+      queryBoolean(unreadOnly, 'unreadOnly') ?? false,
+    );
+  }
+
+  @AuthProtected()
+  @Get('page')
+  public page(
+    @Param('userId') userId: string,
+    @Authorized() user: User,
+    @Query('limit') limit?: unknown,
+    @Query('offset') offset?: unknown,
+  ) {
+    this.ensureSelf(userId, user);
+    return this.notificationService.page(
+      userId,
+      queryInteger(limit, 'limit', 20, 1, 50),
+      queryInteger(offset, 'offset', 0, 0, 100000),
     );
   }
 

@@ -212,9 +212,14 @@ const emit = defineEmits<{
       transform: scale(0.92);
     }
 
+    &:disabled {
+      opacity: 0.45;
+      cursor: wait;
+    }
+
     &--fav {
-      background: rgba(255, 255, 255, 0.92);
-      color: var(--fv-color-text-tertiary);
+      background: var(--fv-color-bg-primary);
+      color: var(--fv-color-text-primary);
     }
 
     &--fav-on {
@@ -232,8 +237,8 @@ const emit = defineEmits<{
 
     // Удаление: контекстное действие. На десктопе — по ховеру, на тач — всегда.
     &--delete {
-      background: rgba(255, 255, 255, 0.92);
-      color: var(--fv-color-text-secondary);
+      background: var(--fv-color-bg-primary);
+      color: var(--fv-color-text-primary);
 
       &:hover {
         color: var(--fv-color-brand);

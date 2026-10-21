@@ -301,10 +301,11 @@ function isLibraryNavActive(to: string): boolean {
           <button
             type="button"
             class="library-subnav__add"
+            data-tour="create-movie"
             @click="router.push('/create')"
           >
             <BaseIcon name="ph:plus-bold" :width="18" :height="18" />
-            Добавить
+            Добавить произведение
           </button>
         </div>
       </div>
