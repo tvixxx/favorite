@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import {
+  blurAfterTouchSelect,
+  selectPopupContainer,
+} from "@/utils/touchSelect";
 import { onBeforeUnmount, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 import {
@@ -207,6 +211,9 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
         <div class="tvdb-field">
           <label for="tvdb-search-format">Формат</label>
           <ASelect
+            @select="blurAfterTouchSelect"
+            :get-popup-container="selectPopupContainer"
+            :list-height="160"
             id="tvdb-search-format"
             v-model:value="type"
             class="tvdb-search__format"

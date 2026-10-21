@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import {
+  blurAfterTouchSelect,
+  selectPopupContainer,
+} from "@/utils/touchSelect";
 import { Select as ASelect } from "ant-design-vue";
 import { useId } from "vue";
 import { contentKindOptions, type ContentKind } from "@/utils/content-kind";
@@ -30,6 +34,9 @@ function selectFormat(value: unknown): void {
   <div class="content-filter">
     <label :for="`${id}-category`">Категория</label>
     <ASelect
+      @select="blurAfterTouchSelect"
+      :get-popup-container="selectPopupContainer"
+      :list-height="160"
       :id="`${id}-category`"
       :value="props.contentKind"
       :options="contentKindOptions"
@@ -40,6 +47,9 @@ function selectFormat(value: unknown): void {
     <template v-if="showFormat">
       <label :for="`${id}-format`">Формат</label>
       <ASelect
+        @select="blurAfterTouchSelect"
+        :get-popup-container="selectPopupContainer"
+        :list-height="160"
         :id="`${id}-format`"
         :value="
           props.isSerial === undefined ? undefined : String(props.isSerial)

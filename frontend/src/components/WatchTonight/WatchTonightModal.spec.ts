@@ -95,7 +95,7 @@ describe("Что посмотреть сегодня", () => {
     });
 
     expect(queries[1].get("offset")).toBe("1");
-    expect(wrapper.text()).toContain("Подходят 2 тайтла");
+    expect(wrapper.text()).toContain("Подходят 2 произведения");
 
     const names = [wrapper.get("h3").text()];
 
@@ -137,13 +137,16 @@ describe("Что посмотреть сегодня", () => {
     await wrapper.get('select[id="watch-tonight-genre"]').setValue("DRAMA");
     expect(wrapper.text()).toContain("Попробуйте другие фильтры");
     await click("Сбросить фильтры");
-    expect(wrapper.text()).toContain("Подходят 5 тайтлов");
+    expect(wrapper.text()).toContain("Подходят 5 произведений");
   });
 
   it("отличает пустой список от одного кандидата и открывает правильную карточку", async () => {
     mocks.get.mockResolvedValue({ data: { total: 1, items: [row("only")] } });
     await open();
-    expect(wrapper.text()).toContain("Это единственный подходящий тайтл");
+    expect(wrapper.text()).toContain(
+      "Это единственное подходящее произведение"
+    );
+
     expect(
       wrapper
         .findAll("button")
@@ -160,7 +163,7 @@ describe("Что посмотреть сегодня", () => {
   it("показывает пустой список и переход в каталог", async () => {
     mocks.get.mockResolvedValue({ data: { total: 0, items: [] } });
     await open();
-    expect(wrapper.text()).toContain("Добавьте тайтлы на потом");
+    expect(wrapper.text()).toContain("Добавьте произведения на потом");
     await click("Открыть каталог");
     expect(mocks.push).toHaveBeenCalledWith("/library/catalog");
   });
@@ -218,7 +221,7 @@ describe("Что посмотреть сегодня", () => {
     }
   );
 
-  it("не выбирает начатые или просмотренные тайтлы даже при лишних строках ответа", async () => {
+  it("не выбирает начатые или просмотренные произведения даже при лишних строках ответа", async () => {
     mocks.get.mockResolvedValue({
       data: {
         total: 4,
@@ -233,6 +236,8 @@ describe("Что посмотреть сегодня", () => {
 
     await open();
     expect(wrapper.get("h3").text()).toBe("Тайтл eligible");
-    expect(wrapper.text()).toContain("Это единственный подходящий тайтл");
+    expect(wrapper.text()).toContain(
+      "Это единственное подходящее произведение"
+    );
   });
 });

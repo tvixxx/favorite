@@ -39,16 +39,18 @@ describe("Подтверждение карточки TheTVDB", () => {
     });
   });
 
-  it("не пропускает пустое описание, страну или жанр", () => {
-    for (const edit of [
-      { description: " " },
-      { countryCodes: [] },
-      { genres: [] },
-    ]) {
+  it("не пропускает пустое описание или жанр", () => {
+    for (const edit of [{ description: " " }, { genres: [] }]) {
       expect(() =>
         prepareTvdbImport(preview(), { title: "Название", ...edit }, {})
       ).toThrow();
     }
+  });
+
+  it("сохраняет неизвестную страну без фиктивного кода", () => {
+    expect(
+      prepareTvdbImport(preview(), { title: "Название", countryCodes: [] }, {})
+    ).toMatchObject({ countryCodes: [] });
   });
 
   it("отклоняет превышающий известные пределы прогресс без тихого обрезания", () => {

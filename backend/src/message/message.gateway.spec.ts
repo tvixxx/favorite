@@ -17,6 +17,7 @@ describe('Доступ к чату и несколько вкладок', () => 
   let auth: { verifyAccessToken: jest.Mock };
   let emitted: Array<{ room: string; event: string }>;
   let disconnected: string[];
+  const getFriends = jest.fn();
 
   const socket = (id: string, token?: string, claimedId = 'user-id'): Socket =>
     ({
@@ -25,6 +26,7 @@ describe('Доступ к чату и несколько вкладок', () => 
       data: {},
       handshake: { auth: { token, userId: claimedId }, query: {} },
       join: jest.fn(),
+      emit: jest.fn(),
       disconnect: jest.fn(() => disconnected.push(id)),
     }) as unknown as Socket;
 
@@ -33,6 +35,7 @@ describe('Доступ к чату и несколько вкладок', () => 
     created = [];
     emitted = [];
     disconnected = [];
+    getFriends.mockReset().mockResolvedValue([]);
     auth = {
       verifyAccessToken: jest.fn((token: string) => {
         if (token !== 'valid-access') {
@@ -73,12 +76,18 @@ describe('Доступ к чату и несколько вкладок', () => 
               Promise.resolve(online.delete(id)),
             ),
             getStatus: jest.fn().mockResolvedValue(null),
-            getOnlineFriends: jest.fn().mockResolvedValue([]),
+            getOnlineFriends: jest.fn((ids: string[]) =>
+              Promise.resolve(
+                ids
+                  .filter((id) => online.has(id))
+                  .map((userId) => ({ userId })),
+              ),
+            ),
           },
         },
         {
           provide: FriendshipService,
-          useValue: { getFriends: jest.fn().mockResolvedValue([]) },
+          useValue: { getFriends },
         },
         {
           provide: NotificationService,
@@ -102,6 +111,49 @@ describe('Доступ к чату и несколько вкладок', () => 
   });
 
   afterEach(() => jest.restoreAllMocks());
+
+  it('передаёт уже подключённых друзей каждому новому устройству пользователя', async () => {
+    online.add(peerId);
+    getFriends.mockResolvedValue([{ friend: { id: peerId } }]);
+    const first = socket('first', 'valid-access');
+    const second = socket('second', 'valid-access');
+    const firstEmit = jest.spyOn(first, 'emit');
+    const secondEmit = jest.spyOn(second, 'emit');
+    await gateway.handleConnection(first);
+    await gateway.handleConnection(second);
+    expect(firstEmit).toHaveBeenCalledWith('presence:snapshot', [peerId]);
+    expect(secondEmit).toHaveBeenCalledWith('presence:snapshot', [peerId]);
+  });
+
+  it('сообщает друзьям о втором устройстве, если первое закрылось во время подключения', async () => {
+    online.add(peerId);
+    let entered!: () => void;
+    const started = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    let finish!: (value: unknown) => void;
+    getFriends
+      .mockImplementationOnce(() => {
+        entered();
+        return new Promise((resolve) => {
+          finish = resolve;
+        });
+      })
+      .mockResolvedValue([{ friend: { id: peerId } }]);
+    const first = socket('first', 'valid-access');
+    const connecting = gateway.handleConnection(first);
+    await started;
+    const second = socket('second', 'valid-access');
+    await gateway.handleConnection(second);
+    Object.defineProperty(first, 'connected', { value: false });
+    await gateway.handleDisconnect(first);
+    finish([{ friend: { id: peerId } }]);
+    await connecting;
+    expect(emitted).toContainEqual({
+      room: `user:${peerId}`,
+      event: 'user:online',
+    });
+  });
 
   it('не подключает пользователя по одному userId без токена', async () => {
     const client = socket('socket-1');

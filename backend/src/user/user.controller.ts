@@ -45,11 +45,21 @@ export class UserController {
   @AuthProtected()
   @Get('search')
   @ApiOperation({
-    summary: 'Поиск пользователя по email',
+    summary: 'Поиск по имени, логину или точному email',
     description: 'Нужен вход; для приглашения друзей',
   })
   @ApiNotFoundResponse({ description: 'Не найден' })
-  public searchByEmail(@Query('email') email: unknown) {
+  public searchByEmail(
+    @Query('email') email: unknown,
+    @Query('query') query: unknown,
+    @Authorized() user: User,
+  ) {
+    const term = queryString(query, 'query')?.trim();
+    if (term !== undefined) {
+      if (term.length < 2 || term.length > 100)
+        throw new BadRequestException('Введите от 2 до 100 символов');
+      return this.userService.search(term, user.id);
+    }
     const value = queryString(email, 'email')?.trim();
 
     if (!value || !isEmail(value)) {

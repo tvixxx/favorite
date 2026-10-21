@@ -263,6 +263,7 @@ describe("Жизненный цикл авторизации", () => {
 
     expect(store.userData).toEqual({
       ...profile,
+      username: null,
       quickAddEnabled: true,
       watchTonightEnabled: false,
       collectionFilesEnabled: false,

@@ -269,7 +269,7 @@ onBeforeUnmount(() => {
     />
 
     <div class="favorites__content">
-      <div class="favorites__kinds" role="group" aria-label="Тип тайтла">
+      <div class="favorites__kinds" role="group" aria-label="Тип произведения">
         <button
           v-for="tab in KIND_TABS"
           :key="tab.key"

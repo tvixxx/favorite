@@ -39,8 +39,7 @@ export function prepareTvdbImport(
   if (!value.title.trim())
     throw new Error("Введите название для русского интерфейса");
   if (!value.description.trim()) throw new Error("Введите описание");
-  if (!value.countryCodes.length || !value.genres.length)
-    throw new Error("Выберите страну и хотя бы один жанр");
+  if (!value.genres.length) throw new Error("Выберите хотя бы один жанр");
   if (
     personal.watchStatus === "NOT_STARTED" &&
     ((personal.currentEpisode ?? 0) > 0 || (personal.currentSeason ?? 0) > 0)

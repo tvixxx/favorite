@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import {
+  blurAfterTouchSelect,
+  selectPopupContainer,
+} from "@/utils/touchSelect";
 import { computed, reactive, ref, useId, watch } from "vue";
 import {
   Button as AButton,
@@ -165,6 +169,9 @@ function submit(allowDuplicate = false): void {
         <label v-if="!movie && !entry" class="diary-form__field">
           <span>Произведение из вашей коллекции *</span>
           <ASelect
+            @select="blurAfterTouchSelect"
+            :get-popup-container="selectPopupContainer"
+            :list-height="160"
             v-model:value="selectedId"
             aria-label="Произведение"
             size="large"
@@ -181,7 +188,7 @@ function submit(allowDuplicate = false): void {
             /></template>
           </ASelect>
           <small
-            >Нет нужного тайтла? Сначала добавьте его через каталог или
+            >Нет нужного произведения? Сначала добавьте его через каталог или
             вручную.</small
           >
         </label>
@@ -336,7 +343,8 @@ function submit(allowDuplicate = false): void {
           <ACheckbox
             v-model:checked="draft.syncRating"
             :disabled="busy || !draft.rating"
-            >Использовать эту оценку как мою текущую оценку тайтла</ACheckbox
+            >Использовать эту оценку как мою текущую оценку
+            произведения</ACheckbox
           >
         </AppDisclosure>
         <div v-if="duplicate" class="diary-form__duplicate" role="status">

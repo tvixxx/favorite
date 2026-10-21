@@ -2,17 +2,20 @@
 import { watch } from "vue";
 import { useRouter } from "vue-router";
 import { setOnboardingDone } from "@/composable/useOnboarding";
-import { createOnboardingDriver } from "@/onboarding/createOnboardingDriver";
+import {
+  createOnboardingDriver,
+  settleLayout,
+} from "@/onboarding/createOnboardingDriver";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 
 const TOUR_STEPS_PREVIEW: { icon: string; text: string }[] = [
   { icon: "ph:squares-four", text: "Несколько шагов на странице коллекции" },
-  { icon: "ph:magnifying-glass", text: "Каталог с подсветкой фильтров" },
+  { icon: "ph:magnifying-glass", text: "Карточки произведений в каталоге" },
   { icon: "ph:users-three", text: "Раздел «Друзья» и уведомления в шапке" },
   {
     icon: "ph:sliders-horizontal",
-    text: "Персональные настройки и дополнительные инструменты",
+    text: "Каждая персональная настройка отдельно",
   },
 ];
 
@@ -50,13 +53,10 @@ const finishAndSkip = (): void => {
   openModel.value = false;
 };
 
-const sleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
-
 const startInteractiveTour = async (): Promise<void> => {
   startingTour = true;
   openModel.value = false;
-  await sleep(280);
+  await settleLayout();
 
   const tourDriver = createOnboardingDriver(router, {
     onCompleted: markDone,

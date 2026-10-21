@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import {
+  blurAfterTouchSelect,
+  selectPopupContainer,
+} from "@/utils/touchSelect";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import {
   Button as AButton,
@@ -418,8 +422,8 @@ function downloadExample(kind: "csv" | "json") {
         </p>
         <p>
           Существующие записи пропустим, сохранив ваши оценки и прогресс.
-          Неизвестные тайтлы сначала добавьте в каталог. Ошибки и дубли в файле
-          блокируют всю партию.
+          Неизвестные произведения сначала добавьте в каталог. Ошибки и дубли в
+          файле блокируют всю партию.
         </p>
         <AppDisclosure label="Пример JSON">
           <pre>{{ exampleJson }}</pre>
@@ -438,9 +442,9 @@ function downloadExample(kind: "csv" | "json") {
           aria-label="Как заполнить файл"
         >
           <p>
-            Примеры показывают формат файла. Замените названия на тайтлы из
-            каталога Favorite. Импорт добавляет их в коллекцию, новые карточки
-            каталога не создаёт.
+            Примеры показывают формат файла. Замените названия на произведения
+            из каталога Favorite. Импорт добавляет их в коллекцию, новые
+            карточки каталога не создаёт.
           </p>
           <dl>
             <dt>Статус просмотра — <code>watchStatus</code></dt>
@@ -508,6 +512,9 @@ function downloadExample(kind: "csv" | "json") {
         </div>
         <label for="collection-import-format">Формат</label
         ><ASelect
+          @select="blurAfterTouchSelect"
+          :get-popup-container="selectPopupContainer"
+          :list-height="160"
           id="collection-import-format"
           v-model:value="format"
           class="collection-import__format"
@@ -515,7 +522,6 @@ function downloadExample(kind: "csv" | "json") {
             { value: 'json', label: 'JSON' },
             { value: 'csv', label: 'CSV' },
           ]"
-          :get-popup-container="(trigger: HTMLElement) => trigger.parentElement ?? trigger"
           :disabled="busy === 'import' || busy === 'file'"
         >
           <template #suffixIcon
@@ -590,6 +596,9 @@ function downloadExample(kind: "csv" | "json") {
                   >Выберите запись</label
                 >
                 <ASelect
+                  @select="blurAfterTouchSelect"
+                  :get-popup-container="selectPopupContainer"
+                  :list-height="160"
                   :id="`collection-import-match-${row.row}`"
                   :value="matches[row.row] || undefined"
                   :aria-label="`Запись для строки ${row.row}`"
@@ -607,7 +616,6 @@ function downloadExample(kind: "csv" | "json") {
                       ].join(' · '),
                     }))
                   "
-                  :get-popup-container="(trigger: HTMLElement) => trigger.parentElement ?? trigger"
                   @change="chooseMatch(row.row, $event)"
                 >
                   <template #suffixIcon>

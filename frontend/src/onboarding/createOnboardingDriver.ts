@@ -1,254 +1,286 @@
-import { driver, type Config, type Driver, type DriveStep } from "driver.js";
-import type { Router } from "vue-router";
+import { driver, type Driver, type DriveStep } from "driver.js";
 import { nextTick } from "vue";
+import type { Router } from "vue-router";
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function ensurePath(router: Router, path: string): Promise<void> {
-  const current = router.currentRoute.value.path;
-  const normalized = path.endsWith("/") ? path.slice(0, -1) : path;
-  const cur =
-    current.endsWith("/") && current.length > 1
-      ? current.slice(0, -1)
-      : current;
-
-  if (cur === normalized || cur.startsWith(`${normalized}/`)) {
-    await nextTick();
-
-    return;
-  }
-
-  await router.push(path);
-  await nextTick();
-  await sleep(320);
-}
-
-function qs(...selectors: string[]): Element | null {
-  for (const selector of selectors) {
-    const found = document.querySelector(selector);
-
-    // Скрытый элемент (например, десктопное меню на мобиле) подсветить нельзя
-    if (found instanceof HTMLElement && found.offsetParent !== null) {
-      return found;
-    }
-  }
-
-  return null;
-}
-
-export type OnboardingDriverCallbacks = {
-  onCompleted: () => void;
+type TourStep = {
+  title: string;
+  description: string;
+  path?: string;
+  selector?: string;
+  settings?: boolean;
 };
 
-/**
- * Интерактивный тур (driver.js): подсветка DOM и переходы по страницам.
- *
- * Важное про порядок: driver.js резолвит `element` шага ДО того, как отдаст
- * управление хукам, поэтому маршрут нужно менять в `onNextClick`/`onPrevClick`
- * предыдущего шага — иначе на новой странице элемент ещё не существует и шаг
- * подсвечивает `body`.
- */
+function visibleElement(selector?: string): HTMLElement | undefined {
+  if (!selector) return;
+
+  return [...document.querySelectorAll<HTMLElement>(selector)].find(
+    (element) =>
+      element.getClientRects().length > 0 &&
+      !element.closest('[aria-busy="true"]')
+  );
+}
+
+function waitForElement(
+  selector: string,
+  signal: AbortSignal
+): Promise<HTMLElement | undefined> {
+  const found = visibleElement(selector);
+
+  if (found || signal.aborted) return Promise.resolve(found);
+
+  return new Promise((resolve) => {
+    const finish = (): void => {
+      observer.disconnect();
+      signal.removeEventListener("abort", finish);
+      resolve(visibleElement(selector));
+    };
+    const observer = new MutationObserver(() => {
+      if (visibleElement(selector)) finish();
+    });
+
+    signal.addEventListener("abort", finish, { once: true });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+    });
+  });
+}
+
+async function waitForImages(
+  element: HTMLElement,
+  signal: AbortSignal
+): Promise<void> {
+  await Promise.all(
+    [...element.querySelectorAll("img")].map((image) => {
+      if (image.complete || signal.aborted) return;
+
+      return new Promise<void>((resolve) => {
+        const finish = (): void => {
+          image.removeEventListener("load", finish);
+          image.removeEventListener("error", finish);
+          signal.removeEventListener("abort", finish);
+          resolve();
+        };
+
+        image.addEventListener("load", finish, { once: true });
+        image.addEventListener("error", finish, { once: true });
+        signal.addEventListener("abort", finish, { once: true });
+      });
+    })
+  );
+}
+
+export async function settleLayout(): Promise<void> {
+  await nextTick();
+
+  const elements = document.querySelectorAll<HTMLElement>(
+    ".modal-backdrop, .profile-settings-modal"
+  );
+
+  await Promise.all(
+    [...elements].flatMap((element) =>
+      (element.getAnimations?.() ?? [])
+        .filter(
+          (animation) => animation.effect?.getTiming().iterations !== Infinity
+        )
+        .map((animation) => animation.finished.catch(() => undefined))
+    )
+  );
+
+  await new Promise<void>((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  );
+}
+
+export type OnboardingDriverCallbacks = { onCompleted: () => void };
+
 export function createOnboardingDriver(
   router: Router,
   callbacks: OnboardingDriverCallbacks
 ): Driver {
-  // Ждём, пока страница отрисуется, и пересчитываем подсветку
-  const settleLayout = async (): Promise<void> => {
-    await nextTick();
-
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-    });
-
-    await sleep(120);
-  };
-
-  /** Переход к соседнему шагу с гарантией, что нужная страница уже открыта */
-  const moveTo = (path: string | null, move: () => void) => {
-    return async (): Promise<void> => {
-      if (path) {
-        await ensurePath(router, path);
-        await settleLayout();
-      }
-
-      move();
-    };
-  };
-
-  const next = (path: string | null) => moveTo(path, () => tourRef.moveNext());
-  const prev = (path: string | null) =>
-    moveTo(path, () => tourRef.movePrevious());
-
-  const showSettings = (move: () => void) => async (): Promise<void> => {
-    const button = qs('[data-tour="profile-settings"]');
-
-    if (button instanceof HTMLElement) button.click();
-    await sleep(240);
-
-    const section = qs('[data-tour="personal-settings"]');
-
-    if (section instanceof HTMLElement) {
-      section.scrollIntoView({ block: "start", behavior: "instant" });
-    }
-
-    await settleLayout();
-    move();
-  };
-
-  const hideSettings = (move: () => void) => async (): Promise<void> => {
-    const button = qs(".profile-settings-modal .modal__close");
-
-    if (button instanceof HTMLElement) button.click();
-    await settleLayout();
-    move();
-  };
-
-  const steps: DriveStep[] = [
+  const lifecycle = new AbortController();
+  let moving = false;
+  let openedSettings = false;
+  const steps: TourStep[] = [
     {
-      popover: {
-        title: "Добро пожаловать",
-        description:
-          "Мы покажем коллекцию и каталог, друзей, уведомления и персональные настройки. Используйте «Далее» или стрелки на клавиатуре.",
-        side: "over",
-        align: "center",
-        onNextClick: next("/library/collection"),
-      },
+      title: "Добро пожаловать",
+      description:
+        "Покажем, как добавлять фильмы и сериалы, вести коллекцию, общаться с друзьями и настроить приложение.",
     },
     {
-      // На мобиле десктопного меню нет — его роль играет таб-бар
-      element: () =>
-        qs('[data-tour="nav-library"]', '[data-tour="tab-library"]') ??
-        document.body,
-      popover: {
-        title: "Медиатека",
-        description:
-          "Центральный вход к коллекции, общему каталогу, актёрам и вашим спискам.",
-        align: "center",
-        onNextClick: next(null),
-        onPrevClick: prev(null),
-      },
+      title: "Медиатека",
+      description:
+        "Здесь ваша коллекция, каталог, актёры, списки и дневник просмотров.",
+      path: "/library/collection",
+      selector: '[data-tour="nav-library"], [data-tour="tab-library"]',
     },
     {
-      popover: {
-        title: "Дополнительные инструменты",
-        description:
-          "Быстрый ввод добавляет тайтлы из каталога. «Что посмотреть сегодня» выбирает из «Буду смотреть». Импорт и экспорт работают с файлами коллекции. Включать и скрывать эти инструменты можно в профиле. В конце тура покажем, где.",
-        align: "center",
-        onNextClick: next(null),
-        onPrevClick: prev(null),
-      },
+      title: "Добавить произведение",
+      description:
+        "Кнопка «+» открывает поиск произведения и ручное создание. Уже существующий фильм можно добавить к себе прямо из каталога.",
+      path: "/library/collection",
+      selector: '[data-tour="create-movie"]',
     },
     {
-      element: '[data-tour="collection-filters"]',
-      popover: {
-        title: "Фильтры и поиск",
-        description:
-          "Жанры, страны, диапазон оценки и текстовый поиск — чтобы находить нужное в большой коллекции.",
-        side: "bottom",
-        align: "start",
-        onNextClick: next("/library/catalog"),
-        onPrevClick: prev(null),
-      },
+      title: "Поиск и статусы просмотра",
+      description:
+        "Ищите по названию и переключайтесь между «Буду смотреть», «Смотрю» и «Просмотрено». Кнопка «Фильтры» открывает остальные условия.",
+      path: "/library/collection",
+      selector: '[data-tour="collection-filters"] .collection-filters__row',
     },
     {
-      // Шаг про каталог как источник тайтлов — подсвечиваем сами карточки
-      element: () =>
-        qs('[data-tour="catalog-grid"]', '[data-tour="catalog-filters"]') ??
-        document.body,
-      popover: {
-        title: "Каталог",
-        description:
-          "Здесь все фильмы базы. Откройте карточку и добавьте тайтл к себе.",
-        side: "top",
-        align: "center",
-        onNextClick: next("/friends"),
-        onPrevClick: prev("/library/collection"),
-      },
+      title: "Каталог произведений",
+      description:
+        "Откройте карточку фильма или сериала, чтобы узнать о нём больше и добавить в свою коллекцию.",
+      path: "/library/catalog",
+      selector:
+        '[data-tour="catalog-grid"] > :first-child, [data-tour="catalog-empty"]',
     },
     {
-      element: () => qs('[data-tour="friends-add-btn"]') ?? document.body,
-      popover: {
-        title: "Друзья",
-        description:
-          "Добавление по email: заявка в друзья или подписка без подтверждения.",
-        side: "bottom",
-        align: "end",
-        onNextClick: next(null),
-        onPrevClick: prev("/library/catalog"),
-      },
+      title: "Найти друзей",
+      description:
+        "Нажмите «Добавить друга». Найдите человека по имени, нику или почте, выберите его и отправьте заявку.",
+      path: "/friends",
+      selector: '[data-tour="friends-add-btn"]',
     },
     {
-      element: () =>
-        qs('[data-tour="nav-notifications"]', '[data-tour="tab-social"]') ??
-        document.body,
-      popover: {
-        title: "Уведомления",
-        description:
-          "Новые сообщения и заявки подсвечиваются здесь (в реальном времени при открытом приложении).",
-        side: "bottom",
-        align: "end",
-        onNextClick: next("/profile"),
-        onPrevClick: prev(null),
-      },
+      title: "Уведомления",
+      description:
+        "Колокольчик показывает до пяти непрочитанных событий. Нажатие открывает событие, полная история доступна по ссылке внутри.",
+      path: "/friends",
+      selector: '[data-tour="nav-notifications"]',
     },
     {
-      element: () => qs('[data-tour="profile-settings"]') ?? document.body,
-      popover: {
-        title: "Настройки профиля",
-        description:
-          "Здесь можно настроить интерфейс под себя. Откроем раздел с переключателями.",
-        side: "bottom",
-        align: "end",
-        onNextClick: showSettings(() => tourRef.moveNext()),
-        onPrevClick: prev("/friends"),
-      },
+      title: "Настройки профиля",
+      description:
+        "Здесь имя, уникальный ник, часовой пояс и персональные настройки. Сейчас посмотрим их по отдельности.",
+      path: "/profile",
+      selector: '[data-tour="profile-settings"]',
     },
     {
-      element: () => {
-        const section = qs('[data-tour="personal-settings"]');
-        const body = section?.closest(".modal__body");
-
-        if (
-          body instanceof HTMLElement &&
-          section &&
-          section.getBoundingClientRect().height > body.clientHeight
-        ) {
-          return body;
-        }
-
-        return section ?? document.body;
-      },
-      popover: {
-        title: "Персональные настройки",
-        description:
-          "Быстрый ввод включён по умолчанию. Подбор на сегодня и импорт/экспорт — выключены. Переключатели сохраняются сразу для вашего аккаунта. Ниже можно настроить уведомления. Всё можно изменить позже: Профиль → Настройки.",
-        side: "left",
-        align: "start",
-        onNextClick: hideSettings(() => tourRef.moveNext()),
-        onPrevClick: hideSettings(() => tourRef.movePrevious()),
-      },
+      title: "Быстрый ввод",
+      description:
+        "Дополнительная кнопка в коллекции помогает быстро найти фильм или сериал в <strong>каталоге</strong> и добавить к себе. Можно скрыть её этим переключателем.",
+      path: "/profile",
+      settings: true,
+      selector: '[data-tour="setting-quickAddEnabled"]',
     },
     {
-      popover: {
-        title: "На этом всё",
-        description:
-          "Дальше просто пользуйтесь Favorite. Тур можно закрыть или вернуться к любому шагу кнопкой «Назад».",
-        side: "over",
-        align: "center",
-        onPrevClick: showSettings(() => tourRef.movePrevious()),
-      },
+      title: "Что посмотреть сегодня",
+      description:
+        "Включите, чтобы приложение предлагало ещё не начатые произведения из вашей коллекции «Буду смотреть».",
+      path: "/profile",
+      settings: true,
+      selector: '[data-tour="setting-watchTonightEnabled"]',
+    },
+    {
+      title: "Импорт и экспорт",
+      description:
+        "Включите работу с файлами: перенос коллекции из CSV или JSON, скачивание данных и печать PDF.",
+      path: "/profile",
+      settings: true,
+      selector: '[data-tour="setting-collectionFilesEnabled"]',
+    },
+    {
+      title: "Какие уведомления показывать",
+      description:
+        "Выберите, нужны ли уведомления о сообщениях и заявках в друзья. Настройки сохраняются сразу для вашего аккаунта.",
+      path: "/profile",
+      settings: true,
+      selector: '[data-tour="notification-settings"]',
+    },
+    {
+      title: "Готово",
+      description:
+        "Добавьте первое произведение или откройте коллекцию. Повторить этот тур можно через меню аккаунта → Помощь.",
+      path: "/profile",
     },
   ];
 
-  const baseConfig: Config = {
+  const closeSettings = (): void => {
+    if (openedSettings)
+      visibleElement(".profile-settings-modal .modal__close")?.click();
+    openedSettings = false;
+  };
+
+  const go = async (index: number): Promise<void> => {
+    if (moving || lifecycle.signal.aborted) return;
+    if (index >= steps.length) {
+      tour.destroy();
+
+      return;
+    }
+
+    const step = steps[index];
+
+    if (!step) return;
+    moving = true;
+    document.body.classList.add("fv-tour-transitioning");
+    try {
+      if (!step.settings) closeSettings();
+      if (step.path && router.currentRoute.value.path !== step.path)
+        await router.push(step.path);
+      await settleLayout();
+      if (lifecycle.signal.aborted) return;
+      if (step.settings && !visibleElement(".profile-settings-modal")) {
+        visibleElement('[data-tour="profile-settings"]')?.click();
+        openedSettings = true;
+        await settleLayout();
+      }
+
+      const element = step.selector
+        ? await waitForElement(step.selector, lifecycle.signal)
+        : undefined;
+
+      if (lifecycle.signal.aborted) return;
+      if (element && !element.closest(".topbar, .mobile-tabbar")) {
+        element.scrollIntoView({ block: "center", behavior: "instant" });
+        await waitForImages(element, lifecycle.signal);
+        await settleLayout();
+      }
+
+      if (!lifecycle.signal.aborted) tour.moveTo(index);
+    } catch {
+      document.body.classList.remove("fv-tour-transitioning");
+      tour.destroy();
+    } finally {
+      moving = false;
+    }
+  };
+
+  const driveSteps: DriveStep[] = steps.map((step) => ({
+    element: step.selector
+      ? () => visibleElement(step.selector) ?? document.body
+      : undefined,
+    popover: {
+      title: step.title,
+      description: step.description,
+      align: "center",
+      onNextClick: () => {
+        void go((tour.getActiveIndex() ?? 0) + 1);
+      },
+      onPrevClick: () => {
+        void go((tour.getActiveIndex() ?? 0) - 1);
+      },
+    },
+  }));
+  const tour = driver({
+    steps: driveSteps,
     showProgress: true,
-    animate: true,
-    smoothScroll: true,
-    // Эталон: подсветка плотно по элементу, скругление 14, маска темнее
+    animate: false,
+    smoothScroll: false,
     stagePadding: 6,
     stageRadius: 14,
+    onHighlightStarted: (element, _step, { driver }) => {
+      driver.setConfig({
+        ...driver.getConfig(),
+        stageRadius: element?.matches(".collection-filters__row") ? 0 : 14,
+      });
+    },
+    onHighlighted: () => {
+      if (!moving) document.body.classList.remove("fv-tour-transitioning");
+    },
     overlayColor: "#0c101a",
     overlayOpacity: 0.6,
     popoverClass: "fv-tour",
@@ -256,14 +288,13 @@ export function createOnboardingDriver(
     prevBtnText: "Назад",
     doneBtnText: "Готово",
     progressText: "{{current}} из {{total}}",
-    allowClose: true,
     onDestroyed: () => {
+      document.body.classList.remove("fv-tour-transitioning");
+      lifecycle.abort();
+      closeSettings();
       callbacks.onCompleted();
     },
-    steps,
-  };
+  });
 
-  const tourRef = driver(baseConfig);
-
-  return tourRef;
+  return tour;
 }

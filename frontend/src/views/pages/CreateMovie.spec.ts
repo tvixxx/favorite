@@ -51,6 +51,43 @@ vi.mock("@/services/api", () => ({
 }));
 
 describe("Создание через форму", () => {
+  it("не меняет иллюстрацию постера при вводе названия", async () => {
+    const wrapper = render();
+    const before = wrapper
+      .get('img[alt="Предпросмотр постера"]')
+      .attributes("src");
+
+    await wrapper
+      .get('input[placeholder="Например: Интерстеллар"]')
+      .setValue("Новое название");
+
+    expect(
+      wrapper.get('img[alt="Предпросмотр постера"]').attributes("src")
+    ).toBe(before);
+
+    wrapper.unmount();
+  });
+
+  it("сохраняет произведение с неизвестной страной без фиктивного кода", async () => {
+    mocks.create.mockReset().mockResolvedValue({ id: "movie-id" });
+    mocks.fetch.mockResolvedValue(undefined);
+
+    const wrapper = render(true);
+
+    await wrapper
+      .get('input[placeholder="Например: Интерстеллар"]')
+      .setValue("Фильм без страны");
+
+    await chooseFilm(wrapper);
+    await wrapper.get('select[aria-label="Страны"]').setValue([]);
+    await wrapper.get("textarea").setValue("Описание фильма");
+    await wrapper.get("form").trigger("submit");
+    await vi.waitFor(() => expect(mocks.create).toHaveBeenCalledOnce());
+    expect(mocks.create.mock.calls[0][0].countryCodes).toEqual([]);
+    wrapper.unmount();
+    vi.unstubAllGlobals();
+  });
+
   it("скрывает поиск по умолчанию и сохраняет ручной черновик при переключении включённого каталога", async () => {
     const off = render();
 

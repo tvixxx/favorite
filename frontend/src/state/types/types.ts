@@ -3,6 +3,7 @@ import type { UserPreferences } from "@/utils/userPreferences";
 export interface UserData extends Partial<UserPreferences> {
   email: string;
   fullName: string;
+  username?: string | null;
   timezone?: string;
   id: string;
   role?: "USER" | "ADMIN";
@@ -34,6 +35,7 @@ export interface UserProfileResponse extends Partial<UserPreferences> {
   id: string;
   email: string;
   fullName: string;
+  username?: string | null;
   timezone?: string;
   fullname?: string;
   name?: string;

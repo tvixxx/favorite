@@ -1905,6 +1905,7 @@ export const UserScalarFieldEnum = {
   email: 'email',
   password: 'password',
   fullName: 'fullName',
+  username: 'username',
   timezone: 'timezone',
   quickAddEnabled: 'quickAddEnabled',
   watchTonightEnabled: 'watchTonightEnabled',

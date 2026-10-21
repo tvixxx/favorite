@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils";
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import Modal from "./BaseModal.vue";
 import { nextTick } from "vue";
 
@@ -12,6 +12,37 @@ describe("BaseModal", () => {
 
   afterEach(() => {
     wrapper?.unmount();
+    vi.unstubAllGlobals();
+  });
+
+  it("сохраняет модалку в видимой области при появлении экранной клавиатуры", async () => {
+    const viewport = Object.assign(new EventTarget(), {
+      height: 800,
+      offsetTop: 0,
+      scale: 1,
+    });
+
+    vi.stubGlobal("visualViewport", viewport);
+    wrapper = mount(Modal, {
+      props: { modelValue: true },
+      global: { stubs: { BaseIcon: true, "a-button": true, Teleport: false } },
+    });
+
+    await nextTick();
+
+    const backdrop = document.querySelector<HTMLElement>(".modal-backdrop")!;
+
+    expect(backdrop.style.height).toBe("800px");
+    viewport.height = 360;
+    viewport.offsetTop = 20;
+    viewport.dispatchEvent(new Event("resize"));
+    await nextTick();
+    expect(backdrop.style.height).toBe("360px");
+    expect(backdrop.style.top).toBe("20px");
+    viewport.scale = 2;
+    viewport.dispatchEvent(new Event("resize"));
+    await nextTick();
+    expect(backdrop.style.height).toBe("");
   });
 
   it("закрытие при клике на фон", async () => {

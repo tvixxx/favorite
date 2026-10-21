@@ -11,6 +11,7 @@ import ReportReviewModal from "@/components/Reviews/ReportReviewModal.vue";
 import ReviewText from "@/components/Reviews/ReviewText.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import CatalogPreviewHero from "./CatalogPreviewHero.vue";
+import MoviePosterEditor from "@/components/ImagePicker/MoviePosterEditor.vue";
 import SkeletonBar from "@/components/Skeleton/SkeletonBar.vue";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
@@ -22,9 +23,10 @@ import type { Movie } from "@/stores/movies/types";
 
 const modelValue = defineModel<boolean>({ required: true });
 
-// После добавления тайтла футер меняется на отметку + переход на полную страницу
+// После добавления произведения футер меняется на отметку + переход на полную страницу
 const isAdded = ref(false);
 const reportOpen = ref(false);
+const posterEditorOpen = ref(false);
 const reportedId = ref("");
 const isMobile = useMediaQuery("(max-width: 767.98px)");
 
@@ -50,6 +52,19 @@ const movie = computed<Movie | null>(
     null
 );
 
+const canEditPoster = computed(
+  () =>
+    !!movie.value &&
+    (mainStore.userData?.role === "ADMIN" ||
+      (!!userId.value && movie.value.createdById === userId.value))
+);
+
+async function reloadPoster(): Promise<void> {
+  userMoviesStore.isLoaded = false;
+  moviesStore.isMoviesLoaded = false;
+  if (props.movieId) await moviesStore.getMovieDetail(props.movieId);
+}
+
 const previewReviews = computed(() => {
   const list = movie.value?.reviews ?? [];
 
@@ -69,6 +84,7 @@ watch(
   () => [modelValue.value, props.movieId] as const,
   async ([open, id]) => {
     reportOpen.value = false;
+    posterEditorOpen.value = false;
     if (!open || !id) {
       return;
     }
@@ -202,6 +218,14 @@ function openFullPage(): void {
           :movie="movie"
           :loading="moviesStore.isMovieLoading"
         />
+        <a-button
+          v-if="canEditPoster"
+          class="catalog-preview__edit-poster"
+          :disabled="moviesStore.isMovieLoading"
+          @click="posterEditorOpen = true"
+        >
+          Изменить постер
+        </a-button>
 
         <div v-if="movie.description?.trim()" class="catalog-preview__section">
           <SectionHeading
@@ -306,6 +330,12 @@ function openFullPage(): void {
       </a-button>
     </template>
   </BaseModal>
+  <MoviePosterEditor
+    v-if="movie && posterEditorOpen && canEditPoster"
+    v-model="posterEditorOpen"
+    :movie="movie"
+    @saved="reloadPoster"
+  />
   <ReportReviewModal v-model="reportOpen" :review-id="reportedId" />
 </template>
 

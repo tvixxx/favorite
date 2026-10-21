@@ -1,4 +1,14 @@
 @use "./scrollbar" as *;
+@use "./media" as *;
+
+@include mediaCoarsePointer {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select,
+  .ant-select .ant-select-selection-search-input {
+    font-size: 16px !important;
+  }
+}
 
 .fv-native-field {
   display: block;

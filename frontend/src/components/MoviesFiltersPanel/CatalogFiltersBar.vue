@@ -24,7 +24,7 @@ import { contentKindOptions } from "@/utils/content-kind";
 
 const props = defineProps<{
   lockedActorIds?: string[];
-  /** Сколько тайтлов сейчас показано — число в кнопке «Показать» */
+  /** Сколько произведений сейчас показано — число в кнопке «Показать» */
   resultCount?: number;
 }>();
 
@@ -186,7 +186,7 @@ const { searchValue, onSearchInput, onSearchEnter } = useDebouncedSearch(
           v-model="searchValue"
           type="text"
           aria-label="Поиск в каталоге"
-          placeholder="Название, ключевое слово, жанр, год…"
+          placeholder="Название фильма или сериала"
           @input="onSearchInput"
           @keydown.enter="onSearchEnter"
         />

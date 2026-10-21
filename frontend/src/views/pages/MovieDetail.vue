@@ -576,11 +576,12 @@ const openListsModal = (): void => {
               <button
                 v-if="canEditPoster"
                 type="button"
-                class="detail-mobile-actions__icon"
+                class="detail-mobile-actions__icon detail-mobile-actions__poster"
                 aria-label="Изменить постер"
                 @click="posterEditorOpen = true"
               >
                 <BaseIcon name="ph:image" :width="20" :height="20" />
+                <span>Изменить постер</span>
               </button>
               <MovieShareButton
                 v-if="currentMovieId"
@@ -1677,6 +1678,7 @@ const openListsModal = (): void => {
 
   &__chips {
     display: flex;
+    align-items: center;
     flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 10px;
@@ -1685,8 +1687,13 @@ const openListsModal = (): void => {
   &__chip {
     display: inline-flex;
     align-items: center;
+    box-sizing: border-box;
     height: 28px;
+    min-height: 28px;
     padding: 0 12px;
+    border: 0;
+    font-family: var(--fv-font-ui);
+    line-height: 1;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.16);
     color: #fff;
@@ -1759,7 +1766,17 @@ const openListsModal = (): void => {
 
 .detail-mobile-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+
+  &__icon.detail-mobile-actions__poster {
+    flex: 1 0 100%;
+    width: auto;
+    gap: 8px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+  }
 
   :deep(.movie-share-btn) {
     flex: 1;

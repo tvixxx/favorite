@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import {
+  blurAfterTouchSelect,
+  selectPopupContainer,
+} from "@/utils/touchSelect";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import {
@@ -201,7 +205,7 @@ function navigate(path: string): void {
         <AButton @click="load">Повторить</AButton>
       </div>
       <div v-else-if="loaded && !movies.length" class="watch-tonight__state">
-        <h3>Добавьте тайтлы на потом</h3>
+        <h3>Добавьте произведения на потом</h3>
         <p>
           Отмечайте интересное в каталоге как «Буду смотреть» — тогда здесь
           появятся варианты.
@@ -213,6 +217,9 @@ function navigate(path: string): void {
           <div>
             <label for="watch-tonight-kind">Тип</label
             ><ASelect
+              @select="blurAfterTouchSelect"
+              :get-popup-container="selectPopupContainer"
+              :list-height="160"
               v-model:value="kind"
               id="watch-tonight-kind"
               size="large"
@@ -222,6 +229,9 @@ function navigate(path: string): void {
           <div>
             <label for="watch-tonight-genre">Жанр</label
             ><ASelect
+              @select="blurAfterTouchSelect"
+              :get-popup-container="selectPopupContainer"
+              :list-height="160"
               v-model:value="genre"
               id="watch-tonight-genre"
               size="large"
@@ -259,7 +269,7 @@ function navigate(path: string): void {
           </div>
           <p class="watch-tonight__availability" role="status">
             <template v-if="filtered.length === 1"
-              >Это единственный подходящий тайтл. Можно изменить
+              >Это единственное подходящее произведение. Можно изменить
               фильтры.</template
             ><template v-else-if="allShown"
               >Все подходящие варианты показаны. Можно начать подбор
@@ -274,7 +284,8 @@ function navigate(path: string): void {
         <div v-else class="watch-tonight__state">
           <h3>Попробуйте другие фильтры</h3>
           <p>
-            В «Буду смотреть» нет ещё не начатых тайтлов с таким типом и жанром.
+            В «Буду смотреть» нет ещё не начатых произведений с таким типом и
+            жанром.
           </p>
           <AButton @click="resetFilters">Сбросить фильтры</AButton>
         </div>

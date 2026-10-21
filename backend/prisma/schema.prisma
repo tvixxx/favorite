@@ -65,6 +65,7 @@ model User {
   email     String   @unique
   password  String
   fullName  String
+  username  String? @unique
   timezone  String @default("UTC")
   quickAddEnabled Boolean @default(true) @map("quick_add_enabled")
   watchTonightEnabled Boolean @default(false) @map("watch_tonight_enabled")
@@ -423,6 +424,7 @@ enum NotificationType {
   CHAT_MESSAGE
   FRIEND_REQUEST
   FRIEND_ACCEPTED
+  FRIEND_REJECTED
 
   @@map("enum_notification_type")
 }

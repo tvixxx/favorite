@@ -12,13 +12,12 @@ import { INFO_LOGOUT_TEXT } from "@/state/constants";
 import { useNotificationsStore } from "@/stores/notifications/notificationsStore";
 import { useChatStore } from "@/stores/chat/chatStore";
 import type { NotificationDto } from "@/stores/notifications/types";
-import { currentTheme, setTheme, themes, type Theme } from "@/composable";
 import { createOnboardingDriver } from "@/onboarding/createOnboardingDriver";
 import { setOnboardingDone } from "@/composable/useOnboarding";
-import { useDateTime } from "@/composable/useDateTime";
+import NotificationList from "@/components/Notifications/NotificationList.vue";
+import { notificationTarget } from "@/utils/notificationText";
 import { useFeedbackAvailability } from "@/composable/useFeedbackAvailability";
 
-const { formatInstant } = useDateTime();
 const { enabled: feedbackEnabled } = useFeedbackAvailability();
 
 const router = useRouter();
@@ -37,6 +36,7 @@ const isLoggedIn = computed<boolean>(() => store.isLoggedIn ?? false);
 const userId = computed(() => store.userData?.id ?? "");
 
 const drawerOpen = ref(false);
+const notificationsOpen = ref(false);
 const accountMenuOpen = ref(false);
 
 interface NavItem {
@@ -61,32 +61,6 @@ const navItems: NavItem[] = [
   { key: "leaderboard", label: "Топ", to: "/leaderboard" },
   { key: "social", label: "Общение", to: "/chat", badge: true },
 ];
-
-const THEME_LABELS: Record<Theme, string> = {
-  light: "Светлая",
-  dark: "Тёмная",
-  emerald: "Изумруд",
-  corporate: "Деловая",
-  synthwave: "Synthwave",
-  retro: "Ретро",
-  cyberpunk: "Cyberpunk",
-};
-
-const THEME_SWATCHES: Record<Theme, { bg: string; accent: string }> = {
-  light: { bg: "#ffffff", accent: "#ff0032" },
-  dark: { bg: "#141414", accent: "#ff3355" },
-  emerald: { bg: "#f0fdf4", accent: "#10b981" },
-  corporate: { bg: "#f8fafc", accent: "#1e40af" },
-  synthwave: { bg: "#0f0f23", accent: "#ec4899" },
-  retro: { bg: "#fef3c7", accent: "#f59e0b" },
-  cyberpunk: { bg: "#1e1b4b", accent: "#8b5cf6" },
-};
-
-const themeSwatches = themes.map((value) => ({
-  value,
-  label: THEME_LABELS[value],
-  ...THEME_SWATCHES[value],
-}));
 
 const fullName = computed<string>(() => store.userData?.fullName?.trim() ?? "");
 const email = computed<string>(() => store.userData?.email?.trim() ?? "");
@@ -161,38 +135,6 @@ const startOnboarding = (): void => {
   tourDriver.drive();
 };
 
-const summary = (n: NotificationDto): string => {
-  const p = n.payload;
-
-  switch (n.type) {
-    case "CHAT_MESSAGE": {
-      const name = String(p.senderName ?? "Сообщение");
-      const preview = String(p.preview ?? "").trim();
-
-      if (preview) {
-        return `${name}: ${preview}`;
-      }
-
-      return name;
-    }
-
-    case "FRIEND_REQUEST": {
-      const name = String(p.requesterName ?? "Пользователь");
-
-      return `${name} хочет добавить вас в друзья`;
-    }
-
-    case "FRIEND_ACCEPTED": {
-      const name = String(p.friendName ?? "Друг");
-
-      return `${name} принял(а) вашу заявку`;
-    }
-
-    default:
-      return "Уведомление";
-  }
-};
-
 const onDropdownOpenChange = async (open: boolean) => {
   if (!open || !userId.value) {
     return;
@@ -227,17 +169,8 @@ const handleNotificationClick = async (n: NotificationDto) => {
     // ignore
   }
 
-  if (n.type === "CHAT_MESSAGE") {
-    const sid = String(n.payload.senderId ?? "");
-
-    if (sid) {
-      router.push(`/chat/${sid}`);
-    } else {
-      router.push("/chat");
-    }
-  } else {
-    router.push("/friends");
-  }
+  notificationsOpen.value = false;
+  router.push(notificationTarget(n));
 };
 
 const handleMarkAllRead = async () => {
@@ -287,8 +220,10 @@ const handleMarkAllRead = async () => {
       <div class="topbar__actions">
         <!-- Колокольчик уведомлений — логика notificationsStore без изменений -->
         <a-dropdown
+          v-model:open="notificationsOpen"
           trigger="click"
           placement="bottomRight"
+          overlay-class-name="fv-notification-dropdown"
           @open-change="onDropdownOpenChange"
         >
           <span
@@ -358,28 +293,21 @@ const handleMarkAllRead = async () => {
                 v-bind="STATE_PRESETS.notificationsEmpty"
               />
 
-              <ul v-else class="notif-panel__list" role="list">
-                <li
-                  v-for="n in notificationsStore.items"
-                  :key="n.id"
-                  role="listitem"
-                  class="notif-panel__item"
-                  :class="{
-                    'notif-panel__item--unread': n.readAt === null,
-                  }"
-                  @click="handleNotificationClick(n)"
-                >
-                  <span class="notif-panel__text">{{ summary(n) }}</span>
-                  <span class="notif-panel__time">{{
-                    formatInstant(n.createdAt, {
-                      day: "2-digit",
-                      month: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
-                  }}</span>
-                </li>
-              </ul>
+              <NotificationList
+                v-else
+                :items="notificationsStore.items"
+                @open="handleNotificationClick"
+              />
+              <button
+                type="button"
+                class="notif-panel__history"
+                @click="
+                  notificationsOpen = false;
+                  goTo('/notifications');
+                "
+              >
+                Вся история уведомлений
+              </button>
             </div>
           </template>
         </a-dropdown>
@@ -462,33 +390,6 @@ const handleMarkAllRead = async () => {
 
               <div class="acctmenu__divider"></div>
 
-              <div class="acctmenu__section-label">Цветовая тема</div>
-              <div class="acctmenu__themes">
-                <button
-                  v-for="t in themeSwatches"
-                  :key="t.value"
-                  type="button"
-                  class="acctmenu__theme"
-                  :class="{ 'is-active': currentTheme === t.value }"
-                  @click="setTheme(t.value)"
-                >
-                  <span
-                    class="acctmenu__swatch"
-                    :style="{ background: t.bg, '--swatch-accent': t.accent }"
-                  ></span>
-                  <span class="acctmenu__theme-label">{{ t.label }}</span>
-                  <BaseIcon
-                    v-if="currentTheme === t.value"
-                    name="ph:check-circle"
-                    class="acctmenu__check"
-                    :width="18"
-                    :height="18"
-                  />
-                </button>
-              </div>
-
-              <div class="acctmenu__divider"></div>
-
               <button class="acctmenu__item acctmenu__signout" @click="signOut">
                 <BaseIcon name="ph:sign-out" :width="18" :height="18" />
                 <span>Выйти</span>
@@ -531,6 +432,20 @@ const handleMarkAllRead = async () => {
           >
         </button>
 
+        <button
+          type="button"
+          class="drawer-nav__link"
+          @click="goTo('/library/lists')"
+        >
+          Мои списки
+        </button>
+        <button
+          type="button"
+          class="drawer-nav__link"
+          @click="goTo('/notifications')"
+        >
+          История уведомлений
+        </button>
         <div class="drawer-nav__divider"></div>
 
         <button
@@ -885,11 +800,17 @@ const handleMarkAllRead = async () => {
 }
 
 /* Панель уведомлений (телепортируется в body — стили глобальные) */
+.fv-notification-dropdown {
+  max-width: calc(100vw - 24px);
+}
+
 .notif-panel {
   width: min(344px, calc(100vw - 24px));
-  max-height: 70vh;
+  max-height: 70dvh;
   padding: 8px;
-  overflow: auto;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
 
   @include customScrollbar();
   background: var(--fv-color-bg-primary);
@@ -898,8 +819,21 @@ const handleMarkAllRead = async () => {
   border-radius: 14px;
   box-shadow: var(--fv-shadow-modal);
 
+  &__history {
+    display: block;
+    width: 100%;
+    padding: 12px 8px;
+    border: 0;
+    background: transparent;
+    color: var(--fv-color-brand);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
   &__head {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 8px;

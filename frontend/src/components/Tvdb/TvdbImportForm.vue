@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import {
+  blurAfterTouchSelect,
+  selectPopupContainer,
+} from "@/utils/touchSelect";
 import { computed, reactive, ref } from "vue";
 import type { TvdbPreview } from "@/services/tvdb";
 import { prepareTvdbImport } from "@/services/tvdb-form";
@@ -197,6 +201,9 @@ function toggleGenre(genre: string): void {
         <div class="tvdb-field">
           <label for="tvdb-description-language">Язык описания</label>
           <ASelect
+            @select="blurAfterTouchSelect"
+            :get-popup-container="selectPopupContainer"
+            :list-height="160"
             id="tvdb-description-language"
             v-model:value="edits.descriptionLanguage"
             aria-label="Язык описания"
@@ -236,6 +243,10 @@ function toggleGenre(genre: string): void {
               Формат из источника: {{ preview.isSerial ? "сериал" : "фильм" }}.
             </p>
             <CountryFilter v-model="edits.countryCodes" />
+            <p v-if="!edits.countryCodes.length" class="tvdb-hint">
+              Страна не указана. Если она неизвестна, можно оставить поле
+              пустым.
+            </p>
             <div class="tvdb-confirm__genre-field">
               <span class="tvdb-confirm__label">Жанры *</span>
               <div class="tvdb-genres" role="group" aria-label="Жанры">

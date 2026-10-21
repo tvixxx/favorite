@@ -23,6 +23,8 @@ describe('Дружба и безопасные ответы', () => {
   };
   let rows: Row[];
   let service: FriendshipService;
+  const notify = jest.fn();
+  const deliver = jest.fn();
   const people = {
     first: {
       id: 'first',
@@ -61,6 +63,12 @@ describe('Дружба и безопасные ответы', () => {
 
   beforeEach(() => {
     rows = [];
+    notify
+      .mockReset()
+      .mockImplementation((userId: string, type: string, payload: unknown) =>
+        Promise.resolve({ id: 'notice', userId, type, payload }),
+      );
+    deliver.mockReset();
     const prisma = {
       user: {
         findUnique: jest.fn(
@@ -132,10 +140,14 @@ describe('Дружба и безопасные ответы', () => {
         $transaction: transactionRunner(prisma),
       } as unknown as PrismaService,
       {
-        create: jest.fn().mockResolvedValue({}),
-        toDto: jest.fn(() => ({})),
+        create: notify,
+        resolveFriendRequest: jest.fn(),
+        toDto: (row: unknown) => row,
       } as unknown as NotificationService,
-      { emitToUser: jest.fn() } as unknown as MessageGateway,
+      {
+        emitToUser: deliver,
+        emitFriendshipChanged: jest.fn(),
+      } as unknown as MessageGateway,
     );
   });
 
@@ -164,6 +176,28 @@ describe('Дружба и безопасные ответы', () => {
     expect(result.status).toBe('ACCEPTED');
     expect(result.requester).not.toHaveProperty('password');
     expect(result.addressee).not.toHaveProperty('password');
+  });
+
+  it('сообщает отправителю об отказе после изменения заявки', async () => {
+    rows.push({
+      id: 'relation-id',
+      requesterId: 'first',
+      addresseeId: 'second',
+      type: 'FRIEND_REQUEST',
+      status: 'PENDING',
+    });
+    await service.rejectRequest('second', 'relation-id');
+    expect(rows[0].status).toBe('REJECTED');
+    expect(deliver).toHaveBeenCalledWith(
+      'first',
+      expect.objectContaining({
+        type: 'FRIEND_REJECTED',
+        payload: expect.objectContaining({
+          friendshipId: 'relation-id',
+          friendName: 'Второй',
+        }) as unknown,
+      }),
+    );
   });
 
   it('позволяет заново отправить ранее отклонённый запрос', async () => {

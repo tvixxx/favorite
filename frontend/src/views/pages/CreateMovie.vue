@@ -81,6 +81,7 @@ const isActorResolving = ref(false);
 const isSubmitting = ref(false);
 const posterSelection = ref<ImageSelection | null>(null);
 const posterUploading = ref(false);
+const posterSeed = Math.random().toString(36).slice(2);
 let actorSelectionRevision = 0;
 
 onBeforeUnmount(() => {
@@ -509,14 +510,7 @@ const addNewMovie = async () => {
                 <a-form-item
                   label="Страны"
                   name="countryCodes"
-                  :rules="[
-                    {
-                      type: 'array',
-                      required: true,
-                      min: 1,
-                      message: 'Выберите хотя бы одну страну',
-                    },
-                  ]"
+                  extra="Если страна неизвестна, оставьте поле пустым."
                 >
                   <a-select
                     v-model:value="formData.countryCodes"
@@ -525,7 +519,7 @@ const addNewMovie = async () => {
                     :filter-option="filterCountryOption"
                     :max-tag-count="3"
                     :options="countrySelectOptions"
-                    placeholder="Страны производства"
+                    placeholder="Не указана"
                     size="large"
                     allow-clear
                   />
@@ -688,8 +682,8 @@ const addNewMovie = async () => {
               <div class="cm-poster">
                 <MoviePoster
                   :src="posterSelection?.thumbnailUrl || formData.imageUrl"
-                  :seed="formData.title || 'new-title'"
-                  :title="formData.title || 'Новый тайтл'"
+                  :seed="posterSeed"
+                  :title="formData.title || 'Новое произведение'"
                   :meta="formData.publishDate || ''"
                   alt="Предпросмотр постера"
                   class="cm-poster__img"

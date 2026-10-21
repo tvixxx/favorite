@@ -116,7 +116,7 @@ async function save(print = false): Promise<void> {
 
     if (!isCurrent() || main.userData?.id !== userId) return;
     if (data === null) {
-      notice.value = "В выбранной выборке нет тайтлов.";
+      notice.value = "Нет произведений для выбранных условий.";
       printWindow?.close();
       printWindow = null;
 
@@ -129,7 +129,7 @@ async function save(print = false): Promise<void> {
       if (!Array.isArray(report.movies))
         throw new Error("Некорректный ответ сервера");
       if (!report.movies.length) {
-        notice.value = "В выбранной выборке нет тайтлов.";
+        notice.value = "Нет произведений для выбранных условий.";
         printWindow?.close();
         printWindow = null;
 
@@ -208,7 +208,7 @@ async function save(print = false): Promise<void> {
         </ARadioGroup>
       </fieldset>
       <fieldset class="collection-export__group" :disabled="busy">
-        <legend>Какие тайтлы скачать</legend>
+        <legend>Какие произведения скачать</legend>
         <ARadioGroup v-model:value="scope" class="collection-export__scopes">
           <ARadio value="all"
             >Вся коллекция

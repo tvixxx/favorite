@@ -510,7 +510,7 @@ onBeforeUnmount(resetSession);
       v-model="deleteOpen"
       title="Удалить запись дневника?"
       :subject="removal ? `${removal.movie.title} · ${removal.viewedOn}` : ''"
-      description="Тайтл, текущая оценка и прогресс останутся в коллекции."
+      description="Произведение, текущая оценка и прогресс останутся в коллекции."
       confirm-text="Удалить запись"
       :loading="saving"
       @confirm="confirmRemove"

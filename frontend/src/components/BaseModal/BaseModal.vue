@@ -9,8 +9,10 @@ import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from "vue";
 import { useMediaQuery } from "@vueuse/core";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { useScrollLock } from "@/composable/useScrollLock";
+import { useVisualViewport } from "@/composable/useVisualViewport";
 
 const modelValue = defineModel<boolean>();
+const viewportStyle = useVisualViewport();
 
 defineProps<{
   layout?: "default" | "detail" | "form" | "quick";
@@ -55,7 +57,13 @@ function onTouchStart(e: TouchEvent): void {
   const body = modal.value?.querySelector(".modal__body");
 
   // тянем лист только если тело прокручено к верху — иначе это обычный скролл
-  dragActive.value = !body || body.scrollTop <= 0;
+  const target = e.target instanceof Element ? e.target : null;
+
+  dragActive.value =
+    !!target?.closest(".modal__grabber, .modal__header") &&
+    !target.closest("button, input, textarea, select") &&
+    (!body || body.scrollTop <= 0);
+
   dragStartY.value = e.touches[0]?.clientY ?? null;
 }
 
@@ -241,6 +249,7 @@ const handleConfirm = () => {
       <div
         v-if="modelValue"
         class="modal-backdrop"
+        :style="viewportStyle"
         :class="{
           'modal-backdrop--sheet': isSheet,
           'modal-backdrop--blur': overlay === 'blur',

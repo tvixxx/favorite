@@ -7,13 +7,14 @@ import {
   useNotificationPrefs,
 } from "@/composable/useNotificationPrefs";
 import type { NotificationDto } from "./types";
+import { createRequestGuard } from "@/utils/requestGuard";
 
 export const useNotificationsStore = defineStore("notifications", () => {
   const prefs = useNotificationPrefs();
   const types = computed(() => [
     ...(prefs.newMessages.value ? ["CHAT_MESSAGE"] : []),
     ...(prefs.friendRequests.value
-      ? ["FRIEND_REQUEST", "FRIEND_ACCEPTED"]
+      ? ["FRIEND_REQUEST", "FRIEND_ACCEPTED", "FRIEND_REJECTED"]
       : []),
   ]);
   const typeQuery = computed(() =>
@@ -21,6 +22,10 @@ export const useNotificationsStore = defineStore("notifications", () => {
   );
   let activeUserId: string | null = null;
   let revision = 0;
+  const listRequests = createRequestGuard();
+  const countRequests = createRequestGuard();
+  const knownIds = new Set<string>();
+  const readIds = new Set<string>();
   const items = ref<NotificationDto[]>([]);
   const unreadCount = ref(0);
   const isLoading = ref(false);
@@ -32,6 +37,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
   const fetchUnreadCount = async (userId: string) => {
     const requestRevision = revision;
+    const isCurrent = countRequests.begin();
 
     if (!userId?.trim()) {
       return;
@@ -49,7 +55,11 @@ export const useNotificationsStore = defineStore("notifications", () => {
         { method: FETCH_METHOD.get }
       );
 
-      if (requestRevision === revision && isSuccessStatus(response.status)) {
+      if (
+        requestRevision === revision &&
+        isCurrent() &&
+        isSuccessStatus(response.status)
+      ) {
         unreadCount.value =
           typeof response.data === "number" ? response.data : 0;
       }
@@ -58,8 +68,10 @@ export const useNotificationsStore = defineStore("notifications", () => {
     }
   };
 
-  const fetchNotifications = async (userId: string, limit = 30) => {
+  const fetchNotifications = async (userId: string, limit = 5) => {
     const requestRevision = revision;
+    const isCurrent = listRequests.begin();
+    const previousIds = new Set(items.value.map((item) => item.id));
 
     if (!userId?.trim()) {
       return [];
@@ -76,23 +88,39 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
     try {
       const response = await useFetch<NotificationDto[]>(
-        `/users/${userId}/notifications?limit=${limit}&${typeQuery.value}`,
+        `/users/${userId}/notifications?limit=${limit}&unreadOnly=true&${typeQuery.value}`,
         { method: FETCH_METHOD.get }
       );
 
-      if (requestRevision !== revision) return [];
+      if (requestRevision !== revision || !isCurrent()) return [];
 
       if (!isSuccessStatus(response.status)) {
         throw new Error("Не удалось загрузить уведомления");
       }
 
-      items.value = response.data.filter((item) =>
-        isNotificationTypeEnabled(item.type)
+      const incoming = items.value.filter((item) => !previousIds.has(item.id));
+      const merged = new Map(
+        [...response.data, ...incoming].map((item) => [item.id, item])
       );
+
+      for (const item of response.data) knownIds.add(item.id);
+      items.value = [...merged.values()]
+        .filter(
+          (item) =>
+            item.readAt === null &&
+            !readIds.has(item.id) &&
+            isNotificationTypeEnabled(item.type)
+        )
+        .sort(
+          (a, b) =>
+            Date.parse(b.createdAt) - Date.parse(a.createdAt) ||
+            b.id.localeCompare(a.id)
+        )
+        .slice(0, 5);
 
       return items.value;
     } catch (error: unknown) {
-      if (requestRevision !== revision) return [];
+      if (requestRevision !== revision || !isCurrent()) return [];
 
       const text =
         error instanceof Error ? error.message : "Ошибка загрузки уведомлений";
@@ -100,12 +128,19 @@ export const useNotificationsStore = defineStore("notifications", () => {
       setError(text);
       throw error;
     } finally {
-      if (requestRevision === revision) isLoading.value = false;
+      if (requestRevision === revision && isCurrent()) isLoading.value = false;
     }
   };
 
   const hydrate = async (userId: string) => {
-    if (activeUserId !== userId) revision++;
+    if (activeUserId !== userId) {
+      revision++;
+      items.value = [];
+      unreadCount.value = 0;
+      knownIds.clear();
+      readIds.clear();
+    }
+
     activeUserId = userId;
 
     const requestRevision = revision;
@@ -122,9 +157,13 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
   const applyIncoming = (dto: NotificationDto) => {
     // Клиентский гейт: если тип уведомления выключен в настройках — не показываем
-    if (!isNotificationTypeEnabled(dto.type)) {
+    if (!isNotificationTypeEnabled(dto.type) || readIds.has(dto.id)) {
       return;
     }
+
+    const seen = knownIds.has(dto.id);
+
+    knownIds.add(dto.id);
 
     const idx = items.value.findIndex((n) => n.id === dto.id);
 
@@ -134,7 +173,11 @@ export const useNotificationsStore = defineStore("notifications", () => {
       items.value = [dto, ...items.value];
     }
 
-    if (idx < 0 && dto.readAt === null) {
+    items.value = items.value
+      .filter((item) => item.readAt === null)
+      .slice(0, 5);
+
+    if (!seen && dto.readAt === null) {
       unreadCount.value += 1;
     }
   };
@@ -161,13 +204,12 @@ export const useNotificationsStore = defineStore("notifications", () => {
       const updated = response.data;
 
       if (updated) {
-        const i = items.value.findIndex((n) => n.id === notificationId);
-
-        if (i >= 0) {
-          items.value[i] = updated;
-        }
-
-        await fetchUnreadCount(userId);
+        readIds.add(updated.id);
+        items.value = items.value.filter((item) => item.id !== notificationId);
+        await Promise.all([
+          fetchUnreadCount(userId),
+          fetchNotifications(userId),
+        ]);
       }
 
       return updated;
@@ -183,6 +225,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
   const markAllRead = async (userId: string) => {
     const requestRevision = revision;
+    const previouslyVisible = new Set(items.value.map((item) => item.id));
 
     if (!userId?.trim()) {
       return;
@@ -202,14 +245,12 @@ export const useNotificationsStore = defineStore("notifications", () => {
         throw new Error("Не удалось отметить все прочитанными");
       }
 
-      const now = new Date().toISOString();
+      for (const id of previouslyVisible) readIds.add(id);
+      items.value = items.value.filter(
+        (item) => !previouslyVisible.has(item.id)
+      );
 
-      items.value = items.value.map((n) => ({
-        ...n,
-        readAt: n.readAt ?? now,
-      }));
-
-      unreadCount.value = 0;
+      await Promise.all([fetchUnreadCount(userId), fetchNotifications(userId)]);
     } catch (error: unknown) {
       if (requestRevision !== revision) return;
 
@@ -222,6 +263,10 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
   const resetSession = () => {
     revision++;
+    listRequests.invalidate();
+    countRequests.invalidate();
+    knownIds.clear();
+    readIds.clear();
     activeUserId = null;
     items.value = [];
     unreadCount.value = 0;

@@ -7,11 +7,16 @@ vi.mock("vue-router", async (importOriginal) => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
-vi.mock("@/state/state", () => ({ useMainStore: () => ({ userData: null }) }));
+const main = vi.hoisted(() => ({
+  userData: null as null | { id: string; role: string },
+}));
+
+vi.mock("@/state/state", () => ({ useMainStore: () => main }));
 vi.mock("@/stores", () => ({
   useMoviesStore: () => ({
     currentMovie: {
       id: "movie-1",
+      createdById: "owner",
       title: "Название",
       genres: [],
       actors: [],
@@ -29,6 +34,40 @@ vi.mock("@/stores", () => ({
 }));
 
 describe("Спойлер в предпросмотре каталога", () => {
+  it("предлагает смену постера автору и скрывает её для другого пользователя", async () => {
+    for (const id of ["owner", "other"]) {
+      main.userData = { id, role: "USER" };
+
+      const wrapper = mount(CatalogMoviePreviewModal, {
+        props: { modelValue: true, movieId: null },
+        global: {
+          stubs: {
+            BaseModal: { template: '<section><slot name="body"/></section>' },
+            MoviePosterEditor: true,
+            ReportReviewModal: true,
+            BaseIcon: true,
+            "a-button": { template: "<button><slot/></button>" },
+          },
+        },
+      });
+
+      expect(wrapper.find(".catalog-preview__edit-poster").exists()).toBe(
+        id === "owner"
+      );
+
+      if (id === "owner") {
+        await wrapper.get(".catalog-preview__edit-poster").trigger("click");
+        expect(
+          wrapper.findComponent({ name: "MoviePosterEditor" }).exists()
+        ).toBe(true);
+      }
+
+      wrapper.unmount();
+    }
+
+    main.userData = null;
+  });
+
   it("не показывает текст до раскрытия читателем", async () => {
     const wrapper = mount(CatalogMoviePreviewModal, {
       props: { modelValue: true, movieId: null },
@@ -37,6 +76,7 @@ describe("Спойлер в предпросмотре каталога", () => 
           BaseModal: { template: '<section><slot name="body"/></section>' },
           ReportReviewModal: true,
           BaseIcon: true,
+          "a-button": { template: "<button><slot/></button>" },
           "a-dropdown": true,
         },
       },

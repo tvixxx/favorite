@@ -1,4 +1,4 @@
-import { flushPromises, mount } from "@vue/test-utils";
+import { DOMWrapper, flushPromises, mount } from "@vue/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { reactive } from "vue";
 import CollectionImportModal from "./CollectionImportModal.vue";
@@ -133,7 +133,7 @@ describe("Обязательная проверка перед импортом 
     await choice.trigger("mousedown");
     await flushPromises();
 
-    const option = wrapper
+    const option = new DOMWrapper(document.body)
       .findAll(".ant-select-item-option")
       .find((item) => item.text().includes("2020"));
 

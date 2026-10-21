@@ -93,10 +93,10 @@ async function remove(): Promise<void> {
       items.value.length === 1 && page.value > 1 ? page.value - 1 : page.value
     );
 
-    message.success("Тайтл удалён из общего каталога");
+    message.success("Произведение удалено из общего каталога");
   } catch (err) {
     message.error(
-      friendlyRequestError(err, { fallback: "Не удалось удалить тайтл" })
+      friendlyRequestError(err, { fallback: "Не удалось удалить произведение" })
     );
   } finally {
     deleting.value = false;
@@ -136,7 +136,9 @@ function saved(): void {
           Выберите проверку, чтобы увидеть карточки для доработки
         </p>
       </div>
-      <a-button type="primary" @click="edit(null)">Добавить тайтл</a-button>
+      <a-button type="primary" @click="edit(null)"
+        >Добавить произведение</a-button
+      >
     </div>
     <div class="admin-quality">
       <button
@@ -151,7 +153,7 @@ function saved(): void {
       </button>
     </div>
     <p class="admin-muted admin-caption">
-      Отсутствие данных — повод проверить карточку. Тестовые тайтлы не
+      Отсутствие данных — повод проверить карточку. Тестовые произведения не
       удаляются.
     </p>
   </section>
@@ -171,13 +173,13 @@ function saved(): void {
       <a-input
         v-model:value="q"
         placeholder="Название"
-        aria-label="Поиск тайтлов"
+        aria-label="Поиск произведений"
         class="admin-search"
         allow-clear
       />
       <a-select
         v-model:value="kind"
-        aria-label="Тип тайтла"
+        aria-label="Тип произведения"
         :options="[
           { value: '', label: 'Все типы' },
           { value: 'film', label: 'Фильмы' },
@@ -186,8 +188,8 @@ function saved(): void {
       />
       <a-input
         v-model:value="author"
-        aria-label="Поиск по автору тайтла"
-        placeholder="Имя автора тайтла"
+        aria-label="Поиск по автору произведения"
+        placeholder="Имя автора произведения"
         allow-clear
         class="admin-search"
       />
@@ -204,7 +206,7 @@ function saved(): void {
         :columns="columns"
         :data-source="items"
         row-key="id"
-        :locale="{ emptyText: 'Тайтлы не найдены' }"
+        :locale="{ emptyText: 'Произведения не найдены' }"
         :pagination="false"
       >
         <template #bodyCell="{ column, record }">
@@ -245,7 +247,7 @@ function saved(): void {
         </article>
         <a-empty
           v-if="!items.length && !loading"
-          description="Тайтлы не найдены"
+          description="Произведения не найдены"
         />
       </div>
     </AdminDataRegion>
@@ -263,7 +265,7 @@ function saved(): void {
   <ConfirmDialog
     v-model="deleteOpen"
     :title="`Удалить «${removing?.title ?? ''}»?`"
-    :description="`Это удалит тайтл у всех пользователей. Связей с коллекциями: ${
+    :description="`Это удалит произведение у всех пользователей. Связей с коллекциями: ${
       removing?._count.userMovies ?? 0
     }, списками: ${removing?._count.listItems ?? 0}, отзывов: ${
       removing?._count.reviews ?? 0

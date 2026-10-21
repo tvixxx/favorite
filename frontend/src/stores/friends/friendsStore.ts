@@ -20,7 +20,7 @@ export interface FriendUser {
   id: string;
   fullName: string;
   email: string;
-  username?: string;
+  username?: string | null;
 }
 
 export interface FriendEntry {

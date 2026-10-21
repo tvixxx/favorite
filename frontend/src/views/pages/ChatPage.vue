@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useChatStore, useUserStatusStore } from "@/stores";
+import { useChatStore, useUserStatusStore, useFriendsStore } from "@/stores";
 import { useMainStore } from "@/state/state";
 import { Badge, message } from "ant-design-vue";
 import ChatMessageInput from "@/components/ChatMessageInput/ChatMessageInput.vue";
@@ -20,6 +20,7 @@ const route = useRoute();
 const router = useRouter();
 const chatStore = useChatStore();
 const userStatusStore = useUserStatusStore();
+const friendsStore = useFriendsStore();
 const mainStore = useMainStore();
 const { formatInstant } = useDateTime();
 
@@ -53,6 +54,14 @@ const selectedConversation = computed(() => {
     (c) => c.otherUser.id === chatStore.currentChatUserId
   );
 });
+
+const selectedUser = computed(
+  () =>
+    selectedConversation.value?.otherUser ??
+    friendsStore.friends.find(
+      (entry) => entry.friend.id === chatStore.currentChatUserId
+    )?.friend
+);
 
 const isOtherUserOnline = computed(() => {
   if (!chatStore.currentChatUserId) {
@@ -314,16 +323,16 @@ onMounted(async () => {
                   class="chat-avatar chat-avatar--sm"
                   :style="{
                     background: avatarGradient(
-                      selectedConversation?.otherUser.id || ''
+                      selectedUser?.id || chatStore.currentChatUserId || ''
                     ),
                   }"
                 >
-                  {{ avatarLetter(selectedConversation?.otherUser.fullName) }}
+                  {{ avatarLetter(selectedUser?.fullName) }}
                 </span>
               </Badge>
               <div class="chat-page__header-info">
                 <span class="chat-page__header-username">
-                  {{ selectedConversation?.otherUser.fullName }}
+                  {{ selectedUser?.fullName || "Собеседник" }}
                 </span>
                 <span
                   class="chat-page__header-status"
@@ -681,7 +690,10 @@ onMounted(async () => {
 @include mediaMax($tablet) {
   .chat-page-shell {
     // высота с учётом верхней шапки + нижнего таб-бара; отступы — как на Друзьях
-    height: calc(100dvh - 128px);
+    height: calc(
+      100dvh - var(--fv-topbar-height) - var(--fv-mobile-tabbar-height) -
+        env(safe-area-inset-bottom, 0px)
+    );
   }
 
   .chat-page {

@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, shallowRef, computed, watch } from "vue";
+import { ref, shallowRef, computed, watch, onScopeDispose } from "vue";
 import { io, Socket } from "socket.io-client";
 import { useFetch, FETCH_METHOD, useAuthToken } from "@/composable";
 import { isSuccessStatus } from "@/utils";
@@ -7,6 +7,7 @@ import { useUserStatusStore } from "../userStatus/userStatusStore";
 import { useNotificationsStore } from "../notifications/notificationsStore";
 import type { NotificationDto } from "../notifications/types";
 import { createRequestGuard } from "@/utils/requestGuard";
+import { useFriendsStore } from "../friends/friendsStore";
 
 export interface Message {
   id: string;
@@ -50,6 +51,8 @@ export const useChatStore = defineStore("chat", () => {
   const isMessagesError = ref(false);
   const isMessagesLoading = ref(false);
   let sessionRevision = 0;
+  let syncing = false;
+  let syncGeneration = 0;
   const conversationRequests = createRequestGuard();
   const messageRequests = createRequestGuard();
 
@@ -71,7 +74,7 @@ export const useChatStore = defineStore("chat", () => {
   const markAsRead = (otherUserId: string) => {
     const me = currentUserId.value;
 
-    if (!me) {
+    if (!me || document.visibilityState === "hidden") {
       return;
     }
 
@@ -118,7 +121,11 @@ export const useChatStore = defineStore("chat", () => {
     // входящее и не в открытом чате → +1 непрочитанное
     const inbound = message.senderId === peerId;
 
-    if (inbound && currentChatUserId.value !== peerId) {
+    if (
+      inbound &&
+      (currentChatUserId.value !== peerId ||
+        document.visibilityState === "hidden")
+    ) {
       existing.unreadCount += 1;
     }
 
@@ -156,13 +163,21 @@ export const useChatStore = defineStore("chat", () => {
 
     socket.value.on("connect", () => {
       isConnected.value = true;
-      if (currentChatUserId.value) {
-        markAsRead(currentChatUserId.value);
-      }
+      void resume();
+    });
+
+    document.addEventListener("visibilitychange", onResume);
+    window.addEventListener("pageshow", onResume);
+    window.addEventListener("online", onResume);
+
+    socket.value.on("presence:snapshot", (ids: string[]) => {
+      userStatusStore.clearStatuses();
+      for (const id of ids) userStatusStore.setUserOnline(id, "");
     });
 
     socket.value.on("disconnect", (reason) => {
       isConnected.value = false;
+      userStatusStore.clearStatuses();
       if (reason === "io server disconnect" && currentUserId.value) {
         const connection = socket.value;
         const requestRevision = sessionRevision;
@@ -243,6 +258,15 @@ export const useChatStore = defineStore("chat", () => {
       }
     );
 
+    socket.value.on("friendship:changed", () => {
+      void Promise.allSettled([
+        refreshFriends(userId),
+        useNotificationsStore().hydrate(userId),
+      ]);
+
+      if (socket.value?.connected) socket.value.emit("presence:sync");
+    });
+
     socket.value.on("notification:new", (dto: NotificationDto) => {
       const notificationsStore = useNotificationsStore();
 
@@ -250,8 +274,77 @@ export const useChatStore = defineStore("chat", () => {
     });
   };
 
+  async function refreshFriends(userId: string): Promise<void> {
+    const friends = useFriendsStore();
+
+    await Promise.all([
+      friends.fetchRequests(userId),
+      friends.fetchStats(userId),
+      friends.fetchFriends(userId),
+      friends.fetchSubscriptions(userId),
+      friends.fetchSubscribers(userId),
+    ]);
+  }
+
+  function onResume(): void {
+    if (document.visibilityState === "hidden") {
+      syncGeneration++;
+      syncing = false;
+
+      return;
+    }
+
+    void resume();
+  }
+
+  async function resume(): Promise<void> {
+    const me = currentUserId.value;
+
+    if (!me || !socket.value || document.visibilityState === "hidden") return;
+    if (!socket.value.connected) {
+      socket.value.connect();
+
+      return;
+    }
+
+    if (syncing) return;
+    syncing = true;
+
+    const generation = ++syncGeneration;
+
+    const revision = sessionRevision;
+    const peer = currentChatUserId.value;
+
+    socket.value.emit("presence:sync");
+    try {
+      await Promise.allSettled([
+        fetchConversations(me),
+        peer ? fetchMessages(me, peer) : Promise.resolve(),
+        useNotificationsStore().hydrate(me),
+        refreshFriends(me),
+      ]);
+
+      if (
+        revision === sessionRevision &&
+        generation === syncGeneration &&
+        peer === currentChatUserId.value &&
+        peer &&
+        !isMessagesError.value
+      )
+        markAsRead(peer);
+    } finally {
+      if (revision === sessionRevision && generation === syncGeneration)
+        syncing = false;
+    }
+  }
+
   const disconnect = () => {
     sessionRevision++;
+    syncGeneration++;
+    syncing = false;
+    document.removeEventListener("visibilitychange", onResume);
+    window.removeEventListener("pageshow", onResume);
+    window.removeEventListener("online", onResume);
     conversationRequests.invalidate();
     messageRequests.invalidate();
     if (socket.value) {
@@ -433,6 +526,8 @@ export const useChatStore = defineStore("chat", () => {
 
     return messages.value.get(currentChatUserId.value) || [];
   });
+
+  onScopeDispose(disconnect);
 
   return {
     socket,

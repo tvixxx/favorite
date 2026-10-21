@@ -39,6 +39,7 @@ function profileData(profile: UserProfileResponse): UserData {
     email: profile.email,
     fullName: profile.fullName || profile.fullname || profile.name || "",
     role: profile.role,
+    username: profile.username ?? null,
     timezone: profile.timezone ?? "UTC",
     avatarUrl: profile.avatarUrl ?? null,
     avatarThumbnailUrl: profile.avatarThumbnailUrl ?? null,
@@ -87,6 +88,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
   async function updateProfile(
     payload: Partial<UserPreferences> & {
       fullName?: string;
+      username?: string | null;
       timezone?: string;
       avatarUrl?: string | null;
       avatarAssetId?: string | null;

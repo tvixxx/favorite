@@ -237,7 +237,7 @@ async function saveStatus(): Promise<void> {
         />
         <a-input
           v-model:value="q"
-          placeholder="Название тайтла"
+          placeholder="Название произведения"
           aria-label="Поиск отзывов по фильму"
           class="admin-search"
           allow-clear

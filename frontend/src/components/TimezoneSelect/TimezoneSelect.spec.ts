@@ -27,6 +27,27 @@ describe("Выбор часового пояса", () => {
     wrapper.unmount();
   });
 
+  it("предлагает время устройства, но не меняет сохранённый пояс без нажатия", async () => {
+    const device = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const selected = device === "UTC" ? "Europe/Moscow" : "UTC";
+
+    mocks.get.mockResolvedValue({ data: ["UTC", "Europe/Moscow"] });
+
+    const wrapper = mount(TimezoneSelect, { props: { modelValue: selected } });
+
+    await flushPromises();
+    expect(wrapper.getComponent(Select).props("value")).toBe(selected);
+    expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+
+    const button = wrapper
+      .findAll("button")
+      .find((item) => item.text().startsWith("Как на устройстве"))!;
+
+    await button.trigger("click");
+    expect(wrapper.emitted("update:modelValue")).toEqual([[device]]);
+    wrapper.unmount();
+  });
+
   it("сохраняет текущий выбор при ошибке списка и позволяет повторить", async () => {
     mocks.get
       .mockRejectedValueOnce(new Error("offline"))

@@ -22,8 +22,12 @@ import type {
 import { lockResource } from '../common/utils/transaction-lock';
 
 const friendshipPeople = {
-  requester: { select: { id: true, fullName: true, email: true } },
-  addressee: { select: { id: true, fullName: true, email: true } },
+  requester: {
+    select: { id: true, fullName: true, email: true, username: true },
+  },
+  addressee: {
+    select: { id: true, fullName: true, email: true, username: true },
+  },
 } as const;
 
 @Injectable()
@@ -126,6 +130,10 @@ export class FriendshipService {
       );
     }
 
+    this.messageGateway.emitFriendshipChanged([
+      friendship.requesterId,
+      friendship.addresseeId,
+    ]);
     return friendship;
   }
 
@@ -153,6 +161,11 @@ export class FriendshipService {
           include: friendshipPeople,
         });
 
+        await this.notificationService.resolveFriendRequest(
+          userId,
+          friendshipId,
+          tx,
+        );
         const notification = await this.notificationService.create(
           updated.requesterId,
           NotificationType.FRIEND_ACCEPTED,
@@ -173,33 +186,64 @@ export class FriendshipService {
       this.notificationService.toDto(notification),
     );
 
+    this.messageGateway.emitFriendshipChanged([
+      updated.requesterId,
+      updated.addresseeId,
+    ]);
     return updated;
   }
 
   async rejectRequest(userId: string, friendshipId: string) {
-    return this.prismaService.$transaction(async (tx) => {
-      const friendship = await this.getLockedFriendship(tx, friendshipId);
-
-      if (friendship.addresseeId !== userId) {
-        throw new ConflictException('You can only reject requests sent to you');
-      }
-
-      if (
-        friendship.status !== FriendshipStatus.PENDING ||
-        friendship.type !== FriendshipType.FRIEND_REQUEST
-      ) {
-        throw new ConflictException('Request is not pending');
-      }
-
-      return tx.friendship.update({
-        where: { id: friendshipId },
-        data: { status: 'REJECTED' },
-      });
-    });
+    const { updated, notification } = await this.prismaService.$transaction(
+      async (tx) => {
+        const friendship = await this.getLockedFriendship(tx, friendshipId);
+        if (friendship.addresseeId !== userId) {
+          throw new ConflictException(
+            'You can only reject requests sent to you',
+          );
+        }
+        if (
+          friendship.status !== FriendshipStatus.PENDING ||
+          friendship.type !== FriendshipType.FRIEND_REQUEST
+        ) {
+          throw new ConflictException('Request is not pending');
+        }
+        const updated = await tx.friendship.update({
+          where: { id: friendshipId },
+          data: { status: 'REJECTED' },
+          include: friendshipPeople,
+        });
+        await this.notificationService.resolveFriendRequest(
+          userId,
+          friendshipId,
+          tx,
+        );
+        const notification = await this.notificationService.create(
+          updated.requesterId,
+          NotificationType.FRIEND_REJECTED,
+          {
+            friendshipId: updated.id,
+            friendId: updated.addresseeId,
+            friendName: updated.addressee.fullName,
+          },
+          tx,
+        );
+        return { updated, notification };
+      },
+    );
+    await this.messageGateway.emitToUser(
+      updated.requesterId,
+      this.notificationService.toDto(notification),
+    );
+    this.messageGateway.emitFriendshipChanged([
+      updated.requesterId,
+      updated.addresseeId,
+    ]);
+    return updated;
   }
 
   async removeFriendship(userId: string, friendshipId: string) {
-    return this.prismaService.$transaction(async (tx) => {
+    const removed = await this.prismaService.$transaction(async (tx) => {
       const friendship = await this.getLockedFriendship(tx, friendshipId);
 
       if (
@@ -213,6 +257,11 @@ export class FriendshipService {
         where: { id: friendshipId },
       });
     });
+    this.messageGateway.emitFriendshipChanged([
+      removed.requesterId,
+      removed.addresseeId,
+    ]);
+    return removed;
   }
 
   private pairKey(first: string, second: string): string {
@@ -255,6 +304,7 @@ export class FriendshipService {
             id: true,
             fullName: true,
             email: true,
+            username: true,
           },
         },
         addressee: {
@@ -262,6 +312,7 @@ export class FriendshipService {
             id: true,
             fullName: true,
             email: true,
+            username: true,
           },
         },
       },
@@ -288,6 +339,7 @@ export class FriendshipService {
             id: true,
             fullName: true,
             email: true,
+            username: true,
           },
         },
       },
@@ -313,6 +365,7 @@ export class FriendshipService {
             id: true,
             fullName: true,
             email: true,
+            username: true,
           },
         },
       },
@@ -338,6 +391,7 @@ export class FriendshipService {
             id: true,
             fullName: true,
             email: true,
+            username: true,
           },
         },
       },

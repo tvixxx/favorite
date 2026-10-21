@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import {
+  blurAfterTouchSelect,
+  selectPopupContainer,
+} from "@/utils/touchSelect";
 import { computed, ref, watch } from "vue";
 import { message } from "ant-design-vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
@@ -67,6 +71,9 @@ async function send(): Promise<void> {
       <a-form layout="vertical" :disabled="saving">
         <a-form-item label="Причина" required>
           <a-select
+            @select="blurAfterTouchSelect"
+            :get-popup-container="selectPopupContainer"
+            :list-height="160"
             v-model:value="reason"
             placeholder="Выберите причину"
             :options="options"

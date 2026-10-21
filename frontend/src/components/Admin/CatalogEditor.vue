@@ -180,7 +180,7 @@ watch(open, async (visible) => {
 
     void searchActors();
   } catch {
-    error.value = "Не удалось открыть тайтл. Закройте окно и повторите.";
+    error.value = "Не удалось открыть произведение. Закройте окно и повторите.";
   } finally {
     if (request === revision) {
       loading.value = false;
@@ -224,11 +224,15 @@ async function save(): Promise<void> {
 
     open.value = false;
     emit("saved");
-    message.success(id ? "Тайтл обновлён" : "Тайтл добавлен в каталог");
+    message.success(
+      id ? "Произведение обновлено" : "Произведение добавлено в каталог"
+    );
   } catch (err) {
     message.error(
       getApiResponseMessage(err) ??
-        friendlyRequestError(err, { fallback: "Не удалось сохранить тайтл" })
+        friendlyRequestError(err, {
+          fallback: "Не удалось сохранить произведение",
+        })
     );
   } finally {
     saving.value = false;
@@ -242,7 +246,7 @@ async function save(): Promise<void> {
     class="admin-dialog catalog-editor"
   >
     <template #title>{{
-      movieId ? "Редактировать тайтл" : "Добавить тайтл"
+      movieId ? "Редактировать произведение" : "Добавить произведение"
     }}</template>
     <template #body>
       <AdminDataRegion :loading="loading">

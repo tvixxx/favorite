@@ -39,6 +39,7 @@ export type UserMinAggregateOutputType = {
   email: string | null
   password: string | null
   fullName: string | null
+  username: string | null
   timezone: string | null
   quickAddEnabled: boolean | null
   watchTonightEnabled: boolean | null
@@ -63,6 +64,7 @@ export type UserMaxAggregateOutputType = {
   email: string | null
   password: string | null
   fullName: string | null
+  username: string | null
   timezone: string | null
   quickAddEnabled: boolean | null
   watchTonightEnabled: boolean | null
@@ -87,6 +89,7 @@ export type UserCountAggregateOutputType = {
   email: number
   password: number
   fullName: number
+  username: number
   timezone: number
   quickAddEnabled: number
   watchTonightEnabled: number
@@ -121,6 +124,7 @@ export type UserMinAggregateInputType = {
   email?: true
   password?: true
   fullName?: true
+  username?: true
   timezone?: true
   quickAddEnabled?: true
   watchTonightEnabled?: true
@@ -145,6 +149,7 @@ export type UserMaxAggregateInputType = {
   email?: true
   password?: true
   fullName?: true
+  username?: true
   timezone?: true
   quickAddEnabled?: true
   watchTonightEnabled?: true
@@ -169,6 +174,7 @@ export type UserCountAggregateInputType = {
   email?: true
   password?: true
   fullName?: true
+  username?: true
   timezone?: true
   quickAddEnabled?: true
   watchTonightEnabled?: true
@@ -280,6 +286,7 @@ export type UserGroupByOutputType = {
   email: string
   password: string
   fullName: string
+  username: string | null
   timezone: string
   quickAddEnabled: boolean
   watchTonightEnabled: boolean
@@ -327,6 +334,7 @@ export type UserWhereInput = {
   email?: Prisma.StringFilter<"User"> | string
   password?: Prisma.StringFilter<"User"> | string
   fullName?: Prisma.StringFilter<"User"> | string
+  username?: Prisma.StringNullableFilter<"User"> | string | null
   timezone?: Prisma.StringFilter<"User"> | string
   quickAddEnabled?: Prisma.BoolFilter<"User"> | boolean
   watchTonightEnabled?: Prisma.BoolFilter<"User"> | boolean
@@ -370,6 +378,7 @@ export type UserOrderByWithRelationInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
+  username?: Prisma.SortOrderInput | Prisma.SortOrder
   timezone?: Prisma.SortOrder
   quickAddEnabled?: Prisma.SortOrder
   watchTonightEnabled?: Prisma.SortOrder
@@ -411,6 +420,7 @@ export type UserOrderByWithRelationInput = {
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   email?: string
+  username?: string
   avatarAssetId?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
@@ -452,13 +462,14 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   adminActions?: Prisma.AdminAuditLogListRelationFilter
   passwordReset?: Prisma.XOR<Prisma.PasswordResetNullableScalarRelationFilter, Prisma.PasswordResetWhereInput> | null
   watchEntries?: Prisma.WatchEntryListRelationFilter
-}, "id" | "email" | "avatarAssetId">
+}, "id" | "email" | "username" | "avatarAssetId">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
+  username?: Prisma.SortOrderInput | Prisma.SortOrder
   timezone?: Prisma.SortOrder
   quickAddEnabled?: Prisma.SortOrder
   watchTonightEnabled?: Prisma.SortOrder
@@ -491,6 +502,7 @@ export type UserScalarWhereWithAggregatesInput = {
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
   password?: Prisma.StringWithAggregatesFilter<"User"> | string
   fullName?: Prisma.StringWithAggregatesFilter<"User"> | string
+  username?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   timezone?: Prisma.StringWithAggregatesFilter<"User"> | string
   quickAddEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   watchTonightEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
@@ -515,6 +527,7 @@ export type UserCreateInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -557,6 +570,7 @@ export type UserUncheckedCreateInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -599,6 +613,7 @@ export type UserUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -641,6 +656,7 @@ export type UserUncheckedUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -683,6 +699,7 @@ export type UserCreateManyInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -707,6 +724,7 @@ export type UserUpdateManyMutationInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -730,6 +748,7 @@ export type UserUncheckedUpdateManyInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -759,6 +778,7 @@ export type UserCountOrderByAggregateInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
+  username?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   quickAddEnabled?: Prisma.SortOrder
   watchTonightEnabled?: Prisma.SortOrder
@@ -787,6 +807,7 @@ export type UserMaxOrderByAggregateInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
+  username?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   quickAddEnabled?: Prisma.SortOrder
   watchTonightEnabled?: Prisma.SortOrder
@@ -811,6 +832,7 @@ export type UserMinOrderByAggregateInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
+  username?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   quickAddEnabled?: Prisma.SortOrder
   watchTonightEnabled?: Prisma.SortOrder
@@ -1150,6 +1172,7 @@ export type UserCreateWithoutUploadedMediaInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -1191,6 +1214,7 @@ export type UserUncheckedCreateWithoutUploadedMediaInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -1237,6 +1261,7 @@ export type UserCreateWithoutAvatarAssetInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -1278,6 +1303,7 @@ export type UserUncheckedCreateWithoutAvatarAssetInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -1335,6 +1361,7 @@ export type UserUpdateWithoutUploadedMediaInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1376,6 +1403,7 @@ export type UserUncheckedUpdateWithoutUploadedMediaInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1428,6 +1456,7 @@ export type UserUpdateWithoutAvatarAssetInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1469,6 +1498,7 @@ export type UserUncheckedUpdateWithoutAvatarAssetInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1510,6 +1540,7 @@ export type UserCreateWithoutPasswordResetInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -1551,6 +1582,7 @@ export type UserUncheckedCreateWithoutPasswordResetInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -1608,6 +1640,7 @@ export type UserUpdateWithoutPasswordResetInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1649,6 +1682,7 @@ export type UserUncheckedUpdateWithoutPasswordResetInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1690,6 +1724,7 @@ export type UserCreateWithoutCreatedMoviesInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -1731,6 +1766,7 @@ export type UserUncheckedCreateWithoutCreatedMoviesInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -1788,6 +1824,7 @@ export type UserUpdateWithoutCreatedMoviesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1829,6 +1866,7 @@ export type UserUncheckedUpdateWithoutCreatedMoviesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1870,6 +1908,7 @@ export type UserCreateWithoutReviewsInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -1911,6 +1950,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -1968,6 +2008,7 @@ export type UserUpdateWithoutReviewsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2009,6 +2050,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2050,6 +2092,7 @@ export type UserCreateWithoutCreatedActorsInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -2091,6 +2134,7 @@ export type UserUncheckedCreateWithoutCreatedActorsInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -2148,6 +2192,7 @@ export type UserUpdateWithoutCreatedActorsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2189,6 +2234,7 @@ export type UserUncheckedUpdateWithoutCreatedActorsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2230,6 +2276,7 @@ export type UserCreateWithoutUserMoviesInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -2271,6 +2318,7 @@ export type UserUncheckedCreateWithoutUserMoviesInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -2328,6 +2376,7 @@ export type UserUpdateWithoutUserMoviesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2369,6 +2418,7 @@ export type UserUncheckedUpdateWithoutUserMoviesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2410,6 +2460,7 @@ export type UserCreateWithoutWatchEntriesInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -2451,6 +2502,7 @@ export type UserUncheckedCreateWithoutWatchEntriesInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -2508,6 +2560,7 @@ export type UserUpdateWithoutWatchEntriesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2549,6 +2602,7 @@ export type UserUncheckedUpdateWithoutWatchEntriesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2590,6 +2644,7 @@ export type UserCreateWithoutListsInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -2631,6 +2686,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -2688,6 +2744,7 @@ export type UserUpdateWithoutListsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2729,6 +2786,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2770,6 +2828,7 @@ export type UserCreateWithoutFriendshipsRequestedInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -2811,6 +2870,7 @@ export type UserUncheckedCreateWithoutFriendshipsRequestedInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -2857,6 +2917,7 @@ export type UserCreateWithoutFriendshipsReceivedInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -2898,6 +2959,7 @@ export type UserUncheckedCreateWithoutFriendshipsReceivedInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -2955,6 +3017,7 @@ export type UserUpdateWithoutFriendshipsRequestedInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2996,6 +3059,7 @@ export type UserUncheckedUpdateWithoutFriendshipsRequestedInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3048,6 +3112,7 @@ export type UserUpdateWithoutFriendshipsReceivedInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3089,6 +3154,7 @@ export type UserUncheckedUpdateWithoutFriendshipsReceivedInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3130,6 +3196,7 @@ export type UserCreateWithoutSentMessagesInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -3171,6 +3238,7 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -3217,6 +3285,7 @@ export type UserCreateWithoutReceivedMessagesInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -3258,6 +3327,7 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -3315,6 +3385,7 @@ export type UserUpdateWithoutSentMessagesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3356,6 +3427,7 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3408,6 +3480,7 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3449,6 +3522,7 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3490,6 +3564,7 @@ export type UserCreateWithoutStatusInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -3531,6 +3606,7 @@ export type UserUncheckedCreateWithoutStatusInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -3588,6 +3664,7 @@ export type UserUpdateWithoutStatusInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3629,6 +3706,7 @@ export type UserUncheckedUpdateWithoutStatusInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3670,6 +3748,7 @@ export type UserCreateWithoutNotificationsInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -3711,6 +3790,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -3768,6 +3848,7 @@ export type UserUpdateWithoutNotificationsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3809,6 +3890,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3850,6 +3932,7 @@ export type UserCreateWithoutFeedbacksInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -3891,6 +3974,7 @@ export type UserUncheckedCreateWithoutFeedbacksInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -3948,6 +4032,7 @@ export type UserUpdateWithoutFeedbacksInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3989,6 +4074,7 @@ export type UserUncheckedUpdateWithoutFeedbacksInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4030,6 +4116,7 @@ export type UserCreateWithoutReviewReportsInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -4071,6 +4158,7 @@ export type UserUncheckedCreateWithoutReviewReportsInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -4128,6 +4216,7 @@ export type UserUpdateWithoutReviewReportsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4169,6 +4258,7 @@ export type UserUncheckedUpdateWithoutReviewReportsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4210,6 +4300,7 @@ export type UserCreateWithoutAdminActionsInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -4251,6 +4342,7 @@ export type UserUncheckedCreateWithoutAdminActionsInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -4308,6 +4400,7 @@ export type UserUpdateWithoutAdminActionsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4349,6 +4442,7 @@ export type UserUncheckedUpdateWithoutAdminActionsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4390,6 +4484,7 @@ export type UserCreateWithoutUsageEventsInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -4431,6 +4526,7 @@ export type UserUncheckedCreateWithoutUsageEventsInput = {
   email: string
   password: string
   fullName: string
+  username?: string | null
   timezone?: string
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -4488,6 +4584,7 @@ export type UserUpdateWithoutUsageEventsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4529,6 +4626,7 @@ export type UserUncheckedUpdateWithoutUsageEventsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4736,6 +4834,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   email?: boolean
   password?: boolean
   fullName?: boolean
+  username?: boolean
   timezone?: boolean
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -4780,6 +4879,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   password?: boolean
   fullName?: boolean
+  username?: boolean
   timezone?: boolean
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -4805,6 +4905,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   password?: boolean
   fullName?: boolean
+  username?: boolean
   timezone?: boolean
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -4830,6 +4931,7 @@ export type UserSelectScalar = {
   email?: boolean
   password?: boolean
   fullName?: boolean
+  username?: boolean
   timezone?: boolean
   quickAddEnabled?: boolean
   watchTonightEnabled?: boolean
@@ -4849,7 +4951,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "fullName" | "timezone" | "quickAddEnabled" | "watchTonightEnabled" | "collectionFilesEnabled" | "notifyNewMessages" | "notifyFriendRequests" | "notifyRecommendations" | "role" | "blockedAt" | "blockedReason" | "authVersion" | "tags" | "avatarUrl" | "avatarThumbnailUrl" | "avatarAssetId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "fullName" | "username" | "timezone" | "quickAddEnabled" | "watchTonightEnabled" | "collectionFilesEnabled" | "notifyNewMessages" | "notifyFriendRequests" | "notifyRecommendations" | "role" | "blockedAt" | "blockedReason" | "authVersion" | "tags" | "avatarUrl" | "avatarThumbnailUrl" | "avatarAssetId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   avatarAsset?: boolean | Prisma.User$avatarAssetArgs<ExtArgs>
   uploadedMedia?: boolean | Prisma.User$uploadedMediaArgs<ExtArgs>
@@ -4907,6 +5009,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     email: string
     password: string
     fullName: string
+    username: string | null
     timezone: string
     quickAddEnabled: boolean
     watchTonightEnabled: boolean
@@ -5370,6 +5473,7 @@ export interface UserFieldRefs {
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly password: Prisma.FieldRef<"User", 'String'>
   readonly fullName: Prisma.FieldRef<"User", 'String'>
+  readonly username: Prisma.FieldRef<"User", 'String'>
   readonly timezone: Prisma.FieldRef<"User", 'String'>
   readonly quickAddEnabled: Prisma.FieldRef<"User", 'Boolean'>
   readonly watchTonightEnabled: Prisma.FieldRef<"User", 'Boolean'>
