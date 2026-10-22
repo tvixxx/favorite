@@ -66,15 +66,15 @@ export class UserController {
       throw new BadRequestException('Укажите корректный email');
     }
 
-    return this.userService.findByEmail(value);
+    return this.userService.findByEmail(value, user);
   }
 
   @AuthProtected()
   @Get(':id')
   @ApiOperation({ summary: 'Профиль по id' })
   @ApiNotFoundResponse()
-  public findById(@Param('id') id: string) {
-    return this.userService.findById(id);
+  public findById(@Param('id') id: string, @Authorized() user: User) {
+    return this.userService.findById(id, user);
   }
 
   @AdminOnly()

@@ -12,14 +12,14 @@ describe("Регистрации в обзоре администратора", 
     mocks.get.mockResolvedValue({
       data: {
         users: 5,
-        movies: 0,
-        serials: 0,
+        movies: 23,
+        serials: 2,
         reviews: 0,
         newFeedback: 0,
         active: 0,
         returning: null,
         inactive: null,
-        startedAt: null,
+        startedAt: "2026-10-01T00:00:00Z",
         since: "2026-10-01T00:00:00Z",
         until: "2026-10-13T12:00:00Z",
         timezone: "UTC+4",
@@ -28,7 +28,7 @@ describe("Регистрации в обзоре администратора", 
           { day: "2026-10-13", count: 3 },
         ],
         features: [],
-        heatmap: [],
+        heatmap: [{ day: 1, hour: 1, users: 1 }],
       },
     });
 
@@ -48,6 +48,11 @@ describe("Регистрации в обзоре администратора", 
     });
 
     await flushPromises();
+    expect(wrapper.text()).toContain("21 фильм и 2 сериала");
+    expect(wrapper.get(".admin-heat button").attributes("title")).toBe(
+      "0 пользователей"
+    );
+
     await wrapper.get('[data-testid="registration-details"]').trigger("click");
 
     const dialog = wrapper.get('[role="dialog"]');

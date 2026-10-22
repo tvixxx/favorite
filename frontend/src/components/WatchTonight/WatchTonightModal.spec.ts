@@ -75,6 +75,14 @@ afterEach(() => {
 });
 
 describe("Что посмотреть сегодня", () => {
+  it("согласует глагол и количество для 21 произведения", async () => {
+    const items = Array.from({ length: 21 }, (_, index) => row(String(index)));
+
+    mocks.get.mockResolvedValue({ data: { total: 21, items } });
+    await open();
+    expect(wrapper.text()).toContain("Подходит 21 произведение");
+  });
+
   it("догружает весь список и не включает просмотренное, начатое и чужие фильтры страницы", async () => {
     mocks.get
       .mockResolvedValueOnce({ data: { total: 2, items: [row("a")] } })

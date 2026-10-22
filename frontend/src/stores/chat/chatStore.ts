@@ -19,19 +19,19 @@ export interface Message {
   sender?: {
     id: string;
     username: string;
-    email: string;
+    email?: string;
   };
   receiver?: {
     id: string;
     username: string;
-    email: string;
+    email?: string;
   };
 }
 
 export interface Conversation {
   otherUser: {
     id: string;
-    email: string;
+    email?: string;
     fullName?: string;
     username?: string;
   };

@@ -50,6 +50,14 @@ vi.mock("@/state/state", () => ({
   useMainStore: () => ({ userData: { id: "owner" } }),
 }));
 
+vi.mock("@/services/api", () => ({
+  default: {
+    get: vi
+      .fn()
+      .mockRejectedValue({ isAxiosError: true, response: { status: 404 } }),
+  },
+}));
+
 vi.mock("@/stores", () => ({
   useMoviesStore: () => state,
   useUserMoviesStore: () => ({ addUserMovie: add }),

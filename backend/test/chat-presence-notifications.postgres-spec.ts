@@ -1,5 +1,6 @@
 import { io, type Socket } from '../../frontend/node_modules/socket.io-client';
 import { performanceFixture } from './performance-fixture';
+import { MessageService } from '../src/message/message.service';
 import { setTimeout as delay } from 'node:timers/promises';
 
 let fixture: Awaited<ReturnType<typeof performanceFixture>>;
@@ -78,6 +79,124 @@ afterAll(async () => {
 });
 
 describe('Настоящие соединения чата и повторные заявки', () => {
+  it('не раскрывает почту через сообщения и список диалогов', async () => {
+    const sender = fixture.users[18];
+    const receiver = fixture.users[20];
+    const created = await fixture.app
+      .get(MessageService)
+      .create(sender, receiver, 'Проверка приватности');
+    expect(created.message.sender).not.toHaveProperty('email');
+    expect(created.message.receiver).not.toHaveProperty('email');
+    for (const path of [
+      `/users/${sender}/messages/${receiver}`,
+      `/users/${sender}/messages/conversations`,
+    ]) {
+      const response = await fetch(base + path, {
+        headers: { Authorization: 'Bearer ' + fixture.tokens[18] },
+      });
+      expect(response.status).toBe(200);
+      const body: unknown = await response.json();
+      expect(JSON.stringify(body)).not.toContain('email');
+      expect(JSON.stringify(body)).toContain('Проверка приватности');
+    }
+  });
+
+  it('отклоняет подмену отправителя, лишние поля и инъекции без создания связей', async () => {
+    const owner = fixture.users[10];
+    const target = fixture.users[12];
+    const count = await fixture.db.prisma.friendship.count({});
+    const post = (path: string, body: unknown, token?: string) =>
+      fetch(base + path, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: 'Bearer ' + token } : {}),
+        },
+        body: JSON.stringify(body),
+      });
+    const path = `/users/${owner}/friends/request`;
+    const valid = { addresseeId: target, type: 'FRIEND_REQUEST' };
+    expect((await post(path, valid)).status).toBe(401);
+    expect(
+      (
+        await post(
+          `/users/${target}/friends/request`,
+          valid,
+          fixture.tokens[10],
+        )
+      ).status,
+    ).toBe(400);
+    for (const body of [
+      { ...valid, requesterId: target },
+      { ...valid, status: 'ACCEPTED', role: 'ADMIN' },
+      { ...valid, addresseeId: "' OR 1=1; DROP TABLE users;--" },
+      { ...valid, addresseeId: { not: owner } },
+      { ...valid, type: '<script>alert(1)</script>' },
+    ])
+      expect((await post(path, body, fixture.tokens[10])).status).toBe(400);
+    expect(await fixture.db.prisma.friendship.count({})).toBe(count);
+    const found = await fetch(
+      base +
+        '/users/search?' +
+        new URLSearchParams({ query: "' OR 1=1;--" }).toString(),
+      { headers: { Authorization: 'Bearer ' + fixture.tokens[10] } },
+    );
+    expect(found.status).toBe(200);
+    expect(await found.json()).toEqual([]);
+    expect(await fixture.db.prisma.user.count({})).toBe(100);
+  });
+
+  it('создаёт одну заявку и одно уведомление при одновременной отправке', async () => {
+    const sender = fixture.users[14];
+    const target = fixture.users[16];
+    const responses = await Promise.all(
+      Array.from({ length: 4 }, () =>
+        fetch(`${base}/users/${sender}/friends/request`, {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + fixture.tokens[14],
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ addresseeId: target, type: 'FRIEND_REQUEST' }),
+        }),
+      ),
+    );
+    expect(responses.map((r) => r.status).sort()).toEqual([201, 409, 409, 409]);
+    const created = (await responses
+      .find((response) => response.status === 201)!
+      .json()) as { id: string };
+    for (const [method, suffix] of [
+      ['PATCH', '/accept'],
+      ['PATCH', '/reject'],
+      ['DELETE', ''],
+    ]) {
+      const forbidden = await fetch(
+        `${base}/users/${fixture.users[11]}/friends/${created.id}${suffix}`,
+        {
+          method,
+          headers: { Authorization: 'Bearer ' + fixture.tokens[11] },
+        },
+      );
+      expect(forbidden.status).toBe(409);
+    }
+    expect(
+      await fixture.db.prisma.friendship.findUnique({
+        where: { id: created.id },
+        select: { status: true },
+      }),
+    ).toEqual({ status: 'PENDING' });
+    expect(
+      await fixture.db.prisma.friendship.count({
+        where: { requesterId: sender, addresseeId: target },
+      }),
+    ).toBe(1);
+    expect(
+      await fixture.db.prisma.notification.count({
+        where: { userId: target, type: 'FRIEND_REQUEST' },
+      }),
+    ).toBe(1);
+  });
+
   it('передаёт присутствие новому устройству, сохраняет его при закрытии одной вкладки и возвращает пропущенное сообщение', async () => {
     const alice = await connect(0);
     expect(alice.online).toEqual([]);

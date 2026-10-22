@@ -1,7 +1,26 @@
 import { describe, it, expect } from "vitest";
-import { PLURAL, pluralize } from "@/utils/plural.utils";
+import { PLURAL, pluralForm, pluralize } from "@/utils/plural.utils";
 
 describe("pluralize", () => {
+  it.each([
+    [0, "фильмов"],
+    [1, "фильм"],
+    [2, "фильма"],
+    [4, "фильма"],
+    [5, "фильмов"],
+    [11, "фильмов"],
+    [12, "фильмов"],
+    [14, "фильмов"],
+    [21, "фильм"],
+    [22, "фильма"],
+    [25, "фильмов"],
+    [101, "фильм"],
+    [111, "фильмов"],
+    [-21, "фильм"],
+  ])("правильная форма для %s", (count, word) => {
+    expect(pluralForm(count as number, PLURAL.movie)).toBe(word);
+  });
+
   it("выбирает форму для единицы", () => {
     expect(pluralize(1, PLURAL.movie)).toBe("1 фильм");
     expect(pluralize(21, PLURAL.movie)).toBe("21 фильм");

@@ -81,6 +81,46 @@ beforeEach(async () => {
   );
 });
 
+describe('Принадлежность произведения коллекции', () => {
+  it('не дублирует уже добавленное произведение и не меняет личную оценку повторным запросом', async () => {
+    await expect(
+      collection.create(users[0], {
+        movieId: movies[0],
+        personalRate: 10,
+      }),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(
+      await database.prisma.userMovie.count({
+        where: { userId: users[0], movieId: movies[0] },
+      }),
+    ).toBe(1);
+    expect(
+      await database.prisma.userMovie.findUnique({
+        where: { userId_movieId: { userId: users[0], movieId: movies[0] } },
+      }),
+    ).toMatchObject({ personalRate: 8, isFavorite: true });
+  });
+
+  it('добавляет чужое произведение только один раз при двух одновременных запросах', async () => {
+    const attempts = await Promise.allSettled([
+      collection.create(users[0], { movieId: movies[2] }),
+      collection.create(users[0], { movieId: movies[2] }),
+    ]);
+    expect(attempts.filter((item) => item.status === 'fulfilled')).toHaveLength(
+      1,
+    );
+    const failed = attempts.find(
+      (item) => item.status === 'rejected',
+    ) as PromiseRejectedResult;
+    expect(failed.reason).toMatchObject({ status: 409 });
+    expect(
+      await database.prisma.userMovie.count({
+        where: { userId: users[0], movieId: movies[2] },
+      }),
+    ).toBe(1);
+  });
+});
+
 describe('Пагинация и рейтинги на PostgreSQL 18', () => {
   it('выдаёт страницы только владельца и сохраняет total', async () => {
     const first = await collection.pageByUser(

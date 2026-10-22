@@ -9,7 +9,8 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { MediaService } from '../media/media.service';
-import type { Prisma } from '../generated/prisma/client';
+import type { Prisma, User } from '../generated/prisma/client';
+import { UserRole } from '../generated/prisma/enums';
 import { lockResource } from '../common/utils/transaction-lock';
 import { invalidateDataCache } from '../common/utils/data-revision';
 import { ZonedCalendar } from '../common/utils/timezone';
@@ -55,10 +56,31 @@ export class UserService {
     });
   }
 
-  public async findById(id: string) {
+  private async canReadEmail(
+    targetId: string,
+    viewer: Pick<User, 'id' | 'role'>,
+  ) {
+    if (viewer.id === targetId || viewer.role === UserRole.ADMIN) return true;
+    return !!(await this.prismaService.friendship.findFirst({
+      where: {
+        type: 'FRIEND_REQUEST',
+        status: 'ACCEPTED',
+        OR: [
+          { requesterId: viewer.id, addresseeId: targetId },
+          { requesterId: targetId, addresseeId: viewer.id },
+        ],
+      },
+      select: { id: true },
+    }));
+  }
+
+  public async findById(id: string, viewer: Pick<User, 'id' | 'role'>) {
     const user = await this.prismaService.user.findUnique({
       where: { id },
-      select: publicUserSelect,
+      select: {
+        ...publicUserSelect,
+        email: await this.canReadEmail(id, viewer),
+      },
     });
 
     if (!user) {
@@ -92,7 +114,7 @@ export class UserService {
     });
   }
 
-  public async findByEmail(email: string) {
+  public async findByEmail(email: string, viewer: Pick<User, 'id' | 'role'>) {
     const user = await this.prismaService.user.findUnique({
       where: { email },
       select: {
@@ -107,7 +129,14 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      role: user.role,
+      ...((await this.canReadEmail(user.id, viewer))
+        ? { email: user.email }
+        : {}),
+    };
   }
 
   public async create(dto: CreateUserDto) {

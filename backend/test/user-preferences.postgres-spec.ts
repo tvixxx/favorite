@@ -154,6 +154,7 @@ describe('Персональные настройки на PostgreSQL и HTTP', 
     expect(
       await new UserService(db.prisma as PrismaService, {} as never).findById(
         other,
+        { id: other, role: 'USER' },
       ),
     ).not.toHaveProperty('notifyNewMessages');
   });

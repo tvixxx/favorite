@@ -11,6 +11,7 @@ import AdminDataRegion from "./AdminDataRegion.vue";
 import AdminEngagement from "./AdminEngagement.vue";
 import type { AdminEngagementData } from "./admin.types";
 import { useDateTime } from "@/composable/useDateTime";
+import { PLURAL, pluralize } from "@/utils/plural.utils";
 
 const { formatDate } = useDateTime();
 
@@ -132,14 +133,14 @@ watch(days, () => void load());
             <b>{{ data.users }}</b>
           </div>
           <div>
-            <span>Новые за {{ days }} дней</span>
+            <span>Новые за {{ pluralize(days, PLURAL.day) }}</span>
             <b>{{
               data.registrations.reduce((sum, item) => sum + item.count, 0)
             }}</b>
             <small>По дате регистрации</small>
           </div>
           <div>
-            <span>Активны за {{ days }} дней</span>
+            <span>Активны за {{ pluralize(days, PLURAL.day) }}</span>
             <b>{{ data.active }}</b>
             <small>По учтённым действиям</small>
           </div>
@@ -149,8 +150,8 @@ watch(days, () => void load());
           </div>
         </div>
         <p class="admin-muted">
-          В каталоге {{ data.movies - data.serials }} фильмов и
-          {{ data.serials }} сериалов. Опубликованных отзывов:
+          В каталоге {{ pluralize(data.movies - data.serials, PLURAL.movie) }} и
+          {{ pluralize(data.serials, PLURAL.serial) }}. Опубликованных отзывов:
           {{ data.reviews }}.
         </p>
         <p class="admin-muted">
@@ -170,7 +171,8 @@ watch(days, () => void load());
               >
             </div>
             <p class="admin-muted">
-              За {{ days }} дней · сохранившиеся аккаунты · {{ data.timezone }}
+              За {{ pluralize(days, PLURAL.day) }} · сохранившиеся аккаунты ·
+              {{ data.timezone }}
             </p>
             <div
               v-if="data.registrations.length"
@@ -209,7 +211,7 @@ watch(days, () => void load());
           <section>
             <h3>Чем пользуются</h3>
             <p class="admin-muted">
-              Уникальные пользователи за {{ days }} дней
+              Уникальные пользователи за {{ pluralize(days, PLURAL.day) }}
             </p>
             <div
               v-for="feature in data.features"
@@ -223,7 +225,9 @@ watch(days, () => void load());
                 >
                 </span>
               </div>
-              <b :title="`${feature.actions} действий`">{{ feature.users }}</b>
+              <b :title="pluralize(feature.actions, PLURAL.action)">{{
+                feature.users
+              }}</b>
             </div>
             <p v-if="!data.features.length" class="admin-muted">
               Пока нет учтённых действий. Данные начнут появляться после
@@ -262,11 +266,13 @@ watch(days, () => void load());
                 <button
                   v-for="hour in 24"
                   :key="hour"
-                  :aria-label="`${day}, ${hour - 1}:00, ${heatValue(
-                    index + 1,
-                    hour - 1
-                  )} пользователей`"
-                  :title="`${heatValue(index + 1, hour - 1)} пользователей`"
+                  :aria-label="`${day}, ${hour - 1}:00, ${pluralize(
+                    heatValue(index + 1, hour - 1),
+                    PLURAL.user
+                  )}`"
+                  :title="
+                    pluralize(heatValue(index + 1, hour - 1), PLURAL.user)
+                  "
                   :style="{
                     '--heat': `${
                       (heatValue(index + 1, hour - 1) / maxHeat) * 85 + 5
@@ -275,10 +281,10 @@ watch(days, () => void load());
                   @click="
                     cellDetail = `${day}, ${
                       hour - 1
-                    }:00–${hour}:00: ${heatValue(
-                      index + 1,
-                      hour - 1
-                    )} пользователей за ${days} дней`
+                    }:00–${hour}:00: ${pluralize(
+                      heatValue(index + 1, hour - 1),
+                      PLURAL.user
+                    )} за ${pluralize(days, PLURAL.day)}`
                   "
                 ></button>
               </template>

@@ -151,7 +151,7 @@ describe('Дружба и безопасные ответы', () => {
     );
   });
 
-  it('не возвращает хеши паролей при отправке запроса', async () => {
+  it('не возвращает почту и хеши паролей при отправке запроса', async () => {
     const result = await service.sendRequest('first', {
       addresseeId: 'second',
       type: FriendshipTypeDto.FRIEND_REQUEST,
@@ -159,8 +159,10 @@ describe('Дружба и безопасные ответы', () => {
     expect(result.requester).toEqual({
       id: 'first',
       fullName: 'Первый',
-      email: 'first@example.test',
+      username: undefined,
     });
+    expect(result.requester).not.toHaveProperty('email');
+    expect(result.addressee).not.toHaveProperty('email');
     expect(result.addressee).not.toHaveProperty('password');
   });
 
