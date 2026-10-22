@@ -19,7 +19,7 @@ export enum FriendshipType {
 export interface FriendUser {
   id: string;
   fullName: string;
-  email: string;
+  email?: string;
   username?: string | null;
 }
 

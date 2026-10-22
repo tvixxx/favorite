@@ -59,7 +59,10 @@ beforeAll(async () => {
         const req = context
           .switchToHttp()
           .getRequest<{ headers: Record<string, string>; user: unknown }>();
-        req.user = { id: req.headers['x-test-user'], role: 'USER' };
+        req.user = {
+          id: req.headers['x-test-user'],
+          role: req.headers['x-test-role'] ?? 'USER',
+        };
         return true;
       },
     })
@@ -94,6 +97,74 @@ beforeEach(async () => {
 });
 
 describe('Логины, поиск людей и история уведомлений', () => {
+  it('скрывает почту до подтверждения дружбы и снова после удаления, оставляет её владельцу и администратору', async () => {
+    const profile = (viewer: string, role = 'USER') =>
+      request(base)
+        .get(`/users/${peer}`)
+        .set('x-test-user', viewer)
+        .set('x-test-role', role);
+    const hidden = async () => {
+      const response = await profile(owner).expect(200);
+      expect(response.body).not.toHaveProperty('email');
+      expect(response.body).not.toHaveProperty('password');
+      const legacy = await request(base)
+        .get('/users/search')
+        .query({ email: 'peer@example.test' })
+        .set('x-test-user', owner)
+        .expect(200);
+      expect(legacy.body).not.toHaveProperty('email');
+    };
+    await hidden();
+    expect((await profile(peer).expect(200)).body).toHaveProperty(
+      'email',
+      'peer@example.test',
+    );
+    expect((await profile(owner, 'ADMIN').expect(200)).body).toHaveProperty(
+      'email',
+      'peer@example.test',
+    );
+    const relation = await friends.sendRequest(owner, {
+      addresseeId: peer,
+      type: FriendshipTypeDto.FRIEND_REQUEST,
+    });
+    expect(relation.requester).not.toHaveProperty('email');
+    expect(relation.addressee).not.toHaveProperty('email');
+    expect((await friends.getRequests(peer))[0].requester).not.toHaveProperty(
+      'email',
+    );
+    await hidden();
+    await friends.acceptRequest(peer, relation.id);
+    expect((await profile(owner).expect(200)).body).toHaveProperty(
+      'email',
+      'peer@example.test',
+    );
+    expect(
+      (
+        await request(base)
+          .get(`/users/${owner}`)
+          .set('x-test-user', peer)
+          .expect(200)
+      ).body,
+    ).toHaveProperty('email', 'owner@example.test');
+    expect((await friends.getFriends(owner))[0].friend).toHaveProperty(
+      'email',
+      'peer@example.test',
+    );
+    await friends.removeFriendship(owner, relation.id);
+    await hidden();
+    await friends.sendRequest(owner, {
+      addresseeId: peer,
+      type: FriendshipTypeDto.SUBSCRIPTION,
+    });
+    await hidden();
+    expect(
+      (await friends.getSubscriptions(owner))[0].subscribedTo,
+    ).not.toHaveProperty('email');
+    expect(
+      (await friends.getSubscribers(peer))[0].subscriber,
+    ).not.toHaveProperty('email');
+  });
+
   it('сохраняет нормализованный логин и отклоняет занятый или недопустимый', async () => {
     await request(base)
       .patch(`/users/${peer}`)

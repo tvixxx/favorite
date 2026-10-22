@@ -20,7 +20,7 @@ import {
   GenreValues,
 } from "@/components/Genres/constants/genres.constants";
 import { contentTypeLabel } from "@/utils/content-kind";
-import { formatYear, pluralize, PLURAL } from "@/utils";
+import { formatYear, pluralForm, pluralize, PLURAL } from "@/utils";
 import { createRequestGuard } from "@/utils/requestGuard";
 
 const props = defineProps<{ modelValue: boolean }>();
@@ -241,7 +241,9 @@ function navigate(path: string): void {
         </div>
         <template v-if="selected">
           <p class="watch-tonight__count">
-            {{ filtered.length === 1 ? "Подходит" : "Подходят" }}
+            {{
+              pluralForm(filtered.length, ["Подходит", "Подходят", "Подходят"])
+            }}
             {{ pluralize(filtered.length, PLURAL.title) }}
           </p>
           <div class="watch-tonight__suggestion">

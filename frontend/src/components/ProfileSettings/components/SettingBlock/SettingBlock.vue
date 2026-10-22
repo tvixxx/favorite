@@ -15,6 +15,7 @@ import { useUserMoviesStore, useFriendsStore } from "@/stores";
 import { useMainStore } from "@/state/state";
 import { STAT_BLOCK_TITLES } from "@/components/ProfileSettings/constants";
 import { useRouter } from "vue-router";
+import { PLURAL, pluralForm } from "@/utils/plural.utils";
 
 const userMoviesStore = useUserMoviesStore();
 const friendsStore = useFriendsStore();
@@ -213,19 +214,28 @@ const isFriendsEmptySocial = computed(() => {
             <span class="friends-stats__value">{{
               friendsStore.stats.friendsCount
             }}</span>
-            <span class="friends-stats__label">Друзей</span>
+            <span class="friends-stats__label">{{
+              pluralForm(friendsStore.stats.friendsCount, PLURAL.friend)
+            }}</span>
           </div>
           <div class="friends-stats__item">
             <span class="friends-stats__value">{{
               friendsStore.stats.subscribersCount
             }}</span>
-            <span class="friends-stats__label">Подписчиков</span>
+            <span class="friends-stats__label">{{
+              pluralForm(friendsStore.stats.subscribersCount, PLURAL.subscriber)
+            }}</span>
           </div>
           <div class="friends-stats__item">
             <span class="friends-stats__value">{{
               friendsStore.stats.subscriptionsCount
             }}</span>
-            <span class="friends-stats__label">Подписок</span>
+            <span class="friends-stats__label">{{
+              pluralForm(
+                friendsStore.stats.subscriptionsCount,
+                PLURAL.subscription
+              )
+            }}</span>
           </div>
         </div>
         <div class="friends-actions">

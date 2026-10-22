@@ -23,10 +23,10 @@ import { lockResource } from '../common/utils/transaction-lock';
 
 const friendshipPeople = {
   requester: {
-    select: { id: true, fullName: true, email: true, username: true },
+    select: { id: true, fullName: true, username: true },
   },
   addressee: {
-    select: { id: true, fullName: true, email: true, username: true },
+    select: { id: true, fullName: true, username: true },
   },
 } as const;
 
@@ -338,7 +338,6 @@ export class FriendshipService {
           select: {
             id: true,
             fullName: true,
-            email: true,
             username: true,
           },
         },
@@ -364,7 +363,6 @@ export class FriendshipService {
           select: {
             id: true,
             fullName: true,
-            email: true,
             username: true,
           },
         },
@@ -390,7 +388,6 @@ export class FriendshipService {
           select: {
             id: true,
             fullName: true,
-            email: true,
             username: true,
           },
         },

@@ -1,3 +1,5 @@
+import { PLURAL, pluralize } from "./plural.utils";
+
 export const MIN_MEDIA_YEAR = 1920;
 export const MAX_SEASONS = 100;
 export const MAX_EPISODES = 5000;
@@ -58,12 +60,11 @@ export function numericDraftError(
     (rules.max === undefined ? undefined : String(rules.max).length);
 
   if (minDigits === maxDigits && raw.length !== minDigits)
-    return `Введите число из ${minDigits} ${
-      minDigits === 1 ? "цифры" : "цифр"
-    }`;
-  if (raw.length < minDigits) return `Введите не меньше ${minDigits} цифр`;
+    return `Введите число из ${pluralize(minDigits, PLURAL.digitGenitive)}`;
+  if (raw.length < minDigits)
+    return `Введите не меньше ${pluralize(minDigits, PLURAL.digitGenitive)}`;
   if (maxDigits !== undefined && raw.length > maxDigits)
-    return `Введите не больше ${maxDigits} цифр`;
+    return `Введите не больше ${pluralize(maxDigits, PLURAL.digitGenitive)}`;
 
   const value = Number(raw);
 

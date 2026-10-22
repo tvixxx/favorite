@@ -4,6 +4,7 @@ import SectionHeading from "@/components/SectionHeading/SectionHeading.vue";
 import { computed, ref, watch } from "vue";
 import { useMediaQuery } from "@vueuse/core";
 import axios from "axios";
+import api from "@/services/api";
 import { Menu as AMenu, MenuItem as AMenuItem, message } from "ant-design-vue";
 
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
@@ -23,8 +24,10 @@ import type { Movie } from "@/stores/movies/types";
 
 const modelValue = defineModel<boolean>({ required: true });
 
-// После добавления произведения футер меняется на отметку + переход на полную страницу
-const isAdded = ref(false);
+const membership = ref<"checking" | "added" | "missing" | "error">("checking");
+const isAdding = ref(false);
+let membershipRequest: AbortController | undefined;
+const isAdded = computed(() => membership.value === "added");
 const reportOpen = ref(false);
 const posterEditorOpen = ref(false);
 const reportedId = ref("");
@@ -80,9 +83,34 @@ const previewReviews = computed(() => {
 
 const hasActors = computed(() => !!movie.value?.actors?.length);
 
+async function checkMembership(): Promise<void> {
+  membershipRequest?.abort();
+
+  const id = props.movieId;
+  const owner = userId.value;
+
+  if (!modelValue.value || !id || !owner) return;
+
+  const request = new AbortController();
+
+  membershipRequest = request;
+  membership.value = "checking";
+  try {
+    await api.get(`/users/${owner}/movies/${id}`, { signal: request.signal });
+    if (!request.signal.aborted) membership.value = "added";
+  } catch (error) {
+    if (request.signal.aborted) return;
+    membership.value =
+      axios.isAxiosError(error) && error.response?.status === 404
+        ? "missing"
+        : "error";
+  }
+}
+
 watch(
-  () => [modelValue.value, props.movieId] as const,
-  async ([open, id]) => {
+  () => [modelValue.value, props.movieId, userId.value] as const,
+  async ([open, id], _previous, cleanup) => {
+    cleanup(() => membershipRequest?.abort());
     reportOpen.value = false;
     posterEditorOpen.value = false;
     if (!open || !id) {
@@ -90,7 +118,9 @@ watch(
     }
 
     moviesStore.setCurrentMovie(null);
-    isAdded.value = false;
+    isAdding.value = false;
+    membership.value = "checking";
+    void checkMembership();
 
     try {
       await moviesStore.getMovieDetail(id);
@@ -107,25 +137,37 @@ watch(modelValue, (open) => {
   }
 });
 
-async function addToCollection() {
+async function addToCollection(): Promise<void> {
   const mid = props.movieId;
+  const owner = userId.value;
+  const request = membershipRequest;
 
-  if (!mid || !userId.value) {
+  if (
+    !mid ||
+    !owner ||
+    membership.value !== "missing" ||
+    isAdding.value ||
+    moviesStore.isMovieLoading ||
+    moviesStore.isMovieError
+  )
     return;
-  }
 
+  isAdding.value = true;
   try {
-    await userMoviesStore.addUserMovie(userId.value, mid, {});
-    isAdded.value = true;
-  } catch (err: unknown) {
-    if (axios.isAxiosError(err) && err.response?.status === 409) {
-      message.warning("Этот фильм уже есть в вашей коллекции");
-      isAdded.value = true;
+    await userMoviesStore.addUserMovie(owner, mid, {});
+    if (request === membershipRequest && !request?.signal.aborted)
+      membership.value = "added";
+  } catch (error) {
+    if (request !== membershipRequest || request?.signal.aborted) return;
+    if (axios.isAxiosError(error) && error.response?.status === 409) {
+      membership.value = "added";
 
       return;
     }
 
     message.error("Не удалось добавить в коллекцию");
+  } finally {
+    if (request === membershipRequest) isAdding.value = false;
   }
 }
 
@@ -308,10 +350,14 @@ function openFullPage(): void {
     </template>
 
     <template #footer>
-      <template v-if="isAdded">
+      <template v-if="membership === 'error'">
+        <span role="alert">Не удалось проверить коллекцию.</span>
+        <a-button @click="checkMembership">Повторить проверку</a-button>
+      </template>
+      <template v-else-if="isAdded">
         <span class="catalog-preview__added">
           <BaseIcon name="ph:check-circle" :width="19" :height="19" />
-          Добавлено в коллекцию
+          Уже в вашей коллекции
         </span>
         <a-button size="large" @click="openFullPage">Открыть страницу</a-button>
       </template>
@@ -320,13 +366,22 @@ function openFullPage(): void {
         type="primary"
         size="large"
         class="catalog-preview__cta"
+        :loading="isAdding || membership === 'checking'"
         :disabled="
-          moviesStore.isMovieLoading || !movie || !!moviesStore.isMovieError
+          membership !== 'missing' ||
+          isAdding ||
+          moviesStore.isMovieLoading ||
+          !movie ||
+          !!moviesStore.isMovieError
         "
         @click="addToCollection"
       >
         <BaseIcon name="ph:plus-circle" :width="19" :height="19" />
-        Добавить в мою коллекцию
+        {{
+          membership === "checking"
+            ? "Проверяем коллекцию…"
+            : "Добавить в мою коллекцию"
+        }}
       </a-button>
     </template>
   </BaseModal>

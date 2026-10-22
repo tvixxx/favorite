@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { PLURAL, pluralize } from "@/utils/plural.utils";
 import type { AdminEngagementData } from "./admin.types";
 
 const props = withDefaults(
@@ -31,7 +32,7 @@ const stages = computed(() => [
   {
     label: "1. Зарегистрировались",
     value: props.data.funnel.registered,
-    detail: `За ${props.days} дней`,
+    detail: `За ${pluralize(props.days, PLURAL.day)}`,
   },
   {
     label: "2. Добавили в коллекцию",
@@ -79,8 +80,9 @@ const weekLabel = (week: string) =>
       <h3>Воронка новых аккаунтов</h3>
       <p class="admin-muted">
         Текущее состояние сохранившихся аккаунтов, зарегистрированных за
-        {{ days }} дней. Учитываются сохранённые записи в коллекции и связанные
-        оценки или отзывы. Удалённые записи не учитываются.
+        {{ pluralize(days, PLURAL.day) }}. Учитываются сохранённые записи в
+        коллекции и связанные оценки или отзывы. Удалённые записи не
+        учитываются.
       </p>
       <div class="admin-metrics admin-engagement__funnel">
         <div v-for="stage in stages" :key="stage.label">

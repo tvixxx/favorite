@@ -1,3 +1,26 @@
+@use "./media" as *;
+
+@keyframes fv-friend-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fv-friend-enter {
+  animation: fv-friend-enter 180ms ease-out;
+}
+
+@include mediaReducedMotion {
+  .fv-friend-enter {
+    animation: none;
+  }
+}
+
 @keyframes uiSpinnerSpin {
   0% {
     transform: rotate(0deg);

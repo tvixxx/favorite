@@ -18,14 +18,12 @@ export class MessageService {
           sender: {
             select: {
               id: true,
-              email: true,
               fullName: true,
             },
           },
           receiver: {
             select: {
               id: true,
-              email: true,
               fullName: true,
             },
           },
@@ -71,14 +69,12 @@ export class MessageService {
         sender: {
           select: {
             id: true,
-            email: true,
             fullName: true,
           },
         },
         receiver: {
           select: {
             id: true,
-            email: true,
             fullName: true,
           },
         },
@@ -103,7 +99,6 @@ export class MessageService {
     const result: Array<{
       otherUser: {
         id: string;
-        email: string;
         fullName: string;
       };
       lastMessage: (typeof messages)[number];
@@ -165,14 +160,12 @@ export class MessageService {
         sender: {
           select: {
             id: true,
-            email: true,
             fullName: true,
           },
         },
         receiver: {
           select: {
             id: true,
-            email: true,
             fullName: true,
           },
         },

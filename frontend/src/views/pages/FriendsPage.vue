@@ -2,13 +2,10 @@
 import { ref, onMounted, computed, watch } from "vue";
 import { useFriendsStore, useUserStatusStore, useChatStore } from "@/stores";
 import { useMainStore } from "@/state/state";
-import { FriendshipType, type FriendUser } from "@/stores/friends/friendsStore";
-import UserSearchInput from "@/components/Friends/UserSearchInput.vue";
+import AddFriendModal from "@/components/Friends/AddFriendModal.vue";
 import { useRoute, useRouter } from "vue-router";
 import SocialHubTabs from "@/components/SocialHubTabs/SocialHubTabs.vue";
-import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
-import BaseRadio from "@/components/BaseRadio/BaseRadio.vue";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import SkeletonBar from "@/components/Skeleton/SkeletonBar.vue";
@@ -68,13 +65,6 @@ const mainStore = useMainStore();
 const userId = computed(() => mainStore.userData?.id || "");
 const searchQuery = ref("");
 const isAddModalVisible = ref(false);
-const isLoading = ref(false);
-const selectedFriend = ref<Pick<
-  FriendUser,
-  "id" | "fullName" | "username"
-> | null>(null);
-const requestType = ref<FriendshipType>(FriendshipType.FRIEND_REQUEST);
-const submitError = ref<string | null>(null);
 
 const filteredFriends = computed(() => {
   if (!searchQuery.value) {
@@ -86,63 +76,13 @@ const filteredFriends = computed(() => {
   return friendsStore.friends.filter(
     (f) =>
       f.friend.fullName.toLowerCase().includes(query) ||
-      f.friend.email.toLowerCase().includes(query) ||
+      (f.friend.email ?? "").toLowerCase().includes(query) ||
       (f.friend.username ?? "").toLowerCase().includes(query.replace(/^@/, ""))
   );
 });
 
 const openAddModal = () => {
   isAddModalVisible.value = true;
-  selectedFriend.value = null;
-  requestType.value = FriendshipType.FRIEND_REQUEST;
-  submitError.value = null;
-};
-
-const closeAddModal = () => {
-  isAddModalVisible.value = false;
-  submitError.value = null;
-};
-
-// «Повторить» возвращает к выбору пользователя.
-const dismissSubmitError = () => {
-  submitError.value = null;
-};
-
-const sendFriendRequest = async () => {
-  if (!selectedFriend.value || isLoading.value) {
-    return;
-  }
-
-  submitError.value = null;
-  isLoading.value = true;
-
-  try {
-    const addresseeId = selectedFriend.value.id;
-
-    await friendsStore.sendRequest(
-      userId.value,
-      addresseeId,
-      requestType.value
-    );
-
-    message.success(
-      requestType.value === FriendshipType.FRIEND_REQUEST
-        ? "Запрос в друзья отправлен"
-        : "Вы подписались на пользователя"
-    );
-
-    closeAddModal();
-  } catch (error) {
-    submitError.value = friendlyRequestError(error, {
-      byStatus: {
-        404: "Пользователь с таким email не найден. Проверьте адрес и попробуйте снова.",
-        409: "Вы уже отправили запрос этому пользователю или уже добавили его.",
-      },
-      fallback: "Не удалось отправить запрос. Попробуйте ещё раз.",
-    });
-  } finally {
-    isLoading.value = false;
-  }
 };
 
 const acceptRequest = async (friendshipId: string) => {
@@ -416,7 +356,9 @@ onMounted(loadAll);
               <span class="user-card__name">{{
                 item.subscriber.fullName
               }}</span>
-              <span class="user-card__meta">{{ item.subscriber.email }}</span>
+              <span class="user-card__meta">{{
+                item.subscriber.username || "Подписчик"
+              }}</span>
             </div>
             <div class="user-card__actions">
               <button
@@ -462,7 +404,9 @@ onMounted(loadAll);
               <span class="user-card__name">{{
                 item.subscribedTo.fullName
               }}</span>
-              <span class="user-card__meta">{{ item.subscribedTo.email }}</span>
+              <span class="user-card__meta">{{
+                item.subscribedTo.username || "Подписка"
+              }}</span>
             </div>
             <div class="user-card__actions">
               <button
@@ -495,65 +439,11 @@ onMounted(loadAll);
       </div>
     </template>
 
-    <BaseModal v-model="isAddModalVisible">
-      <template #title>Добавить пользователя</template>
-
-      <template #body>
-        <StateBlock
-          v-if="submitError"
-          compact
-          variant="error"
-          icon="ph:warning-circle"
-          title="Не удалось отправить"
-          :description="submitError"
-        />
-        <div v-else class="add-modal">
-          <UserSearchInput v-model="selectedFriend" :disabled="isLoading" />
-
-          <span class="add-friend__label">Тип запроса</span>
-          <BaseRadio
-            :model-value="requestType"
-            :options="[
-              {
-                value: FriendshipType.FRIEND_REQUEST,
-                label: 'Запрос в друзья',
-                hint: '— требует подтверждения',
-              },
-              {
-                value: FriendshipType.SUBSCRIPTION,
-                label: 'Подписаться',
-                hint: '— без подтверждения',
-              },
-            ]"
-            @update:model-value="requestType = $event as FriendshipType"
-          />
-        </div>
-      </template>
-
-      <template #footer>
-        <a-button class="add-friend__cancel" @click="closeAddModal">
-          Отмена
-        </a-button>
-        <a-button
-          v-if="submitError"
-          type="primary"
-          html-type="button"
-          @click="dismissSubmitError"
-        >
-          Повторить
-        </a-button>
-        <a-button
-          v-else
-          type="primary"
-          html-type="button"
-          :loading="isLoading"
-          :disabled="!selectedFriend"
-          @click="sendFriendRequest"
-        >
-          Отправить
-        </a-button>
-      </template>
-    </BaseModal>
+    <AddFriendModal
+      v-if="isAddModalVisible"
+      v-model="isAddModalVisible"
+      :user-id="userId"
+    />
   </div>
 </template>
 
@@ -561,27 +451,14 @@ onMounted(loadAll);
 @use "../../styles/media" as *;
 @use "@/styles/scrollbar" as *;
 
-/* Модалка «Добавить пользователя»: лейбл группы и кнопки 1:2 (эталон) */
-.add-friend__label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--fv-color-text-secondary);
-}
-
-:deep(.modal__footer) .ant-btn {
-  flex: 2;
-}
-
-:deep(.modal__footer) .add-friend__cancel {
-  flex: 1;
-}
-
 .friends-page {
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+
+  @include mediaMax(640px) {
+    padding: 24px var(--fv-gutter-mobile);
+  }
 
   // Hero-карточка эталона: текст слева (flex:1), поиск + «Добавить» справа
   &__hero-card {
@@ -595,6 +472,10 @@ onMounted(loadAll);
     border: 1px solid var(--fv-color-border);
     border-radius: var(--fv-radius-lg);
     box-shadow: var(--fv-shadow-low);
+
+    @include mediaMax(640px) {
+      padding: 24px 20px;
+    }
   }
 
   &__hero-text {
@@ -636,6 +517,8 @@ onMounted(loadAll);
 
     @include mediaMax(640px) {
       width: 100%;
+      flex-direction: column;
+      align-items: stretch;
     }
   }
 
@@ -644,12 +527,13 @@ onMounted(loadAll);
     max-width: 100%;
 
     @include mediaMax(640px) {
-      flex: 1;
-      width: auto;
+      flex: none;
+      width: 100%;
+      min-width: 0;
     }
 
     // здесь только размеры и иконка-префикс
-    :deep(.ant-input-affix-wrapper) {
+    &.ant-input-affix-wrapper {
       height: 44px;
       padding: 0 16px;
     }
@@ -667,12 +551,15 @@ onMounted(loadAll);
 
   &__add-btn {
     display: inline-flex;
+    min-height: 44px;
     align-items: center;
     gap: 8px;
     white-space: nowrap;
 
     @include mediaMax(640px) {
       flex-shrink: 0;
+      width: 100%;
+      justify-content: center;
     }
   }
 
