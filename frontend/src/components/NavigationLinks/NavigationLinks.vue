@@ -17,6 +17,7 @@ import { setOnboardingDone } from "@/composable/useOnboarding";
 import NotificationList from "@/components/Notifications/NotificationList.vue";
 import { notificationTarget } from "@/utils/notificationText";
 import { useFeedbackAvailability } from "@/composable/useFeedbackAvailability";
+import { getUserPreference } from "@/utils/userPreferences";
 
 const { enabled: feedbackEnabled } = useFeedbackAvailability();
 
@@ -61,6 +62,13 @@ const navItems: NavItem[] = [
   { key: "leaderboard", label: "Топ", to: "/leaderboard" },
   { key: "social", label: "Общение", to: "/chat", badge: true },
 ];
+const visibleNavItems = computed(() =>
+  navItems.filter(
+    (item) =>
+      item.key !== "leaderboard" ||
+      getUserPreference(store.userData, "showCommunityTops")
+  )
+);
 
 const fullName = computed<string>(() => store.userData?.fullName?.trim() ?? "");
 const email = computed<string>(() => store.userData?.email?.trim() ?? "");
@@ -200,7 +208,7 @@ const handleMarkAllRead = async () => {
 
       <nav class="topbar__nav">
         <button
-          v-for="item in navItems"
+          v-for="item in visibleNavItems"
           :key="item.key"
           type="button"
           class="topbar__nav-link"
@@ -417,7 +425,7 @@ const handleMarkAllRead = async () => {
     >
       <nav class="drawer-nav">
         <button
-          v-for="item in navItems"
+          v-for="item in visibleNavItems"
           :key="item.key"
           type="button"
           class="drawer-nav__link"

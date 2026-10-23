@@ -180,6 +180,12 @@ const routes: Array<RouteRecordRaw> = [
     },
   },
   {
+    path: "/profile/settings",
+    name: "profile-settings",
+    component: () => import("@/views/pages/AdditionalSettingsPage.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
     path: "/feedback",
     name: "feedback",
     beforeEnter: async () =>

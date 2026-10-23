@@ -17,13 +17,13 @@ import SettingBlock from "@/components/ProfileSettings/components/SettingBlock/S
 import { message } from "ant-design-vue";
 import { GenreLabels } from "@/components/Genres/constants/genres.constants";
 import { useBadgesStore, useUserMoviesStore } from "@/stores";
-import PersonalSettings from "@/components/PersonalSettings/PersonalSettings.vue";
 import { avatarGradient } from "@/composable/useAvatarGradient";
 import ImagePicker from "@/components/ImagePicker/ImagePicker.vue";
 import type { ImageSelection } from "@/services/media";
 import TimezoneSelect from "@/components/TimezoneSelect/TimezoneSelect.vue";
 import { timezoneLabel } from "@/utils/timezoneLabel";
 import { getApiResponseMessage } from "@/services/api";
+import { getUserPreference } from "@/utils/userPreferences";
 
 const store = useMainStore();
 const router = useRouter();
@@ -65,6 +65,12 @@ const fullName = computed(() => store.userData?.fullName || "");
 const showCard = computed(() => store.isLoggedIn);
 const showContent = computed(() => showCard.value && user.value);
 const userId = computed(() => store.userData?.id || "");
+const showAchievements = computed(() =>
+  getUserPreference(user.value, "showAchievements")
+);
+const showDetailedAnalytics = computed(() =>
+  getUserPreference(user.value, "showDetailedAnalytics")
+);
 
 const initials = computed(() => {
   if (!user.value?.fullName) {
@@ -188,9 +194,9 @@ const showEditDisplayNameModal = () => {
   isModalVisible.value = true;
 };
 
-const signOut = () => {
-  store.logOut();
-  router.push("/login");
+const openAdditionalSettings = (): void => {
+  isModalVisible.value = false;
+  void router.push({ name: "profile-settings" });
 };
 
 const retryBadges = (): void => {
@@ -276,7 +282,10 @@ onMounted(async () => {
 
         <div class="profile-page__grid">
           <div class="profile-page__primary-column">
-            <div class="profile-page__top-row">
+            <div
+              class="profile-page__top-row"
+              :class="{ 'profile-page__top-row--single': !showAchievements }"
+            >
               <article class="friends-card">
                 <SettingBlock
                   title="Друзья"
@@ -286,7 +295,7 @@ onMounted(async () => {
                 />
               </article>
 
-              <article class="badges-card">
+              <article v-if="showAchievements" class="badges-card">
                 <SectionHeading
                   class="badges-card__header"
                   title="Достижения"
@@ -363,7 +372,7 @@ onMounted(async () => {
               </article>
             </div>
 
-            <article class="analytics-card">
+            <article v-if="showDetailedAnalytics" class="analytics-card">
               <SectionHeading
                 class="analytics-card__header"
                 title="Персональная аналитика"
@@ -530,7 +539,7 @@ onMounted(async () => {
     layout="form"
     class="profile-settings-modal"
   >
-    <template #title>Настройки</template>
+    <template #title>Настройки профиля</template>
 
     <template #body>
       <div class="settings-modal">
@@ -603,15 +612,24 @@ onMounted(async () => {
           </label>
         </div>
 
-        <PersonalSettings />
+        <button
+          type="button"
+          class="settings-modal__additional"
+          :disabled="isSaving || avatarUploading || store.isUpdatingProfile"
+          @click="openAdditionalSettings"
+        >
+          <BaseIcon name="ph:gear" :width="24" :height="24" />
+          <span
+            ><strong>Дополнительные настройки</strong
+            ><small>Вид приложения, инструменты и уведомления</small></span
+          >
+          <BaseIcon name="ph:caret-right" :width="20" :height="20" />
+        </button>
       </div>
     </template>
 
     <template #footer>
-      <a-button class="settings-modal__logout" @click="signOut">
-        <BaseIcon name="ph:sign-out" :width="18" :height="18" />
-        Выйти
-      </a-button>
+      <a-button @click="isModalVisible = false">Отмена</a-button>
       <a-button
         type="primary"
         html-type="button"
@@ -684,22 +702,55 @@ onMounted(async () => {
     color: var(--fv-color-text-secondary);
   }
 
-  &__logout {
-    margin-inline-end: auto;
-    display: inline-flex;
+  &__additional {
+    width: 100%;
+    display: flex;
     align-items: center;
-    gap: 8px;
-    border: none;
-    background: color-mix(in srgb, var(--fv-color-brand) 12%, transparent);
-    color: var(--fv-color-brand);
-
-    &:hover {
-      background: color-mix(
-        in srgb,
-        var(--fv-color-brand) 18%,
-        transparent
-      ) !important;
-      color: var(--fv-color-brand) !important;
+    gap: var(--fv-space-12);
+    min-height: 80px;
+    padding: var(--fv-space-16);
+    border: 1px solid var(--fv-color-border);
+    border-radius: var(--fv-radius-md);
+    background: var(--fv-color-bg-secondary);
+    color: var(--fv-color-text-primary);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    > span {
+      flex: 1;
+      min-width: 0;
+    }
+    > :first-child {
+      color: var(--fv-color-accent);
+      flex-shrink: 0;
+    }
+    > :last-child {
+      color: var(--fv-color-text-tertiary);
+      flex-shrink: 0;
+    }
+    strong {
+      display: block;
+      font-size: var(--fv-text-p3-size);
+      line-height: var(--fv-text-p3-lh);
+      font-weight: var(--fv-weight-medium);
+    }
+    small {
+      display: block;
+      margin-top: var(--fv-space-4);
+      font-size: var(--fv-text-p4-size);
+      line-height: var(--fv-text-p4-lh);
+      color: var(--fv-color-text-secondary);
+    }
+    &:focus-visible {
+      outline: 2px solid var(--fv-color-accent);
+      outline-offset: 3px;
+    }
+    &:disabled {
+      cursor: wait;
+      opacity: 0.5;
+    }
+    &:hover:not(:disabled) {
+      background: var(--fv-color-bg-hover);
     }
   }
 }
@@ -745,6 +796,10 @@ onMounted(async () => {
 
     @include mediaTablet {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &--single {
+      grid-template-columns: minmax(0, 1fr);
     }
 
     > * {

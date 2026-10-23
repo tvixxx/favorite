@@ -51,30 +51,20 @@ beforeEach(() => {
     } as unknown as Driver;
   });
 
+  const currentRoute = { value: { path: "/profile", fullPath: "/profile" } };
+
   router = {
-    currentRoute: { value: { path: "/profile" } },
-    push: vi.fn().mockResolvedValue(undefined),
+    currentRoute,
+    push: vi.fn(async (path: string) => {
+      currentRoute.value = { path: path.split("?")[0], fullPath: path };
+      if (!path.startsWith("/profile/settings")) return;
+      document.body.innerHTML = path.endsWith("section=notifications")
+        ? '<div class="additional-settings__content"><section data-tour="notification-settings"></section></div>'
+        : '<div class="additional-settings__content"><section data-tour="personal-settings"><div data-tour="setting-quickAddEnabled"></div><div data-tour="setting-watchTonightEnabled"></div><div data-tour="setting-collectionFilesEnabled"></div></section></div>';
+    }),
   } as unknown as Router;
 
   document.body.innerHTML = '<button data-tour="profile-settings"></button>';
-  document.querySelector("button")!.addEventListener("click", () => {
-    document.body.insertAdjacentHTML(
-      "beforeend",
-      `<div class="modal-backdrop">
-      <div class="profile-settings-modal"><button class="modal__close"></button><div class="modal__body">
-      <section data-tour="personal-settings">
-        <div data-tour="setting-quickAddEnabled"></div>
-        <div data-tour="setting-watchTonightEnabled"></div>
-        <div data-tour="setting-collectionFilesEnabled"></div>
-      </section><section data-tour="notification-settings"></section></div></div></div>`
-    );
-
-    document
-      .querySelector(".modal__close")!
-      .addEventListener("click", () =>
-        document.querySelector(".modal-backdrop")!.remove()
-      );
-  });
 
   createOnboardingDriver(router, { onCompleted: vi.fn() });
 });
@@ -112,7 +102,7 @@ describe("Переходы интерактивного тура", () => {
     );
   });
 
-  it("открывает настройки и выделяет только конкретный переключатель", async () => {
+  it("открывает персональную категорию отдельной страницы и выделяет конкретный переключатель", async () => {
     config.steps![7].popover!.onNextClick?.(
       undefined,
       config.steps![7],
@@ -120,6 +110,10 @@ describe("Переходы интерактивного тура", () => {
     );
 
     await vi.runAllTimersAsync();
+    expect(router.push).toHaveBeenCalledWith(
+      "/profile/settings?section=personal"
+    );
+
     expect(moveTo).toHaveBeenCalledWith(8);
     expect(target("Быстрый ввод")).toBe(
       document.querySelector('[data-tour="setting-quickAddEnabled"]')
@@ -137,6 +131,34 @@ describe("Переходы интерактивного тура", () => {
       block: "center",
       behavior: "instant",
     });
+  });
+
+  it("переключает категорию уведомлений на той же странице вместо поиска в старой модалке", async () => {
+    config.steps![7].popover!.onNextClick?.(
+      undefined,
+      config.steps![7],
+      {} as never
+    );
+
+    await vi.runAllTimersAsync();
+    index = 10;
+    config.steps![10].popover!.onNextClick?.(
+      undefined,
+      config.steps![10],
+      {} as never
+    );
+
+    await vi.runAllTimersAsync();
+    expect(router.push).toHaveBeenLastCalledWith(
+      "/profile/settings?section=notifications"
+    );
+
+    expect(moveTo).toHaveBeenLastCalledWith(11);
+    expect(target("Какие уведомления показывать")).toBe(
+      document.querySelector('[data-tour="notification-settings"]')
+    );
+
+    expect(document.querySelector(".profile-settings-modal")).toBeNull();
   });
 
   it("не дублирует переход при быстрых повторных нажатиях", async () => {
@@ -157,7 +179,7 @@ describe("Переходы интерактивного тура", () => {
 
     await vi.runAllTimersAsync();
 
-    const body = document.querySelector(".modal__body")!;
+    const body = document.querySelector(".additional-settings__content")!;
 
     Object.defineProperty(body, "clientHeight", { value: 140 });
     expect(target("Быстрый ввод")).not.toBe(body);

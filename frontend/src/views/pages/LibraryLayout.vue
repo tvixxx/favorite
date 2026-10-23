@@ -35,6 +35,13 @@ const filesButton = ref<HTMLButtonElement | null>(null);
 const showCollectionFiles = computed(() =>
   getUserPreference(mainStore.userData, "collectionFilesEnabled")
 );
+const visibleLibraryNavItems = computed(() =>
+  LIBRARY_NAV_ITEMS.filter(
+    (item) =>
+      item.to !== "/library/actors" ||
+      getUserPreference(mainStore.userData, "showActorsSection")
+  )
+);
 
 watch(showCollectionFiles, (visible) => {
   if (!visible) {
@@ -235,7 +242,7 @@ function isLibraryNavActive(to: string): boolean {
       <div class="library-subnav-wrap">
         <nav class="library-subnav" aria-label="Разделы медиатеки">
           <RouterLink
-            v-for="item in LIBRARY_NAV_ITEMS"
+            v-for="item in visibleLibraryNavItems"
             :key="item.to"
             :to="item.to"
             class="library-subnav__chip"

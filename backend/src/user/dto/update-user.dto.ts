@@ -55,6 +55,22 @@ export class UpdateUserDto {
   notifyRecommendations?: boolean;
 
   @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
+  @IsBoolean()
+  showAchievements?: boolean;
+
+  @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
+  @IsBoolean()
+  showDetailedAnalytics?: boolean;
+
+  @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
+  @IsBoolean()
+  showCommunityTops?: boolean;
+
+  @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
+  @IsBoolean()
+  showActorsSection?: boolean;
+
+  @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
   @IsString()
   @MaxLength(80)
   @IsTimeZone()

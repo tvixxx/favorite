@@ -85,6 +85,10 @@ describe('Персональные настройки на PostgreSQL и HTTP', 
         notifyNewMessages: true,
         notifyFriendRequests: true,
         notifyRecommendations: false,
+        showAchievements: true,
+        showDetailedAnalytics: true,
+        showCommunityTops: true,
+        showActorsSection: true,
       });
     }
   });
