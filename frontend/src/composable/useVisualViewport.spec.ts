@@ -23,7 +23,7 @@ function setup(available = true) {
   const wrapper = mount(
     defineComponent({
       setup() {
-        const style = useVisualViewport("bottom");
+        const style = useVisualViewport();
 
         return () => h("nav", { style: style.value });
       },
@@ -35,27 +35,28 @@ function setup(available = true) {
   return { viewport, wrapper, nav: wrapper.element as HTMLElement };
 }
 
-describe("Нижняя панель в видимой области", () => {
-  it("следует за клавиатурой и возвращается вниз после её закрытия", async () => {
+describe("Модальное окно в видимой области", () => {
+  it("уменьшает доступную область при клавиатуре и восстанавливает после закрытия", async () => {
     const { viewport, nav } = setup();
 
     await nextTick();
-    expect(nav.style.top).toBe("800px");
+    expect(nav.style.top).toBe("0px");
     expect(nav.style.bottom).toBe("auto");
-    expect(nav.style.height).toBe("");
-    expect(nav.style.transform).toBe("translateY(-100%)");
+    expect(nav.style.height).toBe("800px");
 
     viewport.height = 360;
     viewport.offsetTop = 120;
     viewport.dispatchEvent(new Event("resize"));
     await nextTick();
-    expect(nav.style.top).toBe("480px");
+    expect(nav.style.top).toBe("120px");
+    expect(nav.style.height).toBe("360px");
 
     viewport.height = 800;
     viewport.offsetTop = 0;
     viewport.dispatchEvent(new Event("resize"));
     await nextTick();
-    expect(nav.style.top).toBe("800px");
+    expect(nav.style.top).toBe("0px");
+    expect(nav.style.height).toBe("800px");
   });
 
   it("учитывает смещение и последующую прокрутку без сброса страницы", async () => {
@@ -66,18 +67,19 @@ describe("Нижняя панель в видимой области", () => {
     viewport.offsetTop = 24;
     viewport.dispatchEvent(new Event("scroll"));
     await nextTick();
-    expect(nav.style.top).toBe("800px");
+    expect(nav.style.top).toBe("24px");
+    expect(nav.style.height).toBe("776px");
 
     viewport.offsetTop = 0;
-    window.dispatchEvent(new Event("scroll"));
+    viewport.dispatchEvent(new Event("scroll"));
     await nextTick();
-    expect(nav.style.top).toBe("776px");
+    expect(nav.style.top).toBe("0px");
     expect(scroll).not.toHaveBeenCalled();
 
     viewport.height = 390;
-    window.dispatchEvent(new Event("resize"));
+    viewport.dispatchEvent(new Event("resize"));
     await nextTick();
-    expect(nav.style.top).toBe("390px");
+    expect(nav.style.height).toBe("390px");
   });
 
   it("сохраняет обычный CSS при масштабировании и восстанавливает привязку", async () => {
@@ -92,25 +94,22 @@ describe("Нижняя панель в видимой области", () => {
     viewport.scale = 1;
     viewport.dispatchEvent(new Event("resize"));
     await nextTick();
-    expect(nav.style.top).toBe("800px");
+    expect(nav.style.height).toBe("800px");
   });
 
-  it("сохраняет CSS bottom: 0 без поддержки VisualViewport", async () => {
+  it("сохраняет исходные стили без поддержки VisualViewport", async () => {
     const { nav } = setup(false);
 
     await nextTick();
     expect(nav.hasAttribute("style")).toBe(false);
   });
 
-  it("снимает обработчики при уничтожении панели", () => {
+  it("снимает обработчики при уничтожении окна", () => {
     const { viewport, wrapper } = setup();
     const viewportOff = vi.spyOn(viewport, "removeEventListener");
-    const windowOff = vi.spyOn(window, "removeEventListener");
 
     wrapper.unmount();
     expect(viewportOff).toHaveBeenCalledWith("resize", expect.any(Function));
     expect(viewportOff).toHaveBeenCalledWith("scroll", expect.any(Function));
-    expect(windowOff).toHaveBeenCalledWith("resize", expect.any(Function));
-    expect(windowOff).toHaveBeenCalledWith("scroll", expect.any(Function));
   });
 });
