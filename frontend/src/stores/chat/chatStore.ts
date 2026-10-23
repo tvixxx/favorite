@@ -53,6 +53,9 @@ export const useChatStore = defineStore("chat", () => {
   let sessionRevision = 0;
   let syncing = false;
   let syncGeneration = 0;
+  let notificationTimer: ReturnType<typeof setInterval> | undefined;
+  let notificationSyncing = false;
+  let notificationSyncAgain = false;
   const conversationRequests = createRequestGuard();
   const messageRequests = createRequestGuard();
 
@@ -169,6 +172,10 @@ export const useChatStore = defineStore("chat", () => {
     document.addEventListener("visibilitychange", onResume);
     window.addEventListener("pageshow", onResume);
     window.addEventListener("online", onResume);
+    notificationTimer = setInterval(() => {
+      if (document.visibilityState !== "hidden" && socket.value?.connected)
+        void refreshNotificationState();
+    }, 30000);
 
     socket.value.on("presence:snapshot", (ids: string[]) => {
       userStatusStore.clearStatuses();
@@ -224,19 +231,32 @@ export const useChatStore = defineStore("chat", () => {
 
       const openPeer = currentChatUserId.value;
 
-      if (openPeer) {
+      if (openPeer === peerId) {
         markAsRead(openPeer);
       }
     });
 
     socket.value.on(
       "messages:read",
-      ({ userId: readByUserId }: { userId: string }) => {
+      ({
+        userId: readByUserId,
+        through,
+        messageId,
+      }: {
+        userId: string;
+        through?: string;
+        messageId?: string;
+      }) => {
         const userMessages = messages.value.get(readByUserId);
 
         if (userMessages) {
           userMessages.forEach((msg) => {
-            if (msg.senderId === userId) {
+            if (
+              msg.senderId === userId &&
+              (messageId
+                ? msg.id === messageId
+                : !through || Date.parse(msg.createdAt) <= Date.parse(through))
+            ) {
               msg.isRead = true;
             }
           });
@@ -268,11 +288,71 @@ export const useChatStore = defineStore("chat", () => {
     });
 
     socket.value.on("notification:new", (dto: NotificationDto) => {
-      const notificationsStore = useNotificationsStore();
+      const silent =
+        dto.type === "CHAT_MESSAGE" &&
+        dto.payload.senderId === currentChatUserId.value &&
+        document.visibilityState !== "hidden";
 
-      notificationsStore.applyIncoming(dto);
+      useNotificationsStore().applyIncoming(dto, silent);
     });
+
+    socket.value.on(
+      "notifications:changed",
+      () => void refreshNotificationState()
+    );
+
+    socket.value.on(
+      "conversation:read",
+      ({
+        otherUserId,
+        through,
+        messageId,
+      }: {
+        otherUserId: string;
+        through: string;
+        messageId?: string;
+      }) => {
+        const cutoff = Date.parse(through);
+
+        if (!Number.isFinite(cutoff)) return;
+        messages.value.get(otherUserId)?.forEach((message) => {
+          if (
+            message.receiverId === userId &&
+            (messageId
+              ? message.id === messageId
+              : Date.parse(message.createdAt) <= cutoff)
+          )
+            message.isRead = true;
+        });
+
+        void refreshNotificationState();
+      }
+    );
   };
+
+  async function refreshNotificationState(): Promise<void> {
+    notificationSyncAgain = true;
+    if (notificationSyncing) return;
+
+    const me = currentUserId.value;
+
+    if (!me) return;
+
+    const revision = sessionRevision;
+
+    notificationSyncing = true;
+    try {
+      do {
+        notificationSyncAgain = false;
+        await Promise.allSettled([
+          useNotificationsStore().hydrate(me),
+          fetchConversations(me),
+        ]);
+      } while (notificationSyncAgain && revision === sessionRevision);
+    } finally {
+      if (revision === sessionRevision) notificationSyncing = false;
+    }
+  }
 
   async function refreshFriends(userId: string): Promise<void> {
     const friends = useFriendsStore();
@@ -341,6 +421,10 @@ export const useChatStore = defineStore("chat", () => {
   const disconnect = () => {
     sessionRevision++;
     syncGeneration++;
+    clearInterval(notificationTimer);
+    notificationTimer = undefined;
+    notificationSyncing = false;
+    notificationSyncAgain = false;
     syncing = false;
     document.removeEventListener("visibilitychange", onResume);
     window.removeEventListener("pageshow", onResume);

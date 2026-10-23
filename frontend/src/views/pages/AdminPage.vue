@@ -5,16 +5,19 @@ import AdminOverview from "@/components/Admin/AdminOverview.vue";
 import AdminUsers from "@/components/Admin/AdminUsers.vue";
 import AdminCatalog from "@/components/Admin/AdminCatalog.vue";
 import AdminModeration from "@/components/Admin/AdminModeration.vue";
+import AdminAnnouncements from "@/components/Admin/AdminAnnouncements.vue";
 
 const tab = useAdminQueryParam("tab", "users", undefined, [
   "users",
   "catalog",
   "moderation",
+  "announcements",
 ]);
 const tabs = [
   { id: "users", label: "Обзор и пользователи" },
   { id: "catalog", label: "Каталог" },
   { id: "moderation", label: "Модерация" },
+  { id: "announcements", label: "Объявления" },
 ];
 </script>
 <template>
@@ -45,6 +48,7 @@ const tabs = [
         <AdminUsers />
       </template>
       <AdminCatalog v-else-if="tab === 'catalog'" />
+      <AdminAnnouncements v-else-if="tab === 'announcements'" />
       <AdminModeration v-else />
     </main>
   </ConfigProvider>

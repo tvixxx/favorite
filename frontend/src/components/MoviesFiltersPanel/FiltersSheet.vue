@@ -5,6 +5,7 @@ import { useMediaQuery } from "@vueuse/core";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { useScrollLock } from "@/composable/useScrollLock";
 import { useFocusTrap } from "@/composable/useFocusTrap";
+import { useSheetSwipe } from "@/composable/useSheetSwipe";
 
 /**
  * Панель фильтров. До 768px — нижний action sheet (эталон), шире — правая шторка.
@@ -23,13 +24,19 @@ const emit = defineEmits<{ reset: [] }>();
 const isSheet = useMediaQuery("(max-width: 767.98px)");
 
 const panel = ref<HTMLElement | null>(null);
-const dragOffset = ref(0);
-const dragStartY = ref<number | null>(null);
-const dragActive = ref(false);
 
 const close = (): void => {
   open.value = false;
 };
+
+const {
+  dragStyle,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  reset: resetSwipe,
+  captureOffset,
+} = useSheetSwipe(panel, () => isSheet.value && !!open.value, close);
 
 const { lock: lockScroll, unlock: unlockScroll } = useScrollLock();
 
@@ -41,7 +48,7 @@ watch(open, async (isOpen) => {
   }
 
   lockScroll();
-  dragOffset.value = 0;
+  resetSwipe();
   await nextTick();
   // preventScroll: панель в этом кадре ещё за краем экрана, доскролл к ней сорвёт выезд
   panel.value?.focus({ preventScroll: true });
@@ -52,43 +59,16 @@ const releaseScrollLock = (): void => {
     unlockScroll();
   }
 };
-
-const onTouchStart = (e: TouchEvent): void => {
-  if (!isSheet.value) {
-    return;
-  }
-
-  const body = panel.value?.querySelector(".fsheet__body");
-
-  dragActive.value = !body || body.scrollTop <= 0;
-  dragStartY.value = e.touches[0]?.clientY ?? null;
-};
-
-const onTouchMove = (e: TouchEvent): void => {
-  if (!dragActive.value || dragStartY.value === null) {
-    return;
-  }
-
-  dragOffset.value = Math.max(
-    0,
-    (e.touches[0]?.clientY ?? 0) - dragStartY.value
-  );
-};
-
-const onTouchEnd = (): void => {
-  if (dragOffset.value > 90) {
-    close();
-  }
-
-  dragOffset.value = 0;
-  dragStartY.value = null;
-  dragActive.value = false;
-};
 </script>
 
 <template>
   <Teleport to="body">
-    <Transition name="fsheet" @after-leave="releaseScrollLock">
+    <Transition
+      name="fsheet"
+      @before-leave="captureOffset"
+      @after-leave="releaseScrollLock"
+      @leave-cancelled="releaseScrollLock"
+    >
       <div
         v-if="open"
         class="fsheet-scrim"
@@ -99,22 +79,24 @@ const onTouchEnd = (): void => {
           ref="panel"
           class="fsheet"
           :class="{ 'fsheet--sheet': isSheet }"
-          :style="
-            dragOffset > 0
-              ? { transform: `translateY(${dragOffset}px)`, transition: 'none' }
-              : undefined
-          "
+          :style="dragStyle"
           role="dialog"
           aria-modal="true"
           aria-label="Фильтры"
           tabindex="-1"
           @touchstart.passive="onTouchStart"
-          @touchmove.passive="onTouchMove"
+          @touchmove="onTouchMove"
           @touchend="onTouchEnd"
+          @touchcancel="resetSwipe"
         >
-          <div v-if="isSheet" class="fsheet__grabber" aria-hidden="true"></div>
+          <div
+            v-if="isSheet"
+            class="fsheet__grabber"
+            data-sheet-handle
+            aria-hidden="true"
+          ></div>
 
-          <header class="fsheet__head">
+          <header class="fsheet__head" data-sheet-handle>
             <h2 class="fsheet__title">Фильтры</h2>
             <span v-if="activeCount" class="fsheet__count">
               {{ activeCount }}
@@ -140,7 +122,7 @@ const onTouchEnd = (): void => {
             </button>
           </header>
 
-          <div class="fsheet__body">
+          <div class="fsheet__body" data-sheet-scroll>
             <slot />
           </div>
 
@@ -181,6 +163,10 @@ const onTouchEnd = (): void => {
   &--sheet {
     align-items: flex-end;
   }
+}
+
+.fsheet--sheet [data-sheet-handle] {
+  touch-action: pan-x pinch-zoom;
 }
 
 .fsheet {
@@ -288,6 +274,7 @@ const onTouchEnd = (): void => {
     gap: 18px;
     padding: 16px 20px;
     overflow-y: auto;
+    overscroll-behavior-y: contain;
 
     @include customScrollbar();
   }
@@ -416,7 +403,7 @@ const onTouchEnd = (): void => {
 
 @keyframes fsheet-up-out {
   from {
-    transform: translateY(0);
+    transform: translateY(var(--fv-sheet-drag, 0px));
   }
 
   to {

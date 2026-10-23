@@ -3,15 +3,17 @@ import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { useChatStore } from "@/stores/chat/chatStore";
+import { useVisualViewport } from "@/composable/useVisualViewport";
 
 const route = useRoute();
 const router = useRouter();
 const chatStore = useChatStore();
+const viewportStyle = useVisualViewport("bottom");
 
 // Непрочитанные сообщения для бейджа «Общение»
 const socialUnread = computed<number>(() => chatStore.totalUnreadCount);
 const socialBadge = computed<string>(() =>
-  socialUnread.value > 99 ? "99+" : String(socialUnread.value)
+  socialUnread.value > 10 ? "10+" : String(socialUnread.value)
 );
 
 interface Tab {
@@ -88,12 +90,17 @@ const leftTabs = computed(() => tabs.slice(0, 2));
 const rightTabs = computed(() => tabs.slice(2));
 
 const go = (to: string): void => {
-  router.push(to);
+  if (to === "/chat") chatStore.closeChat();
+  void router.push(to);
 };
 </script>
 
 <template>
-  <nav class="mobile-tabbar" aria-label="Основная навигация">
+  <nav
+    class="mobile-tabbar"
+    :style="viewportStyle"
+    aria-label="Основная навигация"
+  >
     <button
       v-for="tab in leftTabs"
       :key="tab.key"

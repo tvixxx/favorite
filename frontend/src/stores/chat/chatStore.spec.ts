@@ -164,6 +164,46 @@ describe("Авторизация соединения чата", () => {
     );
   });
 
+  it.each(["messages:read", "conversation:read"])(
+    "точечное событие %s не читает остальные сообщения",
+    (event) => {
+      mocks.useFetch.mockResolvedValue({ status: 200, data: [] });
+
+      const store = useChatStore();
+
+      store.connect("user-id");
+
+      const incoming = event === "conversation:read";
+      const message = {
+        senderId: incoming ? "peer-id" : "user-id",
+        receiverId: incoming ? "user-id" : "peer-id",
+        content: "Сообщение",
+        isRead: false,
+        createdAt: "2026-10-20T12:00:00Z",
+      };
+
+      store.messages.set("peer-id", [
+        { ...message, id: "older" },
+        { ...message, id: "chosen" },
+      ]);
+
+      const handler = mocks.io.mock.results[0].value.on.mock.calls.find(
+        ([name]: [string]) => name === event
+      )[1];
+
+      handler({
+        userId: "peer-id",
+        otherUserId: "peer-id",
+        messageId: "chosen",
+        through: "2026-10-20T13:00:00Z",
+      });
+
+      expect(store.messages.get("peer-id")?.map((item) => item.isRead)).toEqual(
+        [false, true]
+      );
+    }
+  );
+
   it("обновляет входящие заявки без перехода на другую страницу", async () => {
     mocks.useFetch.mockImplementation(async (url: string) => ({
       status: 200,

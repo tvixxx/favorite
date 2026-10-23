@@ -59,7 +59,7 @@ export type Actor = Prisma.ActorModel
 export type UserMovie = Prisma.UserMovieModel
 /**
  * Model WatchEntry
- *
+ * 
  */
 export type WatchEntry = Prisma.WatchEntryModel
 /**
@@ -92,6 +92,16 @@ export type UserStatus = Prisma.UserStatusModel
  * 
  */
 export type Notification = Prisma.NotificationModel
+/**
+ * Model Announcement
+ * 
+ */
+export type Announcement = Prisma.AnnouncementModel
+/**
+ * Model AnnouncementRead
+ * 
+ */
+export type AnnouncementRead = Prisma.AnnouncementReadModel
 /**
  * Model Feedback
  * Обращения из формы «Обратная связь» (/feedback).

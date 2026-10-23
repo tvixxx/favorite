@@ -450,8 +450,11 @@ onMounted(loadAll);
 <style scoped lang="scss">
 @use "../../styles/media" as *;
 @use "@/styles/scrollbar" as *;
+@use "@/styles/layout" as *;
 
 .friends-page {
+  width: 100%;
+  min-width: 0;
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
@@ -579,12 +582,17 @@ onMounted(loadAll);
 /* Табы друзей: голый ряд с подчёркиванием активного (эталон), не карточка */
 .friends-tabs {
   display: flex;
+  min-width: 0;
   gap: 22px;
   margin-bottom: 22px;
   border-bottom: 1px solid var(--fv-color-border);
   overflow-x: auto;
 
   @include hideScrollbar();
+
+  @include mediaMax(640px) {
+    @include edgeScrollContainer;
+  }
 
   &__btn {
     display: inline-flex;

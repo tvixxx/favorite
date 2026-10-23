@@ -363,6 +363,7 @@ export type UserWhereInput = {
   receivedMessages?: Prisma.MessageListRelationFilter
   status?: Prisma.XOR<Prisma.UserStatusNullableScalarRelationFilter, Prisma.UserStatusWhereInput> | null
   notifications?: Prisma.NotificationListRelationFilter
+  announcementReads?: Prisma.AnnouncementReadListRelationFilter
   feedbacks?: Prisma.FeedbackListRelationFilter
   createdMovies?: Prisma.MovieListRelationFilter
   createdActors?: Prisma.ActorListRelationFilter
@@ -407,6 +408,7 @@ export type UserOrderByWithRelationInput = {
   receivedMessages?: Prisma.MessageOrderByRelationAggregateInput
   status?: Prisma.UserStatusOrderByWithRelationInput
   notifications?: Prisma.NotificationOrderByRelationAggregateInput
+  announcementReads?: Prisma.AnnouncementReadOrderByRelationAggregateInput
   feedbacks?: Prisma.FeedbackOrderByRelationAggregateInput
   createdMovies?: Prisma.MovieOrderByRelationAggregateInput
   createdActors?: Prisma.ActorOrderByRelationAggregateInput
@@ -454,6 +456,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   receivedMessages?: Prisma.MessageListRelationFilter
   status?: Prisma.XOR<Prisma.UserStatusNullableScalarRelationFilter, Prisma.UserStatusWhereInput> | null
   notifications?: Prisma.NotificationListRelationFilter
+  announcementReads?: Prisma.AnnouncementReadListRelationFilter
   feedbacks?: Prisma.FeedbackListRelationFilter
   createdMovies?: Prisma.MovieListRelationFilter
   createdActors?: Prisma.ActorListRelationFilter
@@ -555,6 +558,7 @@ export type UserCreateInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -598,6 +602,7 @@ export type UserUncheckedCreateInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -641,6 +646,7 @@ export type UserUpdateInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -684,6 +690,7 @@ export type UserUncheckedUpdateInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -1107,6 +1114,20 @@ export type UserUpdateOneRequiredWithoutNotificationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutNotificationsInput, Prisma.UserUpdateWithoutNotificationsInput>, Prisma.UserUncheckedUpdateWithoutNotificationsInput>
 }
 
+export type UserCreateNestedOneWithoutAnnouncementReadsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAnnouncementReadsInput, Prisma.UserUncheckedCreateWithoutAnnouncementReadsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAnnouncementReadsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutAnnouncementReadsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAnnouncementReadsInput, Prisma.UserUncheckedCreateWithoutAnnouncementReadsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAnnouncementReadsInput
+  upsert?: Prisma.UserUpsertWithoutAnnouncementReadsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAnnouncementReadsInput, Prisma.UserUpdateWithoutAnnouncementReadsInput>, Prisma.UserUncheckedUpdateWithoutAnnouncementReadsInput>
+}
+
 export type UserCreateNestedOneWithoutFeedbacksInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutFeedbacksInput, Prisma.UserUncheckedCreateWithoutFeedbacksInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutFeedbacksInput
@@ -1199,6 +1220,7 @@ export type UserCreateWithoutUploadedMediaInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -1241,6 +1263,7 @@ export type UserUncheckedCreateWithoutUploadedMediaInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -1288,6 +1311,7 @@ export type UserCreateWithoutAvatarAssetInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -1330,6 +1354,7 @@ export type UserUncheckedCreateWithoutAvatarAssetInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -1388,6 +1413,7 @@ export type UserUpdateWithoutUploadedMediaInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -1430,6 +1456,7 @@ export type UserUncheckedUpdateWithoutUploadedMediaInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -1483,6 +1510,7 @@ export type UserUpdateWithoutAvatarAssetInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -1525,6 +1553,7 @@ export type UserUncheckedUpdateWithoutAvatarAssetInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -1568,6 +1597,7 @@ export type UserCreateWithoutPasswordResetInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -1610,6 +1640,7 @@ export type UserUncheckedCreateWithoutPasswordResetInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -1668,6 +1699,7 @@ export type UserUpdateWithoutPasswordResetInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -1710,6 +1742,7 @@ export type UserUncheckedUpdateWithoutPasswordResetInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -1752,6 +1785,7 @@ export type UserCreateWithoutCreatedMoviesInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
   reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
@@ -1794,6 +1828,7 @@ export type UserUncheckedCreateWithoutCreatedMoviesInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
   reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
@@ -1852,6 +1887,7 @@ export type UserUpdateWithoutCreatedMoviesInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
   reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
@@ -1894,6 +1930,7 @@ export type UserUncheckedUpdateWithoutCreatedMoviesInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
   reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
@@ -1935,6 +1972,7 @@ export type UserCreateWithoutReviewsInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -1977,6 +2015,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -2035,6 +2074,7 @@ export type UserUpdateWithoutReviewsInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -2077,6 +2117,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -2120,6 +2161,7 @@ export type UserCreateWithoutCreatedActorsInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
@@ -2162,6 +2204,7 @@ export type UserUncheckedCreateWithoutCreatedActorsInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
@@ -2220,6 +2263,7 @@ export type UserUpdateWithoutCreatedActorsInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
@@ -2262,6 +2306,7 @@ export type UserUncheckedUpdateWithoutCreatedActorsInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
@@ -2303,6 +2348,7 @@ export type UserCreateWithoutUserMoviesInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -2345,6 +2391,7 @@ export type UserUncheckedCreateWithoutUserMoviesInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -2403,6 +2450,7 @@ export type UserUpdateWithoutUserMoviesInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -2445,6 +2493,7 @@ export type UserUncheckedUpdateWithoutUserMoviesInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -2488,6 +2537,7 @@ export type UserCreateWithoutWatchEntriesInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -2530,6 +2580,7 @@ export type UserUncheckedCreateWithoutWatchEntriesInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -2588,6 +2639,7 @@ export type UserUpdateWithoutWatchEntriesInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -2630,6 +2682,7 @@ export type UserUncheckedUpdateWithoutWatchEntriesInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -2671,6 +2724,7 @@ export type UserCreateWithoutListsInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -2713,6 +2767,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -2771,6 +2826,7 @@ export type UserUpdateWithoutListsInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -2813,6 +2869,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -2855,6 +2912,7 @@ export type UserCreateWithoutFriendshipsRequestedInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -2897,6 +2955,7 @@ export type UserUncheckedCreateWithoutFriendshipsRequestedInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -2944,6 +3003,7 @@ export type UserCreateWithoutFriendshipsReceivedInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -2986,6 +3046,7 @@ export type UserUncheckedCreateWithoutFriendshipsReceivedInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -3044,6 +3105,7 @@ export type UserUpdateWithoutFriendshipsRequestedInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -3086,6 +3148,7 @@ export type UserUncheckedUpdateWithoutFriendshipsRequestedInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -3139,6 +3202,7 @@ export type UserUpdateWithoutFriendshipsReceivedInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -3181,6 +3245,7 @@ export type UserUncheckedUpdateWithoutFriendshipsReceivedInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -3223,6 +3288,7 @@ export type UserCreateWithoutSentMessagesInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -3265,6 +3331,7 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -3312,6 +3379,7 @@ export type UserCreateWithoutReceivedMessagesInput = {
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -3354,6 +3422,7 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -3412,6 +3481,7 @@ export type UserUpdateWithoutSentMessagesInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -3454,6 +3524,7 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -3507,6 +3578,7 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -3549,6 +3621,7 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -3591,6 +3664,7 @@ export type UserCreateWithoutStatusInput = {
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -3633,6 +3707,7 @@ export type UserUncheckedCreateWithoutStatusInput = {
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -3691,6 +3766,7 @@ export type UserUpdateWithoutStatusInput = {
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -3733,6 +3809,7 @@ export type UserUncheckedUpdateWithoutStatusInput = {
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -3775,6 +3852,7 @@ export type UserCreateWithoutNotificationsInput = {
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -3817,6 +3895,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -3875,6 +3954,7 @@ export type UserUpdateWithoutNotificationsInput = {
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -3917,6 +3997,195 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
+  feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
+  createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUncheckedUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUncheckedUpdateManyWithoutActorNestedInput
+  passwordReset?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutAnnouncementReadsInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  username?: string | null
+  timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
+  role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
+  authVersion?: number
+  tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  avatarAsset?: Prisma.MediaAssetCreateNestedOneWithoutAvatarInput
+  uploadedMedia?: Prisma.MediaAssetCreateNestedManyWithoutOwnerInput
+  userMovies?: Prisma.UserMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
+  createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
+  createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogCreateNestedManyWithoutActorInput
+  passwordReset?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutAnnouncementReadsInput = {
+  id?: string
+  email: string
+  password: string
+  fullName: string
+  username?: string | null
+  timezone?: string
+  quickAddEnabled?: boolean
+  watchTonightEnabled?: boolean
+  collectionFilesEnabled?: boolean
+  notifyNewMessages?: boolean
+  notifyFriendRequests?: boolean
+  notifyRecommendations?: boolean
+  role?: $Enums.UserRole
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
+  authVersion?: number
+  tags?: $Enums.Genre | null
+  avatarUrl?: string | null
+  avatarThumbnailUrl?: string | null
+  avatarAssetId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutOwnerInput
+  userMovies?: Prisma.UserMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.UserListUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedCreateNestedManyWithoutRequesterInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedCreateNestedManyWithoutAddresseeInput
+  sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
+  createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
+  createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
+  reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
+  usageEvents?: Prisma.UsageEventUncheckedCreateNestedManyWithoutUserInput
+  adminActions?: Prisma.AdminAuditLogUncheckedCreateNestedManyWithoutActorInput
+  passwordReset?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  watchEntries?: Prisma.WatchEntryUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutAnnouncementReadsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutAnnouncementReadsInput, Prisma.UserUncheckedCreateWithoutAnnouncementReadsInput>
+}
+
+export type UserUpsertWithoutAnnouncementReadsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutAnnouncementReadsInput, Prisma.UserUncheckedUpdateWithoutAnnouncementReadsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutAnnouncementReadsInput, Prisma.UserUncheckedCreateWithoutAnnouncementReadsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutAnnouncementReadsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutAnnouncementReadsInput, Prisma.UserUncheckedUpdateWithoutAnnouncementReadsInput>
+}
+
+export type UserUpdateWithoutAnnouncementReadsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  avatarAsset?: Prisma.MediaAssetUpdateOneWithoutAvatarNestedInput
+  uploadedMedia?: Prisma.MediaAssetUpdateManyWithoutOwnerNestedInput
+  userMovies?: Prisma.UserMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
+  createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
+  createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
+  reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
+  usageEvents?: Prisma.UsageEventUpdateManyWithoutUserNestedInput
+  adminActions?: Prisma.AdminAuditLogUpdateManyWithoutActorNestedInput
+  passwordReset?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  watchEntries?: Prisma.WatchEntryUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutAnnouncementReadsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  quickAddEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchTonightEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  collectionFilesEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  tags?: Prisma.NullableEnumGenreFieldUpdateOperationsInput | $Enums.Genre | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarThumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  uploadedMedia?: Prisma.MediaAssetUncheckedUpdateManyWithoutOwnerNestedInput
+  userMovies?: Prisma.UserMovieUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.UserListUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  friendshipsRequested?: Prisma.FriendshipUncheckedUpdateManyWithoutRequesterNestedInput
+  friendshipsReceived?: Prisma.FriendshipUncheckedUpdateManyWithoutAddresseeNestedInput
+  sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -3960,6 +4229,7 @@ export type UserCreateWithoutFeedbacksInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
   reviewReports?: Prisma.ReviewReportCreateNestedManyWithoutReporterInput
@@ -4002,6 +4272,7 @@ export type UserUncheckedCreateWithoutFeedbacksInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
   reviewReports?: Prisma.ReviewReportUncheckedCreateNestedManyWithoutReporterInput
@@ -4060,6 +4331,7 @@ export type UserUpdateWithoutFeedbacksInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
   reviewReports?: Prisma.ReviewReportUpdateManyWithoutReporterNestedInput
@@ -4102,6 +4374,7 @@ export type UserUncheckedUpdateWithoutFeedbacksInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
   reviewReports?: Prisma.ReviewReportUncheckedUpdateManyWithoutReporterNestedInput
@@ -4144,6 +4417,7 @@ export type UserCreateWithoutReviewReportsInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -4186,6 +4460,7 @@ export type UserUncheckedCreateWithoutReviewReportsInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -4244,6 +4519,7 @@ export type UserUpdateWithoutReviewReportsInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -4286,6 +4562,7 @@ export type UserUncheckedUpdateWithoutReviewReportsInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -4328,6 +4605,7 @@ export type UserCreateWithoutAdminActionsInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -4370,6 +4648,7 @@ export type UserUncheckedCreateWithoutAdminActionsInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -4428,6 +4707,7 @@ export type UserUpdateWithoutAdminActionsInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -4470,6 +4750,7 @@ export type UserUncheckedUpdateWithoutAdminActionsInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -4512,6 +4793,7 @@ export type UserCreateWithoutUsageEventsInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorCreateNestedManyWithoutCreatedByInput
@@ -4554,6 +4836,7 @@ export type UserUncheckedCreateWithoutUsageEventsInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   status?: Prisma.UserStatusUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
   feedbacks?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   createdMovies?: Prisma.MovieUncheckedCreateNestedManyWithoutCreatedByInput
   createdActors?: Prisma.ActorUncheckedCreateNestedManyWithoutCreatedByInput
@@ -4612,6 +4895,7 @@ export type UserUpdateWithoutUsageEventsInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUpdateManyWithoutCreatedByNestedInput
@@ -4654,6 +4938,7 @@ export type UserUncheckedUpdateWithoutUsageEventsInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   status?: Prisma.UserStatusUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  announcementReads?: Prisma.AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
   feedbacks?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   createdMovies?: Prisma.MovieUncheckedUpdateManyWithoutCreatedByNestedInput
   createdActors?: Prisma.ActorUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -4678,6 +4963,7 @@ export type UserCountOutputType = {
   sentMessages: number
   receivedMessages: number
   notifications: number
+  announcementReads: number
   feedbacks: number
   createdMovies: number
   createdActors: number
@@ -4697,6 +4983,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   sentMessages?: boolean | UserCountOutputTypeCountSentMessagesArgs
   receivedMessages?: boolean | UserCountOutputTypeCountReceivedMessagesArgs
   notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
+  announcementReads?: boolean | UserCountOutputTypeCountAnnouncementReadsArgs
   feedbacks?: boolean | UserCountOutputTypeCountFeedbacksArgs
   createdMovies?: boolean | UserCountOutputTypeCountCreatedMoviesArgs
   createdActors?: boolean | UserCountOutputTypeCountCreatedActorsArgs
@@ -4777,6 +5064,13 @@ export type UserCountOutputTypeCountReceivedMessagesArgs<ExtArgs extends runtime
  */
 export type UserCountOutputTypeCountNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.NotificationWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountAnnouncementReadsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AnnouncementReadWhereInput
 }
 
 /**
@@ -4863,6 +5157,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   receivedMessages?: boolean | Prisma.User$receivedMessagesArgs<ExtArgs>
   status?: boolean | Prisma.User$statusArgs<ExtArgs>
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
+  announcementReads?: boolean | Prisma.User$announcementReadsArgs<ExtArgs>
   feedbacks?: boolean | Prisma.User$feedbacksArgs<ExtArgs>
   createdMovies?: boolean | Prisma.User$createdMoviesArgs<ExtArgs>
   createdActors?: boolean | Prisma.User$createdActorsArgs<ExtArgs>
@@ -4964,6 +5259,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   receivedMessages?: boolean | Prisma.User$receivedMessagesArgs<ExtArgs>
   status?: boolean | Prisma.User$statusArgs<ExtArgs>
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
+  announcementReads?: boolean | Prisma.User$announcementReadsArgs<ExtArgs>
   feedbacks?: boolean | Prisma.User$feedbacksArgs<ExtArgs>
   createdMovies?: boolean | Prisma.User$createdMoviesArgs<ExtArgs>
   createdActors?: boolean | Prisma.User$createdActorsArgs<ExtArgs>
@@ -4995,6 +5291,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     receivedMessages: Prisma.$MessagePayload<ExtArgs>[]
     status: Prisma.$UserStatusPayload<ExtArgs> | null
     notifications: Prisma.$NotificationPayload<ExtArgs>[]
+    announcementReads: Prisma.$AnnouncementReadPayload<ExtArgs>[]
     feedbacks: Prisma.$FeedbackPayload<ExtArgs>[]
     createdMovies: Prisma.$MoviePayload<ExtArgs>[]
     createdActors: Prisma.$ActorPayload<ExtArgs>[]
@@ -5432,6 +5729,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   receivedMessages<T extends Prisma.User$receivedMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$receivedMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   status<T extends Prisma.User$statusArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$statusArgs<ExtArgs>>): Prisma.Prisma__UserStatusClient<runtime.Types.Result.GetResult<Prisma.$UserStatusPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   notifications<T extends Prisma.User$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  announcementReads<T extends Prisma.User$announcementReadsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$announcementReadsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AnnouncementReadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   feedbacks<T extends Prisma.User$feedbacksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$feedbacksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FeedbackPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   createdMovies<T extends Prisma.User$createdMoviesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdMoviesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MoviePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   createdActors<T extends Prisma.User$createdActorsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdActorsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ActorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -6143,6 +6441,30 @@ export type User$notificationsArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
+}
+
+/**
+ * User.announcementReads
+ */
+export type User$announcementReadsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AnnouncementRead
+   */
+  select?: Prisma.AnnouncementReadSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AnnouncementRead
+   */
+  omit?: Prisma.AnnouncementReadOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AnnouncementReadInclude<ExtArgs> | null
+  where?: Prisma.AnnouncementReadWhereInput
+  orderBy?: Prisma.AnnouncementReadOrderByWithRelationInput | Prisma.AnnouncementReadOrderByWithRelationInput[]
+  cursor?: Prisma.AnnouncementReadWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AnnouncementReadScalarFieldEnum | Prisma.AnnouncementReadScalarFieldEnum[]
 }
 
 /**

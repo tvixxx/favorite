@@ -95,6 +95,7 @@ model User {
   receivedMessages     Message[]      @relation("received_messages")
   status               UserStatus?    @relation("user_status")
   notifications        Notification[] @relation("user_notifications")
+  announcementReads    AnnouncementRead[]
   feedbacks            Feedback[]     @relation("user_feedbacks")
   createdMovies        Movie[]        @relation("created_movies")
   createdActors        Actor[]        @relation("created_actors")
@@ -434,13 +435,44 @@ model Notification {
   userId    String           @map("user_id")
   type      NotificationType
   payload   Json
+  actorId   String? @map("actor_id")
+  actorName String? @map("actor_name")
   readAt    DateTime?        @map("read_at")
   createdAt DateTime         @default(now()) @map("created_at")
 
   user User @relation("user_notifications", fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, actorId, createdAt(sort: Desc)])
   @@map("notifications")
+}
+
+model Announcement {
+  id String @id @default(uuid())
+  releaseId String? @unique @map("release_id")
+  title String
+  body String
+  category String
+  actions Json @default("[]")
+  publishedAt DateTime? @map("published_at")
+  archivedAt DateTime? @map("archived_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  reads AnnouncementRead[]
+
+  @@index([publishedAt(sort: Desc)])
+  @@map("announcements")
+}
+
+model AnnouncementRead {
+  userId String @map("user_id")
+  announcementId String @map("announcement_id")
+  readAt DateTime @default(now()) @map("read_at")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  @@id([userId, announcementId])
+  @@map("announcement_reads")
 }
 
 /// Обращения из формы «Обратная связь» (/feedback).

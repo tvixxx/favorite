@@ -2,7 +2,8 @@ export type NotificationType =
   | "CHAT_MESSAGE"
   | "FRIEND_REQUEST"
   | "FRIEND_ACCEPTED"
-  | "FRIEND_REJECTED";
+  | "FRIEND_REJECTED"
+  | "SYSTEM";
 
 export interface NotificationDto {
   id: string;

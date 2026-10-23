@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
+import { useMediaQuery } from "@vueuse/core";
 import { useRoute, useRouter } from "vue-router";
 import { useChatStore, useUserStatusStore, useFriendsStore } from "@/stores";
 import { useMainStore } from "@/state/state";
@@ -15,9 +16,13 @@ import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import { STATE_PRESETS } from "@/components/StateBlock/stateBlockPresets";
 import { avatarGradient, avatarLetter } from "@/composable/useAvatarGradient";
 import { useDateTime } from "@/composable/useDateTime";
+import { useChatMessageMotion } from "@/composable/useChatMessageMotion";
+import { pluralize } from "@/utils/plural.utils";
 
 const route = useRoute();
 const router = useRouter();
+const isMobile = useMediaQuery("(max-width: 768px)");
+let routeReady = false;
 const chatStore = useChatStore();
 const userStatusStore = useUserStatusStore();
 const friendsStore = useFriendsStore();
@@ -44,6 +49,14 @@ const reloadMessages = (): void => {
 
 const chatInputRef = ref<InstanceType<typeof ChatMessageInput> | null>(null);
 const messagesContainer = ref<HTMLElement | null>(null);
+const { pendingCount, showLatest, onScroll, stopFollowing } =
+  useChatMessageMotion(
+    messagesContainer,
+    () => chatStore.currentMessages,
+    () => chatStore.currentChatUserId,
+    () => !!chatStore.isMessagesLoading,
+    userId
+  );
 
 const selectedConversation = computed(() => {
   if (!chatStore.currentChatUserId) {
@@ -71,17 +84,13 @@ const isOtherUserOnline = computed(() => {
   return userStatusStore.isUserOnline(chatStore.currentChatUserId);
 });
 
-const scrollToBottom = () => {
-  nextTick(() => {
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-    }
-  });
+const selectConversation = async (otherUserId: string): Promise<void> => {
+  await router.push({ name: "chat", params: { userId: otherUserId } });
 };
 
-const selectConversation = async (otherUserId: string) => {
-  await chatStore.openChat(userId.value, otherUserId);
-  scrollToBottom();
+const showConversationList = (): void => {
+  chatStore.closeChat();
+  void router.push("/chat");
 };
 
 // Клаппер: вставляет «#» — открывает подсказку фильмов из коллекции
@@ -109,7 +118,6 @@ const sendMessage = async (wireFromEnter?: string) => {
   try {
     await chatStore.sendMessage(chatStore.currentChatUserId, content);
     if (messageInput.value === draft) messageInput.value = "";
-    scrollToBottom();
   } catch (error) {
     message.error(
       error instanceof Error ? error.message : "Не удалось отправить сообщение"
@@ -142,30 +150,17 @@ const formatTime = (dateString: string) => {
   }
 };
 
-// Скроллим вниз при новом сообщении — следим за длиной + id последнего,
-// а не за глубоким обходом всего треда (deep-watch дёргался и на isRead)
-watch(
-  () => {
-    const msgs = chatStore.currentMessages;
+async function openRouteConversation(): Promise<void> {
+  const paramPeerId = route.params.userId;
 
-    return `${msgs.length}:${msgs[msgs.length - 1]?.id ?? ""}`;
-  },
-  () => {
-    scrollToBottom();
-  }
-);
+  if (typeof paramPeerId === "string" && paramPeerId) {
+    await chatStore.openChat(userId.value, paramPeerId);
 
-onMounted(async () => {
-  if (!userId.value) {
     return;
   }
 
-  await chatStore.fetchConversations(userId.value);
-
-  const paramPeerId = route.params.userId as string | undefined;
-
-  if (paramPeerId) {
-    await selectConversation(paramPeerId);
+  if (isMobile.value) {
+    chatStore.closeChat();
 
     return;
   }
@@ -178,7 +173,7 @@ onMounted(async () => {
     );
 
     if (stillPresent) {
-      await selectConversation(rememberedPeer);
+      await chatStore.openChat(userId.value, rememberedPeer);
 
       return;
     }
@@ -187,8 +182,26 @@ onMounted(async () => {
   }
 
   if (chatStore.conversations.length === 1) {
-    await selectConversation(chatStore.conversations[0].otherUser.id);
+    await chatStore.openChat(
+      userId.value,
+      chatStore.conversations[0].otherUser.id
+    );
   }
+}
+
+watch(
+  () => route.params.userId,
+  () => {
+    if (routeReady) void openRouteConversation();
+  }
+);
+
+onMounted(async () => {
+  if (!userId.value) return;
+  if (isMobile.value) chatStore.closeChat();
+  await chatStore.fetchConversations(userId.value);
+  routeReady = true;
+  await openRouteConversation();
 });
 </script>
 
@@ -239,6 +252,7 @@ onMounted(async () => {
             :class="{
               'conversation-item--active':
                 chatStore.currentChatUserId === item.otherUser.id,
+              'conversation-item--unread': item.unreadCount > 0,
             }"
             @click="selectConversation(item.otherUser.id)"
           >
@@ -313,7 +327,7 @@ onMounted(async () => {
               type="button"
               class="chat-page__header-back"
               aria-label="К списку диалогов"
-              @click="chatStore.closeChat()"
+              @click="showConversationList"
             >
               <BaseIcon name="ph:arrow-left" :width="20" :height="20" />
             </button>
@@ -346,7 +360,13 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div ref="messagesContainer" class="chat-page__messages">
+          <div
+            ref="messagesContainer"
+            class="chat-page__messages"
+            @scroll.passive="onScroll"
+            @wheel.passive="stopFollowing"
+            @touchstart.passive="stopFollowing"
+          >
             <StateBlock
               v-if="chatStore.isMessagesError"
               v-bind="STATE_PRESETS.chatThreadError"
@@ -389,6 +409,7 @@ onMounted(async () => {
               v-for="message in chatStore.currentMessages"
               v-else
               :key="message.id"
+              :data-chat-message="message.id"
               class="message"
               :class="{
                 'message--sent': message.senderId === userId,
@@ -408,6 +429,27 @@ onMounted(async () => {
                 >
               </span>
             </div>
+          </div>
+
+          <div
+            v-if="pendingCount"
+            class="chat-page__new-messages"
+            aria-live="polite"
+          >
+            <button
+              type="button"
+              aria-label="Перейти к новым сообщениям"
+              @click="showLatest"
+            >
+              <BaseIcon name="ph:arrow-down" :width="16" />
+              {{
+                pluralize(pendingCount, [
+                  "новое сообщение",
+                  "новых сообщения",
+                  "новых сообщений",
+                ])
+              }}
+            </button>
           </div>
 
           <div class="chat-page__input">
@@ -607,6 +649,7 @@ onMounted(async () => {
     min-width: 0;
     overflow-y: auto;
     overflow-x: hidden;
+    overflow-anchor: none;
 
     @include customScrollbar();
     padding: 1.5rem;
@@ -632,6 +675,35 @@ onMounted(async () => {
       &--received {
         justify-content: flex-start;
       }
+    }
+  }
+
+  &__new-messages {
+    position: relative;
+    height: 0;
+    flex-shrink: 0;
+    z-index: 2;
+
+    button {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      max-width: calc(100% - 24px);
+      padding: 8px 14px;
+      border: 1px solid var(--fv-color-border);
+      border-radius: 20px;
+      background: var(--fv-color-bg-primary);
+      color: var(--fv-color-brand);
+      box-shadow: var(--fv-shadow-low);
+      font: inherit;
+      font-size: 12px;
+      white-space: nowrap;
+      cursor: pointer;
     }
   }
 
@@ -742,6 +814,10 @@ onMounted(async () => {
     background: var(--fv-color-bg-secondary);
   }
 
+  &--unread {
+    background: var(--fv-color-bg-active-soft);
+  }
+
   &--active {
     background: color-mix(in srgb, var(--fv-color-accent) 10%, transparent);
   }
@@ -845,6 +921,7 @@ onMounted(async () => {
   gap: 4px;
   max-width: 82%;
   min-width: 0;
+  flex-shrink: 0;
 
   &--sent {
     align-self: flex-end;

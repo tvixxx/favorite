@@ -41,6 +41,7 @@ PG_CONTAINER="${PG_CONTAINER:-favorite-postgres}" PG_USER="$POSTGRES_USER" PG_DB
 node "$DEPLOY_DIR/release.cjs" complete "$restore_point"
 start_application
 check_application
+docker compose exec -T backend node dist/src/notification/publish-release.js /app/release-notes/current.json
 docker compose ps
 echo "Обновление завершено. При ошибке смотрите docker compose logs --tail=100 backend web."
 echo "Точка возврата: $restore_point. Инструкция: deploy/RECOVERY.md"
