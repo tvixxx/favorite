@@ -66,6 +66,12 @@ function dismissUpdate(): void {
   loadFailed.value = false;
 }
 
+function openUpdateFromNotification(): void {
+  void checkUpdate();
+  confirmOpen.value = true;
+}
+
+window.addEventListener("fv:request-app-update", openUpdateFromNotification);
 window.addEventListener("online", checkUpdate);
 window.addEventListener("focus", checkUpdate);
 window.addEventListener("vite:preloadError", handlePreloadError);
@@ -75,6 +81,11 @@ navigator.serviceWorker?.addEventListener(
 );
 
 onScopeDispose(() => {
+  window.removeEventListener(
+    "fv:request-app-update",
+    openUpdateFromNotification
+  );
+
   window.removeEventListener("online", checkUpdate);
   window.removeEventListener("focus", checkUpdate);
   window.removeEventListener("vite:preloadError", handlePreloadError);

@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationType } from '../generated/prisma/enums';
+import { readConversation } from '../notification/read-conversation';
+import { notificationEvents } from '../notification/notification-events';
 
 @Injectable()
 export class MessageService {
@@ -33,6 +35,8 @@ export class MessageService {
         data: {
           userId: receiverId,
           type: NotificationType.CHAT_MESSAGE,
+          actorId: senderId,
+          actorName: message.sender.fullName,
           payload: {
             messageId: message.id,
             senderId,
@@ -175,15 +179,15 @@ export class MessageService {
   }
 
   async markConversationAsRead(userId: string, otherUserId: string) {
-    return this.prismaService.message.updateMany({
-      where: {
-        senderId: otherUserId,
-        receiverId: userId,
-        isRead: false,
-      },
-      data: {
-        isRead: true,
-      },
+    const through = new Date();
+    await this.prismaService.$transaction((tx) =>
+      readConversation(tx, userId, otherUserId, through),
+    );
+    notificationEvents.emit('changed', userId);
+    notificationEvents.emit('conversation-read', {
+      userId,
+      actorId: otherUserId,
+      through: through.toISOString(),
     });
   }
 

@@ -62,6 +62,17 @@ test("права токена ограничены заданиями, actions �
   }
 });
 
+test("новость релиза публикуется после проверки приложения, файл включён в runtime-образ", () => {
+  for (const file of ["ci-release.sh", "deploy.sh"]) {
+    const script = fs.readFileSync(path.join(__dirname, "..", file), "utf8");
+    const health = script.indexOf("check_application\n");
+    const publish = script.indexOf("node dist/src/notification/publish-release.js");
+    assert.ok(health >= 0 && publish > health);
+  }
+  const dockerfile = fs.readFileSync(path.join(__dirname, "../../backend/Dockerfile"), "utf8");
+  assert.match(dockerfile, /COPY --from=build \/app\/release-notes \.\/release-notes/);
+});
+
 test("SSH сохраняет проверку ключа сервера, пароль реестра передаётся через stdin", () => {
   const step = w.jobs.deploy.steps[0];
   assert.ok(step.env.CI_SSH_KEY.includes("secrets."));

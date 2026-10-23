@@ -23,6 +23,7 @@ export const useReviewsStore = defineStore("movieReviews", () => {
   const loadedMovieId = ref<string | null>(null);
   let fetchGeneration = 0;
   let sessionRevision = 0;
+
   const setReviews = (newReviews: Review[]) => {
     reviews.value = newReviews;
     totalReviews.value = newReviews.length;
@@ -245,7 +246,6 @@ export const useReviewsStore = defineStore("movieReviews", () => {
   };
 });
 
-/** Сохраняет интерфейс refs для компонентов, которые деструктурируют хук. */
 export function useReviews() {
   const store = useReviewsStore();
 

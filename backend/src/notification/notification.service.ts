@@ -3,6 +3,8 @@ import type { Notification } from '../generated/prisma/client';
 import type { Prisma } from '../generated/prisma/client';
 import { NotificationType } from '../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
+import { markMessageNotificationsRead } from './read-conversation';
+import { notificationEvents } from './notification-events';
 
 export type NotificationDto = {
   id: string;
@@ -34,11 +36,20 @@ export class NotificationService {
     payload: Prisma.InputJsonValue,
     tx: Prisma.TransactionClient = this.prismaService,
   ): Promise<Notification> {
+    const actor =
+      payload && typeof payload === 'object' && !Array.isArray(payload)
+        ? (payload as Prisma.InputJsonObject)
+        : undefined;
+    const actorId = actor?.senderId ?? actor?.requesterId ?? actor?.friendId;
+    const actorName =
+      actor?.senderName ?? actor?.requesterName ?? actor?.friendName;
     return tx.notification.create({
       data: {
         userId,
         type,
         payload,
+        actorId: typeof actorId === 'string' ? actorId : null,
+        actorName: typeof actorName === 'string' ? actorName : null,
       },
     });
   }
@@ -109,30 +120,86 @@ export class NotificationService {
     userId: string,
     notificationId: string,
   ): Promise<NotificationDto | null> {
-    const existing = await this.prismaService.notification.findFirst({
-      where: { id: notificationId, userId },
+    const updated = await this.prismaService.$transaction(async (tx) => {
+      const existing = await tx.notification.findFirst({
+        where: { id: notificationId, userId },
+      });
+      if (!existing || existing.readAt) return existing;
+      if (existing.type === 'CHAT_MESSAGE' && existing.actorId) {
+        const messageId = (existing.payload as Prisma.JsonObject).messageId;
+        if (typeof messageId === 'string')
+          await tx.message.updateMany({
+            where: {
+              id: messageId,
+              receiverId: userId,
+              senderId: existing.actorId,
+            },
+            data: { isRead: true },
+          });
+      }
+      await tx.notification.update({
+        where: { id: notificationId },
+        data: { readAt: new Date() },
+      });
+      return tx.notification.findUniqueOrThrow({
+        where: { id: notificationId },
+      });
     });
-
-    if (!existing) {
-      return null;
-    }
-
-    const updated = await this.prismaService.notification.update({
-      where: { id: notificationId },
-      data: { readAt: new Date() },
-    });
-
+    if (!updated) return null;
+    notificationEvents.emit('changed', userId);
+    if (updated.type === 'CHAT_MESSAGE' && updated.actorId)
+      notificationEvents.emit('conversation-read', {
+        userId,
+        actorId: updated.actorId,
+        through: updated.createdAt.toISOString(),
+        messageId: (updated.payload as Prisma.JsonObject).messageId,
+      });
     return this.toDto(updated);
   }
 
   async markAllRead(userId: string, types?: NotificationType[]): Promise<void> {
-    await this.prismaService.notification.updateMany({
-      where: {
-        userId,
-        readAt: null,
-        ...(types ? { type: { in: types } } : {}),
-      },
-      data: { readAt: new Date() },
+    const through = new Date();
+    const peers = await this.prismaService.$transaction(async (tx) => {
+      const peers =
+        !types || types.includes(NotificationType.CHAT_MESSAGE)
+          ? await tx.message.findMany({
+              where: {
+                receiverId: userId,
+                isRead: false,
+                createdAt: { lte: through },
+              },
+              select: { senderId: true },
+              distinct: ['senderId'],
+            })
+          : [];
+      if (!types || types.includes(NotificationType.CHAT_MESSAGE)) {
+        await tx.message.updateMany({
+          where: {
+            receiverId: userId,
+            isRead: false,
+            createdAt: { lte: through },
+          },
+          data: { isRead: true },
+        });
+        await markMessageNotificationsRead(tx, userId, through);
+      }
+      await tx.notification.updateMany({
+        where: {
+          userId,
+          readAt: null,
+          createdAt: { lte: through },
+          type: { not: 'CHAT_MESSAGE', ...(types ? { in: types } : {}) },
+        },
+        data: { readAt: through },
+      });
+      return peers;
     });
+    notificationEvents.emit('changed', userId);
+    for (const peer of peers)
+      notificationEvents.emit('conversation-read', {
+        userId,
+        actorId: peer.senderId,
+        through: through.toISOString(),
+      });
   }
 }

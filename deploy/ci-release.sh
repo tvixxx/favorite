@@ -40,4 +40,5 @@ docker compose up -d --no-build --no-deps --pull never --wait --wait-timeout 120
 docker compose up -d --no-build --no-deps --pull never --force-recreate --wait --wait-timeout 120 web
 docker compose exec -T web nginx -t
 check_application
+docker compose exec -T backend node dist/src/notification/publish-release.js /app/release-notes/current.json
 echo "CI_RELEASE_OK $expected_sha"

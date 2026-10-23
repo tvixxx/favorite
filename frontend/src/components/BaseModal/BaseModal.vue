@@ -5,11 +5,12 @@ const keyboardStack: ((e: KeyboardEvent) => void)[] = [];
 </script>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from "vue";
+import { nextTick, onBeforeUnmount, ref, useId, watch } from "vue";
 import { useMediaQuery } from "@vueuse/core";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { useScrollLock } from "@/composable/useScrollLock";
 import { useVisualViewport } from "@/composable/useVisualViewport";
+import { useSheetSwipe } from "@/composable/useSheetSwipe";
 
 const modelValue = defineModel<boolean>();
 const viewportStyle = useVisualViewport();
@@ -38,54 +39,20 @@ const titleId = useId();
 // <768px — модалка превращается в action sheet снизу (эталон)
 const isSheet = useMediaQuery("(max-width: 767.98px)");
 
-// Свайп вниз по листу для закрытия
-const dragOffset = ref(0);
-const dragStartY = ref<number | null>(null);
-const dragActive = ref(false);
-
-const dragStyle = computed(() =>
-  dragOffset.value > 0
-    ? { transform: `translateY(${dragOffset.value}px)`, transition: "none" }
-    : undefined
-);
-
-function onTouchStart(e: TouchEvent): void {
-  if (!isSheet.value) {
-    return;
-  }
-
-  const body = modal.value?.querySelector(".modal__body");
-
-  // тянем лист только если тело прокручено к верху — иначе это обычный скролл
-  const target = e.target instanceof Element ? e.target : null;
-
-  dragActive.value =
-    !!target?.closest(".modal__grabber, .modal__header") &&
-    !target.closest("button, input, textarea, select") &&
-    (!body || body.scrollTop <= 0);
-
-  dragStartY.value = e.touches[0]?.clientY ?? null;
-}
-
-function onTouchMove(e: TouchEvent): void {
-  if (!dragActive.value || dragStartY.value === null) {
-    return;
-  }
-
-  const delta = (e.touches[0]?.clientY ?? 0) - dragStartY.value;
-
-  dragOffset.value = Math.max(0, delta);
-}
-
-function onTouchEnd(): void {
-  if (dragOffset.value > 90) {
+const {
+  dragStyle,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  reset: resetSwipe,
+  captureOffset,
+} = useSheetSwipe(
+  modal,
+  () => isSheet.value && !!modelValue.value,
+  () => {
     modelValue.value = false;
   }
-
-  dragOffset.value = 0;
-  dragStartY.value = null;
-  dragActive.value = false;
-}
+);
 
 // Блокировка скролла страницы без сдвига лейаута (порт @angular/cdk BlockScrollStrategy)
 const { lock: lockScroll, unlock: unlockScroll } = useScrollLock();
@@ -182,29 +149,11 @@ function releaseScrollLock(): void {
   }
 }
 
-// Лист может уходить посреди возврата после недотянутого свайпа — выходная
-// анимация должна стартовать оттуда, где он сейчас, а не с нуля
-function captureSheetOffset(el: Element): void {
-  const sheet = el.querySelector<HTMLElement>(".modal--sheet");
-
-  if (!sheet) {
-    return;
-  }
-
-  const shift = Number(
-    /matrix\([^)]+,\s*([-\d.]+)\)/.exec(getComputedStyle(sheet).transform)?.[1]
-  );
-
-  if (shift > 0) {
-    sheet.style.setProperty("--fv-modal-drag", `${shift}px`);
-  }
-}
-
 watch(modelValue, async (open) => {
   if (open) {
     setPrevFocus();
     lockScroll();
-    dragOffset.value = 0;
+    resetSwipe();
     startKeyboard();
     await nextTick();
     // Фокус — после рендера, иначе .focus() ничего не сделает. preventScroll
@@ -242,7 +191,7 @@ const handleConfirm = () => {
   <Teleport to="body">
     <Transition
       name="modal"
-      @before-leave="captureSheetOffset"
+      @before-leave="captureOffset"
       @after-leave="releaseScrollLock"
       @leave-cancelled="releaseScrollLock"
     >
@@ -274,12 +223,18 @@ const handleConfirm = () => {
           :aria-label="headerless ? ariaLabel : undefined"
           tabindex="-1"
           @touchstart.passive="onTouchStart"
-          @touchmove.passive="onTouchMove"
+          @touchmove="onTouchMove"
           @touchend="onTouchEnd"
+          @touchcancel="resetSwipe"
         >
-          <div v-if="isSheet" class="modal__grabber" aria-hidden="true"></div>
+          <div
+            v-if="isSheet"
+            class="modal__grabber"
+            data-sheet-handle
+            aria-hidden="true"
+          ></div>
 
-          <div v-if="!headerless" class="modal__header">
+          <div v-if="!headerless" class="modal__header" data-sheet-handle>
             <h3 :id="titleId" class="modal__header-text">
               <slot name="title">Заголовок</slot>
             </h3>
@@ -293,7 +248,7 @@ const handleConfirm = () => {
             </button>
           </div>
 
-          <div class="modal__body">
+          <div class="modal__body" data-sheet-scroll>
             <slot name="body" />
           </div>
 
@@ -462,14 +417,27 @@ const handleConfirm = () => {
 /* Grabber-хват листа */
 .modal__grabber {
   position: absolute;
-  top: 8px;
+  top: 0;
   left: 50%;
   z-index: 3;
-  width: 40px;
-  height: 5px;
-  border-radius: 999px;
-  background: var(--fv-palette-grey-400);
+  width: 80px;
+  height: 24px;
   transform: translateX(-50%);
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 20px;
+    width: 40px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--fv-palette-grey-400);
+  }
+}
+
+.modal--sheet [data-sheet-handle] {
+  touch-action: pan-x pinch-zoom;
 }
 
 /* Анимации только внутри классов перехода: постоянная `animation` на элементе
@@ -564,9 +532,9 @@ const handleConfirm = () => {
 }
 
 @keyframes fv-sheet-out {
-  /* стартовую точку проставляет captureSheetOffset, если лист был сдвинут свайпом */
+  /* Закрываем от текущего положения листа, включая возврат после короткого свайпа. */
   from {
-    transform: translateY(var(--fv-modal-drag, 0px));
+    transform: translateY(var(--fv-sheet-drag, 0px));
   }
 
   to {
@@ -624,6 +592,7 @@ const handleConfirm = () => {
   overflow-y: auto;
   scrollbar-gutter: stable;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 
   @include customScrollbar();
 }

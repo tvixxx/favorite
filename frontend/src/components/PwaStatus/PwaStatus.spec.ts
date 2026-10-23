@@ -1,6 +1,7 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import PwaStatus from "./PwaStatus.vue";
+import { requestAppUpdate } from "@/components/Notifications/notification-actions";
 
 const mocks = vi.hoisted(() => ({
   refresh: true,
@@ -60,6 +61,26 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Обновление PWA без потери формы", () => {
+  it("по кнопке из системной новости проверяет версию и ждёт подтверждения", async () => {
+    const wrapper = render();
+
+    mocks.options.onRegisteredSW("/sw.js", {
+      update: mocks.update,
+    } as unknown as ServiceWorkerRegistration);
+
+    requestAppUpdate();
+    await flushPromises();
+    expect(mocks.update).toHaveBeenCalledOnce();
+    expect(wrapper.get('[role="dialog"]').text()).toContain(
+      "Сохраните изменения"
+    );
+
+    expect(mocks.apply).not.toHaveBeenCalled();
+    wrapper.unmount();
+    requestAppUpdate();
+    expect(mocks.update).toHaveBeenCalledOnce();
+  });
+
   it("перезагружает подтверждённую версию при смене контроллера после первой установки", async () => {
     const serviceWorker = new EventTarget();
 

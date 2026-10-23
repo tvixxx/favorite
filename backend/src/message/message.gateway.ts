@@ -1,10 +1,17 @@
-import { forwardRef, Inject, Logger } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Logger,
+  type OnModuleDestroy,
+} from '@nestjs/common';
+import { notificationEvents } from '../notification/notification-events';
 import {
   WebSocketGateway,
   WebSocketServer,
   SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   MessageBody,
   ConnectedSocket,
 } from '@nestjs/websockets';
@@ -45,7 +52,11 @@ type ChatSocket = Omit<Socket, 'data'> & {
   namespace: '/chat',
 })
 export class MessageGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+  implements
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    OnGatewayInit,
+    OnModuleDestroy
 {
   private readonly connections = new Map<string, Set<string>>();
   private readonly presenceUpdates = new Map<string, Promise<void>>();
@@ -86,6 +97,61 @@ export class MessageGateway
         'Связь сохранена, обновление списка друзей по WebSocket не доставлено',
       );
     }
+  }
+
+  private onNotificationsChanged(userId?: string): void {
+    try {
+      for (const id of userId ? [userId] : this.connections.keys())
+        this.server.to(`user:${id}`).emit('notifications:changed');
+    } catch {
+      this.logger.warn('Не удалось обновить уведомления');
+    }
+  }
+
+  private onConversationRead(data: {
+    userId: string;
+    actorId: string;
+    through: string;
+    messageId?: string;
+  }): void {
+    try {
+      this.server.to(`user:${data.userId}`).emit('conversation:read', {
+        otherUserId: data.actorId,
+        through: data.through,
+        messageId: data.messageId,
+      });
+      this.server.to(`user:${data.actorId}`).emit('messages:read', {
+        userId: data.userId,
+        through: data.through,
+        messageId: data.messageId,
+      });
+    } catch {
+      this.logger.warn('Не удалось синхронизировать прочтение');
+    }
+  }
+
+  private removeNotificationListeners?: () => void;
+
+  public afterInit(): void {
+    // forwardRef может подменить экземпляр при конструировании, привязываем после инициализации.
+    const changed = (userId?: string): void =>
+      this.onNotificationsChanged(userId);
+    const read = (data: {
+      userId: string;
+      actorId: string;
+      through: string;
+      messageId?: string;
+    }): void => this.onConversationRead(data);
+    notificationEvents.on('changed', changed);
+    notificationEvents.on('conversation-read', read);
+    this.removeNotificationListeners = () => {
+      notificationEvents.off('changed', changed);
+      notificationEvents.off('conversation-read', read);
+    };
+  }
+
+  public onModuleDestroy(): void {
+    this.removeNotificationListeners?.();
   }
 
   public disconnectUser(userId: string): void {
@@ -343,10 +409,6 @@ export class MessageGateway
         userId,
         data.otherUserId,
       );
-
-      this.server
-        .to(`user:${data.otherUserId}`)
-        .emit('messages:read', { userId });
 
       return { success: true };
     } catch {

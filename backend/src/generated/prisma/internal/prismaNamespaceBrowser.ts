@@ -66,6 +66,8 @@ export const ModelName = {
   Message: 'Message',
   UserStatus: 'UserStatus',
   Notification: 'Notification',
+  Announcement: 'Announcement',
+  AnnouncementRead: 'AnnouncementRead',
   Feedback: 'Feedback',
   ReviewReport: 'ReviewReport',
   AdminAuditLog: 'AdminAuditLog',
@@ -329,11 +331,38 @@ export const NotificationScalarFieldEnum = {
   userId: 'userId',
   type: 'type',
   payload: 'payload',
+  actorId: 'actorId',
+  actorName: 'actorName',
   readAt: 'readAt',
   createdAt: 'createdAt'
 } as const
 
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
+export const AnnouncementScalarFieldEnum = {
+  id: 'id',
+  releaseId: 'releaseId',
+  title: 'title',
+  body: 'body',
+  category: 'category',
+  actions: 'actions',
+  publishedAt: 'publishedAt',
+  archivedAt: 'archivedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AnnouncementScalarFieldEnum = (typeof AnnouncementScalarFieldEnum)[keyof typeof AnnouncementScalarFieldEnum]
+
+
+export const AnnouncementReadScalarFieldEnum = {
+  userId: 'userId',
+  announcementId: 'announcementId',
+  readAt: 'readAt'
+} as const
+
+export type AnnouncementReadScalarFieldEnum = (typeof AnnouncementReadScalarFieldEnum)[keyof typeof AnnouncementReadScalarFieldEnum]
 
 
 export const FeedbackScalarFieldEnum = {

@@ -4,6 +4,8 @@ export function notificationText(item: NotificationDto): string {
   const payload = item.payload;
 
   switch (item.type) {
+    case "SYSTEM":
+      return String(payload.title ?? "Новость Favorite");
     case "CHAT_MESSAGE": {
       const name = String(payload.senderName ?? "Сообщение");
       const preview = String(payload.preview ?? "").trim();
@@ -27,6 +29,7 @@ export function notificationText(item: NotificationDto): string {
 }
 
 export function notificationTarget(item: NotificationDto): string {
+  if (item.type === "SYSTEM") return "/notifications?section=system";
   if (item.type === "CHAT_MESSAGE") {
     const id = item.payload.senderId;
 

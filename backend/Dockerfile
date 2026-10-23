@@ -31,6 +31,7 @@ RUN test "$(yarn --version)" = "1.22.22" && yarn install --frozen-lockfile --pro
 # Сгенерированный клиент лежит в src/generated/prisma и целиком состоит из .ts,
 # поэтому попадает в dist при сборке — отдельно копировать нечего
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/release-notes ./release-notes
 
 # PORT задаётся в Compose, 3005 используется по умолчанию. Порт не публикуем,
 # доступ идёт только через nginx внутри docker-сети
