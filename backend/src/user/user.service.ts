@@ -38,6 +38,10 @@ const profileUserSelect = {
   notifyNewMessages: true,
   notifyFriendRequests: true,
   notifyRecommendations: true,
+  showAchievements: true,
+  showDetailedAnalytics: true,
+  showCommunityTops: true,
+  showActorsSection: true,
 } as const;
 
 @Injectable()
@@ -184,6 +188,10 @@ export class UserService {
           notifyNewMessages: dto.notifyNewMessages,
           notifyFriendRequests: dto.notifyFriendRequests,
           notifyRecommendations: dto.notifyRecommendations,
+          showAchievements: dto.showAchievements,
+          showDetailedAnalytics: dto.showDetailedAnalytics,
+          showCommunityTops: dto.showCommunityTops,
+          showActorsSection: dto.showActorsSection,
         };
         if (dto.timezone !== undefined)
           data.timezone = new ZonedCalendar(dto.timezone).zone;

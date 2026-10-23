@@ -1,3 +1,10 @@
+export const VISIBILITY_PREFERENCES_DEFAULTS = {
+  showAchievements: true,
+  showDetailedAnalytics: true,
+  showCommunityTops: true,
+  showActorsSection: true,
+};
+
 export const USER_PREFERENCES_DEFAULTS = {
   quickAddEnabled: true,
   watchTonightEnabled: false,
@@ -5,6 +12,7 @@ export const USER_PREFERENCES_DEFAULTS = {
   notifyNewMessages: true,
   notifyFriendRequests: true,
   notifyRecommendations: false,
+  ...VISIBILITY_PREFERENCES_DEFAULTS,
 };
 
 export type UserPreferenceKey = keyof typeof USER_PREFERENCES_DEFAULTS;
@@ -29,5 +37,9 @@ export function getUserPreferences(
     notifyNewMessages: getUserPreference(user, "notifyNewMessages"),
     notifyFriendRequests: getUserPreference(user, "notifyFriendRequests"),
     notifyRecommendations: getUserPreference(user, "notifyRecommendations"),
+    showAchievements: getUserPreference(user, "showAchievements"),
+    showDetailedAnalytics: getUserPreference(user, "showDetailedAnalytics"),
+    showCommunityTops: getUserPreference(user, "showCommunityTops"),
+    showActorsSection: getUserPreference(user, "showActorsSection"),
   };
 }

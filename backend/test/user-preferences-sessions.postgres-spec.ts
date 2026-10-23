@@ -23,6 +23,10 @@ const defaults = {
   notifyNewMessages: true,
   notifyFriendRequests: true,
   notifyRecommendations: false,
+  showAchievements: true,
+  showDetailedAnalytics: true,
+  showCommunityTops: true,
+  showActorsSection: true,
 };
 const changed = {
   quickAddEnabled: false,
@@ -31,6 +35,10 @@ const changed = {
   notifyNewMessages: false,
   notifyFriendRequests: false,
   notifyRecommendations: true,
+  showAchievements: false,
+  showDetailedAnalytics: false,
+  showCommunityTops: false,
+  showActorsSection: false,
 };
 let db: Awaited<ReturnType<typeof featuresDatabase>>;
 let app: INestApplication;
@@ -152,7 +160,7 @@ async function login(email: string) {
 }
 
 describe('Настройки в независимых авторизованных сессиях', () => {
-  it('переносит все шесть настроек между сессиями и сохраняет их после нового входа', async () => {
+  it('переносит все настройки между сессиями и сохраняет их после нового входа', async () => {
     const desktop = await login('owner@example.test');
     const phone = await login('owner@example.test');
     expect((await desktop.patch(owner, changed)).status).toBe(200);

@@ -7,7 +7,6 @@ type TourStep = {
   description: string;
   path?: string;
   selector?: string;
-  settings?: boolean;
 };
 
 function visibleElement(selector?: string): HTMLElement | undefined {
@@ -75,7 +74,7 @@ export async function settleLayout(): Promise<void> {
   await nextTick();
 
   const elements = document.querySelectorAll<HTMLElement>(
-    ".modal-backdrop, .profile-settings-modal"
+    ".modal-backdrop, .profile-settings-modal, .additional-settings__content"
   );
 
   await Promise.all(
@@ -101,7 +100,6 @@ export function createOnboardingDriver(
 ): Driver {
   const lifecycle = new AbortController();
   let moving = false;
-  let openedSettings = false;
   const steps: TourStep[] = [
     {
       title: "Добро пожаловать",
@@ -154,7 +152,7 @@ export function createOnboardingDriver(
     {
       title: "Настройки профиля",
       description:
-        "Здесь имя, уникальный ник, часовой пояс и персональные настройки. Сейчас посмотрим их по отдельности.",
+        "Здесь фото, имя, уникальный ник и часовой пояс. Кнопка «Дополнительные настройки» открывает вид приложения, инструменты коллекции и уведомления.",
       path: "/profile",
       selector: '[data-tour="profile-settings"]',
     },
@@ -162,32 +160,28 @@ export function createOnboardingDriver(
       title: "Быстрый ввод",
       description:
         "Дополнительная кнопка в коллекции помогает быстро найти фильм или сериал в <strong>каталоге</strong> и добавить к себе. Можно скрыть её этим переключателем.",
-      path: "/profile",
-      settings: true,
+      path: "/profile/settings?section=personal",
       selector: '[data-tour="setting-quickAddEnabled"]',
     },
     {
       title: "Что посмотреть сегодня",
       description:
         "Включите, чтобы приложение предлагало ещё не начатые произведения из вашей коллекции «Буду смотреть».",
-      path: "/profile",
-      settings: true,
+      path: "/profile/settings?section=personal",
       selector: '[data-tour="setting-watchTonightEnabled"]',
     },
     {
       title: "Импорт и экспорт",
       description:
         "Включите работу с файлами: перенос коллекции из CSV или JSON, скачивание данных и печать PDF.",
-      path: "/profile",
-      settings: true,
+      path: "/profile/settings?section=personal",
       selector: '[data-tour="setting-collectionFilesEnabled"]',
     },
     {
       title: "Какие уведомления показывать",
       description:
         "Выберите, нужны ли уведомления о сообщениях и заявках в друзья. Настройки сохраняются сразу для вашего аккаунта.",
-      path: "/profile",
-      settings: true,
+      path: "/profile/settings?section=notifications",
       selector: '[data-tour="notification-settings"]',
     },
     {
@@ -197,12 +191,6 @@ export function createOnboardingDriver(
       path: "/profile",
     },
   ];
-
-  const closeSettings = (): void => {
-    if (openedSettings)
-      visibleElement(".profile-settings-modal .modal__close")?.click();
-    openedSettings = false;
-  };
 
   const go = async (index: number): Promise<void> => {
     if (moving || lifecycle.signal.aborted) return;
@@ -218,16 +206,10 @@ export function createOnboardingDriver(
     moving = true;
     document.body.classList.add("fv-tour-transitioning");
     try {
-      if (!step.settings) closeSettings();
-      if (step.path && router.currentRoute.value.path !== step.path)
+      if (step.path && router.currentRoute.value.fullPath !== step.path)
         await router.push(step.path);
       await settleLayout();
       if (lifecycle.signal.aborted) return;
-      if (step.settings && !visibleElement(".profile-settings-modal")) {
-        visibleElement('[data-tour="profile-settings"]')?.click();
-        openedSettings = true;
-        await settleLayout();
-      }
 
       const element = step.selector
         ? await waitForElement(step.selector, lifecycle.signal)
@@ -291,7 +273,6 @@ export function createOnboardingDriver(
     onDestroyed: () => {
       document.body.classList.remove("fv-tour-transitioning");
       lifecycle.abort();
-      closeSettings();
       callbacks.onCompleted();
     },
   });

@@ -47,6 +47,10 @@ export type UserMinAggregateOutputType = {
   notifyNewMessages: boolean | null
   notifyFriendRequests: boolean | null
   notifyRecommendations: boolean | null
+  showAchievements: boolean | null
+  showDetailedAnalytics: boolean | null
+  showCommunityTops: boolean | null
+  showActorsSection: boolean | null
   role: $Enums.UserRole | null
   blockedAt: Date | null
   blockedReason: string | null
@@ -72,6 +76,10 @@ export type UserMaxAggregateOutputType = {
   notifyNewMessages: boolean | null
   notifyFriendRequests: boolean | null
   notifyRecommendations: boolean | null
+  showAchievements: boolean | null
+  showDetailedAnalytics: boolean | null
+  showCommunityTops: boolean | null
+  showActorsSection: boolean | null
   role: $Enums.UserRole | null
   blockedAt: Date | null
   blockedReason: string | null
@@ -97,6 +105,10 @@ export type UserCountAggregateOutputType = {
   notifyNewMessages: number
   notifyFriendRequests: number
   notifyRecommendations: number
+  showAchievements: number
+  showDetailedAnalytics: number
+  showCommunityTops: number
+  showActorsSection: number
   role: number
   blockedAt: number
   blockedReason: number
@@ -132,6 +144,10 @@ export type UserMinAggregateInputType = {
   notifyNewMessages?: true
   notifyFriendRequests?: true
   notifyRecommendations?: true
+  showAchievements?: true
+  showDetailedAnalytics?: true
+  showCommunityTops?: true
+  showActorsSection?: true
   role?: true
   blockedAt?: true
   blockedReason?: true
@@ -157,6 +173,10 @@ export type UserMaxAggregateInputType = {
   notifyNewMessages?: true
   notifyFriendRequests?: true
   notifyRecommendations?: true
+  showAchievements?: true
+  showDetailedAnalytics?: true
+  showCommunityTops?: true
+  showActorsSection?: true
   role?: true
   blockedAt?: true
   blockedReason?: true
@@ -182,6 +202,10 @@ export type UserCountAggregateInputType = {
   notifyNewMessages?: true
   notifyFriendRequests?: true
   notifyRecommendations?: true
+  showAchievements?: true
+  showDetailedAnalytics?: true
+  showCommunityTops?: true
+  showActorsSection?: true
   role?: true
   blockedAt?: true
   blockedReason?: true
@@ -294,6 +318,10 @@ export type UserGroupByOutputType = {
   notifyNewMessages: boolean
   notifyFriendRequests: boolean
   notifyRecommendations: boolean
+  showAchievements: boolean
+  showDetailedAnalytics: boolean
+  showCommunityTops: boolean
+  showActorsSection: boolean
   role: $Enums.UserRole
   blockedAt: Date | null
   blockedReason: string | null
@@ -342,6 +370,10 @@ export type UserWhereInput = {
   notifyNewMessages?: Prisma.BoolFilter<"User"> | boolean
   notifyFriendRequests?: Prisma.BoolFilter<"User"> | boolean
   notifyRecommendations?: Prisma.BoolFilter<"User"> | boolean
+  showAchievements?: Prisma.BoolFilter<"User"> | boolean
+  showDetailedAnalytics?: Prisma.BoolFilter<"User"> | boolean
+  showCommunityTops?: Prisma.BoolFilter<"User"> | boolean
+  showActorsSection?: Prisma.BoolFilter<"User"> | boolean
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   blockedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   blockedReason?: Prisma.StringNullableFilter<"User"> | string | null
@@ -387,6 +419,10 @@ export type UserOrderByWithRelationInput = {
   notifyNewMessages?: Prisma.SortOrder
   notifyFriendRequests?: Prisma.SortOrder
   notifyRecommendations?: Prisma.SortOrder
+  showAchievements?: Prisma.SortOrder
+  showDetailedAnalytics?: Prisma.SortOrder
+  showCommunityTops?: Prisma.SortOrder
+  showActorsSection?: Prisma.SortOrder
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   blockedReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -436,6 +472,10 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   notifyNewMessages?: Prisma.BoolFilter<"User"> | boolean
   notifyFriendRequests?: Prisma.BoolFilter<"User"> | boolean
   notifyRecommendations?: Prisma.BoolFilter<"User"> | boolean
+  showAchievements?: Prisma.BoolFilter<"User"> | boolean
+  showDetailedAnalytics?: Prisma.BoolFilter<"User"> | boolean
+  showCommunityTops?: Prisma.BoolFilter<"User"> | boolean
+  showActorsSection?: Prisma.BoolFilter<"User"> | boolean
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   blockedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   blockedReason?: Prisma.StringNullableFilter<"User"> | string | null
@@ -480,6 +520,10 @@ export type UserOrderByWithAggregationInput = {
   notifyNewMessages?: Prisma.SortOrder
   notifyFriendRequests?: Prisma.SortOrder
   notifyRecommendations?: Prisma.SortOrder
+  showAchievements?: Prisma.SortOrder
+  showDetailedAnalytics?: Prisma.SortOrder
+  showCommunityTops?: Prisma.SortOrder
+  showActorsSection?: Prisma.SortOrder
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   blockedReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -513,6 +557,10 @@ export type UserScalarWhereWithAggregatesInput = {
   notifyNewMessages?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   notifyFriendRequests?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   notifyRecommendations?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  showAchievements?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  showDetailedAnalytics?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  showCommunityTops?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  showActorsSection?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
   blockedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   blockedReason?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -538,6 +586,10 @@ export type UserCreateInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -582,6 +634,10 @@ export type UserUncheckedCreateInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -626,6 +682,10 @@ export type UserUpdateInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -670,6 +730,10 @@ export type UserUncheckedUpdateInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -714,6 +778,10 @@ export type UserCreateManyInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -739,6 +807,10 @@ export type UserUpdateManyMutationInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -763,6 +835,10 @@ export type UserUncheckedUpdateManyInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -793,6 +869,10 @@ export type UserCountOrderByAggregateInput = {
   notifyNewMessages?: Prisma.SortOrder
   notifyFriendRequests?: Prisma.SortOrder
   notifyRecommendations?: Prisma.SortOrder
+  showAchievements?: Prisma.SortOrder
+  showDetailedAnalytics?: Prisma.SortOrder
+  showCommunityTops?: Prisma.SortOrder
+  showActorsSection?: Prisma.SortOrder
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrder
   blockedReason?: Prisma.SortOrder
@@ -822,6 +902,10 @@ export type UserMaxOrderByAggregateInput = {
   notifyNewMessages?: Prisma.SortOrder
   notifyFriendRequests?: Prisma.SortOrder
   notifyRecommendations?: Prisma.SortOrder
+  showAchievements?: Prisma.SortOrder
+  showDetailedAnalytics?: Prisma.SortOrder
+  showCommunityTops?: Prisma.SortOrder
+  showActorsSection?: Prisma.SortOrder
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrder
   blockedReason?: Prisma.SortOrder
@@ -847,6 +931,10 @@ export type UserMinOrderByAggregateInput = {
   notifyNewMessages?: Prisma.SortOrder
   notifyFriendRequests?: Prisma.SortOrder
   notifyRecommendations?: Prisma.SortOrder
+  showAchievements?: Prisma.SortOrder
+  showDetailedAnalytics?: Prisma.SortOrder
+  showCommunityTops?: Prisma.SortOrder
+  showActorsSection?: Prisma.SortOrder
   role?: Prisma.SortOrder
   blockedAt?: Prisma.SortOrder
   blockedReason?: Prisma.SortOrder
@@ -1201,6 +1289,10 @@ export type UserCreateWithoutUploadedMediaInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1244,6 +1336,10 @@ export type UserUncheckedCreateWithoutUploadedMediaInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1292,6 +1388,10 @@ export type UserCreateWithoutAvatarAssetInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1335,6 +1435,10 @@ export type UserUncheckedCreateWithoutAvatarAssetInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1394,6 +1498,10 @@ export type UserUpdateWithoutUploadedMediaInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1437,6 +1545,10 @@ export type UserUncheckedUpdateWithoutUploadedMediaInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1491,6 +1603,10 @@ export type UserUpdateWithoutAvatarAssetInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1534,6 +1650,10 @@ export type UserUncheckedUpdateWithoutAvatarAssetInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1577,6 +1697,10 @@ export type UserCreateWithoutPasswordResetInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1620,6 +1744,10 @@ export type UserUncheckedCreateWithoutPasswordResetInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1679,6 +1807,10 @@ export type UserUpdateWithoutPasswordResetInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1722,6 +1854,10 @@ export type UserUncheckedUpdateWithoutPasswordResetInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1765,6 +1901,10 @@ export type UserCreateWithoutCreatedMoviesInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1808,6 +1948,10 @@ export type UserUncheckedCreateWithoutCreatedMoviesInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1867,6 +2011,10 @@ export type UserUpdateWithoutCreatedMoviesInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1910,6 +2058,10 @@ export type UserUncheckedUpdateWithoutCreatedMoviesInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1953,6 +2105,10 @@ export type UserCreateWithoutReviewsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -1996,6 +2152,10 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2055,6 +2215,10 @@ export type UserUpdateWithoutReviewsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2098,6 +2262,10 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2141,6 +2309,10 @@ export type UserCreateWithoutCreatedActorsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2184,6 +2356,10 @@ export type UserUncheckedCreateWithoutCreatedActorsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2243,6 +2419,10 @@ export type UserUpdateWithoutCreatedActorsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2286,6 +2466,10 @@ export type UserUncheckedUpdateWithoutCreatedActorsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2329,6 +2513,10 @@ export type UserCreateWithoutUserMoviesInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2372,6 +2560,10 @@ export type UserUncheckedCreateWithoutUserMoviesInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2431,6 +2623,10 @@ export type UserUpdateWithoutUserMoviesInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2474,6 +2670,10 @@ export type UserUncheckedUpdateWithoutUserMoviesInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2517,6 +2717,10 @@ export type UserCreateWithoutWatchEntriesInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2560,6 +2764,10 @@ export type UserUncheckedCreateWithoutWatchEntriesInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2619,6 +2827,10 @@ export type UserUpdateWithoutWatchEntriesInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2662,6 +2874,10 @@ export type UserUncheckedUpdateWithoutWatchEntriesInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2705,6 +2921,10 @@ export type UserCreateWithoutListsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2748,6 +2968,10 @@ export type UserUncheckedCreateWithoutListsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2807,6 +3031,10 @@ export type UserUpdateWithoutListsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2850,6 +3078,10 @@ export type UserUncheckedUpdateWithoutListsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2893,6 +3125,10 @@ export type UserCreateWithoutFriendshipsRequestedInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2936,6 +3172,10 @@ export type UserUncheckedCreateWithoutFriendshipsRequestedInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -2984,6 +3224,10 @@ export type UserCreateWithoutFriendshipsReceivedInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3027,6 +3271,10 @@ export type UserUncheckedCreateWithoutFriendshipsReceivedInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3086,6 +3334,10 @@ export type UserUpdateWithoutFriendshipsRequestedInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3129,6 +3381,10 @@ export type UserUncheckedUpdateWithoutFriendshipsRequestedInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3183,6 +3439,10 @@ export type UserUpdateWithoutFriendshipsReceivedInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3226,6 +3486,10 @@ export type UserUncheckedUpdateWithoutFriendshipsReceivedInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3269,6 +3533,10 @@ export type UserCreateWithoutSentMessagesInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3312,6 +3580,10 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3360,6 +3632,10 @@ export type UserCreateWithoutReceivedMessagesInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3403,6 +3679,10 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3462,6 +3742,10 @@ export type UserUpdateWithoutSentMessagesInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3505,6 +3789,10 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3559,6 +3847,10 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3602,6 +3894,10 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3645,6 +3941,10 @@ export type UserCreateWithoutStatusInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3688,6 +3988,10 @@ export type UserUncheckedCreateWithoutStatusInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3747,6 +4051,10 @@ export type UserUpdateWithoutStatusInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3790,6 +4098,10 @@ export type UserUncheckedUpdateWithoutStatusInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3833,6 +4145,10 @@ export type UserCreateWithoutNotificationsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3876,6 +4192,10 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -3935,6 +4255,10 @@ export type UserUpdateWithoutNotificationsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3978,6 +4302,10 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4021,6 +4349,10 @@ export type UserCreateWithoutAnnouncementReadsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -4064,6 +4396,10 @@ export type UserUncheckedCreateWithoutAnnouncementReadsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -4123,6 +4459,10 @@ export type UserUpdateWithoutAnnouncementReadsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4166,6 +4506,10 @@ export type UserUncheckedUpdateWithoutAnnouncementReadsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4209,6 +4553,10 @@ export type UserCreateWithoutFeedbacksInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -4252,6 +4600,10 @@ export type UserUncheckedCreateWithoutFeedbacksInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -4311,6 +4663,10 @@ export type UserUpdateWithoutFeedbacksInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4354,6 +4710,10 @@ export type UserUncheckedUpdateWithoutFeedbacksInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4397,6 +4757,10 @@ export type UserCreateWithoutReviewReportsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -4440,6 +4804,10 @@ export type UserUncheckedCreateWithoutReviewReportsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -4499,6 +4867,10 @@ export type UserUpdateWithoutReviewReportsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4542,6 +4914,10 @@ export type UserUncheckedUpdateWithoutReviewReportsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4585,6 +4961,10 @@ export type UserCreateWithoutAdminActionsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -4628,6 +5008,10 @@ export type UserUncheckedCreateWithoutAdminActionsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -4687,6 +5071,10 @@ export type UserUpdateWithoutAdminActionsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4730,6 +5118,10 @@ export type UserUncheckedUpdateWithoutAdminActionsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4773,6 +5165,10 @@ export type UserCreateWithoutUsageEventsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -4816,6 +5212,10 @@ export type UserUncheckedCreateWithoutUsageEventsInput = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: $Enums.UserRole
   blockedAt?: Date | string | null
   blockedReason?: string | null
@@ -4875,6 +5275,10 @@ export type UserUpdateWithoutUsageEventsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4918,6 +5322,10 @@ export type UserUncheckedUpdateWithoutUsageEventsInput = {
   notifyNewMessages?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyFriendRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyRecommendations?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAchievements?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showDetailedAnalytics?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showCommunityTops?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showActorsSection?: Prisma.BoolFieldUpdateOperationsInput | boolean
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5136,6 +5544,10 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: boolean
   blockedAt?: boolean
   blockedReason?: boolean
@@ -5182,6 +5594,10 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: boolean
   blockedAt?: boolean
   blockedReason?: boolean
@@ -5208,6 +5624,10 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: boolean
   blockedAt?: boolean
   blockedReason?: boolean
@@ -5234,6 +5654,10 @@ export type UserSelectScalar = {
   notifyNewMessages?: boolean
   notifyFriendRequests?: boolean
   notifyRecommendations?: boolean
+  showAchievements?: boolean
+  showDetailedAnalytics?: boolean
+  showCommunityTops?: boolean
+  showActorsSection?: boolean
   role?: boolean
   blockedAt?: boolean
   blockedReason?: boolean
@@ -5246,7 +5670,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "fullName" | "username" | "timezone" | "quickAddEnabled" | "watchTonightEnabled" | "collectionFilesEnabled" | "notifyNewMessages" | "notifyFriendRequests" | "notifyRecommendations" | "role" | "blockedAt" | "blockedReason" | "authVersion" | "tags" | "avatarUrl" | "avatarThumbnailUrl" | "avatarAssetId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "fullName" | "username" | "timezone" | "quickAddEnabled" | "watchTonightEnabled" | "collectionFilesEnabled" | "notifyNewMessages" | "notifyFriendRequests" | "notifyRecommendations" | "showAchievements" | "showDetailedAnalytics" | "showCommunityTops" | "showActorsSection" | "role" | "blockedAt" | "blockedReason" | "authVersion" | "tags" | "avatarUrl" | "avatarThumbnailUrl" | "avatarAssetId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   avatarAsset?: boolean | Prisma.User$avatarAssetArgs<ExtArgs>
   uploadedMedia?: boolean | Prisma.User$uploadedMediaArgs<ExtArgs>
@@ -5314,6 +5738,10 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     notifyNewMessages: boolean
     notifyFriendRequests: boolean
     notifyRecommendations: boolean
+    showAchievements: boolean
+    showDetailedAnalytics: boolean
+    showCommunityTops: boolean
+    showActorsSection: boolean
     role: $Enums.UserRole
     blockedAt: Date | null
     blockedReason: string | null
@@ -5779,6 +6207,10 @@ export interface UserFieldRefs {
   readonly notifyNewMessages: Prisma.FieldRef<"User", 'Boolean'>
   readonly notifyFriendRequests: Prisma.FieldRef<"User", 'Boolean'>
   readonly notifyRecommendations: Prisma.FieldRef<"User", 'Boolean'>
+  readonly showAchievements: Prisma.FieldRef<"User", 'Boolean'>
+  readonly showDetailedAnalytics: Prisma.FieldRef<"User", 'Boolean'>
+  readonly showCommunityTops: Prisma.FieldRef<"User", 'Boolean'>
+  readonly showActorsSection: Prisma.FieldRef<"User", 'Boolean'>
   readonly role: Prisma.FieldRef<"User", 'UserRole'>
   readonly blockedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly blockedReason: Prisma.FieldRef<"User", 'String'>

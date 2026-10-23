@@ -16,6 +16,10 @@ const preferences = {
   notifyNewMessages: false,
   notifyFriendRequests: false,
   notifyRecommendations: true,
+  showAchievements: false,
+  showDetailedAnalytics: false,
+  showCommunityTops: false,
+  showActorsSection: false,
 };
 
 describe('Персональные настройки профиля', () => {
@@ -41,7 +45,7 @@ describe('Персональные настройки профиля', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
-  it('сохраняет все шесть переключателей, не затрагивая имя и чужой аккаунт', async () => {
+  it('сохраняет все настройки, не затрагивая имя и чужой аккаунт', async () => {
     const users: Record<string, Record<string, unknown>> = {
       owner: {
         id: 'owner',
