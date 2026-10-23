@@ -1,6 +1,11 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { receive, submit, readRequest } = require("./receive.cjs");
+const {
+  receive,
+  submit,
+  readRequest,
+  deploymentFailureReason,
+} = require("./receive.cjs");
 const { Readable, PassThrough } = require("node:stream");
 
 function setup(overrides = {}) {
@@ -55,6 +60,14 @@ function setup(overrides = {}) {
       if (args.includes("rev-parse")) return state.remote;
     }
     if (command === "docker") {
+      if (args[0] === "builder" && args[1] === "prune") {
+        if (state.fail === "prune")
+          throw new Error("daemon failed " + request.token);
+        if (state.freeAfterPrune !== undefined)
+          state.free = state.freeAfterPrune;
+      }
+      if (args.includes("pull") && state.freeAfterPull !== undefined)
+        state.free = state.freeAfterPull;
       if (args.includes("login")) {
         assert.equal(options.input, request.token + "\n");
         if (state.fail === "login")
@@ -87,18 +100,26 @@ test("успех скачивает только digest, проверяет об
   const pulls = f.calls.filter((call) => call.includes("pull"));
   assert.equal(pulls.length, 3);
   const expectedImages = {
-    backend: "ghcr.io/tvixxx/favkino-private-backend@" + f.request.images.backend,
-    migrate: "ghcr.io/tvixxx/favkino-private-migrate@" + f.request.images.migrate,
+    backend:
+      "ghcr.io/tvixxx/favkino-private-backend@" + f.request.images.backend,
+    migrate:
+      "ghcr.io/tvixxx/favkino-private-migrate@" + f.request.images.migrate,
     web: "ghcr.io/tvixxx/favkino-private-web@" + f.request.images.web,
   };
-  assert.deepEqual(pulls.map((call) => call.at(-1)), Object.values(expectedImages));
+  assert.deepEqual(
+    pulls.map((call) => call.at(-1)),
+    Object.values(expectedImages),
+  );
   const imageConfig = f.writes.find((write) =>
     write.file.endsWith("ci-images.json.tmp"),
   );
   assert.deepEqual(
     JSON.parse(imageConfig.value).services,
     Object.fromEntries(
-      Object.entries(expectedImages).map(([service, image]) => [service, { image }]),
+      Object.entries(expectedImages).map(([service, image]) => [
+        service,
+        { image },
+      ]),
     ),
   );
   const snapshot = f.calls.findIndex(
@@ -187,6 +208,112 @@ for (const condition of [
   });
 }
 
+test("недостаток места устраняется одной очисткой неиспользуемого кэша до скачивания образов", () => {
+  const f = setup({
+    free: 8n * 1024n ** 3n - 1n,
+    freeAfterPrune: 20n * 1024n ** 3n,
+  });
+  receive(f.request, f.execute, f.files);
+  const cleanup = f.calls.filter((call) => call.includes("prune"));
+  assert.deepEqual(cleanup, [
+    ["docker", "builder", "prune", "--all", "--force"],
+  ]);
+  assert.ok(
+    f.calls.findIndex((call) => call.includes("prune")) <
+      f.calls.findIndex((call) => call.includes("pull")),
+  );
+  assert.ok(f.writes.some((write) => write.file.includes("ci-last-success")));
+});
+
+test("нехватка места после очистки сохраняет порог и останавливает деплой до скачивания и миграций", () => {
+  const f = setup({ free: 8553811968n });
+  assert.throws(
+    () => receive(f.request, f.execute, f.files),
+    /DEPLOY_NEEDS_8_GIB_FREE available_bytes=8553811968 required_bytes=8589934592/,
+  );
+  assert.equal(f.calls.filter((call) => call.includes("prune")).length, 1);
+  assert.ok(
+    !f.calls.some(
+      (call) =>
+        call.includes("pull") ||
+        call.includes("merge") ||
+        call[0] === "/bin/bash",
+    ),
+  );
+  assert.equal(f.writes.length, 0);
+});
+
+test("грязный checkout и устаревший выпуск не запускают очистку даже при нехватке места", () => {
+  const dirty = setup({ free: 1n, dirty: "?? deploy/.env.before-update" });
+  assert.throws(
+    () => receive(dirty.request, dirty.execute, dirty.files),
+    /DEPLOY_CHECKOUT_NOT_CLEAN_MAIN/,
+  );
+  const superseded = setup({ free: 1n, remote: "e".repeat(40) });
+  receive(superseded.request, superseded.execute, superseded.files);
+  for (const f of [dirty, superseded]) {
+    assert.ok(!f.calls.some((call) => call[0] === "docker"));
+    assert.equal(f.writes.length, 0);
+  }
+});
+
+test("после скачивания тоже проверяется запас для точки восстановления", () => {
+  const f = setup({ freeAfterPull: 1n, freeAfterPrune: 20n * 1024n ** 3n });
+  receive(f.request, f.execute, f.files);
+  assert.equal(f.calls.filter((call) => call.includes("prune")).length, 1);
+  assert.ok(
+    f.calls.findIndex((call) => call.includes("prune")) <
+      f.calls.findIndex((call) => call[0] === "/bin/bash"),
+  );
+});
+
+test("очистка не повторяется при новой нехватке места после скачивания", () => {
+  const f = setup({
+    free: 1n,
+    freeAfterPrune: 8n * 1024n ** 3n,
+    freeAfterPull: 1n,
+  });
+  assert.throws(
+    () => receive(f.request, f.execute, f.files),
+    /DEPLOY_NOT_ENOUGH_SPACE_FOR_RESTORE_POINT available_bytes=1 required_bytes=/,
+  );
+  assert.equal(f.calls.filter((call) => call.includes("prune")).length, 1);
+  assert.ok(
+    !f.calls.some((call) => call[0] === "/bin/bash" || call.includes("merge")),
+  );
+});
+
+test("ошибка очистки останавливает деплой и не раскрывает вывод Docker с токеном", () => {
+  const f = setup({ free: 1n, fail: "prune" });
+  assert.throws(
+    () => receive(f.request, f.execute, f.files),
+    (error) => error.message === "DEPLOY_BUILD_CACHE_CLEANUP_FAILED",
+  );
+  assert.ok(
+    !f.calls.some((call) => call.includes("pull") || call[0] === "/bin/bash"),
+  );
+});
+
+test("в диагностике доступны только известные причины и числовые значения", () => {
+  for (const message of [
+    "DEPLOY_CHECKOUT_NOT_CLEAN_MAIN",
+    "DEPLOY_BUILD_CACHE_CLEANUP_FAILED",
+    "DEPLOY_NEEDS_8_GIB_FREE available_bytes=1 required_bytes=8589934592",
+    "DEPLOY_NOT_ENOUGH_SPACE_FOR_RESTORE_POINT available_bytes=1 required_bytes=9",
+  ])
+    assert.equal(deploymentFailureReason(new Error(message)), message);
+  for (const error of [
+    new Error("registry denied test-token-never-a-real-secret"),
+    new Error("DEPLOY_CHECKOUT_NOT_CLEAN_MAIN\nsecret"),
+    new Error("DEPLOY_UNKNOWN_SECRET"),
+    null,
+  ])
+    assert.equal(
+      deploymentFailureReason(error),
+      "inspect favkino-deploy.service journal",
+    );
+});
+
 test("ошибка миграции не отмечает релиз успешным и не запускает восстановление БД", () => {
   const f = setup({ fail: "apply" });
   assert.throws(
@@ -244,7 +371,14 @@ test("закрытое эксклюзивное задание создаётс�
     },
     f.files,
   );
-  assert.ok(calls.some((call) => call[0] === "/usr/bin/journalctl"));
+  const journal = calls.find((call) => call[0] === "/usr/bin/journalctl");
+  assert.ok(journal);
+  assert.match(
+    journal[journal.indexOf("--since") + 1],
+    /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC$/,
+  );
+  assert.ok(!journal.includes("-n"));
+  assert.ok(journal.includes("--output=short-iso"));
 });
 
 test("оставшееся задание не перезаписывается и не запускает новый деплой", () => {

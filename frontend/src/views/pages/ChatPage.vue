@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useMediaQuery } from "@vueuse/core";
 import { useRoute, useRouter } from "vue-router";
 import { useChatStore, useUserStatusStore, useFriendsStore } from "@/stores";
@@ -23,13 +23,21 @@ const route = useRoute();
 const router = useRouter();
 const isMobile = useMediaQuery("(max-width: 768px)");
 let routeReady = false;
+let isActive = true;
+
+onBeforeUnmount(() => {
+  isActive = false;
+});
+
 const chatStore = useChatStore();
 const userStatusStore = useUserStatusStore();
 const friendsStore = useFriendsStore();
 const mainStore = useMainStore();
 const { formatInstant } = useDateTime();
 
-const showConversationsSkeleton = useMinLoading(() => chatStore.isLoading);
+const showConversationsSkeleton = useMinLoading(
+  () => chatStore.isLoading && !chatStore.hasLoadedConversations
+);
 
 const userId = computed(() => mainStore.userData?.id || "");
 const messageInput = ref("");
@@ -85,6 +93,7 @@ const isOtherUserOnline = computed(() => {
 });
 
 const selectConversation = async (otherUserId: string): Promise<void> => {
+  if (chatStore.currentChatUserId === otherUserId) return;
   await router.push({ name: "chat", params: { userId: otherUserId } });
 };
 
@@ -192,7 +201,8 @@ async function openRouteConversation(): Promise<void> {
 watch(
   () => route.params.userId,
   () => {
-    if (routeReady) void openRouteConversation();
+    if (routeReady && isActive && route.name === "chat")
+      void openRouteConversation();
   }
 );
 
@@ -200,6 +210,7 @@ onMounted(async () => {
   if (!userId.value) return;
   if (isMobile.value) chatStore.closeChat();
   await chatStore.fetchConversations(userId.value);
+  if (!isActive) return;
   routeReady = true;
   await openRouteConversation();
 });

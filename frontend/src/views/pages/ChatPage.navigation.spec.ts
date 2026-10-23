@@ -1,5 +1,5 @@
 import { shallowMount, flushPromises } from "@vue/test-utils";
-import { reactive, ref } from "vue";
+import { nextTick, reactive, ref } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import ChatPage from "./ChatPage.vue";
@@ -48,6 +48,7 @@ function makeChat() {
     conversations: [conversation("first"), conversation("second", 2)],
     currentMessages: [],
     isLoading: false,
+    hasLoadedConversations: true,
     isMessagesLoading: false,
     isMessagesError: false,
     isError: null,
@@ -68,7 +69,12 @@ const mounted: Array<ReturnType<typeof shallowMount>> = [];
 
 afterEach(() => mounted.splice(0).forEach((wrapper) => wrapper.unmount()));
 
-async function setup(path = "/chat", mobile = true, single = false) {
+async function setup(
+  path = "/chat",
+  mobile = true,
+  single = false,
+  prepare?: (chat: ReturnType<typeof makeChat>) => void
+) {
   mocks.mobile = mobile;
   mocks.chat = makeChat();
   if (single) {
@@ -76,9 +82,14 @@ async function setup(path = "/chat", mobile = true, single = false) {
     mocks.chat.conversations = [conversation("second", 2)];
   }
 
+  prepare?.(mocks.chat);
+
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: "/chat/:userId?", name: "chat", component: ChatPage }],
+    routes: [
+      { path: "/chat/:userId?", name: "chat", component: ChatPage },
+      { path: "/friends", name: "friends", component: { template: "<div/>" } },
+    ],
   });
 
   await router.push(path);
@@ -93,6 +104,77 @@ async function setup(path = "/chat", mobile = true, single = false) {
 }
 
 describe("Переходы в общение", () => {
+  it("фоновое обновление после прочтения не скрывает загруженный список шиммером", async () => {
+    const { wrapper, chat } = await setup();
+
+    for (let update = 0; update < 3; update++) {
+      chat.isLoading = true;
+      await nextTick();
+      expect(wrapper.find("rows-skeleton-stub").exists()).toBe(false);
+      expect(wrapper.findAll(".conversation-item")).toHaveLength(2);
+      chat.isLoading = false;
+      await nextTick();
+    }
+  });
+
+  it("уже загруженный пустой список остаётся пустым состоянием при обновлении", async () => {
+    const { wrapper, chat } = await setup("/chat", true, false, (state) => {
+      state.conversations = [];
+    });
+
+    chat.isLoading = true;
+    await nextTick();
+    expect(wrapper.find("rows-skeleton-stub").exists()).toBe(false);
+    expect(
+      wrapper.get(".chat-page__sidebar").find("state-block-stub").exists()
+    ).toBe(true);
+  });
+
+  it("первую загрузку списка по-прежнему показывает шиммером", async () => {
+    const { wrapper } = await setup("/chat", true, false, (state) => {
+      state.conversations = [];
+      state.hasLoadedConversations = false;
+      state.isLoading = true;
+    });
+
+    expect(wrapper.find("rows-skeleton-stub").exists()).toBe(true);
+  });
+
+  it("нажатие на уже открытого собеседника не запускает загрузку повторно", async () => {
+    const { wrapper, chat } = await setup("/chat", false);
+
+    expect(chat.openChat).toHaveBeenCalledTimes(1);
+    await wrapper.findAll(".conversation-item")[0].trigger("click");
+    await flushPromises();
+    expect(chat.openChat).toHaveBeenCalledTimes(1);
+  });
+
+  it("при уходе в друзья не открывает диалог обработчиком старой страницы", async () => {
+    const { router, chat } = await setup("/chat/second", false);
+    const opened = chat.openChat.mock.calls.length;
+
+    await router.push("/friends");
+    await flushPromises();
+    expect(chat.openChat).toHaveBeenCalledTimes(opened);
+  });
+
+  it("завершение запроса уничтоженной страницы не открывает чат заново", async () => {
+    let finish!: () => void;
+    const { wrapper, chat } = await setup("/chat", false, false, (state) => {
+      state.fetchConversations.mockImplementation(
+        () =>
+          new Promise<void>((resolve) => {
+            finish = resolve;
+          })
+      );
+    });
+
+    wrapper.unmount();
+    finish();
+    await flushPromises();
+    expect(chat.openChat).not.toHaveBeenCalled();
+  });
+
   it.each([
     [0, ""],
     [1, "1"],
