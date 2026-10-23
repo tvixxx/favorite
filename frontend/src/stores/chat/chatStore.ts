@@ -47,6 +47,7 @@ export const useChatStore = defineStore("chat", () => {
   const currentUserId = ref<string | null>(null);
   const isConnected = ref(false);
   const isLoading = ref(false);
+  const hasLoadedConversations = ref(false);
   const isError = ref<string | null>(null);
   const isMessagesError = ref(false);
   const isMessagesLoading = ref(false);
@@ -441,6 +442,7 @@ export const useChatStore = defineStore("chat", () => {
 
     // Чистим чат-состояние, чтобы не текло между сессиями (logout)
     conversations.value = [];
+    hasLoadedConversations.value = false;
     messages.value = new Map();
     currentChatUserId.value = null;
     currentUserId.value = null;
@@ -469,6 +471,7 @@ export const useChatStore = defineStore("chat", () => {
 
       if (isSuccessStatus(response.status)) {
         conversations.value = response.data;
+        hasLoadedConversations.value = true;
       } else {
         isError.value = "Не удалось загрузить диалоги";
       }
@@ -621,6 +624,7 @@ export const useChatStore = defineStore("chat", () => {
     currentUserId,
     isConnected,
     isLoading,
+    hasLoadedConversations,
     isError,
     isMessagesError,
     isMessagesLoading,

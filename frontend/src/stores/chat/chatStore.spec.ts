@@ -343,6 +343,27 @@ describe("Авторизация соединения чата", () => {
     }
   );
 
+  it("отличает загруженный пустой список от первой загрузки и сбрасывает состояние при выходе", async () => {
+    const store = useChatStore();
+
+    expect(store.hasLoadedConversations).toBe(false);
+    mocks.useFetch.mockResolvedValue({ status: 200, data: [] });
+    await store.fetchConversations("user-id");
+    expect(store.hasLoadedConversations).toBe(true);
+    expect(store.conversations).toEqual([]);
+    store.disconnect();
+    expect(store.hasLoadedConversations).toBe(false);
+  });
+
+  it("ошибка первой загрузки не помечает список загруженным", async () => {
+    const store = useChatStore();
+
+    mocks.useFetch.mockRejectedValue(new Error("offline"));
+    await store.fetchConversations("user-id");
+    expect(store.hasLoadedConversations).toBe(false);
+    expect(store.isError).toBeTruthy();
+  });
+
   it("не теряет сообщение сокета при поздней загрузке истории", async () => {
     let finish!: (value: unknown) => void;
 

@@ -69,8 +69,26 @@ function receive(request, execute = execFileSync, files = fs) {
     const disk = files.statfsSync(ROOT, { bigint: true });
     return disk.bavail * disk.bsize;
   };
-  if (freeBytes() < 8n * 1024n ** 3n)
-    throw new Error("DEPLOY_NEEDS_8_GIB_FREE");
+  let cacheCleanupAttempted = false;
+  const requireSpace = (required, code) => {
+    let available = freeBytes();
+    if (available < required && !cacheCleanupAttempted) {
+      cacheCleanupAttempted = true;
+      console.log("DEPLOY_BUILD_CACHE_CLEANUP_STARTED");
+      try {
+        run("docker", ["builder", "prune", "--all", "--force"], {
+          timeout: 120000,
+        });
+      } catch {
+        throw new Error("DEPLOY_BUILD_CACHE_CLEANUP_FAILED");
+      }
+      available = freeBytes();
+    }
+    const details =
+      " available_bytes=" + available + " required_bytes=" + required;
+    console.log("DEPLOY_DISK_SPACE " + code + details);
+    if (available < required) throw new Error(code + details);
+  };
   if (
     git("remote", "get-url", "origin") !==
       "https://github.com/tvixxx/favorite.git" ||
@@ -93,13 +111,17 @@ function receive(request, execute = execFileSync, files = fs) {
     return;
   }
   git("merge-base", "--is-ancestor", "HEAD", request.sha);
+  requireSpace(8n * 1024n ** 3n, "DEPLOY_NEEDS_8_GIB_FREE");
   const config = files.mkdtempSync("/run/favkino-deploy-job/docker.");
   files.chmodSync(config, 0o700);
   const docker = (...args) => run("docker", ["--config", config, ...args]);
   const images = Object.fromEntries(
     SERVICES.map((service) => [
       service,
-      "ghcr.io/tvixxx/favkino-private-" + service + "@" + request.images[service],
+      "ghcr.io/tvixxx/favkino-private-" +
+        service +
+        "@" +
+        request.images[service],
     ]),
   );
   try {
@@ -135,7 +157,7 @@ function receive(request, execute = execFileSync, files = fs) {
       console.log("DEPLOY_SUPERSEDED");
       return;
     }
-    // shortcut: точки релизов очищает оператор, добавить ротацию после выбора глубины истории.
+    // Ротация архивов и образов выполняется отдельным таймером под общей блокировкой.
     let archiveBytes = 0n;
     for (const container of ["favorite-backend", "favorite-web"]) {
       const image = run("docker", [
@@ -148,9 +170,10 @@ function receive(request, execute = execFileSync, files = fs) {
         docker("image", "inspect", "--format", "{{.Size}}", image),
       );
     }
-    if (freeBytes() < 3n * 1024n ** 3n + archiveBytes * 2n) {
-      throw new Error("DEPLOY_NOT_ENOUGH_SPACE_FOR_RESTORE_POINT");
-    }
+    requireSpace(
+      3n * 1024n ** 3n + archiveBytes * 2n,
+      "DEPLOY_NOT_ENOUGH_SPACE_FOR_RESTORE_POINT",
+    );
     const point = run("/bin/bash", [
       "-c",
       "source ./common.sh; node ./release.cjs snapshot",
@@ -214,6 +237,8 @@ function submit(request, execute = execFileSync, files = fs) {
     mode: 0o600,
     flag: "wx",
   });
+  const since =
+    new Date().toISOString().slice(0, 19).replace("T", " ") + " UTC";
   // systemd продолжает деплой, даже если SSH-соединение оборвалось.
   try {
     run(["start", "favkino-deploy.service"], { stdio: "inherit" });
@@ -223,10 +248,10 @@ function submit(request, execute = execFileSync, files = fs) {
       [
         "-u",
         "favkino-deploy.service",
-        "-n",
-        "60",
+        "--since",
+        since,
         "--no-pager",
-        "--output=cat",
+        "--output=short-iso",
       ],
       { env: { PATH }, stdio: "inherit" },
     );
@@ -251,7 +276,16 @@ async function readRequest(stream) {
   }
 }
 
-module.exports = { receive, submit, readRequest };
+function deploymentFailureReason(error) {
+  const message = error instanceof Error ? error.message : "";
+  return /^(?:DEPLOY_CHECKOUT_NOT_CLEAN_MAIN|DEPLOY_BUILD_CACHE_CLEANUP_FAILED|DEPLOY_(?:NEEDS_8_GIB_FREE|NOT_ENOUGH_SPACE_FOR_RESTORE_POINT)(?: available_bytes=\d+ required_bytes=\d+)?)$/.test(
+    message,
+  )
+    ? message
+    : "inspect favkino-deploy.service journal";
+}
+
+module.exports = { receive, submit, readRequest, deploymentFailureReason };
 
 if (require.main === module) {
   (async () => {
@@ -267,10 +301,8 @@ if (require.main === module) {
     } else {
       throw new Error("Invalid invocation");
     }
-  })().catch(() => {
-    console.error(
-      "FAVKINO_DEPLOY_FAILED: inspect favkino-deploy.service journal",
-    );
+  })().catch((error) => {
+    console.error("FAVKINO_DEPLOY_FAILED: " + deploymentFailureReason(error));
     process.exitCode = 1;
   });
 }
