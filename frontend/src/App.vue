@@ -131,7 +131,6 @@ useHotThemeKeys();
 <template>
   <ConfigProvider :theme="themeConfig">
     <NavigationLinks v-if="showNavMenu" />
-    <MobileTabBar v-if="showNavMenu && !hideMobileTabBar" />
     <PwaStatus />
 
     <OnboardingModal
@@ -140,28 +139,31 @@ useHotThemeKeys();
       :user-id="store.userData.id"
     />
 
-    <StateBlock
-      v-if="store.authUnavailable"
-      variant="error"
-      icon="ph:wifi-slash"
-      title="Не удалось подключиться"
-      description="Проверьте соединение и повторите загрузку. Проверим вход, когда сервер станет доступен."
-      :actions="[
-        {
-          label: 'Повторить',
-          onClick: retryAuth,
-          loading: store.isFetchingUser,
-        },
-      ]"
-    />
-    <Suspense v-else>
-      <router-view />
-      <template #fallback>
-        <div class="app-suspense-fallback">
-          <AppSpinner :size="32" />
-        </div>
-      </template>
-    </Suspense>
+    <div class="app-content">
+      <StateBlock
+        v-if="store.authUnavailable"
+        variant="error"
+        icon="ph:wifi-slash"
+        title="Не удалось подключиться"
+        description="Проверьте соединение и повторите загрузку. Проверим вход, когда сервер станет доступен."
+        :actions="[
+          {
+            label: 'Повторить',
+            onClick: retryAuth,
+            loading: store.isFetchingUser,
+          },
+        ]"
+      />
+      <Suspense v-else>
+        <router-view />
+        <template #fallback>
+          <div class="app-suspense-fallback">
+            <AppSpinner :size="32" />
+          </div>
+        </template>
+      </Suspense>
+    </div>
+    <MobileTabBar v-if="showNavMenu && !hideMobileTabBar" />
   </ConfigProvider>
 </template>
 
@@ -212,24 +214,16 @@ body {
     0 0 0 5px var(--fv-color-accent);
 }
 
-/* Место под нижний таб-бар на мобиле, чтобы контент не прятался */
 @include mediaMax($tablet) {
   #app {
-    padding-bottom: calc(
-      var(--fv-mobile-tabbar-height) + env(safe-area-inset-bottom, 0px)
-    );
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
   }
 
-  /* Экраны со своей нижней панелью (детальная, обратная связь):
-     таб-бар скрыт, значит место под него не нужно */
-  #app:has(.detail-actionbar),
-  #app:has(.feedback-actionbar),
-  #app:has(.cm-footer) {
-    padding-bottom: 0;
-  }
-
-  #app:has(.auth-page) {
-    padding-bottom: 0;
+  .app-content {
+    flex: 1 0 auto;
+    min-width: 0;
   }
 }
 </style>

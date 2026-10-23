@@ -180,12 +180,6 @@ const tabs = [
 }
 
 @include mediaMax($tablet) {
-  // Нижний отступ приложения должен идти после длинной страницы, а не после первого экрана.
-  #app:has(.admin-page) {
-    height: auto;
-    min-height: 100%;
-  }
-
   .admin-page {
     padding-bottom: 24px;
 
