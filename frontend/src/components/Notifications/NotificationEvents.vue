@@ -31,10 +31,6 @@ const reduced =
 const exitFrames = [{ opacity: 1 }, { opacity: 0 }];
 const enterFrames = [{ opacity: 0 }, { opacity: 1 }];
 
-function eventCards(root: HTMLElement): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(":scope > [data-event-id]"));
-}
-
 watch(
   [
     () => props.view,
@@ -59,69 +55,26 @@ watch(
       return;
 
     const changed = ids !== oldIds;
-    const filtering = changed && filter !== oldFilter && !error && !oldError;
     const crossfade =
-      view !== oldView &&
-      !changed &&
       !error &&
       !oldError &&
-      props.items.length > 0;
+      (changed
+        ? filter !== oldFilter
+        : view !== oldView && props.items.length > 0);
 
     if (!crossfade && !changed && error === oldError) return;
 
-    const snapshot =
-      crossfade || filtering
-        ? (root.cloneNode(crossfade) as HTMLElement)
-        : undefined;
-    const positions = new Map<string, DOMRect>();
-
-    if (filtering && snapshot) {
-      const origin = root.getBoundingClientRect();
-      const nextIds = new Set(props.items.map((item) => item.id));
-
-      for (const card of eventCards(root)) {
-        const id = card.dataset.eventId!;
-        const rect = card.getBoundingClientRect();
-
-        if (nextIds.has(id)) positions.set(id, rect);
-        else {
-          const copy = card.cloneNode(true) as HTMLElement;
-
-          copy.classList.add("notification-events__leaving");
-          Object.assign(copy.style, {
-            left: `${rect.left - origin.left}px`,
-            top: `${rect.top - origin.top - root.clientTop}px`,
-            width: `${rect.width}px`,
-          });
-
-          snapshot.append(copy);
-        }
-      }
-    }
-
-    const animations: Animation[] = [];
+    const snapshot = crossfade
+      ? (root.cloneNode(true) as HTMLElement)
+      : undefined;
+    let animation: Animation | undefined;
     let cancelled = false;
 
     function cancel(): void {
       if (cancelled) return;
       cancelled = true;
-      animations.forEach((animation) => animation.cancel());
+      animation?.cancel();
       snapshot?.remove();
-    }
-
-    function play(
-      element: HTMLElement,
-      frames: Parameters<HTMLElement["animate"]>[0],
-      duration: number
-    ): Animation {
-      const animation = element.animate(frames, {
-        duration,
-        easing: "ease-out",
-      });
-
-      animations.push(animation);
-
-      return animation;
     }
 
     reduced?.addEventListener?.("change", cancel);
@@ -133,46 +86,19 @@ watch(
     await nextTick();
     if (cancelled || reduced?.matches) return;
 
-    if (filtering) {
-      // Measure the final layout before applying transforms or inserting the old layer.
-      const cards = Array.from(eventCards(root), (card) => ({
-        card,
-        previous: positions.get(card.dataset.eventId!),
-        rect: card.getBoundingClientRect(),
-      }));
-
-      for (const { card, previous, rect } of cards) {
-        if (!previous) play(card, enterFrames, 150);
-        else {
-          const x = previous.left - rect.left;
-          const y = previous.top - rect.top;
-
-          if (Math.abs(x) >= 1 || Math.abs(y) >= 1)
-            play(
-              card,
-              [
-                { transform: `translate(${x}px, ${y}px)` },
-                { transform: "none" },
-              ],
-              220
-            );
-        }
-      }
-    } else if (!crossfade) play(root, enterFrames, 180);
-
-    if (snapshot?.childElementCount) {
+    if (snapshot) {
       snapshot.classList.add("notification-events__snapshot");
-      snapshot.classList.toggle(
-        "notification-events__snapshot--view",
-        crossfade
-      );
-
       snapshot.setAttribute("inert", "");
       snapshot.setAttribute("aria-hidden", "true");
       root.after(snapshot);
-      play(snapshot, exitFrames, crossfade ? 180 : 150).onfinish = () =>
-        snapshot.remove();
     }
+
+    animation = (snapshot ?? root).animate(snapshot ? exitFrames : enterFrames, {
+      duration: 180,
+      easing: "ease-out",
+    });
+
+    if (snapshot) animation.onfinish = () => snapshot.remove();
   }
 );
 </script>
@@ -201,7 +127,6 @@ watch(
       <NotificationEventCard
         v-for="item in items"
         :key="item.id"
-        :data-event-id="item.id"
         :item="item"
         :compact="view === 'compact'"
         :disabled="disabled"
@@ -264,13 +189,7 @@ watch(
   overflow: clip;
   align-content: start;
   pointer-events: none;
-}
-.notification-events__snapshot--view,
-.notification-events__leaving {
   background: var(--fv-color-bg-primary);
-}
-.notification-events__leaving {
-  position: absolute;
 }
 @include mediaMax(1000px) {
   .notification-events--grid {
