@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Body,
   Controller,
-  ForbiddenException,
   Get,
   Param,
   ParseUUIDPipe,
@@ -12,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { IsDateString, IsIn, IsOptional, IsUUID } from 'class-validator';
 import { AuthProtected, Authorized, AdminOnly } from '../common/decorators';
+import { requireOwner } from '../common/utils/require-owner';
 import type { User } from '../generated/prisma/client';
 import {
   queryBoolean,
@@ -82,13 +82,9 @@ export class NotificationCenterController {
     private readonly center: NotificationCenterService,
     private readonly announcements: AnnouncementService,
   ) {}
-  private self(userId: string, user: User): void {
-    if (userId !== user.id) throw new ForbiddenException();
-  }
-
   @Get('summary')
   public summary(@Param('userId') userId: string, @Authorized() user: User) {
-    this.self(userId, user);
+    requireOwner(userId, user);
     return this.center.summary(userId);
   }
   @Get('senders')
@@ -97,7 +93,7 @@ export class NotificationCenterController {
     @Authorized() user: User,
     @Query() query: Record<string, unknown>,
   ) {
-    this.self(userId, user);
+    requireOwner(userId, user);
     return this.center.senders(userId, page(query));
   }
   @Get('people/:actorId')
@@ -107,7 +103,7 @@ export class NotificationCenterController {
     @Authorized() user: User,
     @Query() query: Record<string, unknown>,
   ) {
-    this.self(userId, user);
+    requireOwner(userId, user);
     return this.center.people(userId, actorId, page(query));
   }
   @Get('system')
@@ -116,7 +112,7 @@ export class NotificationCenterController {
     @Authorized() user: User,
     @Query() query: Record<string, unknown>,
   ) {
-    this.self(userId, user);
+    requireOwner(userId, user);
     return this.announcements.page(userId, {
       ...page(query),
       category: queryEnum(query.category, 'category', [
@@ -132,7 +128,7 @@ export class NotificationCenterController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @Authorized() user: User,
   ): Promise<void> {
-    this.self(userId, user);
+    requireOwner(userId, user);
     await this.announcements.markRead(userId, id);
     notificationEvents.emit('changed', userId);
   }
@@ -142,7 +138,7 @@ export class NotificationCenterController {
     @Authorized() user: User,
     @Body() dto: ReadScopeDto,
   ): Promise<void> {
-    this.self(userId, user);
+    requireOwner(userId, user);
     const through = new Date(Math.min(Date.parse(dto.through), Date.now()));
     if (dto.scope === 'person' && !dto.actorId)
       throw new BadRequestException('Не указан отправитель');

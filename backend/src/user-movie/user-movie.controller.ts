@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   NotFoundException,
   Param,
@@ -34,6 +33,7 @@ import {
   parseGenreFilters,
 } from '../common/utils/parse-query-filters';
 import { AuthProtected, Authorized } from '../common/decorators';
+import { requireOwner } from '../common/utils/require-owner';
 import type { User } from '../generated/prisma/client';
 import {
   queryBoolean,
@@ -48,12 +48,6 @@ import {
 export class UserMovieController {
   constructor(private readonly userMovieService: UserMovieService) {}
 
-  private ensureSelf(paramUserId: string, user: { id: string }): void {
-    if (paramUserId !== user.id) {
-      throw new ForbiddenException();
-    }
-  }
-
   @AuthProtected()
   @Get('export')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
@@ -64,7 +58,7 @@ export class UserMovieController {
     @Query() query: CollectionExportQueryDto,
     @Res({ passthrough: true }) response: Response,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
     const result = await this.userMovieService.exportCollection(userId, query);
     response.setHeader('Cache-Control', 'private, no-store');
     const count = 'content' in result ? result.count : result.movies.length;
@@ -95,7 +89,7 @@ export class UserMovieController {
     @Authorized() user: User,
     @Query() query: CollectionQueryDto,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
     return this.userMovieService.pageByUser(userId, query);
   }
 
@@ -124,7 +118,7 @@ export class UserMovieController {
     @Query('isSerial') isSerial?: string,
     @Query('contentKind') contentKind?: unknown,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
     return this.userMovieService.findAllByUser(userId, {
       contentKind: queryEnum(
         contentKind,
@@ -173,7 +167,7 @@ export class UserMovieController {
     @Query('isSerial') isSerial?: string,
     @Query('contentKind') contentKind?: unknown,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
     return this.userMovieService.searchUserMovies(
       userId,
       queryString(query, 'q') ?? '',
@@ -214,7 +208,7 @@ export class UserMovieController {
     @Param('userId') userId: string,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
     return this.userMovieService.findFavoritesByUser(userId);
   }
 
@@ -231,7 +225,7 @@ export class UserMovieController {
     @Param('userId') userId: string,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
     return this.userMovieService.findSeeLaterByUser(userId);
   }
 
@@ -248,7 +242,7 @@ export class UserMovieController {
     @Param('userId') userId: string,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
     return this.userMovieService.getUserStats(userId);
   }
 
@@ -266,7 +260,7 @@ export class UserMovieController {
     @Param('userId') userId: string,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
     return this.userMovieService.getUserAnalytics(userId);
   }
 
@@ -288,7 +282,7 @@ export class UserMovieController {
     @Param('movieId') movieId: string,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
     // true → в movie придёт averageRating (плитка «Средняя» на детальной)
     const row = await this.userMovieService.findByUserAndMovie(
       userId,
@@ -321,7 +315,7 @@ export class UserMovieController {
     @Body() dto: CreateUserMovieBodyDto,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
     return this.userMovieService.create(userId, dto);
   }
 
@@ -346,7 +340,7 @@ export class UserMovieController {
     @Body() dto: UpdateUserMovieDto,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
     return this.userMovieService.update(userId, movieId, dto);
   }
 
@@ -359,7 +353,7 @@ export class UserMovieController {
     @Body() dto: RateUserMovieDto,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
     return this.userMovieService.rate(userId, movieId, dto);
   }
 
@@ -380,7 +374,7 @@ export class UserMovieController {
     @Param('movieId') movieId: string,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
     return this.userMovieService.delete(userId, movieId);
   }
 }

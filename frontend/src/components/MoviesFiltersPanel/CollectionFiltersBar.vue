@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useDebouncedSearch } from "@/composable/useDebouncedSearch";
-import dayjs, { type Dayjs } from "dayjs";
-import { releaseMonthBound, releaseDateInput } from "@/utils/releaseDate";
+import { clearedCatalogFacets, useCatalogFacets } from "@/composable/useCatalogFacets";
+import dayjs from "dayjs";
+import { releaseDateInput } from "@/utils/releaseDate";
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import FiltersSheet from "@/components/MoviesFiltersPanel/FiltersSheet.vue";
@@ -14,13 +15,7 @@ import CountryFilter from "@/components/Countries/CountryFilter.vue";
 import PeriodChips from "@/components/Filters/PeriodChips.vue";
 import RateFilter from "@/components/Filters/RateFilter.vue";
 import { type UserMoviesFilters, WatchStatus } from "@/stores";
-import {
-  type Genre,
-  GenreLabels,
-} from "@/components/Genres/constants/genres.constants";
-import { PRODUCTION_COUNTRIES } from "@/constants/countries/production-countries";
 import ContentKindFilter from "@/components/ContentType/ContentKindFilter.vue";
-import { contentKindOptions } from "@/utils/content-kind";
 
 const props = withDefaults(
   defineProps<{
@@ -66,34 +61,14 @@ const activeStatus = computed<StatusKey>(() =>
     ? "watched"
     : "all"
 );
-const selectedGenres = computed<Genre[]>({
-  get: () => props.filters.genres ?? [],
-  set: (genres) =>
-    updateFilters({ genres: genres.length ? genres : undefined }),
-});
-const selectedCountries = computed<string[]>({
-  get: () => props.filters.countryCodes ?? [],
-  set: (countryCodes) =>
-    updateFilters({
-      countryCodes: countryCodes.length ? countryCodes : undefined,
-    }),
-});
-const publishDateRange = computed<[Dayjs, Dayjs] | null>({
-  get: (): [Dayjs, Dayjs] | null =>
-    props.filters.publishDateFrom && props.filters.publishDateTo
-      ? [
-          releaseDateInput(props.filters.publishDateFrom),
-          releaseDateInput(props.filters.publishDateTo),
-        ]
-      : null,
-  set: (range) =>
-    updateFilters({
-      publishDateFrom: range?.[0]
-        ? releaseMonthBound(range[0], "from")
-        : undefined,
-      publishDateTo: range?.[1] ? releaseMonthBound(range[1], "to") : undefined,
-    }),
-});
+const {
+  selectedGenres,
+  selectedCountries,
+  publishDateRange,
+  tags: facetTags,
+  count: facetCount,
+  removeTag: removeFacetTag,
+} = useCatalogFacets(() => props.filters, updateFilters);
 const rateRange = computed<[number, number]>({
   get: (): [number, number] => [
     props.filters.personalRateMin ?? 0,
@@ -111,17 +86,7 @@ const rateActive = computed(
   () => rateRange.value[0] > 0 || rateRange.value[1] < 10
 );
 
-const advancedCount = computed(() => {
-  let n = 0;
-
-  if (props.filters.contentKind) n += 1;
-  if (selectedGenres.value.length) n += 1;
-  if (selectedCountries.value.length) n += 1;
-  if (publishDateRange.value) n += 1;
-  if (rateActive.value) n += 1;
-
-  return n;
-});
+const advancedCount = computed(() => facetCount.value + Number(rateActive.value));
 
 // Пресеты (эталон): один клик выставляет типовую комбинацию фильтров
 type PresetKey = "high-rate" | "fresh" | "later";
@@ -176,62 +141,15 @@ const togglePreset = (key: PresetKey): void => {
       ];
 };
 
-const countryLabel = (code: string): string =>
-  PRODUCTION_COUNTRIES.find((c) => c.code === code)?.label ?? code;
-
-const activeTags = computed<FilterTag[]>(() => {
-  const tags: FilterTag[] = selectedGenres.value.map((genre) => ({
-    key: `genre:${genre}`,
-    label: GenreLabels[genre],
-  }));
-
-  selectedCountries.value.forEach((code) => {
-    tags.push({ key: `country:${code}`, label: countryLabel(code) });
-  });
-
-  const category = contentKindOptions.find(
-    (option) => option.value === props.filters.contentKind
-  );
-
-  if (category) tags.push({ key: "contentKind", label: category.label });
-
-  const [from, to] = publishDateRange.value ?? [];
-
-  if (from && to) {
-    tags.push({
-      key: "date",
-      label: `${dayjs(from).format("MM.YYYY")} — ${dayjs(to).format(
-        "MM.YYYY"
-      )}`,
-    });
-  }
-
-  if (rateActive.value) {
-    tags.push({
-      key: "rate",
-      label: `Оценка ${rateRange.value[0]}–${rateRange.value[1]}`,
-    });
-  }
-
-  return tags;
-});
+const activeTags = computed<FilterTag[]>(() =>
+  rateActive.value
+    ? [...facetTags.value, { key: "rate", label: `Оценка ${rateRange.value[0]}–${rateRange.value[1]}` }]
+    : facetTags.value
+);
 
 const removeTag = (key: string): void => {
-  const [type, value] = key.split(":");
-
-  if (type === "contentKind") updateFilters({ contentKind: undefined });
-
-  if (type === "genre") {
-    selectedGenres.value = selectedGenres.value.filter((g) => g !== value);
-  } else if (type === "country") {
-    selectedCountries.value = selectedCountries.value.filter(
-      (c) => c !== value
-    );
-  } else if (type === "date") {
-    publishDateRange.value = null;
-  } else if (type === "rate") {
-    rateRange.value = [...DEFAULT_RATE];
-  }
+  if (key === "rate") rateRange.value = [...DEFAULT_RATE];
+  else removeFacetTag(key);
 };
 
 function updateFilters(patch: UserMoviesFilters): void {
@@ -256,11 +174,7 @@ const setStatus = (key: StatusKey): void => {
 
 const resetAdvanced = (): void => {
   updateFilters({
-    contentKind: undefined,
-    genres: undefined,
-    countryCodes: undefined,
-    publishDateFrom: undefined,
-    publishDateTo: undefined,
+    ...clearedCatalogFacets,
     personalRateMin: undefined,
     personalRateMax: undefined,
   });

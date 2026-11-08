@@ -6,6 +6,29 @@ import { WatchStatus } from "@/stores";
 describe("Поиск в коллекции", () => {
   afterEach(() => vi.useRealTimers());
 
+  it("показывает и снимает формат, пришедший из профиля", async () => {
+    const wrapper = mount(CollectionFiltersBar, {
+      props: {
+        searchHandler: vi.fn(),
+        filters: { isSerial: true, watchStatus: WatchStatus.WATCHING },
+      },
+      global: { stubs: { BaseIcon: true, FiltersSheet: true } },
+    });
+
+    try {
+      expect(wrapper.get(".collection-filters__badge").text()).toBe("1");
+      await wrapper
+        .get('[aria-label="Убрать фильтр: Сериалы и выпуски"]')
+        .trigger("click");
+
+      expect(wrapper.emitted("update:filters")).toEqual([
+        [{ isSerial: undefined, watchStatus: WatchStatus.WATCHING }],
+      ]);
+    } finally {
+      wrapper.unmount();
+    }
+  });
+
   it("не запускает отложенный поиск после закрытия страницы", async () => {
     vi.useFakeTimers();
 

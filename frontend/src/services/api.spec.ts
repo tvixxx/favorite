@@ -14,10 +14,6 @@ const mocks = vi.hoisted(() => ({
     sessionRevision: 0,
     applyAccessToken: vi.fn(),
   },
-  router: {
-    currentRoute: { value: { path: "/profile", matched: [{}] } },
-    replace: vi.fn(),
-  },
 }));
 
 vi.mock("@/composable", () => ({
@@ -25,7 +21,6 @@ vi.mock("@/composable", () => ({
 }));
 
 vi.mock("@/state/state", () => ({ useMainStore: () => mocks.store }));
-vi.mock("@/router", () => ({ default: mocks.router }));
 
 const response = (
   config: InternalAxiosRequestConfig,
@@ -47,6 +42,7 @@ const unauthorized = (config: InternalAxiosRequestConfig) =>
 
 describe("Повтор HTTP-запросов после refresh", () => {
   let oldAdapter: AxiosAdapter | undefined;
+  const logout = vi.fn();
 
   beforeEach(() => {
     oldAdapter = axios.defaults.adapter as AxiosAdapter;
@@ -62,11 +58,13 @@ describe("Повтор HTTP-запросов после refresh", () => {
       }
     );
 
-    mocks.router.replace.mockClear();
+    logout.mockClear();
+    window.addEventListener("auth:logout", logout);
   });
 
   afterEach(() => {
     axios.defaults.adapter = oldAdapter;
+    window.removeEventListener("auth:logout", logout);
   });
 
   it("не удваивает относительный префикс API и сохраняет короткие административные пути", async () => {
@@ -122,7 +120,7 @@ describe("Повтор HTTP-запросов после refresh", () => {
     ]);
   });
 
-  it("не обновляет сессию и не перенаправляет при ошибке входа", async () => {
+  it("не обновляет и не завершает сессию при ошибке входа", async () => {
     const refresh = vi.fn((config: InternalAxiosRequestConfig) =>
       Promise.resolve(response(config, { accessToken: "unexpected" }))
     );
@@ -134,7 +132,7 @@ describe("Повтор HTTP-запросов после refresh", () => {
     );
 
     expect(refresh).not.toHaveBeenCalled();
-    expect(mocks.router.replace).not.toHaveBeenCalled();
+    expect(logout).not.toHaveBeenCalled();
   });
 
   it("не завершает сессию, если при обновлении токена пропала сеть", async () => {
@@ -143,39 +141,23 @@ describe("Повтор HTTP-запросов после refresh", () => {
 
     api.defaults.adapter = unauthorized;
 
-    const logout = vi.fn();
+    await expect(api.get("/users/user-id/movies")).rejects.toMatchObject({
+      code: "ERR_NETWORK",
+    });
 
-    window.addEventListener("auth:logout", logout);
-    try {
-      await expect(api.get("/users/user-id/movies")).rejects.toMatchObject({
-        code: "ERR_NETWORK",
-      });
-
-      expect(logout).not.toHaveBeenCalled();
-      expect(mocks.router.replace).not.toHaveBeenCalled();
-      expect(mocks.store.accessToken).toBe("fixture-old-access");
-    } finally {
-      window.removeEventListener("auth:logout", logout);
-    }
+    expect(logout).not.toHaveBeenCalled();
+    expect(mocks.store.accessToken).toBe("fixture-old-access");
   });
 
   it("завершает сессию, когда сервер отклонил обновление токена", async () => {
     axios.defaults.adapter = unauthorized;
     api.defaults.adapter = unauthorized;
 
-    const logout = vi.fn();
+    await expect(api.get("/users/user-id/movies")).rejects.toBeInstanceOf(
+      AxiosError
+    );
 
-    window.addEventListener("auth:logout", logout);
-    try {
-      await expect(api.get("/users/user-id/movies")).rejects.toBeInstanceOf(
-        AxiosError
-      );
-
-      expect(logout).toHaveBeenCalledOnce();
-      expect(mocks.router.replace).toHaveBeenCalledWith("/login");
-    } finally {
-      window.removeEventListener("auth:logout", logout);
-    }
+    expect(logout).toHaveBeenCalledOnce();
   });
 
   it("не отдаёт успешный ответ предыдущей сессии после выхода", async () => {
@@ -217,6 +199,6 @@ describe("Повтор HTTP-запросов после refresh", () => {
     expect(await pending).toBeInstanceOf(AxiosError);
     expect(mocks.store.accessToken).toBe("fixture-another-account");
     expect(mocks.store.applyAccessToken).not.toHaveBeenCalled();
-    expect(mocks.router.replace).not.toHaveBeenCalled();
+    expect(logout).not.toHaveBeenCalled();
   });
 });

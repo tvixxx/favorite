@@ -3,6 +3,16 @@ import { onBeforeUnmount, watch, type Ref } from "vue";
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+const stack: ((event: KeyboardEvent) => void)[] = [];
+
+export function hasActiveFocusTrap(): boolean {
+  return stack.length > 0;
+}
+
+function handleKeydown(event: KeyboardEvent): void {
+  stack[stack.length - 1]?.(event);
+}
+
 /**
  * Ловушка фокуса для оверлеев: пока панель открыта, Tab не выпускает фокус на фон,
  * Esc закрывает, а после закрытия фокус возвращается на элемент-открывашку.
@@ -60,18 +70,33 @@ export function useFocusTrap(
     }
   };
 
-  const stop = (): void => window.removeEventListener("keydown", onKeydown);
+  function stop(): boolean {
+    const index = stack.indexOf(onKeydown);
 
-  watch(isOpen, (open) => {
-    if (open) {
-      previousFocus = document.activeElement as HTMLElement;
-      window.addEventListener("keydown", onKeydown);
-    } else {
-      stop();
-      // preventScroll: панель ещё уезжает, доскролл к открывашке дёрнул бы страницу
-      previousFocus?.focus({ preventScroll: true });
-    }
-  });
+    if (index === -1) return false;
+
+    const wasTop = index === stack.length - 1;
+
+    stack.splice(index, 1);
+    if (!stack.length) window.removeEventListener("keydown", handleKeydown);
+
+    return wasTop;
+  }
+
+  watch(
+    isOpen,
+    (open) => {
+      if (open) {
+        previousFocus = document.activeElement as HTMLElement | null;
+        if (!stack.length) window.addEventListener("keydown", handleKeydown);
+        stack.push(onKeydown);
+      } else if (stop()) {
+        // The closing transition still holds the scroll lock.
+        previousFocus?.focus({ preventScroll: true });
+      }
+    },
+    { immediate: true }
+  );
 
   onBeforeUnmount(stop);
 }

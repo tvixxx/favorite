@@ -1,14 +1,9 @@
-<script lang="ts">
-// Модалки живут стеком (детали списка → подтверждение удаления): клавиатуру
-// обслуживает только верхняя, иначе нижняя тянет Tab на себя, а Esc закрывает обе
-const keyboardStack: ((e: KeyboardEvent) => void)[] = [];
-</script>
-
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref, useId, watch } from "vue";
+import { nextTick, ref, useId, watch } from "vue";
 import { useMediaQuery } from "@vueuse/core";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import { useScrollLock } from "@/composable/useScrollLock";
+import { useFocusTrap } from "@/composable/useFocusTrap";
 import { useVisualViewport } from "@/composable/useVisualViewport";
 import { useSheetSwipe } from "@/composable/useSheetSwipe";
 
@@ -32,7 +27,6 @@ const emit = defineEmits<{ confirm: [] }>();
 defineOptions({ inheritAttrs: false });
 
 const modal = ref<HTMLElement | null>(null);
-const previousFocus = ref<HTMLElement | null>(null);
 // Стабильный id заголовка → aria-labelledby (SR читает имя диалога)
 const titleId = useId();
 
@@ -57,88 +51,9 @@ const {
 // Блокировка скролла страницы без сдвига лейаута (порт @angular/cdk BlockScrollStrategy)
 const { lock: lockScroll, unlock: unlockScroll } = useScrollLock();
 
-const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-function getFocusable(): HTMLElement[] {
-  if (!modal.value) {
-    return [];
-  }
-
-  return Array.from(
-    modal.value.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-  ).filter((el) => el.offsetParent !== null);
-}
-
-function onKeydown(e: KeyboardEvent): void {
-  if (keyboardStack[keyboardStack.length - 1] !== onKeydown) {
-    return;
-  }
-
-  if (e.key === "Escape") {
-    modelValue.value = false;
-
-    return;
-  }
-
-  if (e.key !== "Tab" || !modal.value) {
-    return;
-  }
-
-  // Фокус-трап: Tab не выпускает фокус из диалога на фон
-  const focusable = getFocusable();
-  const active = document.activeElement as HTMLElement | null;
-
-  if (focusable.length === 0) {
-    e.preventDefault();
-    modal.value.focus();
-
-    return;
-  }
-
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-
-  if (!active || !modal.value.contains(active)) {
-    e.preventDefault();
-    first.focus();
-
-    return;
-  }
-
-  if (e.shiftKey && active === first) {
-    e.preventDefault();
-    last.focus();
-  } else if (!e.shiftKey && active === last) {
-    e.preventDefault();
-    first.focus();
-  }
-}
-
-function startKeyboard(): void {
-  keyboardStack.push(onKeydown);
-  window.addEventListener("keydown", onKeydown);
-}
-
-function stopKeyboard(): void {
-  window.removeEventListener("keydown", onKeydown);
-
-  const index = keyboardStack.indexOf(onKeydown);
-
-  if (index !== -1) {
-    keyboardStack.splice(index, 1);
-  }
-}
-
-function setPrevFocus() {
-  previousFocus.value = document.activeElement as HTMLElement;
-}
-
-function activatePrevFocus(): void {
-  // preventScroll: лок скролла снимается только после выходной анимации, и
-  // доскролл браузера к кнопке-открывашке дёрнул бы страницу под уходящим окном
-  previousFocus.value?.focus({ preventScroll: true });
-}
+useFocusTrap(modal, modelValue, () => {
+  modelValue.value = false;
+});
 
 // Vue уводит уходящий узел двумя путями — обычный конец анимации и форсированное
 // удаление при повторном открытии, — поэтому лок снимаем по обоим. Иначе счётчик
@@ -149,26 +64,19 @@ function releaseScrollLock(): void {
   }
 }
 
-watch(modelValue, async (open) => {
-  if (open) {
-    setPrevFocus();
+watch(
+  modelValue,
+  async (open) => {
+    if (!open) return;
+
     lockScroll();
     resetSwipe();
-    startKeyboard();
     await nextTick();
-    // Фокус — после рендера, иначе .focus() ничего не сделает. preventScroll
-    // обязателен: подложка скроллится, и доскролл к окну, стоящему в начальной точке
-    // анимации (лист — ниже вьюпорта), гасит весь выезд встречным скроллом
-    modal.value?.focus({ preventScroll: true });
-  } else {
-    stopKeyboard();
-    activatePrevFocus();
-  }
-});
-
-// Размонтирование с открытой модалкой (напр. смена роута) не проходит через watcher
-// (лок скролла в этом случае освобождает onScopeDispose внутри useScrollLock)
-onBeforeUnmount(stopKeyboard);
+    // Не прокручивать подложку к окну, пока оно выезжает.
+    if (modelValue.value) modal.value?.focus({ preventScroll: true });
+  },
+  { immediate: true }
+);
 
 // Уходящая подложка все 200–320 мс продолжает перехватывать клики (см. стили), но
 // действовать по ним не должна: без guard клик по ней слал бы второй update:modelValue

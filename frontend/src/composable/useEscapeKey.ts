@@ -1,18 +1,18 @@
 import { onBeforeUnmount, watch, type Ref } from "vue";
+import { hasActiveFocusTrap } from "./useFocusTrap";
 
 /**
  * Esc отменяет активное действие на странице: режим правки, раскрытую панель.
  * Слушатель живёт только пока действие активно.
  *
- * Если поверх открыт диалог, Esc отдаём ему — у модалки свой обработчик,
- * иначе одно нажатие закрыло бы и окно, и правку под ним.
+ * Если поверх открыт оверлей, Esc обрабатывает его ловушка фокуса.
  */
 export function useEscapeKey(
   isActive: Ref<boolean>,
   onEscape: () => void
 ): void {
   const onKeydown = (e: KeyboardEvent): void => {
-    if (e.key !== "Escape" || document.querySelector(".modal-backdrop")) {
+    if (e.key !== "Escape" || hasActiveFocusTrap()) {
       return;
     }
 

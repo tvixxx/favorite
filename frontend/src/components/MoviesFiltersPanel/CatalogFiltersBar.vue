@@ -1,26 +1,17 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { ref } from "vue";
 import { useDebouncedSearch } from "@/composable/useDebouncedSearch";
-import dayjs, { type Dayjs } from "dayjs";
-import { releaseMonthBound, releaseDateInput } from "@/utils/releaseDate";
+import { clearedCatalogFacets, useCatalogFacets } from "@/composable/useCatalogFacets";
 
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import FiltersSheet from "@/components/MoviesFiltersPanel/FiltersSheet.vue";
-import FiltersActiveTags, {
-  type FilterTag,
-} from "@/components/MoviesFiltersPanel/FiltersActiveTags.vue";
+import FiltersActiveTags from "@/components/MoviesFiltersPanel/FiltersActiveTags.vue";
 import GenreFilter from "@/components/Genres/GenreFilter.vue";
 import CountryFilter from "@/components/Countries/CountryFilter.vue";
 import PeriodChips from "@/components/Filters/PeriodChips.vue";
 import { useMoviesStore } from "@/stores";
 import type { MoviesFilters } from "@/stores/movies/types";
-import {
-  type Genre,
-  GenreLabels,
-} from "@/components/Genres/constants/genres.constants";
-import { PRODUCTION_COUNTRIES } from "@/constants/countries/production-countries";
 import ContentKindFilter from "@/components/ContentType/ContentKindFilter.vue";
-import { contentKindOptions } from "@/utils/content-kind";
 
 const props = defineProps<{
   lockedActorIds?: string[];
@@ -30,102 +21,15 @@ const props = defineProps<{
 
 const moviesStore = useMoviesStore();
 
-const selectedGenres = computed<Genre[]>({
-  get: () => moviesStore.filters.genres ?? [],
-  set: (genres) =>
-    updateFilters({ genres: genres.length ? genres : undefined }),
-});
-const selectedCountries = computed<string[]>({
-  get: () => moviesStore.filters.countryCodes ?? [],
-  set: (countryCodes) =>
-    updateFilters({
-      countryCodes: countryCodes.length ? countryCodes : undefined,
-    }),
-});
-const publishDateRange = computed<[Dayjs, Dayjs] | null>({
-  get: (): [Dayjs, Dayjs] | null =>
-    moviesStore.filters.publishDateFrom && moviesStore.filters.publishDateTo
-      ? [
-          releaseDateInput(moviesStore.filters.publishDateFrom),
-          releaseDateInput(moviesStore.filters.publishDateTo),
-        ]
-      : null,
-  set: (range) =>
-    updateFilters({
-      publishDateFrom: range?.[0]
-        ? releaseMonthBound(range[0], "from")
-        : undefined,
-      publishDateTo: range?.[1] ? releaseMonthBound(range[1], "to") : undefined,
-    }),
-});
+const {
+  selectedGenres,
+  selectedCountries,
+  publishDateRange,
+  tags: activeTags,
+  count: advancedCount,
+  removeTag,
+} = useCatalogFacets(() => moviesStore.filters, updateFilters);
 const isDrawerOpen = ref(false);
-
-const advancedCount = computed(() => {
-  let n = 0;
-
-  if (moviesStore.filters.contentKind) n += 1;
-  if (moviesStore.filters.isSerial !== undefined) n += 1;
-  if (selectedGenres.value.length) n += 1;
-  if (selectedCountries.value.length) n += 1;
-  if (publishDateRange.value) n += 1;
-
-  return n;
-});
-
-const countryLabel = (code: string): string =>
-  PRODUCTION_COUNTRIES.find((c) => c.code === code)?.label ?? code;
-
-const activeTags = computed<FilterTag[]>(() => {
-  const tags: FilterTag[] = selectedGenres.value.map((genre) => ({
-    key: `genre:${genre}`,
-    label: GenreLabels[genre],
-  }));
-
-  selectedCountries.value.forEach((code) => {
-    tags.push({ key: `country:${code}`, label: countryLabel(code) });
-  });
-
-  const category = contentKindOptions.find(
-    (option) => option.value === moviesStore.filters.contentKind
-  );
-
-  if (category) tags.push({ key: "contentKind", label: category.label });
-  if (moviesStore.filters.isSerial !== undefined)
-    tags.push({
-      key: "format",
-      label: moviesStore.filters.isSerial ? "Сериалы и выпуски" : "Фильмы",
-    });
-
-  const [from, to] = publishDateRange.value ?? [];
-
-  if (from && to) {
-    tags.push({
-      key: "date",
-      label: `${dayjs(from).format("MM.YYYY")} — ${dayjs(to).format(
-        "MM.YYYY"
-      )}`,
-    });
-  }
-
-  return tags;
-});
-
-const removeTag = (key: string): void => {
-  const [type, value] = key.split(":");
-
-  if (type === "contentKind") updateFilters({ contentKind: undefined });
-  if (type === "format") updateFilters({ isSerial: undefined });
-
-  if (type === "genre") {
-    selectedGenres.value = selectedGenres.value.filter((g) => g !== value);
-  } else if (type === "country") {
-    selectedCountries.value = selectedCountries.value.filter(
-      (c) => c !== value
-    );
-  } else if (type === "date") {
-    publishDateRange.value = null;
-  }
-};
 
 const runFetch = (): void => {
   void moviesStore.fetchMovies(moviesStore.searchQuery).catch(() => {
@@ -144,16 +48,7 @@ function updateFilters(patch: MoviesFilters): void {
   runFetch();
 }
 
-const resetAdvanced = (): void => {
-  updateFilters({
-    contentKind: undefined,
-    isSerial: undefined,
-    genres: undefined,
-    countryCodes: undefined,
-    publishDateFrom: undefined,
-    publishDateTo: undefined,
-  });
-};
+const resetAdvanced = (): void => updateFilters(clearedCatalogFacets);
 
 const triggerSearch = (q: string): void => {
   moviesStore.setCurrentPage(1);

@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   Header,
   HttpCode,
@@ -14,6 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthProtected, Authorized } from '../common/decorators';
+import { requireOwner } from '../common/utils/require-owner';
 import { AuthOriginGuard } from '../common/guards/auth-origin.guard';
 import { WatchDiaryService } from './watch-diary.service';
 import {
@@ -29,10 +29,6 @@ import type { DiaryPage, DiarySaveResult } from './diary.types';
 @UseGuards(AuthOriginGuard)
 export class WatchDiaryController {
   constructor(private readonly diary: WatchDiaryService) {}
-  private owner(userId: string, user: { id: string }): string {
-    if (userId !== user.id) throw new ForbiddenException();
-    return user.id;
-  }
   @Get()
   @Header('Cache-Control', 'private, no-store')
   public list(
@@ -40,7 +36,7 @@ export class WatchDiaryController {
     @Authorized() user: { id: string },
     @Query() query: DiaryQueryDto,
   ): Promise<DiaryPage> {
-    return this.diary.list(this.owner(userId, user), query);
+    return this.diary.list(requireOwner(userId, user), query);
   }
   @Post()
   @HttpCode(200)
@@ -50,7 +46,7 @@ export class WatchDiaryController {
     @Authorized() user: { id: string },
     @Body() input: CreateDiaryDto,
   ): Promise<DiarySaveResult> {
-    return this.diary.create(this.owner(userId, user), input);
+    return this.diary.create(requireOwner(userId, user), input);
   }
   @Patch(':id')
   @Header('Cache-Control', 'private, no-store')
@@ -60,7 +56,7 @@ export class WatchDiaryController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() input: UpdateDiaryDto,
   ): Promise<DiarySaveResult> {
-    return this.diary.update(this.owner(userId, user), id, input);
+    return this.diary.update(requireOwner(userId, user), id, input);
   }
   @Delete(':id')
   @HttpCode(204)
@@ -71,6 +67,6 @@ export class WatchDiaryController {
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: DeleteDiaryDto,
   ): Promise<void> {
-    return this.diary.remove(this.owner(userId, user), id, query.revision);
+    return this.diary.remove(requireOwner(userId, user), id, query.revision);
   }
 }
