@@ -1,7 +1,9 @@
 import { mount } from "@vue/test-utils";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import Modal from "./BaseModal.vue";
-import { nextTick } from "vue";
+import FiltersSheet from "@/components/MoviesFiltersPanel/FiltersSheet.vue";
+import { useEscapeKey } from "@/composable/useEscapeKey";
+import { defineComponent, nextTick, ref } from "vue";
 
 describe("BaseModal", () => {
   let wrapper: ReturnType<typeof mount>;
@@ -113,5 +115,75 @@ describe("BaseModal", () => {
       bottom.unmount();
       top.unmount();
     });
+  });
+
+  it("Esc закрывает только модалку поверх панели фильтров", async () => {
+    const filters = mount(FiltersSheet, {
+      props: { modelValue: false, activeCount: 0 },
+      global: { stubs: { BaseIcon: true } },
+    });
+
+    wrapper = mount(Modal, {
+      props: { modelValue: false },
+      global: { stubs: { BaseIcon: true, "a-button": true } },
+    });
+
+    try {
+      await filters.setProps({ modelValue: true });
+      await wrapper.setProps({ modelValue: true });
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      await nextTick();
+      expect(wrapper.emitted("update:modelValue")).toEqual([[false]]);
+      expect(filters.emitted("update:modelValue")).toBeUndefined();
+    } finally {
+      filters.unmount();
+    }
+  });
+
+  it("закрывает по Esc модалку, смонтированную открытой", async () => {
+    wrapper = mount(Modal, {
+      props: { modelValue: true },
+      global: { stubs: { BaseIcon: true, "a-button": true } },
+    });
+
+    await nextTick();
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await nextTick();
+    expect(wrapper.emitted("update:modelValue")).toEqual([[false]]);
+  });
+
+  it("Esc под панелью фильтров не отменяет действие на странице", async () => {
+    const isActive = ref(false);
+    const cancel = vi.fn();
+
+    wrapper = mount(
+      defineComponent({
+        setup() {
+          useEscapeKey(isActive, cancel);
+
+          return () => null;
+        },
+      })
+    );
+
+    isActive.value = true;
+    await nextTick();
+
+    const filters = mount(FiltersSheet, {
+      props: { modelValue: true, activeCount: 0 },
+      global: { stubs: { BaseIcon: true } },
+    });
+
+    try {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      expect(filters.emitted("update:modelValue")).toEqual([[false]]);
+      expect(cancel).not.toHaveBeenCalled();
+
+      await filters.setProps({ modelValue: false });
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      expect(cancel).toHaveBeenCalledOnce();
+    } finally {
+      filters.unmount();
+    }
   });
 });

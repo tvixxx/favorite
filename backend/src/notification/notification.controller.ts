@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Controller,
-  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -15,6 +14,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthProtected, Authorized } from '../common/decorators';
+import { requireOwner } from '../common/utils/require-owner';
 import type { User } from '../generated/prisma/client';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '../generated/prisma/enums';
@@ -43,12 +43,6 @@ function notificationTypes(
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
-  private ensureSelf(paramUserId: string, user: { id: string }): void {
-    if (paramUserId !== user.id) {
-      throw new ForbiddenException();
-    }
-  }
-
   @ApiOperation({ summary: 'Список уведомлений пользователя' })
   @ApiOkResponse({ description: 'Уведомления' })
   @ApiBearerAuth()
@@ -61,7 +55,7 @@ export class NotificationController {
     @Query('types') types?: string | string[],
     @Query('unreadOnly') unreadOnly?: unknown,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
 
     const limit = queryInteger(limitRaw, 'limit', 30, 1, 50);
 
@@ -81,7 +75,7 @@ export class NotificationController {
     @Query('limit') limit?: unknown,
     @Query('offset') offset?: unknown,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
     return this.notificationService.page(
       userId,
       queryInteger(limit, 'limit', 20, 1, 50),
@@ -99,7 +93,7 @@ export class NotificationController {
     @Authorized() user: User,
     @Query('types') types?: string | string[],
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
 
     return this.notificationService.unreadCount(
       userId,
@@ -117,7 +111,7 @@ export class NotificationController {
     @Param('notificationId') notificationId: string,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
 
     return this.notificationService.markRead(userId, notificationId);
   }
@@ -132,7 +126,7 @@ export class NotificationController {
     @Authorized() user: User,
     @Query('types') types?: string | string[],
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
 
     return this.notificationService.markAllRead(
       userId,

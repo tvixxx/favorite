@@ -168,7 +168,8 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/notifications",
     name: "notifications",
-    component: () => import("@/views/pages/NotificationsPage.vue"),
+    component: () =>
+      import("@/components/Notifications/NotificationCenter.vue"),
     meta: { requiresAuth: true },
   },
   {
@@ -284,6 +285,20 @@ router.beforeEach(async (to, _, next) => {
   }
 
   next();
+});
+
+function redirectAfterSessionExpiry(): void {
+  const { matched, path } = router.currentRoute.value;
+
+  // При первой навигации решение уже принимает guard.
+  if (matched.length && path !== "/login") {
+    void router.replace("/login");
+  }
+}
+
+window.addEventListener("auth:logout", redirectAfterSessionExpiry);
+import.meta.hot?.dispose(() => {
+  window.removeEventListener("auth:logout", redirectAfterSessionExpiry);
 });
 
 export default router;

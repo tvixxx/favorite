@@ -8,11 +8,9 @@ import { AUTH_REFRESH_ENDPOINT } from "@/constants/api/auth-endpoints";
 import { API_BASE_URL } from "@/constants/api/endpoints";
 import { useMainStore } from "@/state/state";
 import { watch } from "vue";
-import router from "@/router";
 import type { AuthResponse } from "@/state/types";
 
 const UNAUTHORIZED_STATUS = 401;
-const LOGIN_ROUTE = "/login";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -23,22 +21,8 @@ const api = axios.create({
   },
 });
 
-function forceLogoutAndRedirectToLogin(): void {
+function notifySessionExpired(): void {
   window.dispatchEvent(new CustomEvent("auth:logout"));
-
-  // Первая навигация ещё не завершилась (сюда попадаем из router-guard, который
-  // проверяет сессию): push отсюда прервал бы её и оставил пустой каркас —
-  // без шапки и с пустым контентом. Редиректом в этом случае занимается guard.
-  if (!router.currentRoute.value.matched.length) {
-    return;
-  }
-
-  const currentRoute = router.currentRoute.value.path;
-
-  if (currentRoute !== LOGIN_ROUTE) {
-    // replace, чтобы «назад» не возвращал на страницу с истёкшей сессией
-    router.replace(LOGIN_ROUTE);
-  }
 }
 
 function isAuthMutation(config: InternalAxiosRequestConfig): boolean {
@@ -154,7 +138,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
 
     if (originalRequest._retry) {
-      forceLogoutAndRedirectToLogin();
+      notifySessionExpired();
 
       return Promise.reject(error);
     }
@@ -179,7 +163,7 @@ api.interceptors.response.use(
       }
 
       if (revision === useMainStore().sessionRevision)
-        forceLogoutAndRedirectToLogin();
+        notifySessionExpired();
 
       return Promise.reject(error);
     }

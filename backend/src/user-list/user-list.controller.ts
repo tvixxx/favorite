@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -16,6 +15,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthProtected, Authorized } from '../common/decorators';
+import { requireOwner } from '../common/utils/require-owner';
 import type { User } from '../generated/prisma/client';
 import { UserListService } from './user-list.service';
 import { AddMovieToListDto, CreateUserListDto, UpdateUserListDto } from './dto';
@@ -25,12 +25,6 @@ import { AddMovieToListDto, CreateUserListDto, UpdateUserListDto } from './dto';
 export class UserListController {
   constructor(private readonly userListService: UserListService) {}
 
-  private ensureSelf(paramUserId: string, user: { id: string }): void {
-    if (paramUserId !== user.id) {
-      throw new ForbiddenException();
-    }
-  }
-
   @ApiOperation({
     summary: 'Получить пользовательские списки',
     description: 'Возвращает списки текущего пользователя',
@@ -39,7 +33,7 @@ export class UserListController {
   @AuthProtected()
   @Get()
   public findAll(@Param('userId') userId: string, @Authorized() user: User) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
 
     return this.userListService.findAllByUser(userId);
   }
@@ -57,7 +51,7 @@ export class UserListController {
     @Param('listId') listId: string,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
 
     return this.userListService.findById(userId, listId);
   }
@@ -77,7 +71,7 @@ export class UserListController {
     @Body() dto: CreateUserListDto,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
 
     return this.userListService.create(userId, dto);
   }
@@ -99,7 +93,7 @@ export class UserListController {
     @Body() dto: UpdateUserListDto,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
 
     return this.userListService.update(userId, listId, dto);
   }
@@ -117,7 +111,7 @@ export class UserListController {
     @Param('listId') listId: string,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
 
     return this.userListService.delete(userId, listId);
   }
@@ -140,7 +134,7 @@ export class UserListController {
     @Body() dto: AddMovieToListDto,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
 
     return this.userListService.addMovie(userId, listId, dto);
   }
@@ -159,7 +153,7 @@ export class UserListController {
     @Param('movieId') movieId: string,
     @Authorized() user: User,
   ) {
-    this.ensureSelf(userId, user);
+    requireOwner(userId, user);
 
     return this.userListService.removeMovie(userId, listId, movieId);
   }
