@@ -157,9 +157,16 @@ const handleCancel = () => {
 
     :deep(.ant-form-item-control-input-content) {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: flex-end;
       gap: 12px;
+    }
+
+    @include mediaMax(360px) {
+      :deep(.ant-btn-lg) {
+        padding-inline: 10px;
+      }
     }
   }
 

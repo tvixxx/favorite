@@ -1,4 +1,4 @@
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import NotificationEvents from "./NotificationEvents.vue";
 import type { NotificationEvent } from "./center.types";
@@ -112,6 +112,7 @@ describe("Появление событий уведомлений", () => {
       expect(animate).not.toHaveBeenCalled();
       await wrapper.setProps({ loading: true });
       await wrapper.setProps({ loading: false, items: [event("второе")] });
+      await flushPromises();
       expect(animate).toHaveBeenCalledTimes(1);
       expect(animate).toHaveBeenCalledWith(
         [{ opacity: 0 }, { opacity: 1 }],
@@ -121,6 +122,7 @@ describe("Появление событий уведомлений", () => {
       expect(wrapper.text()).toContain("второе");
       expect(wrapper.text()).not.toContain("первое");
       await wrapper.setProps({ items: [], loading: false });
+      await flushPromises();
       expect(wrapper.text()).toContain("Событий пока нет");
       expect(animate).toHaveBeenCalledTimes(2);
     } finally {
@@ -134,8 +136,95 @@ describe("Появление событий уведомлений", () => {
     try {
       await wrapper.setProps({ loading: false, ready: true });
       await wrapper.setProps({ items: [event("новое")] });
+      await wrapper.setProps({ view: "grid" });
+      await flushPromises();
       expect(wrapper.text()).toContain("новое");
+      expect(wrapper.find(".notification-events--grid").exists()).toBe(true);
+      expect(wrapper.find("[inert]").exists()).toBe(false);
       expect(animate).not.toHaveBeenCalled();
+    } finally {
+      dispose();
+    }
+  });
+
+  it("при смене вида оставляет карточки на месте в DOM и убирает снимок прежней раскладки", async () => {
+    const { wrapper, animate, cancel, dispose } = createEvents();
+
+    try {
+      await wrapper.setProps({
+        loading: false,
+        ready: true,
+        items: [event("событие")],
+      });
+
+      const card = wrapper.get("article").element;
+
+      await wrapper.setProps({ view: "grid" });
+      await flushPromises();
+      expect(wrapper.get(".notification-events--grid article").element).toBe(
+        card
+      );
+
+      expect(wrapper.get("[inert]").attributes("aria-hidden")).toBe("true");
+      expect(animate).toHaveBeenCalledWith(
+        [{ opacity: 1 }, { opacity: 0 }],
+        expect.objectContaining({ duration: 180 })
+      );
+
+      await wrapper.setProps({ view: "compact" });
+      await flushPromises();
+      expect(cancel).toHaveBeenCalledTimes(1);
+      expect(wrapper.findAll("[inert]")).toHaveLength(1);
+      expect(wrapper.get(".notification-events--compact article").element).toBe(
+        card
+      );
+    } finally {
+      dispose();
+    }
+  });
+
+  it("при фильтрации сохраняет совпавшую карточку и затухает только исключённая", async () => {
+    const { wrapper, animate, dispose } = createEvents();
+
+    try {
+      const keep = event("остаётся");
+
+      await wrapper.setProps({
+        loading: false,
+        ready: true,
+        items: [event("уходит"), keep],
+      });
+
+      const card = wrapper.findAll("article")[1].element;
+
+      vi.spyOn(card, "getBoundingClientRect")
+        .mockReturnValueOnce(new DOMRect(0, 80, 320, 80))
+        .mockReturnValue(new DOMRect(0, 0, 320, 80));
+
+      await wrapper.setProps({ loading: true });
+      expect(animate).not.toHaveBeenCalled();
+      expect(wrapper.findAll("article")).toHaveLength(2);
+      await wrapper.setProps({
+        loading: false,
+        filterKey: "friends",
+        items: [keep],
+      });
+
+      await flushPromises();
+      expect(
+        wrapper.get(".notification-events:not([inert]) article").element
+      ).toBe(card);
+
+      expect(wrapper.get("[inert]").text()).toBe("уходит");
+      expect(animate).toHaveBeenCalledWith(
+        [{ transform: "translate(0px, 80px)" }, { transform: "none" }],
+        expect.objectContaining({ duration: 220 })
+      );
+
+      expect(animate).toHaveBeenCalledWith(
+        [{ opacity: 1 }, { opacity: 0 }],
+        expect.objectContaining({ duration: 150 })
+      );
     } finally {
       dispose();
     }
@@ -146,7 +235,9 @@ describe("Появление событий уведомлений", () => {
 
     await wrapper.setProps({ loading: false, ready: true });
     await wrapper.setProps({ items: [event("первое")] });
+    await flushPromises();
     await wrapper.setProps({ items: [event("второе")] });
+    await flushPromises();
     expect(animate).toHaveBeenCalledTimes(2);
     expect(cancel).toHaveBeenCalledTimes(1);
     dispose();

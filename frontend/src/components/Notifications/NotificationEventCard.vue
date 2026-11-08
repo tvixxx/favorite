@@ -224,7 +224,6 @@ onBeforeUnmount(() => observer?.disconnect());
     cursor: pointer;
   }
   button:disabled {
-    opacity: 0.5;
     cursor: default;
   }
   &.is-compact {

@@ -256,7 +256,7 @@ async function navigate(item: NotificationEvent, path: string): Promise<void> {
           </div>
           <Button
             v-if="state.section === 'people'"
-            :disabled="state.busy || !state.selected?.unread"
+            :disabled="state.saving || !state.selected?.unread"
             @click="state.readScope(true)"
             >Прочитать все</Button
           >
@@ -272,11 +272,12 @@ async function navigate(item: NotificationEvent, path: string): Promise<void> {
         />
         <NotificationEvents
           :items="state.events.items"
+          :filter-key="state.events.filterKey"
           :view="state.view[state.section]"
           :loading="state.events.loading"
           :ready="state.events.ready"
           :error="state.events.error"
-          :disabled="state.busy"
+          :disabled="state.saving"
           @retry="state.refresh"
           @read="state.read"
           @update="checkUpdate"

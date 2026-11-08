@@ -42,6 +42,7 @@ export function useNotificationCenter(userId: Ref<string | undefined>) {
   });
   const events = reactive({
     items: [] as NotificationEvent[],
+    filterKey: "",
     total: 0,
     loading: false,
     ready: false,
@@ -148,6 +149,7 @@ export function useNotificationCenter(userId: Ref<string | undefined>) {
 
     const current = (eventRequest = new AbortController());
     const source = section.value;
+    const filterKey = source === "people" ? kind.value : category.value;
     const context =
       userId.value +
       ":" +
@@ -175,9 +177,8 @@ export function useNotificationCenter(userId: Ref<string | undefined>) {
             offset: (eventPage.value - 1) * 10,
             q: appliedSearch[source] || undefined,
             unreadOnly: unreadOnly[source] || undefined,
-            kind: source === "people" ? kind.value || undefined : undefined,
-            category:
-              source === "system" ? category.value || undefined : undefined,
+            kind: source === "people" ? filterKey || undefined : undefined,
+            category: source === "system" ? filterKey || undefined : undefined,
             through: summary.asOf,
           },
           signal: current.signal,
@@ -186,6 +187,7 @@ export function useNotificationCenter(userId: Ref<string | undefined>) {
 
       if (current.signal.aborted) return;
       events.error = "";
+      events.filterKey = filterKey;
       events.items = data.items.map((item) => ({ ...item, source }));
       events.total = data.total;
       if (source === "people" && selected.value && data.unread !== undefined)
@@ -297,6 +299,7 @@ export function useNotificationCenter(userId: Ref<string | undefined>) {
       senders.error = "";
       senders.loading = false;
       events.items = [];
+      events.filterKey = "";
       events.total = 0;
       events.error = "";
       events.loading = false;
