@@ -217,14 +217,15 @@ const {
       </div>
 
       <div class="serial-progress__edit-actions">
-        <a-button @click="cancelEditProgress"> Отмена </a-button>
+        <a-button size="large" @click="cancelEditProgress">Отмена</a-button>
         <a-button
           type="primary"
+          size="large"
           :loading="isProgressSaving"
           @click="saveProgress"
         >
-          <BaseIcon name="ph:check" :width="16" :height="16" />
-          Сохранить
+          <BaseIcon name="ph:check" :width="18" :height="18" />
+          <span>Сохранить</span>
         </a-button>
       </div>
     </div>
@@ -467,15 +468,25 @@ const {
 
   &__edit-actions {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     justify-content: flex-end;
-    gap: 10px;
+    gap: 12px;
     padding-top: 0.5rem;
     border-top: 1px solid
       color-mix(in srgb, var(--fv-color-border) 50%, transparent);
 
     :deep(.ant-btn-primary) {
-      display: flex;
+      display: inline-flex;
       align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    @include mediaMax(360px) {
+      :deep(.ant-btn-lg) {
+        padding-inline: 10px;
+      }
     }
   }
 

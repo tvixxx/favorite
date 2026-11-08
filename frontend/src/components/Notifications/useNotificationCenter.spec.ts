@@ -126,6 +126,7 @@ describe("Загрузка центра уведомлений", () => {
     await flushPromises();
 
     const completed = state.events.items;
+    const completedFilter = state.events.filterKey;
     const pending: Array<(value: unknown) => void> = [];
 
     mocks.get.mockImplementation(
@@ -136,16 +137,19 @@ describe("Загрузка центра уведомлений", () => {
     await nextTick();
     expect(state.events.ready).toBe(true);
     expect(state.events.items).toBe(completed);
+    expect(state.events.filterKey).toBe(completedFilter);
     state.category.value = "SERVICE";
     await nextTick();
     pending[1]({ data: { items: [], total: 0 } });
     await flushPromises();
     expect(state.events.items).toEqual([]);
     expect(state.events.loading).toBe(false);
+    expect(state.events.filterKey).toBe("SERVICE");
     pending[0]({ data: { items: [event("запоздалое")], total: 1 } });
     await flushPromises();
     expect(state.events.items).toEqual([]);
     expect(state.events.ready).toBe(true);
+    expect(state.events.filterKey).toBe("SERVICE");
   });
 
   it("не подменяет ошибку пустым состоянием до ответа повторного запроса", async () => {
