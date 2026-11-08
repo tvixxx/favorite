@@ -135,7 +135,7 @@ describe("Появление событий уведомлений", () => {
 
     try {
       await wrapper.setProps({ loading: false, ready: true });
-      await wrapper.setProps({ items: [event("новое")] });
+      await wrapper.setProps({ items: [event("новое")], filterKey: "friends" });
       await wrapper.setProps({ view: "grid" });
       await flushPromises();
       expect(wrapper.text()).toContain("новое");
@@ -183,47 +183,47 @@ describe("Появление событий уведомлений", () => {
     }
   });
 
-  it("при фильтрации сохраняет совпавшую карточку и затухает только исключённая", async () => {
+  it("при переходе между всеми событиями и дружбой затухает весь прежний набор без перемещения карточек", async () => {
     const { wrapper, animate, dispose } = createEvents();
 
     try {
-      const keep = event("остаётся");
+      const friend = event("дружба");
+      const all = [
+        ...Array.from({ length: 9 }, (_, i) => event(`сообщение ${i + 1}`)),
+        friend,
+      ];
+      const live = ".notification-events:not([inert]) article";
 
       await wrapper.setProps({
         loading: false,
         ready: true,
-        items: [event("уходит"), keep],
+        view: "grid",
+        items: all,
       });
 
-      const card = wrapper.findAll("article")[1].element;
-
-      vi.spyOn(card, "getBoundingClientRect")
-        .mockReturnValueOnce(new DOMRect(0, 80, 320, 80))
-        .mockReturnValue(new DOMRect(0, 0, 320, 80));
+      const card = wrapper.findAll(live)[9].element;
 
       await wrapper.setProps({ loading: true });
       expect(animate).not.toHaveBeenCalled();
-      expect(wrapper.findAll("article")).toHaveLength(2);
+      expect(wrapper.findAll(live)).toHaveLength(10);
       await wrapper.setProps({
         loading: false,
         filterKey: "friends",
-        items: [keep],
+        items: [friend],
       });
 
       await flushPromises();
-      expect(
-        wrapper.get(".notification-events:not([inert]) article").element
-      ).toBe(card);
-
-      expect(wrapper.get("[inert]").text()).toBe("уходит");
-      expect(animate).toHaveBeenCalledWith(
-        [{ transform: "translate(0px, 80px)" }, { transform: "none" }],
-        expect.objectContaining({ duration: 220 })
-      );
-
-      expect(animate).toHaveBeenCalledWith(
-        [{ opacity: 1 }, { opacity: 0 }],
-        expect.objectContaining({ duration: 150 })
+      expect(wrapper.get(live).element).toBe(card);
+      expect(wrapper.findAll("[inert] article")).toHaveLength(10);
+      await wrapper.setProps({ filterKey: "", items: all });
+      await flushPromises();
+      expect(wrapper.findAll(live)[9].element).toBe(card);
+      expect(wrapper.findAll("[inert] article")).toHaveLength(1);
+      expect(animate.mock.calls).toEqual(
+        Array.from({ length: 2 }, () => [
+          [{ opacity: 1 }, { opacity: 0 }],
+          expect.objectContaining({ duration: 180 }),
+        ])
       );
     } finally {
       dispose();
