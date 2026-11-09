@@ -32,9 +32,7 @@ const selected = ref<MovieApiResponse | null>(null);
 const seen = ref(new Set<string>());
 const kind = ref("any");
 const genre = ref("any");
-const loading = ref(false);
-const loaded = ref(false);
-const error = ref(false);
+const phase = ref<"idle" | "loading" | "ready" | "error">("idle");
 const guard = createRequestGuard();
 let controller: AbortController | undefined;
 const typeOptions = [
@@ -121,9 +119,7 @@ function invalidate(): void {
   movies.value = [];
   selected.value = null;
   seen.value = new Set();
-  loaded.value = false;
-  loading.value = false;
-  error.value = false;
+  phase.value = "idle";
   kind.value = "any";
   genre.value = "any";
 }
@@ -136,20 +132,16 @@ async function load(): Promise<void> {
   const isCurrent = guard.begin();
   const id = main.userData.id;
 
-  loading.value = true;
-  error.value = false;
-  loaded.value = false;
+  phase.value = "loading";
   movies.value = [];
   try {
     const result = await fetchWatchTonight(id, controller.signal);
 
     if (!isCurrent() || main.userData?.id !== id) return;
     movies.value = result;
-    loaded.value = true;
+    phase.value = "ready";
   } catch {
-    if (isCurrent()) error.value = true;
-  } finally {
-    if (isCurrent()) loading.value = false;
+    if (isCurrent()) phase.value = "error";
   }
 }
 
@@ -195,16 +187,16 @@ function navigate(path: string): void {
       <p class="watch-tonight__intro">
         Выбираем из ещё не начатого в «Буду смотреть».
       </p>
-      <div v-if="loading" class="watch-tonight__state" role="status">
+      <div v-if="phase === 'loading'" class="watch-tonight__state" role="status">
         <ASpin />
         <p>Загружаем список…</p>
       </div>
-      <div v-else-if="error" class="watch-tonight__state" role="alert">
+      <div v-else-if="phase === 'error'" class="watch-tonight__state" role="alert">
         <h3>Не удалось загрузить список</h3>
         <p>Проверьте соединение и попробуйте ещё раз.</p>
         <AButton @click="load">Повторить</AButton>
       </div>
-      <div v-else-if="loaded && !movies.length" class="watch-tonight__state">
+      <div v-else-if="phase === 'ready' && !movies.length" class="watch-tonight__state">
         <h3>Добавьте произведения на потом</h3>
         <p>
           Отмечайте интересное в каталоге как «Буду смотреть» — тогда здесь
@@ -212,7 +204,7 @@ function navigate(path: string): void {
         </p>
         <AButton @click="navigate('/library/catalog')">Открыть каталог</AButton>
       </div>
-      <template v-else-if="loaded">
+      <template v-else-if="phase === 'ready'">
         <div class="watch-tonight__filters">
           <div>
             <label for="watch-tonight-kind">Тип</label
@@ -294,7 +286,7 @@ function navigate(path: string): void {
       </template>
     </template>
     <template #footer>
-      <template v-if="selected && !loading && !error">
+      <template v-if="selected && phase === 'ready'">
         <AButton
           :disabled="filtered.length === 1"
           @click="allShown ? restart() : choose()"

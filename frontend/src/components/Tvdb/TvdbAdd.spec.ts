@@ -374,4 +374,46 @@ describe("Добавление из TheTVDB через интерфейс", () =
     expect(wrapper.emitted("added")).toBeUndefined();
     wrapper.unmount();
   });
+
+  it.each(["preview", "import"])(
+    "не возвращает экран предыдущего пользователя после позднего %s",
+    async (operation) => {
+      const wrapper = render();
+      let finish!: (data: unknown) => void;
+      const pending = new Promise((resolve) => {
+        finish = resolve;
+      });
+
+      await search(wrapper);
+      if (operation === "preview") api.previewTvdb.mockReturnValueOnce(pending);
+      else api.importTvdb.mockReturnValueOnce(pending);
+      await wrapper.get("button[data-tvdb-select]").trigger("click");
+      await flushPromises();
+      if (operation === "import") {
+        await wrapper
+          .get('form[aria-label="Подтверждение импорта"]')
+          .trigger("submit");
+      }
+
+      await wrapper.setProps({ userId: "other", sessionRevision: 1 });
+      finish(
+        operation === "preview"
+          ? preview
+          : { movieId: "saved", alreadyInCollection: false }
+      );
+
+      await flushPromises();
+      expect(wrapper.find('form[aria-label="Поиск TheTVDB"]').exists()).toBe(
+        true
+      );
+
+      expect(
+        wrapper.find('form[aria-label="Подтверждение импорта"]').exists()
+      ).toBe(false);
+
+      expect(wrapper.text()).not.toContain("Добавлено в коллекцию");
+      expect(wrapper.emitted("added")).toBeUndefined();
+      wrapper.unmount();
+    }
+  );
 });

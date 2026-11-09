@@ -86,6 +86,7 @@ describe("Сохранение отзыва", () => {
     });
 
     expect(mocks.create).not.toHaveBeenCalled();
+    expect(wrapper.findComponent({ name: "ReviewForm" }).exists()).toBe(false);
     wrapper.unmount();
   });
 

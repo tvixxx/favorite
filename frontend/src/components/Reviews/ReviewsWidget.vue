@@ -28,7 +28,7 @@ const { fetchReviews, createReview, updateReview, deleteReview } = reviewsStore;
 const MIN_REVIEW_TEXT_LENGTH = 10;
 
 const editingReview = ref<Review | null>(null);
-const isEditing = ref(false);
+const isEditing = computed(() => editingReview.value !== null);
 const isSaving = ref(false);
 const deletingIds = ref(new Set<string>());
 const reportOpen = ref(false);
@@ -53,7 +53,6 @@ const startEdit = (review: Review) => {
   }
 
   editingReview.value = review;
-  isEditing.value = true;
 };
 
 const cancelEdit = () => {
@@ -62,7 +61,6 @@ const cancelEdit = () => {
   }
 
   editingReview.value = null;
-  isEditing.value = false;
 };
 
 useEscapeKey(isEditing, cancelEdit);
@@ -76,7 +74,6 @@ watch(
 
     editingReview.value = null;
     reportOpen.value = false;
-    isEditing.value = false;
     try {
       await fetchReviews(id, 10, isLoggedIn.value);
     } catch {
@@ -117,7 +114,6 @@ const handleSubmit = async (text: string, rate: number, isSpoiler = false) => {
 
       message.success("Отзыв обновлён");
       editingReview.value = null;
-      isEditing.value = false;
     } else {
       await createReview({ text, rate, movieId, isSpoiler });
       if (movieId !== submittedMovieId) {

@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, ref } from "vue";
+import { computed, ref, shallowRef } from "vue";
 import { getDefaultLoaderDelayTime, MOVIES_ENDPOINTS } from "@/constants";
 import { isSuccessStatus } from "@/utils";
 import { FETCH_METHOD, useFetch } from "@/composable";
@@ -32,10 +32,15 @@ interface MoviesPage {
 export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   const moviesList = ref<Movie[]>([]);
   const isMoviesLoaded = ref<boolean>(false);
-  const isMoviesLoading = ref(false);
+  const loadPhase = shallowRef<"idle" | "loading" | "refreshing" | "appending">(
+    "idle"
+  );
+  const isMoviesLoading = computed(
+    () => loadPhase.value === "loading" || loadPhase.value === "refreshing"
+  );
   const isMoviesError = ref<string | null>(null);
   const totalMovies = ref(0);
-  const isLoadingMore = ref(false);
+  const isLoadingMore = computed(() => loadPhase.value === "appending");
   const loadMoreError = ref<string | null>(null);
   const nextOffset = ref(0);
 
@@ -66,7 +71,11 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   };
 
   const setLoadingMovies = (value: boolean) => {
-    isMoviesLoading.value = value;
+    loadPhase.value = value
+      ? isMoviesLoaded.value
+        ? "refreshing"
+        : "loading"
+      : "idle";
   };
 
   const setErrorMovies = (errorText: string | null) => {
@@ -111,7 +120,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
   const setFilters = (newFilters: MoviesFilters) => {
     if (JSON.stringify(filters.value) !== JSON.stringify(newFilters)) {
       queryRequests.invalidate();
-      isLoadingMore.value = false;
+      if (isLoadingMore.value) loadPhase.value = "idle";
       isMoviesLoaded.value = false;
     }
 
@@ -173,7 +182,6 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     searchQuery.value = "";
     searchResults.value = [];
     isSearching.value = false;
-    isLoadingMore.value = false;
     loadMoreError.value = null;
   };
 
@@ -190,7 +198,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     query = query.trim();
     searchQuery.value = query;
     isSearching.value = !append && !!query;
-    isLoadingMore.value = append;
+    if (append) loadPhase.value = "appending";
     loadMoreError.value = null;
 
     if (!append) {
@@ -271,7 +279,7 @@ export const useMoviesStore = defineStore(MOVIE_STORE_NAME, () => {
     } finally {
       if (append) {
         if (isCurrent()) {
-          isLoadingMore.value = false;
+          loadPhase.value = "idle";
         }
       } else {
         setTimeout(() => {

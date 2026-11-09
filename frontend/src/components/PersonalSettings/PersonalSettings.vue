@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, shallowRef, watch } from "vue";
 import { Switch as ASwitch } from "ant-design-vue";
 import { useMainStore } from "@/state/state";
 import {
@@ -15,19 +15,36 @@ const props = withDefaults(
 );
 
 const store = useMainStore();
-const pending = ref<UserPreferenceKey | null>(null);
-const error = ref("");
-const failedAttempt = ref<{
+
+type PreferenceAttempt = {
   key: UserPreferenceKey;
   checked: boolean;
   userId: string;
   revision: number;
-} | null>(null);
+};
+type PreferenceSave =
+  | { status: "idle" }
+  | { status: "saving"; attempt: PreferenceAttempt }
+  | { status: "error"; attempt: PreferenceAttempt; message: string };
 
-watch([() => store.userData?.id, () => store.sessionRevision], () => {
-  error.value = "";
-  failedAttempt.value = null;
-});
+const saveState = shallowRef<PreferenceSave>({ status: "idle" });
+const pending = computed(() =>
+  saveState.value.status === "saving" ? saveState.value.attempt.key : null
+);
+const error = computed(() =>
+  saveState.value.status === "error" ? saveState.value.message : ""
+);
+const failedAttempt = computed(() =>
+  saveState.value.status === "error" ? saveState.value.attempt : null
+);
+
+watch(
+  [() => store.userData?.id, () => store.sessionRevision],
+  () => {
+    saveState.value = { status: "idle" };
+  },
+  { flush: "sync" }
+);
 
 const groups: Array<{
   id: "personal" | "notifications";
@@ -83,18 +100,24 @@ async function savePreference(
   const id = store.userData.id;
   const revision = store.sessionRevision;
 
-  pending.value = key;
-  error.value = "";
-  failedAttempt.value = null;
+  const operation: PreferenceSave = {
+    status: "saving",
+    attempt: { key, checked, userId: id, revision },
+  };
+
+  saveState.value = operation;
   try {
     await store.updateProfile({ [key]: checked });
   } catch {
     if (store.userData?.id === id && store.sessionRevision === revision) {
-      error.value = "Не удалось сохранить настройку. Попробуйте ещё раз.";
-      failedAttempt.value = { key, checked, userId: id, revision };
+      saveState.value = {
+        status: "error",
+        message: "Не удалось сохранить настройку. Попробуйте ещё раз.",
+        attempt: operation.attempt,
+      };
     }
   } finally {
-    pending.value = null;
+    if (saveState.value === operation) saveState.value = { status: "idle" };
   }
 }
 

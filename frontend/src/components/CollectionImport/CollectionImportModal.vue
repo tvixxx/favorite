@@ -3,7 +3,7 @@ import {
   blurAfterTouchSelect,
   selectPopupContainer,
 } from "@/utils/touchSelect";
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from "vue";
 import {
   Button as AButton,
   Select as ASelect,
@@ -31,8 +31,6 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const filename = ref("");
 const readable = ref("");
 const error = ref("");
-const busy = ref<"check" | "import" | "file" | null>(null);
-const result = ref<{ added: number; skipped: number } | null>(null);
 const matches = ref<Record<number, string>>({});
 const selectedMatches = computed(() =>
   Object.entries(matches.value)
@@ -64,17 +62,40 @@ interface Preview {
   }[];
 }
 
-const preview = ref<Preview | null>(null);
-let checkedInput = "";
+type ImportState =
+  | { phase: "editing" | "reading" | "checking" }
+  | { phase: "review"; preview: Preview }
+  | {
+      phase: "ready" | "importing";
+      preview: Preview & { proof: string };
+      inputKey: string;
+    }
+  | { phase: "complete"; result: { added: number; skipped: number } };
+
+const state = shallowRef<ImportState>({ phase: "editing" });
+const preview = computed(() =>
+  "preview" in state.value ? state.value.preview : null
+);
+const result = computed(() =>
+  state.value.phase === "complete" ? state.value.result : null
+);
+const busy = computed(() => {
+  switch (state.value.phase) {
+    case "reading":
+      return "file";
+    case "checking":
+      return "check";
+    case "importing":
+      return "import";
+    default:
+      return null;
+  }
+});
 let controller: AbortController | undefined;
 const requests = createRequestGuard();
 const MAX_BYTES = 2 * 1024 * 1024;
 const canImport = computed(
-  () =>
-    !busy.value &&
-    preview.value?.valid &&
-    !!preview.value.proof &&
-    preview.value.ready > 0
+  () => state.value.phase === "ready" && state.value.inputKey === inputKey()
 );
 const exampleJson = JSON.stringify(
   {
@@ -110,11 +131,8 @@ const watchLabels: Record<string, string> = {
 function invalidate() {
   requests.invalidate();
   controller?.abort();
-  preview.value = null;
-  checkedInput = "";
-  busy.value = null;
+  state.value = { phase: "editing" };
   error.value = "";
-  result.value = null;
 }
 
 watch(
@@ -171,11 +189,11 @@ function chooseMatch(row: number, movieId: unknown): void {
   };
 
   if (preview.value) {
-    preview.value.proof = null;
-    preview.value.valid = false;
+    state.value = {
+      phase: "review",
+      preview: { ...preview.value, proof: null, valid: false },
+    };
   }
-
-  checkedInput = "";
 }
 
 function toggleReadable() {
@@ -268,7 +286,7 @@ async function chooseFile(event: Event) {
 
   const current = requests.begin();
 
-  busy.value = "file";
+  state.value = { phase: "reading" };
   try {
     const extension = file.name.split(".").at(-1)?.toLowerCase();
 
@@ -292,7 +310,7 @@ async function chooseFile(event: Event) {
           ? "Сохраните файл в кодировке UTF-8"
           : (cause as Error).message;
   } finally {
-    if (current()) busy.value = null;
+    if (current()) state.value = { phase: "editing" };
   }
 }
 
@@ -310,7 +328,7 @@ async function check() {
   const current = requests.begin();
   const key = inputKey();
 
-  busy.value = "check";
+  state.value = { phase: "checking" };
   controller = new AbortController();
   try {
     const response = await api.post<Preview>(
@@ -326,19 +344,33 @@ async function check() {
     );
 
     if (current() && key === inputKey()) {
-      preview.value = response.data;
-      checkedInput = key;
+      const data = response.data;
+
+      state.value =
+        data.valid && data.proof && data.ready > 0
+          ? {
+              phase: "ready",
+              preview: { ...data, proof: data.proof },
+              inputKey: key,
+            }
+          : { phase: "review", preview: data };
     }
   } catch (cause) {
-    if (current())
+    if (current()) {
+      state.value = { phase: "editing" };
       error.value = getApiResponseMessage(cause) ?? friendlyRequestError(cause);
-  } finally {
-    if (current()) busy.value = null;
+    }
   }
 }
 
 async function commit() {
-  if (!canImport.value || !main.userData?.id || checkedInput !== inputKey())
+  const checked = state.value;
+
+  if (
+    checked.phase !== "ready" ||
+    !main.userData?.id ||
+    checked.inputKey !== inputKey()
+  )
     return;
   try {
     validate();
@@ -351,7 +383,7 @@ async function commit() {
 
   const current = requests.begin();
 
-  busy.value = "import";
+  state.value = { ...checked, phase: "importing" };
   error.value = "";
   controller = new AbortController();
   try {
@@ -363,30 +395,25 @@ async function commit() {
         ...(selectedMatches.value.length
           ? { matches: selectedMatches.value }
           : {}),
-        proof: preview.value!.proof,
+        proof: checked.preview.proof,
       },
       { signal: controller.signal, timeout: 30000 }
     );
 
     if (current()) {
-      result.value = response.data;
+      state.value = { phase: "complete", result: response.data };
       if (response.data.added > 0)
         trackUsage(`/users/${main.userData.id}/movies/import`, "POST");
-      preview.value = null;
-      checkedInput = "";
       emit("imported");
     }
   } catch (cause) {
     if (current()) {
-      if ([400, 409].includes(getRequestStatus(cause) ?? 0)) {
-        preview.value = null;
-        checkedInput = "";
-      }
+      state.value = [400, 409].includes(getRequestStatus(cause) ?? 0)
+        ? { phase: "editing" }
+        : checked;
 
       error.value = getApiResponseMessage(cause) ?? friendlyRequestError(cause);
     }
-  } finally {
-    if (current()) busy.value = null;
   }
 }
 

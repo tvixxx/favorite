@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import SectionHeading from "@/components/SectionHeading/SectionHeading.vue";
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from "vue";
 import { useRouter } from "vue-router";
 import {
   Button as AButton,
@@ -61,16 +61,31 @@ const items = ref<DiaryEntry[]>([]),
   total = ref(0),
   loading = ref(false),
   loadError = ref("");
-const formOpen = ref(false),
-  formEpoch = ref(0),
-  editing = ref<DiaryEntry | null>(null),
-  duplicate = ref<DiaryEntry | null>(null);
+const editor = shallowRef<{
+  entry: DiaryEntry | null;
+  duplicate: DiaryEntry | null;
+} | null>(null);
+const formOpen = computed({
+  get: () => editor.value !== null,
+  set: (open: boolean) => {
+    if (!open) editor.value = null;
+  },
+});
+const formEpoch = ref(0);
+const editing = computed(() => editor.value?.entry ?? null);
+const duplicate = computed(() => editor.value?.duplicate ?? null);
+const mutation = shallowRef<"save" | "remove" | null>(null);
+const saving = computed(() => mutation.value !== null);
 const movies = ref<DiaryMovie[]>([]),
   moviesLoading = ref(false),
-  saving = ref(false),
   formError = ref("");
-const removal = ref<DiaryEntry | null>(null),
-  deleteOpen = ref(false);
+const removal = ref<DiaryEntry | null>(null);
+const deleteOpen = computed({
+  get: () => removal.value !== null,
+  set: (open: boolean) => {
+    if (!open) removal.value = null;
+  },
+});
 const readGuard = createRequestGuard(),
   movieGuard = createRequestGuard(),
   mutationGuard = createRequestGuard();
@@ -162,11 +177,9 @@ function searchMovies(query: string): void {
 }
 
 function openForm(entry: DiaryEntry | null = null): void {
-  editing.value = entry;
-  duplicate.value = null;
+  editor.value = { entry, duplicate: null };
   formError.value = "";
   formEpoch.value++;
-  formOpen.value = true;
   if (!entry && !props.movie) void loadMovies();
 }
 
@@ -184,7 +197,7 @@ async function save(submission: {
 
   mutationController?.abort();
   mutationController = new AbortController();
-  saving.value = true;
+  mutation.value = "save";
   formError.value = "";
   try {
     const { viewedOn, scope, season, isRewatch, rating, note } =
@@ -214,7 +227,8 @@ async function save(submission: {
 
     if (!current()) return;
     if (result.status === "duplicate") {
-      duplicate.value = result.entry;
+      if (editor.value)
+        editor.value = { ...editor.value, duplicate: result.entry };
 
       return;
     }
@@ -239,13 +253,12 @@ async function save(submission: {
       formError.value =
         getApiResponseMessage(error) || "Не удалось сохранить просмотр";
   } finally {
-    if (current()) saving.value = false;
+    if (current()) mutation.value = null;
   }
 }
 
 function askRemove(entry: DiaryEntry): void {
   removal.value = entry;
-  deleteOpen.value = true;
 }
 
 async function confirmRemove(): Promise<void> {
@@ -255,7 +268,7 @@ async function confirmRemove(): Promise<void> {
     current = mutationGuard.begin();
 
   mutationController = new AbortController();
-  saving.value = true;
+  mutation.value = "remove";
   try {
     await removeDiary(
       userId.value,
@@ -275,7 +288,7 @@ async function confirmRemove(): Promise<void> {
         getApiResponseMessage(error) || "Не удалось удалить запись"
       );
   } finally {
-    if (current()) saving.value = false;
+    if (current()) mutation.value = null;
   }
 }
 
@@ -293,9 +306,7 @@ function resetSession(): void {
   movies.value = [];
   formOpen.value = false;
   deleteOpen.value = false;
-  editing.value = null;
-  duplicate.value = null;
-  saving.value = false;
+  mutation.value = null;
   moviesLoading.value = false;
   loadError.value = "";
   formError.value = "";

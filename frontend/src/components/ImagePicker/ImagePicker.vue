@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from "vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import ProtectedImage from "./ProtectedImage.vue";
 import { useMainStore } from "@/state/state";
@@ -34,8 +34,9 @@ const mode = ref<"file" | "url">(
 const urlText = ref(
   props.modelValue?.assetId ? "" : props.modelValue?.url ?? ""
 );
-const uploading = ref(false);
-const processing = ref(false);
+const uploadPhase = shallowRef<"idle" | "uploading" | "processing">("idle");
+const uploading = computed(() => uploadPhase.value !== "idle");
+const processing = computed(() => uploadPhase.value === "processing");
 const progress = ref(0);
 const error = ref("");
 const previewFailed = ref(false);
@@ -70,8 +71,7 @@ function stop(): void {
   generation += 1;
   controller?.abort();
   controller = null;
-  uploading.value = false;
-  processing.value = false;
+  uploadPhase.value = "idle";
   emit("busy", false);
 }
 
@@ -146,7 +146,7 @@ async function chooseFile(event: Event): Promise<void> {
   info.value = null;
   progress.value = 0;
   localPreview.value = URL.createObjectURL(file);
-  uploading.value = true;
+  uploadPhase.value = "uploading";
   emit("busy", true);
   emit("update:modelValue", { url: localPreview.value });
 
@@ -162,7 +162,8 @@ async function chooseFile(event: Event): Promise<void> {
           ? Math.min(100, Math.round((loaded / total) * 100))
           : 0;
 
-        processing.value = !!total && loaded >= total;
+        uploadPhase.value =
+          total && loaded >= total ? "processing" : "uploading";
       },
     });
 
@@ -204,8 +205,7 @@ async function chooseFile(event: Event): Promise<void> {
     emit("update:modelValue", lastValid.value);
   } finally {
     if (request === generation) {
-      uploading.value = false;
-      processing.value = false;
+      uploadPhase.value = "idle";
       controller = null;
       emit("busy", false);
     }

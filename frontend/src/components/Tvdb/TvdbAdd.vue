@@ -3,7 +3,7 @@ import {
   blurAfterTouchSelect,
   selectPopupContainer,
 } from "@/utils/touchSelect";
-import { onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from "vue";
 import { RouterLink } from "vue-router";
 import {
   importTvdb,
@@ -33,13 +33,28 @@ const emit = defineEmits<{ manual: [title: string]; added: [] }>();
 const query = ref("");
 const type = ref("");
 const year = ref<number>();
-const results = ref<TvdbCandidate[]>([]);
-const preview = ref<TvdbPreview | null>(null);
-const success = ref<{ movieId: string; alreadyInCollection: boolean } | null>(
-  null
+
+type TvdbScreen =
+  | { view: "search" }
+  | { view: "preview"; preview: TvdbPreview }
+  | {
+      view: "complete";
+      result: { movieId: string; alreadyInCollection: boolean };
+    };
+type TvdbOperation = "search" | "preview" | "import";
+
+const screen = shallowRef<TvdbScreen>({ view: "search" });
+const searchResults = ref<TvdbCandidate[] | null>(null);
+const results = computed(() => searchResults.value ?? []);
+const searched = computed(() => searchResults.value !== null);
+const preview = computed(() =>
+  screen.value.view === "preview" ? screen.value.preview : null
 );
-const busy = ref(false);
-const searched = ref(false);
+const success = computed(() =>
+  screen.value.view === "complete" ? screen.value.result : null
+);
+const pendingOperation = shallowRef<TvdbOperation | null>(null);
+const busy = computed(() => pendingOperation.value !== null);
 const error = ref("");
 let revision = 0;
 let controller: AbortController | undefined;
@@ -47,7 +62,12 @@ let controller: AbortController | undefined;
 function cancel(): void {
   revision++;
   controller?.abort();
-  busy.value = false;
+  pendingOperation.value = null;
+}
+
+function backToResults(): void {
+  screen.value = { view: "search" };
+  error.value = "";
 }
 
 watch(
@@ -55,17 +75,16 @@ watch(
   () => {
     cancel();
     query.value = "";
-    results.value = [];
-    preview.value = null;
-    success.value = null;
+    searchResults.value = null;
+    screen.value = { view: "search" };
     error.value = "";
-    searched.value = false;
   },
   { flush: "sync" }
 );
 
 onBeforeUnmount(cancel);
 async function run(
+  operation: TvdbOperation,
   action: (signal: AbortSignal) => Promise<void>
 ): Promise<void> {
   cancel();
@@ -74,7 +93,7 @@ async function run(
   const requestRevision = revision;
 
   controller = new AbortController();
-  busy.value = true;
+  pendingOperation.value = operation;
   error.value = "";
   try {
     await action(controller.signal);
@@ -84,7 +103,7 @@ async function run(
         getApiResponseMessage(reason) ||
         "Не удалось получить данные TheTVDB. Повторите попытку.";
   } finally {
-    if (requestRevision === revision) busy.value = false;
+    if (requestRevision === revision) pendingOperation.value = null;
   }
 }
 
@@ -96,7 +115,7 @@ async function search(): Promise<void> {
     return;
   }
 
-  await run(async (signal) => {
+  await run("search", async (signal) => {
     const data = await searchTvdb(
       query.value.trim(),
       type.value,
@@ -105,37 +124,35 @@ async function search(): Promise<void> {
     );
 
     if (signal.aborted) return;
-    results.value = data;
-    searched.value = true;
-    success.value = null;
+    searchResults.value = data;
+    screen.value = { view: "search" };
   });
 }
 
 async function select(candidate: TvdbCandidate): Promise<void> {
   if (candidate.inCollection && candidate.localMovieId) {
-    success.value = {
-      movieId: candidate.localMovieId,
-      alreadyInCollection: true,
+    screen.value = {
+      view: "complete",
+      result: { movieId: candidate.localMovieId, alreadyInCollection: true },
     };
 
     return;
   }
 
-  await run(async (signal) => {
+  await run("preview", async (signal) => {
     const data = await previewTvdb(candidate, signal);
 
-    if (!signal.aborted) preview.value = data;
+    if (!signal.aborted) screen.value = { view: "preview", preview: data };
   });
 }
 
 async function confirm(payload: Record<string, unknown>): Promise<void> {
-  await run(async (signal) => {
+  await run("import", async (signal) => {
     const result = await importTvdb(payload, signal);
 
     if (signal.aborted) return;
-    success.value = result;
-    preview.value = null;
-    results.value = results.value.map((item) =>
+    screen.value = { view: "complete", result };
+    searchResults.value = results.value.map((item) =>
       item.id === payload.id && item.type === payload.type
         ? { ...item, localMovieId: result.movieId, inCollection: true }
         : item
@@ -173,7 +190,7 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
             aria-hidden="true"
           />
         </RouterLink>
-        <button type="button" class="tvdb-link" @click="success = null">
+        <button type="button" class="tvdb-link" @click="backToResults">
           Добавить ещё
         </button>
       </div>
@@ -185,10 +202,7 @@ async function confirm(payload: Record<string, unknown>): Promise<void> {
       :is-admin="isAdmin"
       :busy="busy"
       @confirm="confirm"
-      @back="
-        preview = null;
-        error = '';
-      "
+      @back="backToResults"
     />
     <template v-else>
       <form

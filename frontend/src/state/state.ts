@@ -47,6 +47,10 @@ function profileData(profile: UserProfileResponse): UserData {
   };
 }
 
+type AuthResult =
+  | { status: "authenticated"; profile: UserProfileResponse }
+  | { status: "guest" | "unavailable" };
+
 export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
   const userDataRaw = useStorage<UserData | null>(
     CURRENT_USER,
@@ -239,37 +243,26 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
         return;
       }
 
-      authUnavailable.value = false;
-
       if (isSuccessStatus(status)) {
-        const userObj = profileData(data);
-
-        userDataRaw.value = userObj;
-        state.value.user.data = userObj;
-        state.value.user.loggedIn = true;
+        setAuthResult({ status: "authenticated", profile: data });
       } else {
-        userDataRaw.value = null;
-        state.value.user.data = null;
-        state.value.user.loggedIn = false;
+        setAuthResult({ status: "guest" });
       }
     } catch (error) {
       if (requestRevision !== sessionRevision.value) {
         return;
       }
 
-      authUnavailable.value =
+      const unavailable =
         isAxiosError(error) &&
         (!error.response || error.response.status >= 500);
 
-      userDataRaw.value = null;
-      state.value.user.data = null;
-      state.value.user.loggedIn = false;
+      setAuthResult({ status: unavailable ? "unavailable" : "guest" });
       throw new Error("Не удалось получить данные пользователя", {
         cause: error,
       });
     } finally {
       if (requestRevision === sessionRevision.value) {
-        state.value.user.isAuthLoaded = true;
         state.value.isFetchingUser = false;
       }
     }
@@ -297,7 +290,7 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
         throw new Error("Не удалось получить профиль");
       }
 
-      setUserProfile(fetchedUser.data);
+      setAuthResult({ status: "authenticated", profile: fetchedUser.data });
     } catch (error) {
       if (requestRevision === sessionRevision.value) {
         clearAuthState();
@@ -311,29 +304,25 @@ export const useMainStore = defineStore(MAIN_STORE_NAME, () => {
     }
   }
 
-  function setUserProfile(userProfile: UserProfileResponse) {
-    if (!userProfile) {
-      return;
-    }
+  function setAuthResult(result: AuthResult): void {
+    const data =
+      result.status === "authenticated" ? profileData(result.profile) : null;
 
-    const userObj = profileData(userProfile);
-
-    userDataRaw.value = userObj;
-    state.value.user.data = userObj;
-    state.value.user.loggedIn = true;
-    state.value.user.isAuthLoaded = true;
+    authUnavailable.value = result.status === "unavailable";
+    userDataRaw.value = data;
+    state.value.user = {
+      data,
+      loggedIn: result.status === "authenticated",
+      isAuthLoaded: true,
+    };
   }
 
   function clearAuthState(): void {
     sessionRevision.value++;
     authRequest = null;
-    authUnavailable.value = false;
     isUpdatingProfile.value = false;
-    userDataRaw.value = null;
     accessToken.value = null;
-    state.value.user.data = null;
-    state.value.user.loggedIn = false;
-    state.value.user.isAuthLoaded = true;
+    setAuthResult({ status: "guest" });
     state.value.isFetchingUser = false;
     useUserMoviesStore().resetSession();
     useUserListsStore().resetSession();

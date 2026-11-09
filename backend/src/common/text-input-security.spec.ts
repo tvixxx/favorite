@@ -1,9 +1,12 @@
 import { ValidationPipe } from '@nestjs/common';
 import { CreateMovieRequest } from '../movie/dto/create-movie.dto';
-import { CreateActorDto } from '../actor/dto/create-actor.dto';
+import { CreateActorDto, PatchActorDto } from '../actor/dto/create-actor.dto';
+import { PatchMovieDto } from '../movie/dto/patch-movie.dto';
 import { CreateReviewDto } from '../review/dto/create-review.dto';
 import { UpdateReviewDto } from '../review/dto/update-review.dto';
 import { CreateUserListDto } from '../user-list/dto/create-user-list.dto';
+import { UpdateUserListDto } from '../user-list/dto/update-user-list.dto';
+import { PatchUserDto } from '../user/dto/update-user.dto';
 import { RegisterRequest } from '../auth/dto/register.dto';
 import { CreateFeedbackDto } from '../feedback/dto/create-feedback.dto';
 import { queryString } from './utils/query-value';
@@ -12,6 +15,58 @@ const pipe = new ValidationPipe({
   transform: true,
   whitelist: true,
   forbidNonWhitelisted: true,
+});
+
+describe('Границы цветов и ссылок на изображения', () => {
+  it.each([
+    'url(https://example.test/pixel)',
+    '#fff; background-image: url(https://example.test/pixel)',
+    'expression(alert(1))',
+  ])(
+    'отклоняет CSS в поле цвета при создании и обновлении списка: %s',
+    async (color) => {
+      await expect(
+        validate({ name: 'Список', color }, CreateUserListDto),
+      ).rejects.toMatchObject({ status: 400 });
+      await expect(
+        validate({ color }, UpdateUserListDto),
+      ).rejects.toMatchObject({
+        status: 400,
+      });
+    },
+  );
+
+  it.each([
+    'javascript:alert(1)',
+    'data:image/svg+xml,<svg onload=alert(1)>',
+    'vbscript:msgbox(1)',
+    '//example.test/poster.webp',
+  ])('отклоняет недопустимую ссылку на изображение: %s', async (url) => {
+    for (const [dto, field, extra] of [
+      [CreateMovieRequest, 'imageUrl', movie],
+      [PatchMovieDto, 'imageUrl', {}],
+      [CreateActorDto, 'imageUrl', { name: 'Актёр' }],
+      [PatchActorDto, 'imageUrl', {}],
+      [PatchUserDto, 'avatarUrl', {}],
+    ] as const) {
+      await expect(
+        validate({ ...extra, [field]: url }, dto),
+      ).rejects.toMatchObject({
+        status: 400,
+      });
+    }
+  });
+
+  it('сохраняет HEX-цвет и допустимую HTTPS-ссылку', async () => {
+    await expect(
+      validate({ name: 'Список', color: '#007CFF' }, CreateUserListDto),
+    ).resolves.toMatchObject({ color: '#007CFF' });
+    const imageUrl = 'https://example.test/poster.webp';
+
+    await expect(validate({ imageUrl }, PatchMovieDto)).resolves.toMatchObject({
+      imageUrl,
+    });
+  });
 });
 const movie = {
   title: 'Фильм',

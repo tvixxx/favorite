@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { useUserListsStore } from "@/stores/userLists/userListsStore";
-import { computed, ref } from "vue";
+import { computed, ref, shallowRef } from "vue";
 import { FETCH_METHOD, useFetch } from "@/composable";
 import { getDefaultLoaderDelayTime } from "@/constants";
 import { isSuccessStatus } from "@/utils";
@@ -22,8 +22,13 @@ import {
 export const useUserMoviesStore = defineStore("userMovies", () => {
   const userMovies = ref<UserMovie[]>([]);
   const isLoaded = ref<boolean>(false);
-  const isLoading = ref(false);
-  const isLoadingMore = ref(false);
+  const loadPhase = shallowRef<"idle" | "loading" | "refreshing" | "appending">(
+    "idle"
+  );
+  const isLoading = computed(
+    () => loadPhase.value === "loading" || loadPhase.value === "refreshing"
+  );
+  const isLoadingMore = computed(() => loadPhase.value === "appending");
   const totalCount = ref(0);
   const isError = ref<string | null>(null);
 
@@ -98,7 +103,11 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
   });
 
   const setLoading = (value: boolean) => {
-    isLoading.value = value;
+    loadPhase.value = value
+      ? isLoaded.value
+        ? "refreshing"
+        : "loading"
+      : "idle";
   };
 
   const setError = (errorText: string | null) => {
@@ -136,7 +145,6 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     searchQuery.value = "";
     searchResults.value = [];
     isSearching.value = false;
-    isLoadingMore.value = false;
   };
 
   const requestPage = async (
@@ -152,7 +160,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
 
     searchQuery.value = query;
     isSearching.value = !!query;
-    isLoadingMore.value = append;
+    if (append) loadPhase.value = "appending";
     if (!append) {
       setLoading(true);
       setError(null);
@@ -227,7 +235,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
       if (!append) setError("Ошибка загрузки фильмов");
       throw err;
     } finally {
-      if (isCurrent()) isLoadingMore.value = false;
+      if (isCurrent() && append) loadPhase.value = "idle";
       setTimeout(() => {
         if (isCurrent()) {
           setLoading(false);
@@ -557,7 +565,6 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     isLoaded.value = false;
     setLoading(false);
     isSearching.value = false;
-    isLoadingMore.value = false;
     stats.value = null;
     analytics.value = null;
   }
@@ -615,8 +622,7 @@ export const useUserMoviesStore = defineStore("userMovies", () => {
     analyticsRequests.invalidate();
     userMovies.value = [];
     isLoaded.value = false;
-    isLoading.value = false;
-    isLoadingMore.value = false;
+    loadPhase.value = "idle";
     totalCount.value = 0;
     isError.value = null;
     searchResults.value = [];

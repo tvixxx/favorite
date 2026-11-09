@@ -135,6 +135,7 @@ useHotThemeKeys();
 
     <OnboardingModal
       v-if="store.userData?.id && !isGuestRoute"
+      :key="store.sessionRevision"
       v-model:open="onboardingOpen"
       :user-id="store.userData.id"
     />

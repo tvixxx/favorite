@@ -21,6 +21,22 @@ interface AdminAnnouncement {
   archivedAt: string | null;
 }
 
+function announcementState(
+  item: AdminAnnouncement
+): "draft" | "published" | "archived" {
+  return item.archivedAt
+    ? "archived"
+    : item.publishedAt
+    ? "published"
+    : "draft";
+}
+
+const stateLabels = {
+  draft: "Черновик",
+  published: "Опубликовано",
+  archived: "В архиве",
+};
+
 const editorFormId = useId();
 const items = ref<AdminAnnouncement[]>([]);
 const total = ref(0);
@@ -29,8 +45,11 @@ const loading = ref(false);
 const error = ref("");
 const saving = ref(false);
 const editing = ref<AnnouncementDraft | null>(null);
-const confirming = ref<AdminAnnouncement | null>(null);
-const operation = ref<"publish" | "archive">("publish");
+const confirming = ref<{
+  item: AdminAnnouncement;
+  operation: "publish" | "archive";
+} | null>(null);
+const operation = computed(() => confirming.value?.operation ?? "publish");
 let request: AbortController | undefined;
 const editorOpen = computed({
   get: () => !!editing.value,
@@ -113,7 +132,10 @@ async function apply(): Promise<void> {
   error.value = "";
   try {
     await api.post(
-      "/admin/announcements/" + confirming.value.id + "/" + operation.value
+      "/admin/announcements/" +
+        confirming.value.item.id +
+        "/" +
+        confirming.value.operation
     );
 
     confirming.value = null;
@@ -151,13 +173,7 @@ onBeforeUnmount(() => request?.abort());
     <article v-for="item in items" :key="item.id" class="announcement-row">
       <div>
         <h3>{{ item.title }}</h3>
-        <Tag>{{
-          item.archivedAt
-            ? "В архиве"
-            : item.publishedAt
-            ? "Опубликовано"
-            : "Черновик"
-        }}</Tag
+        <Tag>{{ stateLabels[announcementState(item)] }}</Tag
         ><Tag>{{
           item.category === "RELEASE"
             ? "Релиз"
@@ -169,25 +185,19 @@ onBeforeUnmount(() => request?.abort());
       <p>{{ item.body }}</p>
       <div class="announcement-row__actions">
         <Button
-          v-if="!item.publishedAt && !item.archivedAt"
+          v-if="announcementState(item) === 'draft'"
           :disabled="loading || saving"
           @click="edit(item)"
           >Редактировать</Button
         ><Button
-          v-if="!item.publishedAt && !item.archivedAt"
+          v-if="announcementState(item) === 'draft'"
           :disabled="loading || saving"
-          @click="
-            confirming = item;
-            operation = 'publish';
-          "
+          @click="confirming = { item, operation: 'publish' }"
           >Предпросмотр и публикация</Button
         ><Button
-          v-if="!item.archivedAt"
+          v-if="announcementState(item) !== 'archived'"
           :disabled="loading || saving"
-          @click="
-            confirming = item;
-            operation = 'archive';
-          "
+          @click="confirming = { item, operation: 'archive' }"
           >В архив</Button
         >
       </div>
@@ -243,10 +253,10 @@ onBeforeUnmount(() => request?.abort());
           : "Архивировать объявление?"
       }}</template
       ><template #body
-        ><h3>{{ confirming?.title }}</h3>
-        <p class="announcement-row__full">{{ confirming?.body }}</p>
+        ><h3>{{ confirming?.item.title }}</h3>
+        <p class="announcement-row__full">{{ confirming?.item.body }}</p>
         <Button
-          v-for="action in safeNotificationActions(confirming?.actions)"
+          v-for="action in safeNotificationActions(confirming?.item.actions)"
           :key="action.path"
           disabled
           >{{ action.label }}</Button

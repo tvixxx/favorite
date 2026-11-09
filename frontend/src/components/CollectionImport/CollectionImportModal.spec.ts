@@ -285,4 +285,64 @@ describe("Обязательная проверка перед импортом 
     expect(wrapper.text()).toContain("Проверка устарела");
     wrapper.unmount();
   });
+
+  it("после сетевой ошибки позволяет вручную повторить импорт того же проверенного снимка", async () => {
+    const wrapper = render();
+
+    await wrapper.get("textarea").setValue(content);
+    mocks.post
+      .mockResolvedValueOnce({ data: preview })
+      .mockRejectedValueOnce(new Error("Network error"))
+      .mockResolvedValueOnce({ data: { added: 1, skipped: 0 } });
+
+    await wrapper.get('[data-testid="import-check"]').trigger("click");
+    await flushPromises();
+    await wrapper.get('[data-testid="import-commit"]').trigger("click");
+    await flushPromises();
+    expect(wrapper.emitted("imported")).toBeUndefined();
+    expect(
+      wrapper.get('[data-testid="import-commit"]').attributes("disabled")
+    ).toBeUndefined();
+
+    await wrapper.get('[data-testid="import-commit"]').trigger("click");
+    await flushPromises();
+    expect(mocks.post.mock.calls[2][1]).toEqual(mocks.post.mock.calls[1][1]);
+    expect(wrapper.emitted("imported")).toHaveLength(1);
+    wrapper.unmount();
+  });
+
+  it.each(["закрытия", "смены сессии"])(
+    "не применяет поздний результат импорта после %s",
+    async (reason) => {
+      const wrapper = render();
+      let finish!: (value: unknown) => void;
+
+      await wrapper.get("textarea").setValue(content);
+      mocks.post.mockResolvedValueOnce({ data: preview }).mockReturnValueOnce(
+        new Promise((resolve) => {
+          finish = resolve;
+        })
+      );
+
+      await wrapper.get('[data-testid="import-check"]').trigger("click");
+      await flushPromises();
+      await wrapper.get('[data-testid="import-commit"]').trigger("click");
+
+      const signal = mocks.post.mock.calls[1][2].signal as AbortSignal;
+
+      if (reason === "закрытия") await wrapper.setProps({ modelValue: false });
+      else store.sessionRevision++;
+      expect(signal.aborted).toBe(true);
+      finish({ data: { added: 1, skipped: 0 } });
+      await flushPromises();
+      await wrapper.setProps({ modelValue: true });
+      expect(wrapper.emitted("imported")).toBeUndefined();
+      expect(wrapper.text()).not.toContain("Импорт завершён");
+      expect(
+        wrapper.get('[data-testid="import-commit"]').attributes("disabled")
+      ).toBeDefined();
+
+      wrapper.unmount();
+    }
+  );
 });

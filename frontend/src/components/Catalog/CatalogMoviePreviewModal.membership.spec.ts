@@ -178,4 +178,38 @@ describe("Принадлежность произведения коллекци
     expect(wrapper.text()).not.toContain("Уже в вашей коллекции");
     wrapper.unmount();
   });
+
+  it("после ошибки добавления разрешает повтор и не меняет новую карточку поздним успехом", async () => {
+    calls.add.mockRejectedValueOnce(new Error("offline"));
+
+    const wrapper = render();
+
+    await flushPromises();
+    await wrapper.get(".catalog-preview__cta").trigger("click");
+    await flushPromises();
+    expect(
+      wrapper.get(".catalog-preview__cta").attributes("disabled")
+    ).toBeUndefined();
+
+    let finish!: (value: unknown) => void;
+
+    calls.add.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+    );
+
+    await wrapper.get(".catalog-preview__cta").trigger("click");
+    await wrapper.setProps({ movieId: "second" });
+    await flushPromises();
+    finish({ id: "old-link" });
+    await flushPromises();
+    expect(wrapper.text()).toContain("Добавить в мою коллекцию");
+    expect(wrapper.text()).not.toContain("Уже в вашей коллекции");
+    expect(
+      wrapper.get(".catalog-preview__cta").attributes("disabled")
+    ).toBeUndefined();
+
+    wrapper.unmount();
+  });
 });

@@ -1,15 +1,24 @@
-import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  shallowRef,
+  type ComputedRef,
+} from "vue";
 import api from "@/services/api";
 
 export function usePasswordRecoveryAvailability(): {
-  enabled: Ref<boolean>;
-  checking: Ref<boolean>;
-  failed: Ref<boolean>;
+  enabled: ComputedRef<boolean>;
+  checking: ComputedRef<boolean>;
+  failed: ComputedRef<boolean>;
   load: () => Promise<void>;
 } {
-  const enabled = ref(false);
-  const checking = ref(true);
-  const failed = ref(false);
+  const status = shallowRef<"checking" | "enabled" | "disabled" | "error">(
+    "checking"
+  );
+  const enabled = computed(() => status.value === "enabled");
+  const checking = computed(() => status.value === "checking");
+  const failed = computed(() => status.value === "error");
   let controller: AbortController | undefined;
 
   async function load(): Promise<void> {
@@ -18,9 +27,7 @@ export function usePasswordRecoveryAvailability(): {
     const current = new AbortController();
 
     controller = current;
-    enabled.value = false;
-    checking.value = true;
-    failed.value = false;
+    status.value = "checking";
     try {
       const { data } = await api.get<{ passwordRecovery?: unknown }>(
         "/auth/password/capabilities",
@@ -28,11 +35,9 @@ export function usePasswordRecoveryAvailability(): {
       );
 
       if (!current.signal.aborted)
-        enabled.value = data?.passwordRecovery === true;
+        status.value = data?.passwordRecovery === true ? "enabled" : "disabled";
     } catch {
-      if (!current.signal.aborted) failed.value = true;
-    } finally {
-      if (!current.signal.aborted) checking.value = false;
+      if (!current.signal.aborted) status.value = "error";
     }
   }
 

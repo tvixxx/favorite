@@ -34,6 +34,30 @@ async function checkWebHeaders(base, asset) {
       request.on("error", reject);
     });
     assert.equal(status, path === missing ? 404 : 200, `${path}: status`);
+    const reportOnly = headers["content-security-policy-report-only"];
+    assert.ok(reportOnly, `${path}: content-security-policy-report-only`);
+    assert.equal(
+      headers["content-security-policy"],
+      undefined,
+      `${path}: CSP must be report-only during rollout`,
+    );
+    const directives = reportOnly.split(";").map((value) => value.trim());
+    for (const expected of [
+      "default-src 'self'",
+      "script-src 'self'",
+      "script-src-attr 'none'",
+      "style-src 'self'",
+      "object-src 'none'",
+      "base-uri 'none'",
+      "report-uri /_csp-report",
+    ]) {
+      const name = expected.split(" ")[0];
+      assert.deepEqual(
+        directives.filter((value) => value.split(/\s+/)[0] === name),
+        [expected],
+        `${path}: CSP ${name}`,
+      );
+    }
     for (const [header, expected] of [
       ["x-content-type-options", "nosniff"],
       ["x-frame-options", "SAMEORIGIN"],

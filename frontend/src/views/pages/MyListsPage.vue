@@ -416,7 +416,7 @@ onMounted(() => {
         >
           <span
             class="list-card__band"
-            :style="{ background: list.color || 'var(--fv-color-brand)' }"
+            :style="{ backgroundColor: list.color || 'var(--fv-color-brand)' }"
             aria-hidden="true"
           >
             <BaseIcon
@@ -469,7 +469,7 @@ onMounted(() => {
 
       <template #body>
         <div class="list-form">
-          <div class="list-form__preview" :style="{ background: formColor }">
+          <div class="list-form__preview" :style="{ backgroundColor: formColor }">
             <BaseIcon
               name="ph:bookmarks-simple-fill"
               class="list-form__preview-icon"
@@ -566,7 +566,7 @@ onMounted(() => {
           <header
             class="list-detail-modal__cover"
             :style="{
-              background: displayedList?.color || 'var(--fv-color-brand)',
+              backgroundColor: displayedList?.color || 'var(--fv-color-brand)',
             }"
           >
             <div class="list-detail-modal__cover-actions">

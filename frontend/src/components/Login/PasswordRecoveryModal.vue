@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from "vue";
 import { Button as AButton, Input as AInput } from "ant-design-vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import api from "@/services/api";
@@ -10,8 +10,9 @@ import { createRequestGuard } from "@/utils/requestGuard";
 const props = defineProps<{ modelValue: boolean; email: string }>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean] }>();
 const inputEmail = ref("");
-const busy = ref(false);
-const sent = ref(false);
+const status = shallowRef<"editing" | "submitting" | "sent">("editing");
+const busy = computed(() => status.value === "submitting");
+const sent = computed(() => status.value === "sent");
 const error = ref("");
 const requests = createRequestGuard();
 let controller: AbortController | undefined;
@@ -21,9 +22,8 @@ watch(
   () => {
     requests.invalidate();
     controller?.abort();
-    busy.value = false;
+    status.value = "editing";
     inputEmail.value = props.email;
-    sent.value = false;
     error.value = "";
   },
   { immediate: true }
@@ -48,7 +48,7 @@ async function submit() {
   const current = requests.begin();
 
   controller = new AbortController();
-  busy.value = true;
+  status.value = "submitting";
   error.value = "";
   try {
     await api.post(
@@ -57,11 +57,11 @@ async function submit() {
       { signal: controller.signal, timeout: 15000 }
     );
 
-    if (current()) sent.value = true;
+    if (current()) status.value = "sent";
   } catch (cause) {
     if (current()) error.value = friendlyRequestError(cause);
   } finally {
-    if (current()) busy.value = false;
+    if (current() && status.value === "submitting") status.value = "editing";
   }
 }
 </script>

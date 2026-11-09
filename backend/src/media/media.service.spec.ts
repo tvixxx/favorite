@@ -54,6 +54,17 @@ describe('Привязка загруженного медиа', () => {
     ).rejects.toThrow();
   });
 
+  it.each(['PROCESSING', 'FAILED', 'DELETING'])(
+    'не привязывает изображение в состоянии %s',
+    async (status) => {
+      tx.mediaAsset.findUnique.mockResolvedValue({ ...asset, status });
+      await expect(
+        service.claim(tx as never, 'asset-id', 'user-id', 'MOVIE_POSTER'),
+      ).rejects.toMatchObject({ status: 404 });
+      expect(tx.mediaAsset.updateMany).not.toHaveBeenCalled();
+    },
+  );
+
   it('возвращает обработанные ссылки после успешного захвата', async () => {
     expect(
       await service.claim(tx as never, 'asset-id', 'user-id', 'MOVIE_POSTER'),
@@ -130,6 +141,41 @@ describe('Лимиты загрузки', () => {
 });
 
 describe('Очистка медиа', () => {
+  it('повторяет удаление после ошибки хранилища, не теряя запись для очистки', async () => {
+    const asset = {
+      id: 'asset-id',
+      status: 'DELETING',
+      mainKey: 'images/asset/full.webp',
+      thumbnailKey: 'images/asset/thumbnail.webp',
+      createdAt: new Date(Date.now() - 25 * 3600000),
+    };
+    const prisma = {
+      mediaAsset: {
+        findMany: jest.fn().mockResolvedValue([asset]),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        findUnique: jest.fn().mockResolvedValue(asset),
+        deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+    };
+    const storage = {
+      remove: jest
+        .fn()
+        .mockRejectedValueOnce(new Error('storage unavailable'))
+        .mockResolvedValueOnce(undefined),
+    };
+    const service = new MediaService(
+      prisma as never,
+      storage as never,
+      {} as never,
+    );
+
+    await service.cleanup();
+    expect(prisma.mediaAsset.deleteMany).not.toHaveBeenCalled();
+    await service.cleanup();
+    expect(storage.remove).toHaveBeenCalledTimes(2);
+    expect(prisma.mediaAsset.deleteMany).toHaveBeenCalledTimes(1);
+  });
+
   it('не удаляет файлы, если изображение успели привязать', async () => {
     const prisma = {
       mediaAsset: {

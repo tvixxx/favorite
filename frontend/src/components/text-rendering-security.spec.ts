@@ -8,6 +8,7 @@ const attacks = [
   "<img src=x onerror=alert(1)>",
   "<script>alert(1)</script>",
   "<svg onload=alert(1)>",
+  '</style><img src=x onerror="alert(1)">',
   "javascript:alert(1)",
   "data:text/html,<script>alert(1)</script>",
 ];

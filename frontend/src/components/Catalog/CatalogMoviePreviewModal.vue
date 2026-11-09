@@ -24,8 +24,10 @@ import type { Movie } from "@/stores/movies/types";
 
 const modelValue = defineModel<boolean>({ required: true });
 
-const membership = ref<"checking" | "added" | "missing" | "error">("checking");
-const isAdding = ref(false);
+const membership = ref<"checking" | "added" | "missing" | "adding" | "error">(
+  "checking"
+);
+const isAdding = computed(() => membership.value === "adding");
 let membershipRequest: AbortController | undefined;
 const isAdded = computed(() => membership.value === "added");
 const reportOpen = ref(false);
@@ -118,7 +120,6 @@ watch(
     }
 
     moviesStore.setCurrentMovie(null);
-    isAdding.value = false;
     membership.value = "checking";
     void checkMembership();
 
@@ -146,13 +147,12 @@ async function addToCollection(): Promise<void> {
     !mid ||
     !owner ||
     membership.value !== "missing" ||
-    isAdding.value ||
     moviesStore.isMovieLoading ||
     moviesStore.isMovieError
   )
     return;
 
-  isAdding.value = true;
+  membership.value = "adding";
   try {
     await userMoviesStore.addUserMovie(owner, mid, {});
     if (request === membershipRequest && !request?.signal.aborted)
@@ -167,7 +167,8 @@ async function addToCollection(): Promise<void> {
 
     message.error("Не удалось добавить в коллекцию");
   } finally {
-    if (request === membershipRequest) isAdding.value = false;
+    if (request === membershipRequest && membership.value === "adding")
+      membership.value = "missing";
   }
 }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   Button as AButton,
@@ -31,8 +31,9 @@ const token = computed(() => {
 });
 const password = ref("");
 const confirmation = ref("");
-const busy = ref(false);
-const done = ref(false);
+const status = shallowRef<"editing" | "submitting" | "complete">("editing");
+const busy = computed(() => status.value === "submitting");
+const done = computed(() => status.value === "complete");
 const error = ref("");
 const recoveryOpen = ref(false);
 const requests = createRequestGuard();
@@ -43,7 +44,7 @@ watch(
   () => {
     requests.invalidate();
     controller?.abort();
-    busy.value = false;
+    if (!done.value) status.value = "editing";
     password.value = "";
     confirmation.value = "";
     error.value = "";
@@ -85,7 +86,7 @@ async function submit() {
   const current = requests.begin();
 
   controller = new AbortController();
-  busy.value = true;
+  status.value = "submitting";
   error.value = "";
   try {
     await api.post(
@@ -97,7 +98,7 @@ async function submit() {
     if (!current()) return;
     password.value = "";
     confirmation.value = "";
-    done.value = true;
+    status.value = "complete";
     void store.logOut();
     await router.replace({ hash: "" });
   } catch (cause) {
@@ -108,7 +109,7 @@ async function submit() {
         },
       });
   } finally {
-    if (current()) busy.value = false;
+    if (current() && status.value === "submitting") status.value = "editing";
   }
 }
 </script>

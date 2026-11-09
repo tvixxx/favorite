@@ -65,10 +65,10 @@ const render = (props = {}) =>
         MoviePoster: true,
         ConfirmDialog: true,
         DiaryForm: {
-          props: ["modelValue", "duplicate"],
+          props: ["modelValue", "duplicate", "error"],
           emits: ["confirm"],
           template:
-            "<div v-if=\"modelValue\"><p>{{ duplicate?.note }}</p><button data-confirm @click=\"$emit('confirm', { values: { viewedOn: '2026-10-17', scope: 'TITLE', season: null, isRewatch: false, rating: 9, note: 'Новая запись', syncStatus: false, syncRating: false }, movieId: 'movie', requestId: 'request', allowDuplicate: false })\">Подтвердить просмотр</button></div>",
+            "<div v-if=\"modelValue\"><p>{{ duplicate?.note }}</p><p>{{ error }}</p><button data-confirm @click=\"$emit('confirm', { values: { viewedOn: '2026-10-17', scope: 'TITLE', season: null, isRewatch: false, rating: 9, note: 'Новая запись', syncStatus: false, syncRating: false }, movieId: 'movie', requestId: 'request', allowDuplicate: false })\">Подтвердить просмотр</button></div>",
         },
       },
     },
@@ -188,5 +188,34 @@ describe("Загрузка личного дневника", () => {
       wrapper.unmount();
       vi.useRealTimers();
     }
+  });
+
+  it("после ошибки сохраняет форму и повторяет тот же запрос, закрывает её только после успеха", async () => {
+    mocks.create
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValueOnce({
+        status: "saved",
+        entry: entry("Новая запись"),
+        collectionUpdated: true,
+      });
+
+    const wrapper = render();
+
+    await flushPromises();
+    await wrapper.get("[data-diary-add]").trigger("click");
+    await wrapper.get("[data-confirm]").trigger("click");
+    await flushPromises();
+    expect(wrapper.text()).toContain("Не удалось сохранить просмотр");
+    expect(wrapper.find("[data-confirm]").exists()).toBe(true);
+    expect(wrapper.emitted("collectionUpdated")).toBeUndefined();
+    await wrapper.get("[data-confirm]").trigger("click");
+    await flushPromises();
+    expect(mocks.create.mock.calls.at(-1)?.[1]).toEqual(
+      mocks.create.mock.calls.at(-2)?.[1]
+    );
+
+    expect(wrapper.find("[data-confirm]").exists()).toBe(false);
+    expect(wrapper.emitted("collectionUpdated")).toHaveLength(1);
+    wrapper.unmount();
   });
 });
