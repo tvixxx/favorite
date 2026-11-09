@@ -45,7 +45,10 @@ export const useChatStore = defineStore("chat", () => {
   const messages = ref<Map<string, Message[]>>(new Map());
   const currentChatUserId = ref<string | null>(null);
   const currentUserId = ref<string | null>(null);
-  const isConnected = ref(false);
+  const connectionState = shallowRef<
+    "disconnected" | "connecting" | "connected" | "reconnecting"
+  >("disconnected");
+  const isConnected = computed(() => connectionState.value === "connected");
   const isLoading = ref(false);
   const hasLoadedConversations = ref(false);
   const isError = ref<string | null>(null);
@@ -71,6 +74,7 @@ export const useChatStore = defineStore("chat", () => {
     }
 
     if (next && next !== previous && socket.value) {
+      connectionState.value = "reconnecting";
       socket.value.disconnect().connect();
     }
   });
@@ -153,6 +157,7 @@ export const useChatStore = defineStore("chat", () => {
     }
 
     currentUserId.value = userId;
+    connectionState.value = "connecting";
 
     // За одним доменом сокет ходит на тот же origin (VITE_SOCKET_URL=""),
     // путь /socket.io проксирует nginx. В деве — прямой адрес бэкенда.
@@ -166,7 +171,7 @@ export const useChatStore = defineStore("chat", () => {
     });
 
     socket.value.on("connect", () => {
-      isConnected.value = true;
+      connectionState.value = "connected";
       void resume();
     });
 
@@ -184,7 +189,7 @@ export const useChatStore = defineStore("chat", () => {
     });
 
     socket.value.on("disconnect", (reason) => {
-      isConnected.value = false;
+      connectionState.value = "reconnecting";
       userStatusStore.clearStatuses();
       if (reason === "io server disconnect" && currentUserId.value) {
         const connection = socket.value;
@@ -436,7 +441,6 @@ export const useChatStore = defineStore("chat", () => {
       socket.value.removeAllListeners();
       socket.value.disconnect();
       socket.value = null;
-      isConnected.value = false;
       currentUserId.value = null;
     }
 
@@ -450,7 +454,7 @@ export const useChatStore = defineStore("chat", () => {
     isMessagesLoading.value = false;
     isMessagesError.value = false;
     isError.value = null;
-    isConnected.value = false;
+    connectionState.value = "disconnected";
     userStatusStore.clearStatuses();
   };
 

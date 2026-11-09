@@ -84,24 +84,22 @@ const feedback = useAdminPage<AdminFeedback>(
 );
 const selectedReview = ref<AdminReview | null>(null);
 const selectedFeedback = ref<AdminFeedback | null>(null);
-const reviewOpen = ref(false);
-const feedbackOpen = ref(false);
 const reason = ref("");
 const nextStatus = ref("NEW");
 const saving = ref(false);
 const reviewDialogOpen = computed({
-  get: () => reviewOpen.value,
+  get: () => selectedReview.value !== null,
   set: (value: boolean) => {
-    if (!saving.value) {
-      reviewOpen.value = value;
+    if (!value && !saving.value) {
+      selectedReview.value = null;
     }
   },
 });
 const feedbackDialogOpen = computed({
-  get: () => feedbackOpen.value,
+  get: () => selectedFeedback.value !== null,
   set: (value: boolean) => {
-    if (!saving.value) {
-      feedbackOpen.value = value;
+    if (!value && !saving.value) {
+      selectedFeedback.value = null;
     }
   },
 });
@@ -137,7 +135,6 @@ watch(
 function showReview(review: AdminReview): void {
   selectedReview.value = review;
   reason.value = "";
-  reviewOpen.value = true;
 }
 
 function showFeedback(id: string): void {
@@ -149,7 +146,6 @@ function showFeedback(id: string): void {
 
   selectedFeedback.value = item;
   nextStatus.value = item.status;
-  feedbackOpen.value = true;
 }
 
 async function moderate(dismiss = false): Promise<void> {
@@ -174,7 +170,7 @@ async function moderate(dismiss = false): Promise<void> {
       });
     }
 
-    reviewOpen.value = false;
+    selectedReview.value = null;
     message.success("Решение сохранено");
     await reviews.load();
   } catch (err) {
@@ -198,7 +194,7 @@ async function saveStatus(): Promise<void> {
       status: nextStatus.value,
     });
 
-    feedbackOpen.value = false;
+    selectedFeedback.value = null;
     message.success("Статус обращения обновлён");
     await feedback.load();
   } catch (err) {
@@ -443,7 +439,7 @@ async function saveStatus(): Promise<void> {
       </template>
     </template>
     <template #footer>
-      <a-button :disabled="saving" @click="reviewOpen = false"
+      <a-button :disabled="saving" @click="reviewDialogOpen = false"
         >Закрыть</a-button
       >
       <a-button
@@ -500,7 +496,7 @@ async function saveStatus(): Promise<void> {
       </template>
     </template>
     <template #footer>
-      <a-button :disabled="saving" @click="feedbackOpen = false"
+      <a-button :disabled="saving" @click="feedbackDialogOpen = false"
         >Закрыть</a-button
       >
       <a-button type="primary" :loading="saving" @click="saveStatus"

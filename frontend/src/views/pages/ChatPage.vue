@@ -122,11 +122,21 @@ const sendMessage = async (wireFromEnter?: string) => {
   }
 
   const draft = messageInput.value;
+  const recipient = chatStore.currentChatUserId;
+  const owner = userId.value;
+  const revision = mainStore.sessionRevision;
 
   isSending.value = true;
   try {
-    await chatStore.sendMessage(chatStore.currentChatUserId, content);
-    if (messageInput.value === draft) messageInput.value = "";
+    await chatStore.sendMessage(recipient, content);
+    if (
+      isActive &&
+      chatStore.currentChatUserId === recipient &&
+      userId.value === owner &&
+      mainStore.sessionRevision === revision &&
+      messageInput.value === draft
+    )
+      messageInput.value = "";
   } catch (error) {
     message.error(
       error instanceof Error ? error.message : "Не удалось отправить сообщение"

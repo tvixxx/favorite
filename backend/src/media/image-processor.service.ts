@@ -12,9 +12,8 @@ import type { TransformedImage } from './image-transform';
 
 @Injectable()
 export class ImageProcessor implements OnModuleDestroy {
-  private active = false;
   private stopped = false;
-  private currentWorker: Worker | null = null;
+  private cancelCurrent: (() => void) | null = null;
   private queue: Array<{
     input: Buffer;
     policy: ImagePolicy;
@@ -50,7 +49,7 @@ export class ImageProcessor implements OnModuleDestroy {
   }
 
   private next(): void {
-    if (this.active || this.stopped) {
+    if (this.cancelCurrent || this.stopped) {
       return;
     }
 
@@ -60,7 +59,6 @@ export class ImageProcessor implements OnModuleDestroy {
       return;
     }
 
-    this.active = true;
     let worker: Worker;
 
     try {
@@ -69,7 +67,6 @@ export class ImageProcessor implements OnModuleDestroy {
         resourceLimits: { maxOldGenerationSizeMb: 192 },
       });
     } catch {
-      this.active = false;
       job.reject(
         new ServiceUnavailableException(
           'Не удалось запустить обработку изображения',
@@ -80,7 +77,6 @@ export class ImageProcessor implements OnModuleDestroy {
       return;
     }
 
-    this.currentWorker = worker;
     const timeout = setTimeout(
       () =>
         finish(
@@ -90,17 +86,14 @@ export class ImageProcessor implements OnModuleDestroy {
         ),
       30_000,
     );
-    let settled = false;
     const finish = (error?: Error, result?: TransformedImage): void => {
-      if (settled) {
+      if (this.cancelCurrent !== cancel) {
         return;
       }
 
-      settled = true;
+      this.cancelCurrent = null;
       clearTimeout(timeout);
       void worker.terminate();
-      this.currentWorker = null;
-      this.active = false;
       if (error) {
         job.reject(error);
       } else if (result) {
@@ -113,6 +106,10 @@ export class ImageProcessor implements OnModuleDestroy {
 
       this.next();
     };
+    const cancel = (): void =>
+      finish(new ServiceUnavailableException('Обработка изображения прервана'));
+
+    this.cancelCurrent = cancel;
 
     worker.once(
       'message',
@@ -129,18 +126,12 @@ export class ImageProcessor implements OnModuleDestroy {
     worker.once('error', () =>
       finish(new BadRequestException('Не удалось прочитать изображение')),
     );
-    worker.once('exit', () => {
-      if (!settled) {
-        finish(
-          new ServiceUnavailableException('Обработка изображения прервана'),
-        );
-      }
-    });
+    worker.once('exit', cancel);
   }
 
   public onModuleDestroy(): void {
     this.stopped = true;
-    void this.currentWorker?.terminate();
+    this.cancelCurrent?.();
     for (const job of this.queue) {
       job.reject(
         new ServiceUnavailableException(

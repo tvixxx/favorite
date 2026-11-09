@@ -132,6 +132,31 @@ describe("Выгрузка коллекции", () => {
     expect(mocks.blobs).toHaveLength(0);
   });
 
+  it("игнорирует завершение печати после закрытия и повторного открытия", async () => {
+    const popup = { document: { title: "" }, close: vi.fn() };
+    let finishPrint!: () => void;
+
+    vi.spyOn(window, "open").mockReturnValue(popup as unknown as Window);
+    mocks.print.mockReturnValueOnce(new Promise<void>((resolve) => {
+      finishPrint = resolve;
+    }));
+
+    await wrapper.get('input[value="pdf"]').setValue(true);
+    mocks.get.mockResolvedValueOnce({
+      data: { exportedAt: "2026-10-16T00:00:00Z", movies: [{ title: "Фильм" }] },
+      headers: {},
+    });
+
+    await click("Открыть для печати");
+    expect(mocks.print).toHaveBeenCalledWith(popup);
+    await wrapper.setProps({ modelValue: false });
+    await wrapper.setProps({ modelValue: true });
+    finishPrint();
+    await flushPromises();
+    expect(popup.close).toHaveBeenCalledOnce();
+    expect(wrapper.text()).not.toContain("Документ открыт для печати");
+  });
+
   it("скачивает всю коллекцию, а не загруженную страницу или текущий поиск", async () => {
     await click("Скачать JSON");
     expect(JSON.parse(await mocks.blobs[0].text()).movies).toHaveLength(23);

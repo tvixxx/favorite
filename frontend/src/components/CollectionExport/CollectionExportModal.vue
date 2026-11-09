@@ -28,7 +28,8 @@ const collection = useUserMoviesStore();
 const format = ref<"json" | "csv" | "pdf">("json");
 const scope = ref<"all" | "filtered" | "completed">("all");
 const posters = ref(true);
-const busy = ref(false);
+const phase = ref<"idle" | "fetching" | "generating" | "handoff">("idle");
+const busy = computed(() => phase.value !== "idle");
 const error = ref("");
 const notice = ref("");
 const guard = createRequestGuard();
@@ -48,7 +49,7 @@ function invalidate(): void {
   controller?.abort();
   printWindow?.close();
   printWindow = null;
-  busy.value = false;
+  phase.value = "idle";
   error.value = "";
   notice.value = "";
 }
@@ -110,7 +111,7 @@ async function save(print = false): Promise<void> {
 
   params.set("format", selectedFormat);
   params.set("scope", scope.value);
-  busy.value = true;
+  phase.value = "fetching";
   try {
     const data = await fetchCollectionFile(userId, params, signal);
 
@@ -136,7 +137,12 @@ async function save(print = false): Promise<void> {
         return;
       }
 
+      phase.value = "generating";
+
       const { createCollectionPdf } = await import("@/services/collectionPdf");
+
+      if (!isCurrent()) return;
+
       const pdf = await createCollectionPdf(report, {
         posters: posters.value,
         timezone: main.userData?.timezone ?? "UTC",
@@ -145,8 +151,10 @@ async function save(print = false): Promise<void> {
       });
 
       if (!isCurrent() || signal.aborted) return;
+      phase.value = "handoff";
       if (print && printWindow) {
         await pdf.print(printWindow);
+        if (!isCurrent()) return;
         printWindow = null;
       } else
         downloadCollectionFile(
@@ -160,6 +168,7 @@ async function save(print = false): Promise<void> {
         : "Скачивание началось.";
     } else {
       if (!(data instanceof Blob)) throw new Error("Некорректный файл");
+      phase.value = "handoff";
       downloadCollectionFile(
         data,
         `favorite-collection-${new Date()
@@ -179,7 +188,7 @@ async function save(print = false): Promise<void> {
       printWindow = null;
     }
   } finally {
-    if (isCurrent()) busy.value = false;
+    if (isCurrent()) phase.value = "idle";
   }
 }
 </script>

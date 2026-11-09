@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onScopeDispose, ref, watch } from "vue";
 import { useMainStore } from "@/state/state";
 import { useRoute, useRouter } from "vue-router";
 import { message } from "ant-design-vue";
@@ -129,17 +129,34 @@ const signOut = (): void => {
   router.push("/login");
 };
 
+let activeTour: ReturnType<typeof createOnboardingDriver> | undefined;
+
+function cancelTour(): void {
+  const tour = activeTour;
+
+  activeTour = undefined;
+  tour?.destroy();
+}
+
+watch([userId, () => store.sessionRevision], cancelTour, { flush: "sync" });
+onScopeDispose(cancelTour);
+
 const startOnboarding = (): void => {
   accountMenuOpen.value = false;
+  cancelTour();
+
+  const owner = userId.value;
 
   const tourDriver = createOnboardingDriver(router, {
     onCompleted: () => {
-      if (userId.value) {
-        setOnboardingDone(userId.value);
+      if (activeTour === tourDriver) {
+        activeTour = undefined;
+        if (owner) setOnboardingDone(owner);
       }
     },
   });
 
+  activeTour = tourDriver;
   tourDriver.drive();
 };
 

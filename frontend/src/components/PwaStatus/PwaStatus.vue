@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onScopeDispose, ref } from "vue";
+import { computed, onScopeDispose, ref } from "vue";
 import { useOnline } from "@vueuse/core";
 import { useRegisterSW } from "virtual:pwa-register/vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
@@ -7,11 +7,17 @@ import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 
 const online = useOnline();
 const confirmOpen = ref(false);
-const updating = ref(false);
-const error = ref("");
+
+type UpdateState =
+  | { phase: "idle" }
+  | { phase: "applying"; reloadRequested: boolean }
+  | { phase: "waiting-for-controller" }
+  | { phase: "failed" };
+
+const update = ref<UpdateState>({ phase: "idle" });
+const updating = computed(() => update.value.phase === "applying");
 const loadFailed = ref(false);
 let registration: ServiceWorkerRegistration | undefined;
-let updateRequested = false;
 const { needRefresh, updateServiceWorker } = useRegisterSW({
   immediate: true,
   onNeedReload: reloadAfterUpdate,
@@ -21,10 +27,15 @@ const { needRefresh, updateServiceWorker } = useRegisterSW({
 });
 
 function reloadAfterUpdate(): void {
-  if (updateRequested) {
-    updateRequested = false;
-    window.location.reload();
-  }
+  const current = update.value;
+
+  if (current.phase === "applying" && current.reloadRequested) {
+    current.reloadRequested = false;
+  } else if (current.phase === "waiting-for-controller") {
+    update.value = { phase: "idle" };
+  } else return;
+
+  window.location.reload();
 }
 
 async function checkUpdate(): Promise<void> {
@@ -38,21 +49,24 @@ async function applyUpdate(): Promise<void> {
     return;
   }
 
-  updating.value = true;
-  error.value = "";
+  update.value = { phase: "applying", reloadRequested: needRefresh.value };
+
+  const attempt = update.value;
 
   try {
-    if (needRefresh.value) {
-      updateRequested = true;
+    if (attempt.reloadRequested) {
       await updateServiceWorker(true);
     } else {
       window.location.reload();
     }
   } catch {
-    updateRequested = false;
-    error.value = "Не удалось обновить приложение. Попробуйте ещё раз.";
+    if (update.value === attempt) update.value = { phase: "failed" };
   } finally {
-    updating.value = false;
+    if (update.value === attempt) {
+      update.value = attempt.reloadRequested
+        ? { phase: "waiting-for-controller" }
+        : { phase: "idle" };
+    }
   }
 }
 
@@ -81,6 +95,7 @@ navigator.serviceWorker?.addEventListener(
 );
 
 onScopeDispose(() => {
+  update.value = { phase: "idle" };
   window.removeEventListener(
     "fv:request-app-update",
     openUpdateFromNotification
@@ -132,7 +147,9 @@ onScopeDispose(() => {
         Страница перезагрузится. Сохраните изменения в открытых формах перед
         обновлением.
       </p>
-      <p v-if="error" class="pwa-status__message" role="alert">{{ error }}</p>
+      <p v-if="update.phase === 'failed'" class="pwa-status__message" role="alert">
+        Не удалось обновить приложение. Попробуйте ещё раз.
+      </p>
     </template>
     <template #footer>
       <a-button :disabled="updating" @click="confirmOpen = false"

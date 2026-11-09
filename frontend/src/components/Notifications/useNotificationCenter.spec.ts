@@ -70,6 +70,33 @@ afterEach(() => {
 });
 
 describe("Загрузка центра уведомлений", () => {
+  it.each(["выхода", "закрытия"])(
+    "не подтверждает старое действие после %s во время обновления счётчиков",
+    async (reason) => {
+      const { state, user } = setup();
+
+      await flushPromises();
+
+      let finish!: () => void;
+
+      mocks.patch.mockResolvedValueOnce(undefined);
+      mocks.hydrate.mockReturnValueOnce(
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        })
+      );
+
+      const pending = state.read(state.events.items[0]);
+
+      await flushPromises();
+      if (reason === "выхода") user.value = undefined;
+      else scope.stop();
+      await nextTick();
+      finish();
+      expect(await pending).toBe(false);
+    }
+  );
+
   it("ждёт триста миллисекунд после последнего ввода", async () => {
     const { state } = setup();
 

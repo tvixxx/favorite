@@ -47,6 +47,29 @@ const profile = {
 };
 
 describe("Жизненный цикл авторизации", () => {
+  it("параллельные проверки ждут один профиль и завершают загрузку вместе", async () => {
+    let finish!: (response: unknown) => void;
+
+    mocks.fetch.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+    );
+
+    const store = useMainStore();
+    const first = store.fetchUser();
+    const second = store.fetchUser();
+
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+    expect(store.isFetchingUser).toBe(true);
+    expect(store.isLoggedIn).toBe(false);
+    finish({ status: 200, data: profile });
+    await Promise.all([first, second]);
+    expect(store.isFetchingUser).toBe(false);
+    expect(store.isLoggedIn).toBe(true);
+    expect(store.userData?.id).toBe(profile.id);
+  });
+
   it("не запускает второе сохранение профиля, пока не завершилось первое", async () => {
     mocks.fetch.mockResolvedValueOnce({ status: 200, data: profile });
 

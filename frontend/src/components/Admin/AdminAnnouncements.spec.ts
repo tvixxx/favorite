@@ -70,6 +70,66 @@ async function fill() {
 }
 
 describe("Черновик системного объявления", () => {
+  it("разделяет действия черновика, публикации и архива и публикует только подтверждённую запись", async () => {
+    mocks.get.mockResolvedValueOnce({
+      data: {
+        items: [
+          {
+            id: "draft",
+            title: "Черновая запись",
+            body: "Текст",
+            category: "NEWS",
+            actions: [],
+            publishedAt: null,
+            archivedAt: null,
+          },
+          {
+            id: "published",
+            title: "Опубликованная запись",
+            body: "Текст",
+            category: "NEWS",
+            actions: [],
+            publishedAt: "2026-11-01",
+            archivedAt: null,
+          },
+          {
+            id: "archived",
+            title: "Архивная запись",
+            body: "Текст",
+            category: "NEWS",
+            actions: [],
+            publishedAt: null,
+            archivedAt: "2026-11-01",
+          },
+        ],
+        total: 3,
+      },
+    });
+
+    wrapper = mount(AdminAnnouncements, {
+      attachTo: document.body,
+      global: { plugins: [Antd], stubs: { BaseIcon: true } },
+    });
+
+    await flushPromises();
+
+    const rows = wrapper.findAll("article");
+
+    expect(rows[0].text()).toContain("Редактировать");
+    expect(rows[1].text()).not.toContain("Редактировать");
+    expect(rows[1].text()).toContain("В архив");
+    expect(rows[2].findAll("button")).toHaveLength(0);
+    button("Предпросмотр и публикация").click();
+    await flushPromises();
+    expect(mocks.post).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain("Опубликовать для всех?");
+    button("Опубликовать для всех").click();
+    await flushPromises();
+    expect(mocks.post).toHaveBeenCalledWith(
+      "/admin/announcements/draft/publish"
+    );
+  });
+
   it("оставляет один набор действий и сохраняет форму кнопкой из нижней панели", async () => {
     await setup();
     await fill();

@@ -1,5 +1,5 @@
 import { mount, flushPromises } from "@vue/test-utils";
-import { reactive } from "vue";
+import { nextTick, reactive } from "vue";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ImagePicker from "./ImagePicker.vue";
 
@@ -200,5 +200,34 @@ describe("Выбор изображения", () => {
     wrapper.unmount();
     expect(options.signal.aborted).toBe(true);
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:fixture/poster.png");
+  });
+
+  it("различает передачу и обработку файла, отмена игнорирует поздний прогресс", async () => {
+    mocks.upload.mockReturnValue(new Promise(() => {}));
+
+    const wrapper = render();
+
+    await select(wrapper, "poster.png");
+
+    const options = mocks.upload.mock.calls[0][2];
+
+    options.onProgress(50, 100);
+    await nextTick();
+    expect(wrapper.text()).toContain("Загружаем… 50%");
+    options.onProgress(100, 100);
+    await nextTick();
+    expect(wrapper.text()).toContain("Готовим изображение…");
+    expect(wrapper.emitted("busy")?.at(-1)).toEqual([true]);
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text() === "Отмена")!
+      .trigger("click");
+
+    options.onProgress(100, 100);
+    await nextTick();
+    expect(options.signal.aborted).toBe(true);
+    expect(wrapper.find("progress").exists()).toBe(false);
+    expect(wrapper.emitted("busy")?.at(-1)).toEqual([false]);
+    wrapper.unmount();
   });
 });

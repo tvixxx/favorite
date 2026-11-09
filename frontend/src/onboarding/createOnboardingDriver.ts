@@ -208,6 +208,7 @@ export function createOnboardingDriver(
     try {
       if (step.path && router.currentRoute.value.fullPath !== step.path)
         await router.push(step.path);
+      if (lifecycle.signal.aborted) return;
       await settleLayout();
       if (lifecycle.signal.aborted) return;
 
@@ -219,6 +220,7 @@ export function createOnboardingDriver(
       if (element && !element.closest(".topbar, .mobile-tabbar")) {
         element.scrollIntoView({ block: "center", behavior: "instant" });
         await waitForImages(element, lifecycle.signal);
+        if (lifecycle.signal.aborted) return;
         await settleLayout();
       }
 

@@ -7,7 +7,13 @@ const { checkWebHeaders } = require("./check-web-headers.cjs");
 
 async function fixture(
   t,
-  { missingHeader, missingStatus = 404, badCache = false } = {},
+  {
+    missingHeader,
+    missingStatus = 404,
+    badCache = false,
+    scriptSrc = "'self'",
+    enforce = false,
+  } = {},
 ) {
   const paths = [];
   const server = http.createServer((request, response) => {
@@ -16,6 +22,12 @@ async function fixture(
     response.setHeader("X-Content-Type-Options", "nosniff");
     response.setHeader("X-Frame-Options", "SAMEORIGIN");
     response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    response.setHeader(
+      "Content-Security-Policy-Report-Only",
+      `default-src 'self'; script-src ${scriptSrc}; script-src-attr 'none'; style-src 'self'; object-src 'none'; base-uri 'none'; report-uri /_csp-report`,
+    );
+    if (enforce)
+      response.setHeader("Content-Security-Policy", "default-src 'self'");
     if (path === "/assets/__qa_missing__.js") {
       response.statusCode = missingStatus;
       if (missingHeader) response.removeHeader(missingHeader);
@@ -84,6 +96,7 @@ for (const header of [
   "X-Content-Type-Options",
   "X-Frame-Options",
   "Referrer-Policy",
+  "Content-Security-Policy-Report-Only",
 ]) {
   test(`отсутствие ${header} у ответа 404 не выдаёт успешную проверку`, async (t) => {
     const { base } = await fixture(t, { missingHeader: header });
@@ -93,6 +106,16 @@ for (const header of [
     );
   });
 }
+
+test("отклоняет небезопасный script-src в пробной политике", async (t) => {
+  const { base } = await fixture(t, { scriptSrc: "'self' 'unsafe-inline'" });
+  await assert.rejects(checkWebHeaders(base, "/assets/app.js"), /CSP script-src/);
+});
+
+test("отклоняет преждевременное применение CSP", async (t) => {
+  const { base } = await fixture(t, { enforce: true });
+  await assert.rejects(checkWebHeaders(base, "/assets/app.js"), /must be report-only/);
+});
 
 test("ответ 200 вместо ожидаемого 404 считается ошибкой", async (t) => {
   const { base } = await fixture(t, { missingStatus: 200 });

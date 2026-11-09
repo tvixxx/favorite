@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch } from "vue";
+import { onScopeDispose, watch } from "vue";
 import { useRouter } from "vue-router";
 import { setOnboardingDone } from "@/composable/useOnboarding";
 import {
@@ -27,25 +27,32 @@ const props = defineProps<{
 
 const router = useRouter();
 
-let startingTour = false;
+let launch: { owner: string } | undefined;
+let activeTour: ReturnType<typeof createOnboardingDriver> | undefined;
 
-const markDone = (): void => {
-  if (props.userId) {
-    setOnboardingDone(props.userId);
-  }
-};
+function cancelTour(): void {
+  launch = undefined;
+
+  const tour = activeTour;
+
+  activeTour = undefined;
+  tour?.destroy();
+}
+
+watch(() => props.userId, cancelTour, { flush: "sync" });
+onScopeDispose(cancelTour);
 
 // Любое закрытие (крестик / клик по фону / Esc / «Пропустить») отмечает обучение
 // пройденным — кроме запуска тура (там отметка ставится по его завершении).
 watch(openModel, (open) => {
   if (open) {
-    startingTour = false;
+    cancelTour();
 
     return;
   }
 
-  if (!startingTour) {
-    markDone();
+  if (!launch && props.userId) {
+    setOnboardingDone(props.userId);
   }
 });
 
@@ -54,14 +61,30 @@ const finishAndSkip = (): void => {
 };
 
 const startInteractiveTour = async (): Promise<void> => {
-  startingTour = true;
+  if (!openModel.value || launch || !props.userId) return;
+
+  const current = { owner: props.userId };
+
+  launch = current;
   openModel.value = false;
   await settleLayout();
+  if (launch !== current) return;
+  if (openModel.value) {
+    launch = undefined;
+
+    return;
+  }
 
   const tourDriver = createOnboardingDriver(router, {
-    onCompleted: markDone,
+    onCompleted: () => {
+      if (activeTour !== tourDriver) return;
+      activeTour = undefined;
+      launch = undefined;
+      setOnboardingDone(current.owner);
+    },
   });
 
+  activeTour = tourDriver;
   tourDriver.drive();
 };
 </script>

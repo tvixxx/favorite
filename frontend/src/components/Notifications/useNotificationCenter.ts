@@ -1,4 +1,12 @@
-import { computed, onScopeDispose, reactive, ref, watch, type Ref } from "vue";
+import {
+  computed,
+  onScopeDispose,
+  reactive,
+  ref,
+  shallowRef,
+  watch,
+  type Ref,
+} from "vue";
 import api from "@/services/api";
 import { useNotificationsStore } from "@/stores/notifications/notificationsStore";
 import { friendlyRequestError } from "@/utils/friendlyError";
@@ -44,12 +52,22 @@ export function useNotificationCenter(userId: Ref<string | undefined>) {
     items: [] as NotificationEvent[],
     filterKey: "",
     total: 0,
-    loading: false,
-    ready: false,
+    phase: "idle" as "idle" | "loading" | "refreshing" | "ready",
+    get loading(): boolean {
+      return this.phase === "loading" || this.phase === "refreshing";
+    },
+    get ready(): boolean {
+      return this.phase === "ready" || this.phase === "refreshing";
+    },
     error: "",
   });
-  const saving = ref(false);
-  const mutationError = ref("");
+  const mutation = shallowRef<
+    { status: "idle" | "saving" } | { status: "error"; message: string }
+  >({ status: "idle" });
+  const saving = computed(() => mutation.value.status === "saving");
+  const mutationError = computed(() =>
+    mutation.value.status === "error" ? mutation.value.message : ""
+  );
   const notifications = useNotificationsStore();
   let directoryRequest: AbortController | undefined;
   let eventRequest: AbortController | undefined;
@@ -116,7 +134,7 @@ export function useNotificationCenter(userId: Ref<string | undefined>) {
       senders.items = data.items;
       senders.total = data.total;
       if (!selected.value && data.items[0]) selected.value = data.items[0];
-      if (!selected.value && section.value === "people") events.ready = true;
+      if (!selected.value && section.value === "people") events.phase = "ready";
       if (selected.value) {
         const fresh = data.items.find((item) => item.id === selected.value!.id);
 
@@ -141,8 +159,7 @@ export function useNotificationCenter(userId: Ref<string | undefined>) {
     if (!endpoint.value || (section.value === "people" && !selected.value)) {
       events.items = [];
       events.total = 0;
-      events.loading = false;
-      events.ready = false;
+      events.phase = "idle";
 
       return;
     }
@@ -161,11 +178,11 @@ export function useNotificationCenter(userId: Ref<string | undefined>) {
       events.items = [];
       events.total = 0;
       eventContext = context;
-      events.ready = false;
+      events.phase = "idle";
       events.error = "";
     }
 
-    events.loading = true;
+    events.phase = events.ready ? "refreshing" : "loading";
     try {
       const path =
         source === "system" ? "/system" : `/people/${selected.value!.id}`;
@@ -203,8 +220,7 @@ export function useNotificationCenter(userId: Ref<string | undefined>) {
         });
     } finally {
       if (!current.signal.aborted) {
-        events.loading = false;
-        events.ready = true;
+        events.phase = "ready";
       }
     }
   }
@@ -238,28 +254,34 @@ export function useNotificationCenter(userId: Ref<string | undefined>) {
   }
 
   async function mutate(action: () => Promise<unknown>): Promise<boolean> {
-    if (saving.value) return false;
+    const owner = userId.value;
+
+    if (saving.value || !owner) return false;
 
     const version = generation;
 
-    saving.value = true;
-    mutationError.value = "";
+    mutation.value = { status: "saving" };
     try {
       await action();
       if (version !== generation) return false;
-      await notifications.hydrate(userId.value!);
+      await notifications.hydrate(owner);
+      if (version !== generation) return false;
       await refresh();
 
-      return true;
+      return version === generation;
     } catch (error) {
       if (version === generation)
-        mutationError.value = friendlyRequestError(error, {
-          fallback: "Не удалось сохранить прочтение.",
-        });
+        mutation.value = {
+          status: "error",
+          message: friendlyRequestError(error, {
+            fallback: "Не удалось сохранить прочтение.",
+          }),
+        };
 
       return false;
     } finally {
-      if (version === generation) saving.value = false;
+      if (version === generation && mutation.value.status === "saving")
+        mutation.value = { status: "idle" };
     }
   }
 
@@ -302,8 +324,7 @@ export function useNotificationCenter(userId: Ref<string | undefined>) {
       events.filterKey = "";
       events.total = 0;
       events.error = "";
-      events.loading = false;
-      events.ready = false;
+      events.phase = "idle";
       selected.value = null;
       mobileDetail.value = false;
       senderPage.value = 1;
@@ -315,8 +336,7 @@ export function useNotificationCenter(userId: Ref<string | undefined>) {
       appliedSearch.people = "";
       appliedSearch.system = "";
       for (const id of Object.keys(peoplePages)) delete peoplePages[id];
-      saving.value = false;
-      mutationError.value = "";
+      mutation.value = { status: "idle" };
       summary.people = 0;
       summary.system = 0;
       void refresh();
@@ -372,6 +392,7 @@ export function useNotificationCenter(userId: Ref<string | undefined>) {
   );
 
   onScopeDispose(() => {
+    generation++;
     directoryRequest?.abort();
     eventRequest?.abort();
     summaryRequest?.abort();

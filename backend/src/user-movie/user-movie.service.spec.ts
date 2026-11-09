@@ -244,6 +244,35 @@ describe('Статусы просмотра и удаление из колле�
     expect(result.currentEpisode).toBeNull();
   });
 
+  it('завершает сериал по прогрессу и возвращает в смотрю при уменьшении', async () => {
+    isSerial = true;
+    current.watchStatus = WatchStatus.WATCHING;
+    current.currentEpisode = 9;
+    current.completedAt = null;
+    const finished = await service.update('user-id', 'movie-id', {
+      currentEpisode: 10,
+    });
+    expect(finished.watchStatus).toBe(WatchStatus.COMPLETED);
+    expect(finished.completedAt).toBeInstanceOf(Date);
+    const resumed = await service.update('user-id', 'movie-id', {
+      currentEpisode: 9,
+    });
+    expect(resumed.watchStatus).toBe(WatchStatus.WATCHING);
+    expect(resumed.completedAt).toBeNull();
+    expect(resumed.startedAt).toEqual(new Date('2026-01-01'));
+  });
+
+  it('сохраняет явно выбранный статус смотрю даже на последней серии', async () => {
+    isSerial = true;
+    const result = await service.update('user-id', 'movie-id', {
+      watchStatus: WatchStatus.WATCHING,
+      currentSeason: 2,
+      currentEpisode: 10,
+    });
+    expect(result.watchStatus).toBe(WatchStatus.WATCHING);
+    expect(result.completedAt).toBeNull();
+  });
+
   it('не позволяет переносить личную запись на другого владельца через лишние поля', async () => {
     const result = await service.update('user-id', 'movie-id', {
       personalRate: 8,

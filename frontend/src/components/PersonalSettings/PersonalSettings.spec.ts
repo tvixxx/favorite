@@ -116,6 +116,56 @@ describe("Переключатели персональных настроек",
     ).toBe("true");
   });
 
+  it("разрешает сохранение новой сессии, не завершая его поздней ошибкой предыдущей", async () => {
+    await open();
+
+    const store = useMainStore();
+    let rejectOld!: (error: Error) => void;
+    let finishNew!: (value: unknown) => void;
+
+    mocks.fetch.mockReturnValueOnce(
+      new Promise((_, reject) => {
+        rejectOld = reject;
+      })
+    );
+
+    await wrapper.get('[aria-label="Показывать достижения"]').trigger("click");
+    mocks.fetch.mockResolvedValueOnce({ status: 200, data: true });
+    await store.logOut();
+    mocks.fetch
+      .mockResolvedValueOnce({
+        status: 200,
+        data: { accessToken: "fixture-new-session" },
+      })
+      .mockResolvedValueOnce({ status: 200, data: { ...profile } });
+
+    await store.logIn({
+      email: profile.email,
+      password: "fixture-only-password",
+    });
+
+    await flushPromises();
+
+    const toggle = wrapper.get('[aria-label="Раздел «Актёры»"]');
+
+    expect(toggle.attributes("disabled")).toBeUndefined();
+    mocks.fetch.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishNew = resolve;
+      })
+    );
+
+    await toggle.trigger("click");
+    rejectOld(new Error("Ошибка прежней сессии"));
+    await flushPromises();
+    expect(toggle.classes()).toContain("ant-switch-loading");
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false);
+    finishNew({ status: 200, data: { ...profile, showActorsSection: false } });
+    await flushPromises();
+    expect(toggle.attributes("aria-checked")).toBe("false");
+    expect(toggle.classes()).not.toContain("ant-switch-loading");
+  });
+
   it.each([
     ["showAchievements", "Показывать достижения"],
     ["showCommunityTops", "Топы сообщества"],
