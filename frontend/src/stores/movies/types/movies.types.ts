@@ -178,6 +178,7 @@ export interface UserMoviesAnalyticsTopGenre {
 export interface UserMoviesAnalyticsContinueWatchingItem {
   movieId: string;
   title: string;
+  posterUrl?: string | null;
   currentSeason: number | null;
   currentEpisode: number | null;
   seasonCount: number | null;

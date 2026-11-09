@@ -3,19 +3,21 @@ import SectionHeading from "@/components/SectionHeading/SectionHeading.vue";
 import { useMainStore } from "@/state/state";
 import { useRouter } from "vue-router";
 
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, shallowRef, watch } from "vue";
 import BaseIcon from "@/components/BaseIcon/BaseIcon.vue";
 import BaseModal from "@/components/BaseModal/BaseModal.vue";
 import SkeletonBar from "@/components/Skeleton/SkeletonBar.vue";
-import RowsSkeleton from "@/components/Skeleton/RowsSkeleton.vue";
 import { useMinLoading } from "@/components/Skeleton/useMinLoading";
 import type { UserData } from "@/state/types";
 import ProfileSettings from "@/components/ProfileSettings/ProfileSettings.vue";
-import BadgesList from "@/components/Badges/BadgesList.vue";
+import ProfileAchievements from "@/components/ProfileSettings/ProfileAchievements.vue";
+import ProfileWatching from "@/components/ProfileSettings/ProfileWatching.vue";
+import { PROFILE_THEME_META } from "@/components/ProfileSettings/constants";
+import { currentTheme } from "@/composable";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
 import SettingBlock from "@/components/ProfileSettings/components/SettingBlock/SettingBlock.vue";
 import { message } from "ant-design-vue";
-import { GenreLabels } from "@/components/Genres/constants/genres.constants";
+import ProfileAnalyticsTiles from "@/components/ProfileSettings/ProfileAnalyticsTiles.vue";
 import { useBadgesStore, useUserMoviesStore } from "@/stores";
 import { avatarGradient } from "@/composable/useAvatarGradient";
 import ImagePicker from "@/components/ImagePicker/ImagePicker.vue";
@@ -30,18 +32,22 @@ const router = useRouter();
 const badgesStore = useBadgesStore();
 const userMoviesStore = useUserMoviesStore();
 
-const showBadgesSkeleton = useMinLoading(() => badgesStore.isLoading);
+const showBadgesSkeleton = useMinLoading(
+  () =>
+    badgesStore.isLoading &&
+    !badgesStore.unlockedBadges.length &&
+    !badgesStore.lockedBadges.length
+);
 const showAnalyticsSkeleton = useMinLoading(
-  () => userMoviesStore.isAnalyticsLoading
+  () => userMoviesStore.isAnalyticsLoading && !userMoviesStore.analytics
 );
 
 const isModalVisible = ref(false);
+const isThemeModalVisible = shallowRef(false);
 const isSaving = ref(false);
 const editForm = ref({ fullName: "", username: "", timezone: "UTC" });
 const editAvatar = ref<ImageSelection | null>(null);
 const avatarUploading = ref(false);
-
-const achievementsView = ref<"unlocked" | "locked">("unlocked");
 
 const user = computed<UserData | null>(() => store.userData ?? null);
 const avatarFailed = ref(false);
@@ -77,10 +83,14 @@ const initials = computed(() => {
     return "U";
   }
 
-  return user.value.fullName
-    .split(" ")
-    .map((n) => n.charAt(0).toUpperCase())
-    .join("");
+  return (
+    user.value.fullName
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((name) => Array.from(name)[0]?.toUpperCase())
+      .join("") || "U"
+  );
 });
 
 const analytics = computed(() => userMoviesStore.analytics);
@@ -242,276 +252,163 @@ onMounted(async () => {
           <div class="profile-hero__info">
             <p class="profile-hero__eyebrow">Ваш кинопрофиль</p>
             <h1 class="profile-hero__name">
-              {{ fullName }}
+              {{ fullName || user?.username || "Профиль" }}
             </h1>
             <div v-if="user" class="profile-hero__meta">
               <span v-if="user.username" class="profile-hero__meta-item">{{
-                user.username
+                `@${user.username}`
               }}</span>
               <span class="profile-hero__meta-item">
                 <BaseIcon
                   name="ph:envelope-simple"
                   class="profile-hero__meta-icon"
                 />
-                {{ user.email }}
+                <span>{{ user.email }}</span>
               </span>
               <span class="profile-hero__meta-item"
                 >Часовой пояс: {{ timezoneLabel(user.timezone ?? "UTC") }}</span
               >
             </div>
           </div>
-          <button
-            type="button"
-            class="profile-hero__settings"
-            data-tour="profile-settings"
-            aria-label="Настройки"
-            title="Настройки профиля"
-            @click="showEditDisplayNameModal"
-          >
-            <span class="profile-hero__settings-content">
-              <BaseIcon
-                name="ph:gear"
-                class="profile-hero__settings-icon"
-                :width="18"
-                :height="18"
-              />
-              <span class="profile-hero__settings-label">Настройки</span>
-            </span>
-          </button>
+          <div class="profile-hero__actions">
+            <button
+              type="button"
+              class="profile-hero__settings"
+              data-tour="profile-settings"
+              aria-label="Настройки"
+              title="Настройки профиля"
+              @click="showEditDisplayNameModal"
+            >
+              <BaseIcon name="ph:gear" :width="16" :height="16" />
+              Настройки
+            </button>
+            <button
+              type="button"
+              class="profile-hero__settings"
+              aria-label="Цветовая тема"
+              @click="isThemeModalVisible = true"
+            >
+              <BaseIcon name="ph:palette" :width="16" :height="16" />
+              Тема · {{ PROFILE_THEME_META[currentTheme]?.label ?? "Светлая" }}
+            </button>
+          </div>
         </section>
 
         <div class="profile-page__grid">
-          <div class="profile-page__primary-column">
-            <div
-              class="profile-page__top-row"
-              :class="{ 'profile-page__top-row--single': !showAchievements }"
+          <ProfileWatching
+            v-if="
+              showDetailedAnalytics &&
+              (showAnalyticsSkeleton ||
+                (analytics && !userMoviesStore.isAnalyticsError))
+            "
+            class="profile-page__watching"
+            :item="continueWatchingItem"
+            :loading="showAnalyticsSkeleton"
+            @open="openContinueWatching"
+          />
+          <ProfileSettings
+            class="profile-page__sidebar"
+            :types="['stats', 'friends']"
+          />
+
+          <article v-if="showAchievements" class="badges-card">
+            <SectionHeading
+              class="badges-card__header"
+              title="Достижения"
+              icon="ph:trophy"
+              tag="h2"
+              v-if="badgesStore.isError && !showBadgesSkeleton"
+            />
+            <StateBlock
+              v-if="badgesStore.isError && !showBadgesSkeleton"
+              compact
+              variant="error"
+              icon="ph:warning-circle"
+              title="Не удалось загрузить достижения"
+              :actions="[
+                {
+                  label: 'Повторить',
+                  icon: 'ph:arrow-clockwise',
+                  kind: 'primary',
+                  onClick: retryBadges,
+                },
+              ]"
+            />
+            <ProfileAchievements
+              v-else
+              :unlocked="badgesStore.unlockedBadges"
+              :locked="badgesStore.lockedBadges"
+              :loading="showBadgesSkeleton"
             >
-              <article class="friends-card">
-                <SettingBlock
-                  title="Друзья"
-                  description="Управление друзьями и подписками"
-                  type="friends"
-                  icon="ph:users-three"
+              <SectionHeading title="Достижения" icon="ph:trophy" tag="h2" />
+            </ProfileAchievements>
+          </article>
+
+          <article v-if="showDetailedAnalytics" class="analytics-card">
+            <SectionHeading
+              class="analytics-card__header"
+              title="Персональная аналитика"
+              icon="ph:chart-line-up"
+              tag="h3"
+            />
+
+            <div v-if="showAnalyticsSkeleton" class="analytics-card__content">
+              <ProfileAnalyticsTiles />
+              <div class="analytics-card__quick-actions" aria-hidden="true">
+                <SkeletonBar
+                  width="176px"
+                  height="var(--profile-action-height)"
+                  radius="var(--fv-radius-control)"
                 />
-              </article>
-
-              <article v-if="showAchievements" class="badges-card">
-                <SectionHeading
-                  class="badges-card__header"
-                  title="Достижения"
-                  icon="ph:trophy"
-                  tag="h3"
+                <SkeletonBar
+                  width="168px"
+                  height="var(--profile-action-height)"
+                  radius="var(--fv-radius-control)"
                 />
-
-                <RowsSkeleton
-                  v-if="showBadgesSkeleton"
-                  :count="4"
-                  :badge="false"
-                />
-
-                <StateBlock
-                  v-else-if="badgesStore.isError"
-                  compact
-                  variant="error"
-                  icon="ph:warning-circle"
-                  title="Не удалось загрузить достижения"
-                  :actions="[
-                    {
-                      label: 'Повторить',
-                      icon: 'ph:arrow-clockwise',
-                      kind: 'primary',
-                      onClick: retryBadges,
-                    },
-                  ]"
-                />
-
-                <div v-else class="badges-card__content">
-                  <div class="badges-card__seg" role="tablist">
-                    <button
-                      type="button"
-                      class="badges-card__seg-btn"
-                      :class="{
-                        'badges-card__seg-btn--on':
-                          achievementsView === 'unlocked',
-                      }"
-                      @click="achievementsView = 'unlocked'"
-                    >
-                      Открытые
-                    </button>
-                    <button
-                      type="button"
-                      class="badges-card__seg-btn"
-                      :class="{
-                        'badges-card__seg-btn--on':
-                          achievementsView === 'locked',
-                      }"
-                      @click="achievementsView = 'locked'"
-                    >
-                      Закрытые
-                    </button>
-                  </div>
-
-                  <BadgesList
-                    v-if="achievementsView === 'unlocked'"
-                    class="badges-card__list"
-                    tabindex="0"
-                    role="region"
-                    aria-label="Открытые достижения"
-                    :badges="badgesStore.unlockedBadges"
-                  />
-                  <BadgesList
-                    v-else
-                    class="badges-card__list"
-                    tabindex="0"
-                    role="region"
-                    aria-label="Закрытые достижения"
-                    :badges="badgesStore.lockedBadges"
-                    :show-locked="true"
-                  />
-                </div>
-              </article>
+              </div>
             </div>
 
-            <article v-if="showDetailedAnalytics" class="analytics-card">
-              <SectionHeading
-                class="analytics-card__header"
-                title="Персональная аналитика"
-                icon="ph:chart-line-up"
-                tag="h3"
-              />
+            <StateBlock
+              v-else-if="userMoviesStore.isAnalyticsError || !analytics"
+              compact
+              variant="error"
+              icon="ph:warning-circle"
+              title="Не удалось загрузить аналитику"
+              :actions="[
+                {
+                  label: 'Повторить',
+                  icon: 'ph:arrow-clockwise',
+                  kind: 'primary',
+                  onClick: retryAnalytics,
+                },
+              ]"
+            />
 
-              <div v-if="showAnalyticsSkeleton" class="analytics-card__skel">
-                <SkeletonBar
-                  v-for="i in 4"
-                  :key="`an-skel-${i}`"
-                  height="92px"
-                  radius="var(--fv-radius-md)"
-                />
-              </div>
+            <div v-else class="analytics-card__content">
+              <ProfileAnalyticsTiles :analytics="analytics" />
 
-              <StateBlock
-                v-else-if="userMoviesStore.isAnalyticsError || !analytics"
-                compact
-                variant="error"
-                icon="ph:warning-circle"
-                title="Не удалось загрузить аналитику"
-                :actions="[
-                  {
-                    label: 'Повторить',
-                    icon: 'ph:arrow-clockwise',
-                    kind: 'primary',
-                    onClick: retryAnalytics,
-                  },
-                ]"
-              />
-
-              <div v-else class="analytics-card__content">
-                <div class="analytics-tiles">
-                  <div class="analytics-tile">
-                    <span class="analytics-tile__label">Тренд просмотров</span>
-                    <div class="analytics-tile__trend">
-                      <span class="analytics-tile__trend-part">
-                        <b>{{ analytics.addedLast7Days }}</b> за 7 дней
-                      </span>
-                      <span class="analytics-tile__trend-part">
-                        <b>{{ analytics.addedLast30Days }}</b> за 30 дней
-                      </span>
-                    </div>
-                  </div>
-
-                  <div class="analytics-tile">
-                    <span class="analytics-tile__label">Фильмы / Сериалы</span>
-                    <span class="analytics-tile__value">
-                      {{ analytics.totalMovies }} / {{ analytics.totalSerials }}
-                    </span>
-                    <span class="analytics-tile__hint">
-                      завершено {{ analytics.completionRate }}%
-                    </span>
-                  </div>
-
-                  <div class="analytics-tile">
-                    <span class="analytics-tile__label">Топ жанров</span>
-                    <div
-                      v-if="analytics.topGenres.length"
-                      class="analytics-tile__chips"
-                    >
-                      <span
-                        v-for="g in analytics.topGenres"
-                        :key="g.genre"
-                        class="analytics-tile__chip"
-                      >
-                        {{ GenreLabels[g.genre] ?? g.genre }} · {{ g.count }}
-                      </span>
-                    </div>
-                    <span v-else class="analytics-tile__hint">
-                      Пока недостаточно данных
-                    </span>
-                  </div>
-
-                  <div class="analytics-tile">
-                    <span class="analytics-tile__label"
-                      >Продолжить смотреть</span
-                    >
-                    <button
-                      v-if="continueWatchingItem"
-                      type="button"
-                      class="analytics-tile__continue"
-                      @click="openContinueWatching"
-                    >
-                      <span
-                        class="analytics-tile__poster"
-                        aria-hidden="true"
-                      ></span>
-                      <span class="analytics-tile__continue-info">
-                        <span class="analytics-tile__continue-title">
-                          {{ continueWatchingItem.title }}
-                        </span>
-                        <span class="analytics-tile__continue-meta">
-                          С{{ continueWatchingItem.currentSeason ?? 0 }} · Э{{
-                            continueWatchingItem.currentEpisode ?? 0
-                          }}<template v-if="continueWatchingItem.episodeCount">
-                            из {{ continueWatchingItem.episodeCount }}</template
-                          >
-                        </span>
-                      </span>
-                    </button>
-                    <span v-else class="analytics-tile__hint">
-                      Нет сериалов в процессе
-                    </span>
-                  </div>
-                </div>
-
-                <div
-                  v-if="hasQuickActions"
-                  class="analytics-card__quick-actions"
+              <div v-if="hasQuickActions" class="analytics-card__quick-actions">
+                <a-button
+                  v-if="analytics.watchingSerialsCount > 0"
+                  @click="openWatchingSerials"
                 >
-                  <a-button
-                    v-if="analytics.watchingSerialsCount > 0"
-                    type="primary"
-                    @click="openWatchingSerials"
-                  >
-                    Сериалы в процессе ({{ analytics.watchingSerialsCount }})
-                  </a-button>
-                  <a-button
-                    v-if="analytics.statusBreakdown.dropped > 0"
-                    @click="openDroppedTitles"
-                  >
-                    Брошено ({{ analytics.statusBreakdown.dropped }})
-                  </a-button>
-                  <a-button
-                    v-if="analytics.seeLaterCount > 0"
-                    @click="openSeeLaterTitles"
-                  >
-                    Досмотреть позже ({{ analytics.seeLaterCount }})
-                  </a-button>
-                </div>
+                  Сериалы в процессе ({{ analytics.watchingSerialsCount }})
+                </a-button>
+                <a-button
+                  v-if="analytics.statusBreakdown.dropped > 0"
+                  @click="openDroppedTitles"
+                >
+                  Брошено ({{ analytics.statusBreakdown.dropped }})
+                </a-button>
+                <a-button
+                  v-if="analytics.seeLaterCount > 0"
+                  @click="openSeeLaterTitles"
+                >
+                  Досмотреть позже ({{ analytics.seeLaterCount }})
+                </a-button>
               </div>
-            </article>
-          </div>
-
-          <div class="profile-page__secondary-column">
-            <ProfileSettings :types="['theme', 'stats']" />
-          </div>
+            </div>
+          </article>
         </div>
       </template>
 
@@ -641,12 +538,36 @@ onMounted(async () => {
       </a-button>
     </template>
   </BaseModal>
+  <BaseModal
+    v-model="isThemeModalVisible"
+    layout="quick"
+    class="profile-theme-modal"
+    hide-footer
+  >
+    <template #title>Цветовая тема</template>
+    <template #body>
+      <SettingBlock
+        class="profile-theme-options"
+        title="Цветовая тема"
+        description=""
+        type="theme"
+        icon="ph:palette"
+        hide-heading
+        @theme-selected="isThemeModalVisible = false"
+      />
+    </template>
+  </BaseModal>
 </template>
 
 <style scoped lang="scss">
 @use "../../styles/media" as *;
 @use "@/styles/layout" as *;
-@use "@/styles/scrollbar" as *;
+
+@include mediaTablet {
+  :global(.profile-theme-modal.modal--quick) {
+    width: min(450px, calc(100% - 28px));
+  }
+}
 
 .profile-avatar-image {
   width: 100%;
@@ -756,6 +677,7 @@ onMounted(async () => {
 }
 
 .profile-page {
+  --profile-action-height: 40px;
   @include pageShell(0);
   display: flex;
   flex-direction: column;
@@ -770,224 +692,128 @@ onMounted(async () => {
 
   &__grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-    margin: 2rem 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    margin: 16px 0 32px;
     align-items: start;
 
     @include mediaDesktopXS {
-      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-      gap: 1.25rem;
+      &:has(.profile-page__watching) {
+        grid-template-columns: minmax(0, 2.55fr) minmax(0, 1fr);
+      }
     }
   }
 
-  &__primary-column {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    min-width: 0;
-  }
-
-  &__top-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1.25rem;
-    align-items: stretch;
-
-    @include mediaTablet {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    &--single {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    > * {
-      min-width: 0;
-    }
-  }
-
-  &__secondary-column {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
+  &__sidebar {
     min-width: 0;
   }
 }
 
 .profile-hero {
-  position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 24px;
-  margin-top: 2rem;
-  padding: 1.75rem 2rem;
-  background: var(--fv-color-bg-primary);
-  border-radius: var(--fv-radius-lg);
-  box-shadow: var(--fv-shadow-card);
-  border: 1px solid color-mix(in srgb, var(--fv-color-border) 55%, transparent);
+  gap: 12px;
+  margin-top: 20px;
 
-  @include mediaMax(640px) {
-    flex-direction: column;
-    align-items: center;
+  @include mediaTablet {
+    grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 16px;
-    padding: 1.5rem;
-    text-align: center;
+    margin-top: 32px;
   }
 
   &__avatar {
-    flex-shrink: 0;
-    width: 84px;
-    height: 84px;
+    display: grid;
+    place-items: center;
+    width: clamp(44px, 6vw, 58px);
+    aspect-ratio: 1;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     color: #fff;
-    font-size: 34px;
+    font-size: 1.25rem;
     font-weight: 700;
   }
 
   &__info {
-    flex: 1;
     min-width: 0;
-
-    @include mediaMax(640px) {
-      width: 100%;
-    }
   }
 
   &__eyebrow {
-    margin: 0 0 6px;
-    font-family: var(--fv-font-display);
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
+    margin: 0 0 4px;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--fv-color-text-tertiary);
+    color: var(--fv-color-text-secondary);
   }
 
   &__name {
     margin: 0;
     font-family: var(--fv-font-display);
-    font-size: clamp(1.5rem, 4vw, 2rem);
-    font-weight: 500;
-    line-height: 1.1;
-    color: var(--fv-color-text-primary);
+    font-size: clamp(1.4rem, 3.5vw, 2.25rem);
+    line-height: 1.12;
     overflow-wrap: anywhere;
-    cursor: pointer;
   }
 
   &__meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px 16px;
-    margin-top: 8px;
-
-    @include mediaMax(640px) {
-      justify-content: center;
-    }
+    gap: 4px 12px;
+    margin-top: 5px;
   }
 
   &__meta-item {
-    min-width: 0;
-    max-width: 100%;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.95rem;
+    min-width: 0;
+    max-width: 100%;
+    font-size: 0.85rem;
     color: var(--fv-color-text-secondary);
-    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
 
-    &--muted {
-      color: var(--fv-color-text-tertiary);
+  &__actions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    @include mediaTablet {
+      grid-column: auto;
+      justify-content: flex-end;
     }
   }
 
-  &__meta-icon {
-    width: 16px;
-    height: 16px;
-    color: inherit;
-    flex-shrink: 0;
-  }
-
-  &__short-id {
-    cursor: pointer;
-    font-family: monospace;
-  }
-
   &__settings {
-    flex-shrink: 0;
-    align-self: flex-start;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    height: 44px;
-    padding: 0 20px;
-    border: none;
-    border-radius: var(--fv-radius-sm);
-    background: var(--fv-color-bg-secondary);
+    min-height: var(--profile-action-height);
+    max-width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--fv-color-border);
+    border-radius: var(--fv-radius-control);
+    background: var(--fv-color-bg-primary);
     color: var(--fv-color-text-primary);
     font: inherit;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
     font-weight: 500;
+    overflow-wrap: anywhere;
     cursor: pointer;
-    transition: background var(--fv-motion-fast) var(--fv-ease);
 
     &:hover {
-      background: color-mix(
-        in srgb,
-        var(--fv-color-text-primary) 8%,
-        var(--fv-color-bg-secondary)
-      );
+      background: var(--fv-color-bg-hover);
     }
 
     &:focus-visible {
       outline: 2px solid var(--fv-color-accent);
-      outline-offset: 3px;
+      outline-offset: 2px;
     }
 
-    @include mediaMax(640px) {
-      position: absolute;
-      top: var(--fv-space-16);
-      right: var(--fv-space-16);
-      width: 44px;
-      padding: 0;
+    svg {
+      flex: none;
     }
   }
-
-  &__settings-label {
-    text-box-trim: trim-both;
-    text-box-edge: cap alphabetic;
-
-    @include mediaMax(640px) {
-      display: none;
-    }
-  }
-
-  &__settings-content {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    line-height: 1;
-  }
-
-  &__settings-icon {
-    display: block;
-    flex: none;
-    width: 18px;
-    height: 18px;
-  }
-}
-
-.friends-card {
-  background: var(--fv-color-bg-primary);
-  border-radius: 24px;
-  box-shadow: var(--fv-shadow-low);
-  border: 1px solid var(--fv-color-border);
-  padding: 1.5rem;
 }
 
 .guest-card {
@@ -1053,146 +879,26 @@ onMounted(async () => {
 }
 
 .badges-card {
+  grid-column: 1 / -1;
+  min-width: 0;
   background: var(--fv-color-bg-primary);
-  border-radius: 24px;
-  box-shadow: var(--fv-shadow-low);
+  border-radius: var(--fv-radius-lg);
+  box-shadow: var(--fv-shadow-card);
   border: 1px solid var(--fv-color-border);
-  padding: 2rem;
-
-  @include mediaMobileXL {
-    padding: 1.5rem;
-  }
+  padding: clamp(16px, 3vw, 24px);
 
   &__header {
-    margin-bottom: 1.5rem;
-  }
-
-  &__loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    padding: 3rem 1rem;
-    text-align: center;
-    color: var(--fv-color-text-secondary);
-  }
-
-  &__loader {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--fv-color-border);
-    border-top-color: var(--fv-color-accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  &__error {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    padding: 3rem 1rem;
-    text-align: center;
-    color: var(--fv-color-negative);
-  }
-
-  &__error-icon {
-    width: 2rem;
-    height: 2rem;
-  }
-
-  &__content {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  &__list {
-    @include customScrollbar;
-    height: 16rem;
-    min-width: 0;
-    overflow-y: auto;
-    scrollbar-gutter: stable;
-  }
-
-  &__seg {
-    display: inline-flex;
-    align-self: flex-start;
-    gap: 2px;
-    padding: 4px;
-    border-radius: 10px;
-    background: var(--fv-color-bg-secondary);
-  }
-
-  &__seg-btn {
-    height: 34px;
-    padding: 0 16px;
-    border: none;
-    border-radius: 7px;
-    background: transparent;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: var(--fv-color-text-secondary);
-    cursor: pointer;
-    transition: color var(--fv-motion-fast) var(--fv-ease),
-      background var(--fv-motion-fast) var(--fv-ease);
-
-    &--on {
-      background: var(--fv-color-bg-primary);
-      color: var(--fv-color-text-primary);
-      box-shadow: var(--fv-shadow-card);
-    }
+    margin-bottom: 12px;
   }
 }
 
 .analytics-card {
-  background: var(--fv-color-bg-primary);
-  border-radius: 24px;
-  box-shadow: var(--fv-shadow-low);
-  border: 1px solid var(--fv-color-border);
-  padding: 1.5rem;
+  grid-column: 1 / -1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-
-  &__loading,
-  &__error {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    padding: 1.4rem 0.8rem;
-    color: var(--fv-color-text-secondary);
-  }
-
-  &__loader {
-    width: 32px;
-    height: 32px;
-    border: 3px solid var(--fv-color-border);
-    border-top-color: var(--fv-color-accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  &__skel {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 12px;
-    padding: 0.5rem 0;
-  }
-
-  &__error {
-    color: var(--fv-color-negative);
-  }
-
-  &__error-icon {
-    width: 22px;
-    height: 22px;
-  }
+  padding-top: 4px;
 
   &__content {
     display: flex;
@@ -1204,130 +910,24 @@ onMounted(async () => {
     display: flex;
     flex-wrap: wrap;
     gap: 0.6rem;
-  }
-}
 
-.analytics-tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
-}
-
-.analytics-tile {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 16px;
-  border-radius: var(--fv-radius-md);
-  background: var(--fv-color-bg-secondary);
-  text-align: left;
-
-  &__label {
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--fv-color-text-tertiary);
-  }
-
-  &__trend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 16px;
-  }
-
-  &__trend-part {
-    font-size: 0.9rem;
-    color: var(--fv-color-text-secondary);
-
-    b {
-      font-family: var(--fv-font-display);
-      font-size: 1.35rem;
+    :deep(.ant-btn) {
+      max-width: 100%;
+      min-height: var(--profile-action-height);
+      height: auto;
+      padding: 6px 10px;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      border-radius: var(--fv-radius-control);
+      border-color: var(--fv-color-border);
+      font-size: 0.875rem;
       font-weight: 500;
-      color: var(--fv-color-text-primary);
-      margin-right: 2px;
     }
   }
-
-  &__value {
-    font-family: var(--fv-font-display);
-    font-size: 1.35rem;
-    font-weight: 500;
-    color: var(--fv-color-text-primary);
-  }
-
-  &__hint {
-    font-size: 0.85rem;
-    color: var(--fv-color-text-secondary);
-  }
-
-  &__chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 2px;
-  }
-
-  &__chip {
-    display: inline-flex;
-    align-items: center;
-    height: 30px;
-    padding: 0 14px;
-    border-radius: 999px;
-    background: var(--fv-color-bg-secondary);
-    border: 1px solid var(--fv-color-border);
-    font-size: 0.82rem;
-    font-weight: 500;
-    color: var(--fv-color-text-primary);
-  }
-
-  &__continue {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 2px;
-    padding: 0;
-    width: 100%;
-    min-width: 0;
-    border: none;
-    background: none;
-    cursor: pointer;
-    text-align: left;
-  }
-
-  &__poster {
-    flex-shrink: 0;
-    width: 34px;
-    aspect-ratio: 2 / 3;
-    border-radius: 6px;
-    background: linear-gradient(160deg, #2a3550, #0e1524);
-  }
-
-  &__continue-info {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
-
-  &__continue-title {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--fv-color-text-primary);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__continue-meta {
-    font-size: 0.78rem;
-    color: var(--fv-color-text-secondary);
-  }
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.profile-theme-options {
+  padding-bottom: 20px;
 }
 
 :deep(.ant-select) {

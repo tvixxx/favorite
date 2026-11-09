@@ -56,6 +56,7 @@ type UserMovieAnalytics = {
   continueWatching: Array<{
     movieId: string;
     title: string;
+    posterUrl: string | null;
     currentSeason: number | null;
     currentEpisode: number | null;
     seasonCount: number | null;
@@ -1019,6 +1020,7 @@ export class UserMovieService {
           movie: {
             select: {
               title: true,
+              poster: { select: { url: true, thumbnailUrl: true } },
               seasonCount: true,
               episodeCount: true,
             },
@@ -1068,6 +1070,8 @@ export class UserMovieService {
       continueWatching: continueRows.map((row) => ({
         movieId: row.movieId,
         title: row.movie.title,
+        posterUrl:
+          row.movie.poster?.thumbnailUrl || row.movie.poster?.url || null,
         currentSeason: row.currentSeason,
         currentEpisode: row.currentEpisode,
         seasonCount: row.movie.seasonCount,

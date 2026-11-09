@@ -16,6 +16,7 @@ defineProps<{
   headerless?: boolean;
   /** Доступное имя диалога для headerless-режима (когда нет заголовка) */
   ariaLabel?: string;
+  hideFooter?: boolean;
   /** Подложка: `default` — затемнение + blur(3px) по спеке, `blur` — усиленное blur(25px) */
   overlay?: "default" | "blur";
 }>();
@@ -160,7 +161,7 @@ const handleConfirm = () => {
             <slot name="body" />
           </div>
 
-          <div class="modal__footer">
+          <div v-if="!hideFooter" class="modal__footer">
             <slot name="footer">
               <a-button @click="modelValue = false">Отмена</a-button>
               <a-button type="primary" @click="handleConfirm"
