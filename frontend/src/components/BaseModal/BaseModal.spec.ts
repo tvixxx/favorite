@@ -17,6 +17,18 @@ describe("BaseModal", () => {
     vi.unstubAllGlobals();
   });
 
+  it("оставляет закрытие диалога, когда действие применяется без футера", () => {
+    wrapper = mount(Modal, {
+      props: { modelValue: true, hideFooter: true },
+      global: { stubs: { BaseIcon: true, "a-button": true } },
+    });
+
+    const dialog = document.querySelector('[role="dialog"]');
+
+    expect(dialog?.querySelector(".modal__footer")).toBeNull();
+    expect(dialog?.querySelector('[aria-label="Закрыть"]')).not.toBeNull();
+  });
+
   it("сохраняет модалку в видимой области при появлении экранной клавиатуры", async () => {
     const viewport = Object.assign(new EventTarget(), {
       height: 800,

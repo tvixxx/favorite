@@ -10,10 +10,13 @@ import {
 } from "@/shared/profile/profile.types";
 import StatsBlock from "@/components/ProfileSettings/components/Stats/StatsBlock.vue";
 import StateBlock from "@/components/StateBlock/StateBlock.vue";
-import RowsSkeleton from "@/components/Skeleton/RowsSkeleton.vue";
+import SkeletonBar from "@/components/Skeleton/SkeletonBar.vue";
 import { useUserMoviesStore, useFriendsStore } from "@/stores";
 import { useMainStore } from "@/state/state";
-import { STAT_BLOCK_TITLES } from "@/components/ProfileSettings/constants";
+import {
+  PROFILE_THEME_META,
+  STAT_BLOCK_TITLES,
+} from "@/components/ProfileSettings/constants";
 import { useRouter } from "vue-router";
 import { PLURAL, pluralForm } from "@/utils/plural.utils";
 
@@ -22,37 +25,26 @@ const friendsStore = useFriendsStore();
 const mainStore = useMainStore();
 const router = useRouter();
 
-const props = defineProps<SettingBlockProps>();
+const props = defineProps<SettingBlockProps & { hideHeading?: boolean }>();
+const emit = defineEmits<{ themeSelected: [] }>();
 const isTheme = computed(() => props.type === "theme");
 const isStats = computed(() => props.type === "stats");
 const isFriends = computed(() => props.type === "friends");
 
 const userId = computed(() => mainStore.userData?.id || "");
 
-const THEME_META: Record<
-  Theme,
-  { label: string; canvas: string; accent: string }
-> = {
-  light: { label: "Светлая", canvas: "#ffffff", accent: "#ff0032" },
-  dark: { label: "Тёмная", canvas: "#141414", accent: "#177ddc" },
-  emerald: { label: "Изумруд", canvas: "#f0fdf4", accent: "#10b981" },
-  corporate: { label: "Деловая", canvas: "#f8fafc", accent: "#1e40af" },
-  synthwave: { label: "Synthwave", canvas: "#1e1e3f", accent: "#ec4899" },
-  retro: { label: "Ретро", canvas: "#fef3c7", accent: "#f59e0b" },
-  cyberpunk: { label: "Cyberpunk", canvas: "#1e1b4b", accent: "#8b5cf6" },
-};
-
 const themeSwatches = themes.map((value) => ({
   value,
-  ...THEME_META[value],
+  ...PROFILE_THEME_META[value],
 }));
+
+const selectTheme = (theme: Theme): void => {
+  setTheme(theme);
+  emit("themeSelected");
+};
 
 const stats = computed(() => {
   const data = userMoviesStore.stats;
-
-  if (!data) {
-    return null;
-  }
 
   // Эталон: «Смотреть позже» в статистике не показываем (есть в аналитике/коллекции)
   const keys = (Object.keys(StatsBlockType) as StatsBlockType[]).filter(
@@ -62,11 +54,13 @@ const stats = computed(() => {
   return keys.map((type) => ({
     type,
     title: STAT_BLOCK_TITLES[type],
-    value: data[type],
+    value: data?.[type] ?? 0,
   })) satisfies StatsBlockItem[];
 });
 
-const isStatsLoading = computed(() => userMoviesStore.isStatsLoading);
+const isStatsLoading = computed(
+  () => userMoviesStore.isStatsLoading && !userMoviesStore.stats
+);
 const isStatsFailed = computed(() => userMoviesStore.isStatsError);
 
 const retryStats = async () => {
@@ -84,6 +78,10 @@ const goToChatPage = () => {
 };
 
 const friendsStatsLoading = ref(false);
+const showFriendsSkeleton = computed(
+  () =>
+    (friendsStatsLoading.value || friendsStore.isLoading) && !friendsStore.stats
+);
 
 const loadFriendsStats = async () => {
   if (!userId.value) {
@@ -135,6 +133,7 @@ const isFriendsEmptySocial = computed(() => {
 <template>
   <section class="setting-block setting-block--theme">
     <SectionHeading
+      v-if="!props.hideHeading"
       class="setting-block__header"
       :title="props.title"
       :icon="props.icon"
@@ -152,22 +151,29 @@ const isFriendsEmptySocial = computed(() => {
         type="button"
         class="theme-swatches__item"
         :class="{ 'theme-swatches__item--active': currentTheme === t.value }"
-        @click="setTheme(t.value)"
+        :aria-pressed="currentTheme === t.value"
+        @click="selectTheme(t.value)"
       >
-        <span class="theme-swatches__chip" :style="{ background: t.canvas }">
-          <span
-            class="theme-swatches__dot"
-            :style="{ background: t.accent }"
-          ></span>
-        </span>
+        <span
+          class="theme-swatches__dot"
+          :style="{ background: t.accent }"
+          aria-hidden="true"
+        />
         <span class="theme-swatches__label">{{ t.label }}</span>
+        <BaseIcon
+          v-if="currentTheme === t.value"
+          class="theme-swatches__selected"
+          name="ph:check-bold"
+          :width="16"
+          :height="16"
+          aria-hidden="true"
+        />
       </button>
     </div>
 
     <div v-if="isStats" class="setting-block__stats">
-      <RowsSkeleton v-if="isStatsLoading" :count="4" :badge="false" />
       <StateBlock
-        v-else-if="isStatsFailed || !stats"
+        v-if="!isStatsLoading && (isStatsFailed || !userMoviesStore.stats)"
         compact
         variant="error"
         icon="ph:warning-circle"
@@ -182,18 +188,17 @@ const isFriendsEmptySocial = computed(() => {
         ]"
       />
       <div v-else class="setting-block__stats-content">
-        <StatsBlock :items="stats" />
+        <StatsBlock :items="stats" :loading="isStatsLoading" />
       </div>
     </div>
 
-    <div v-if="isFriends" class="setting-block__friends">
-      <RowsSkeleton
-        v-if="friendsStatsLoading || friendsStore.isLoading"
-        :count="3"
-        :badge="false"
-      />
+    <div
+      v-if="isFriends"
+      class="setting-block__friends"
+      :aria-busy="showFriendsSkeleton || undefined"
+    >
       <div
-        v-else-if="friendsStore.stats"
+        v-if="showFriendsSkeleton || friendsStore.stats"
         class="setting-block__friends-content"
       >
         <div
@@ -209,7 +214,7 @@ const isFriendsEmptySocial = computed(() => {
             примите входящие запросы.
           </p>
         </div>
-        <div class="friends-stats">
+        <div v-if="friendsStore.stats" class="friends-stats">
           <div class="friends-stats__item">
             <span class="friends-stats__value">{{
               friendsStore.stats.friendsCount
@@ -238,18 +243,47 @@ const isFriendsEmptySocial = computed(() => {
             }}</span>
           </div>
         </div>
-        <div class="friends-actions">
-          <a-button type="primary" size="large" block @click="goToFriendsPage">
+        <div v-else class="friends-stats" aria-hidden="true">
+          <SkeletonBar width="42px" height="12px" radius="5px" />
+          <SkeletonBar width="93px" height="12px" radius="5px" />
+          <SkeletonBar width="72px" height="12px" radius="5px" />
+        </div>
+        <div
+          class="friends-actions"
+          :class="{ 'friends-actions--loading': showFriendsSkeleton }"
+          :aria-hidden="showFriendsSkeleton || undefined"
+        >
+          <a-button
+            size="large"
+            :disabled="showFriendsSkeleton"
+            @click="goToFriendsPage"
+          >
             <template #icon>
               <BaseIcon name="ph:users" class="friends-actions__icon" />
             </template>
-            Управление друзьями
+            Друзья
+            <SkeletonBar
+              v-if="showFriendsSkeleton"
+              class="friends-actions__skeleton"
+              height="100%"
+              radius="var(--fv-radius-control)"
+            />
           </a-button>
-          <a-button size="large" block @click="goToChatPage">
+          <a-button
+            size="large"
+            :disabled="showFriendsSkeleton"
+            @click="goToChatPage"
+          >
             <template #icon>
               <BaseIcon name="ph:chat-circle" class="friends-actions__icon" />
             </template>
             Сообщения
+            <SkeletonBar
+              v-if="showFriendsSkeleton"
+              class="friends-actions__skeleton"
+              height="100%"
+              radius="var(--fv-radius-control)"
+            />
           </a-button>
         </div>
       </div>
@@ -278,43 +312,55 @@ const isFriendsEmptySocial = computed(() => {
 
 .theme-swatches {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(94px, 1fr));
-  gap: 10px;
+  gap: 8px;
 
   &__item {
-    padding: 10px;
-    border: 2px solid var(--fv-color-border);
-    border-radius: 14px;
-    background: var(--fv-color-bg-secondary);
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 44px;
+    min-width: 0;
+    padding: 8px 12px;
+    border: 1px solid var(--fv-color-border);
+    border-radius: var(--fv-radius-control);
+    background: var(--fv-color-bg-primary);
+    text-align: left;
+    font: inherit;
+    color: var(--fv-color-text-primary);
     cursor: pointer;
     transition: border-color var(--fv-motion-fast) var(--fv-ease);
 
     &--active {
       border-color: var(--fv-color-accent);
+      background: color-mix(
+        in srgb,
+        var(--fv-color-accent) 12%,
+        var(--fv-color-bg-primary)
+      );
+      font-weight: 700;
+    }
+
+    &:hover {
+      border-color: var(--fv-color-accent);
     }
   }
 
-  &__chip {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 40px;
-    margin-bottom: 7px;
-    border-radius: 9px;
-    border: 1px solid var(--fv-color-border);
-  }
-
   &__dot {
-    width: 16px;
-    height: 16px;
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--fv-color-border);
     border-radius: 50%;
   }
 
   &__label {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--fv-color-text-primary);
+    overflow-wrap: anywhere;
+  }
+
+  &__selected {
+    flex: none;
+    margin-left: auto;
+    color: var(--fv-color-accent);
   }
 }
 
@@ -346,7 +392,7 @@ const isFriendsEmptySocial = computed(() => {
   &__friends-content {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 12px;
   }
 
   &__friends-empty-hint {
@@ -382,24 +428,22 @@ const isFriendsEmptySocial = computed(() => {
 
 // Эталон: 3 центрированных тайла в ряд (число + подпись)
 .friends-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.625rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: 24px;
+  gap: 4px 10px;
 
   &__item {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.15rem;
-    text-align: center;
-    padding: 0.875rem 0.375rem;
-    background: var(--fv-color-bg-secondary);
-    border-radius: 14px;
+    align-items: baseline;
+    gap: 4px;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   &__value {
-    font-size: 1.5rem;
-    font-weight: 500;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
     line-height: 1.1;
     color: var(--fv-color-text-primary);
@@ -413,8 +457,20 @@ const isFriendsEmptySocial = computed(() => {
 
 .friends-actions {
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  &--loading :deep(.ant-btn.ant-btn-lg) {
+    position: relative;
+    overflow: hidden;
+    color: transparent;
+    border-color: transparent;
+  }
+
+  &__skeleton {
+    position: absolute;
+    inset: 0;
+  }
 
   &__icon {
     width: 1.25rem;
@@ -432,6 +488,12 @@ const isFriendsEmptySocial = computed(() => {
     gap: 0.5rem;
     height: auto;
     min-height: 44px;
+    max-width: 100%;
+    border-radius: var(--fv-radius-control);
+    border-color: var(--fv-color-border);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    white-space: normal;
     padding-top: 10px;
     padding-bottom: 10px;
   }

@@ -5,6 +5,49 @@ import type { Prisma } from '../generated/prisma/client';
 
 jest.mock('../prisma/prisma.service', () => ({ PrismaService: class {} }));
 
+describe('Постеры сериалов в аналитике', () => {
+  it('выбирает миниатюру, затем исходный постер и возвращает null без изображения', async () => {
+    const posters = [
+      {
+        thumbnailUrl: '/media/poster-thumbnail.webp',
+        url: '/media/poster.webp',
+      },
+      { thumbnailUrl: '', url: 'https://example.test/poster.jpg' },
+      null,
+    ];
+    const prisma = {
+      userMovie: {
+        count: jest.fn().mockResolvedValue(0),
+        findMany: jest
+          .fn()
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce(
+            posters.map((poster, index) => ({
+              movieId: `movie-${index}`,
+              currentSeason: null,
+              currentEpisode: null,
+              movie: {
+                title: 'Сериал',
+                seasonCount: 2,
+                episodeCount: 24,
+                poster,
+              },
+            })),
+          ),
+      },
+    };
+    const service = new UserMovieService(prisma as unknown as PrismaService);
+
+    const analytics = await service.getUserAnalytics('user-id');
+
+    expect(analytics.continueWatching).toMatchObject([
+      { movieId: 'movie-0', posterUrl: '/media/poster-thumbnail.webp' },
+      { movieId: 'movie-1', posterUrl: 'https://example.test/poster.jpg' },
+      { movieId: 'movie-2', posterUrl: null },
+    ]);
+  });
+});
+
 describe('Статусы просмотра и удаление из коллекции', () => {
   let current: Record<string, unknown>;
   let listItems: Array<{ userId: string; movieId: string }>;
