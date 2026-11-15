@@ -4,40 +4,68 @@ import vueDevTools from "vite-plugin-vue-devtools";
 import { VitePWA } from "vite-plugin-pwa";
 import { fileURLToPath, URL } from "node:url";
 
-function antStyleNonce(): Plugin {
-  const injectors = new Set([
-    "ant-design-vue/es/vc-util/Dom/dynamicCSS.js",
-    "@ant-design/icons-vue/es/dynamicCSS.js",
+function antCspStyles(): Plugin {
+  const styleElement = "styleNode.innerHTML = css;";
+  const noncePatch = [
+    [
+      styleElement,
+      `
+        const nonce = document.querySelector('meta[name="fv-style-nonce"]')?.nonce;
+        if (nonce && /^[a-f0-9]{32}$/.test(nonce)) styleNode.nonce = nonce;
+        ${styleElement}
+      `,
+    ],
+  ] as const;
+  const patches = new Map<string, ReadonlyArray<readonly [string, string]>>([
+    ["ant-design-vue/es/vc-util/Dom/dynamicCSS.js", noncePatch],
+    ["@ant-design/icons-vue/es/dynamicCSS.js", noncePatch],
+    // The measuring textarea needs individual CSS properties under CSP.
+    [
+      "ant-design-vue/es/input/calculateNodeHeight.js",
+      [
+        [
+          "SIZING_STYLE.map(name => `${name}:${style.getPropertyValue(name)}`).join(';')",
+          "SIZING_STYLE.map(name => [name, style.getPropertyValue(name)])",
+        ],
+        [
+          "hiddenTextarea.setAttribute('style', `${sizingStyle};${HIDDEN_TEXTAREA_STYLE}`);",
+          String.raw`
+            for (const [name, value] of sizingStyle) {
+              hiddenTextarea.style.setProperty(name, value);
+            }
+            for (const [, name, value] of HIDDEN_TEXTAREA_STYLE.matchAll(/([a-z-]+):\s*(.*?)\s*!important;/g)) {
+              hiddenTextarea.style.setProperty(name, value, 'important');
+            }
+          `,
+        ],
+      ],
+    ],
   ]);
-  const createStyle = "styleNode.innerHTML = css;";
   const patched = new Set<string>();
 
   return {
-    name: "favorite-ant-style-nonce",
+    name: "favorite-ant-csp-styles",
     apply: "build",
     transform(code, id) {
       const dependency = id.split("/node_modules/").pop();
+      const replacements = dependency && patches.get(dependency);
 
-      if (!dependency || !injectors.has(dependency)) return;
-      if (code.split(createStyle).length !== 2) {
-        this.error(`Ant style injector changed: ${dependency}`);
+      if (!dependency || !replacements) return;
+      for (const [original, replacement] of replacements) {
+        if (code.split(original).length !== 2) {
+          this.error(`Ant CSP style implementation changed: ${dependency}`);
+        }
+
+        code = code.replace(original, () => replacement);
       }
 
       patched.add(dependency);
 
-      // Ant component and animation styles do not all receive ConfigProvider.csp.
-      return code.replace(
-        createStyle,
-        `
-        const nonce = document.querySelector('meta[name="fv-style-nonce"]')?.nonce;
-        if (nonce && /^[a-f0-9]{32}$/.test(nonce)) styleNode.nonce = nonce;
-        ${createStyle}
-      `
-      );
+      return code;
     },
     buildEnd(error) {
-      if (!error && patched.size !== injectors.size) {
-        this.error("An Ant style injector was not found in the production build");
+      if (!error && patched.size !== patches.size) {
+        this.error("An Ant CSP style module was not found in the production build");
       }
     },
   };
@@ -47,7 +75,7 @@ export default defineConfig(({ command }) => ({
   cacheDir: process.env.FAVOURITE_VITE_CACHE_DIR ?? "node_modules/.vite",
   plugins: [
     vue(),
-    antStyleNonce(),
+    antCspStyles(),
     ...(command === "serve"
       ? [vueDevTools({ launchEditor: process.env.LAUNCH_EDITOR })]
       : []),
