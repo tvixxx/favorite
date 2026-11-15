@@ -1,6 +1,14 @@
+<script lang="ts">
+import { addCollection } from "@iconify/vue/offline";
+import icons from "./icons.json";
+
+addCollection(icons.ph);
+addCollection(icons["fluent-color"]);
+</script>
+
 <script setup lang="ts">
 import { computed } from "vue";
-import { Icon } from "@iconify/vue";
+import { Icon } from "@iconify/vue/offline";
 
 const props = defineProps({
   name: {

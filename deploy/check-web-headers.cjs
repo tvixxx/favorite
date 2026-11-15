@@ -6,6 +6,8 @@ async function checkWebHeaders(base, asset) {
   const secure = new URL(base).protocol === "https:";
   const client = secure ? https : http;
   const missing = "/assets/__qa_missing__.js";
+  const htmlPaths = new Set(["/", "/login", "/index.html"]);
+  const documentNonces = new Set();
   for (const path of [
     "/",
     "/login",
@@ -15,15 +17,20 @@ async function checkWebHeaders(base, asset) {
     asset,
     missing,
   ]) {
-    const { status, headers } = await new Promise((resolve, reject) => {
+    const { status, headers, body } = await new Promise((resolve, reject) => {
       // Только одноразовый QA-сертификат из verify-local.sh, реальные сервисы этим кодом не проверяются.
       const request = client.get(
         new URL(path, base),
         { rejectUnauthorized: !secure },
         (response) => {
+          let body = "";
+          if (htmlPaths.has(path)) {
+            response.setEncoding("utf8");
+            response.on("data", (chunk) => { body += chunk; });
+          }
           response.on("error", reject);
           response.on("end", () =>
-            resolve({ status: response.statusCode, headers: response.headers }),
+            resolve({ status: response.statusCode, headers: response.headers, body }),
           );
           response.resume();
         },
@@ -42,11 +49,19 @@ async function checkWebHeaders(base, asset) {
       `${path}: CSP must be report-only during rollout`,
     );
     const directives = reportOnly.split(";").map((value) => value.trim());
+    const style = directives.filter((value) => value.split(/\s+/)[0] === "style-src");
+    assert.equal(style.length, 1, `${path}: one CSP style-src`);
+    const nonce = /^style-src 'self' 'nonce-([a-f0-9]{32})'$/.exec(style[0])?.[1];
+    assert.ok(nonce, `${path}: CSP style-src with nonce`);
+    if (htmlPaths.has(path)) {
+      assert.ok(body.includes(`<meta name="fv-style-nonce" nonce="${nonce}">`), `${path}: HTML style nonce`);
+      assert.ok(!documentNonces.has(nonce), `${path}: unique HTML nonce`);
+      documentNonces.add(nonce);
+    }
     for (const expected of [
       "default-src 'self'",
       "script-src 'self'",
       "script-src-attr 'none'",
-      "style-src 'self'",
       "object-src 'none'",
       "base-uri 'none'",
       "report-uri /_csp-report",

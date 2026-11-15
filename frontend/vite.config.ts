@@ -1,13 +1,53 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import vue from "@vitejs/plugin-vue";
 import vueDevTools from "vite-plugin-vue-devtools";
 import { VitePWA } from "vite-plugin-pwa";
 import { fileURLToPath, URL } from "node:url";
 
+function antStyleNonce(): Plugin {
+  const injectors = new Set([
+    "ant-design-vue/es/vc-util/Dom/dynamicCSS.js",
+    "@ant-design/icons-vue/es/dynamicCSS.js",
+  ]);
+  const createStyle = "styleNode.innerHTML = css;";
+  const patched = new Set<string>();
+
+  return {
+    name: "favorite-ant-style-nonce",
+    apply: "build",
+    transform(code, id) {
+      const dependency = id.split("/node_modules/").pop();
+
+      if (!dependency || !injectors.has(dependency)) return;
+      if (code.split(createStyle).length !== 2) {
+        this.error(`Ant style injector changed: ${dependency}`);
+      }
+
+      patched.add(dependency);
+
+      // Ant component and animation styles do not all receive ConfigProvider.csp.
+      return code.replace(
+        createStyle,
+        `
+        const nonce = document.querySelector('meta[name="fv-style-nonce"]')?.nonce;
+        if (nonce && /^[a-f0-9]{32}$/.test(nonce)) styleNode.nonce = nonce;
+        ${createStyle}
+      `
+      );
+    },
+    buildEnd(error) {
+      if (!error && patched.size !== injectors.size) {
+        this.error("An Ant style injector was not found in the production build");
+      }
+    },
+  };
+}
+
 export default defineConfig(({ command }) => ({
   cacheDir: process.env.FAVOURITE_VITE_CACHE_DIR ?? "node_modules/.vite",
   plugins: [
     vue(),
+    antStyleNonce(),
     ...(command === "serve"
       ? [vueDevTools({ launchEditor: process.env.LAUNCH_EDITOR })]
       : []),

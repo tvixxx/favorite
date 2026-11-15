@@ -13,18 +13,22 @@ async function fixture(
     badCache = false,
     scriptSrc = "'self'",
     enforce = false,
+    nonceMismatch = false,
+    reuseNonce = false,
   } = {},
 ) {
   const paths = [];
   const server = http.createServer((request, response) => {
     const path = request.url;
     paths.push(path);
+    const html = ["/", "/login", "/index.html"].includes(path);
+    const nonce = String(reuseNonce ? 1 : paths.length).padStart(32, "0");
     response.setHeader("X-Content-Type-Options", "nosniff");
     response.setHeader("X-Frame-Options", "SAMEORIGIN");
     response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
     response.setHeader(
       "Content-Security-Policy-Report-Only",
-      `default-src 'self'; script-src ${scriptSrc}; script-src-attr 'none'; style-src 'self'; object-src 'none'; base-uri 'none'; report-uri /_csp-report`,
+      `default-src 'self'; script-src ${scriptSrc}; script-src-attr 'none'; style-src 'self' 'nonce-${nonce}'; object-src 'none'; base-uri 'none'; report-uri /_csp-report`,
     );
     if (enforce)
       response.setHeader("Content-Security-Policy", "default-src 'self'");
@@ -41,7 +45,11 @@ async function fixture(
           : "no-cache",
       );
     }
-    response.end("QA response");
+    response.end(
+      html
+        ? `<meta name="fv-style-nonce" nonce="${nonceMismatch ? "placeholder" : nonce}">`
+        : "QA response",
+    );
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   t.after(
@@ -110,6 +118,16 @@ for (const header of [
 test("отклоняет небезопасный script-src в пробной политике", async (t) => {
   const { base } = await fixture(t, { scriptSrc: "'self' 'unsafe-inline'" });
   await assert.rejects(checkWebHeaders(base, "/assets/app.js"), /CSP script-src/);
+});
+
+test("отклоняет HTML с nonce, отличным от заголовка CSP", async (t) => {
+  const { base } = await fixture(t, { nonceMismatch: true });
+  await assert.rejects(checkWebHeaders(base, "/assets/app.js"), /HTML style nonce/);
+});
+
+test("отклоняет повторное использование nonce между HTML-ответами", async (t) => {
+  const { base } = await fixture(t, { reuseNonce: true });
+  await assert.rejects(checkWebHeaders(base, "/assets/app.js"), /unique HTML nonce/);
 });
 
 test("отклоняет преждевременное применение CSP", async (t) => {
