@@ -51,6 +51,10 @@ vi.mock("@/services/api", () => ({
 }));
 
 describe("Создание через форму", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("не меняет иллюстрацию постера при вводе названия", async () => {
     const wrapper = render();
     const before = wrapper
@@ -88,21 +92,92 @@ describe("Создание через форму", () => {
     vi.unstubAllGlobals();
   });
 
-  it("скрывает поиск по умолчанию и сохраняет ручной черновик при переключении включённого каталога", async () => {
+  it("показывает ручную форму при отключённом каталоге", async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ data: { enabled: false } });
+
     const off = render();
 
     await flushPromises();
     expect(off.find('[aria-label="Способ добавления"]').exists()).toBe(false);
+    expect(off.get("form.cm-form").isVisible()).toBe(true);
     off.unmount();
-    vi.mocked(api.get).mockResolvedValueOnce({ data: { enabled: true } });
+  });
+
+  it("показывает ручную форму при ошибке проверки каталога", async () => {
+    vi.mocked(api.get).mockRejectedValueOnce(new Error("Network error"));
 
     const wrapper = render();
 
     await flushPromises();
+    expect(wrapper.get("form.cm-form").isVisible()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it("показывает шиммер минимум 300 мс при быстром ответе каталога", async () => {
+    vi.useFakeTimers();
+    vi.mocked(api.get).mockResolvedValueOnce({ data: { enabled: true } });
+
+    const wrapper = render();
+    const skeleton = ".tvdb-search-skeleton";
+    const search = 'form[aria-label="Поиск TheTVDB"]';
+
+    expect(wrapper.find(skeleton).exists()).toBe(true);
+    await flushPromises();
+    await vi.advanceTimersByTimeAsync(299);
+    expect(wrapper.find(skeleton).exists()).toBe(true);
+    expect(wrapper.find(search).exists()).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(wrapper.find(skeleton).exists()).toBe(false);
+    expect(wrapper.get(search).isVisible()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it("после медленного ответа сразу открывает поиск и сохраняет ручной черновик", async () => {
+    vi.useFakeTimers();
+
+    let finish!: (response: { data: { enabled: boolean } }) => void;
+
+    vi.mocked(api.get).mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+    );
+
+    const wrapper = render();
+    const manualForm = wrapper.get<HTMLFormElement>("form.cm-form");
+
+    await vi.advanceTimersByTimeAsync(500);
+    expect(manualForm.element.style.display).toBe("none");
+
+    expect(wrapper.find('form[aria-label="Поиск TheTVDB"]').exists()).toBe(
+      false
+    );
+
+    expect(
+      wrapper
+        .get('[role="status"][aria-label="Загрузка"] .tvdb-search-skeleton')
+        .isVisible()
+    ).toBe(true);
+
+    finish({ data: { enabled: true } });
+    await flushPromises();
+
+    expect(
+      wrapper.find('[role="status"][aria-label="Загрузка"]').exists()
+    ).toBe(false);
+
+    expect(
+      wrapper.get('input[aria-label="Название для поиска"]').isVisible()
+    ).toBe(true);
+
+    expect(manualForm.element.style.display).toBe("none");
+
     await wrapper
       .findAll('[aria-label="Способ добавления"] button')
       .find((b) => b.text() === "Вручную")!
       .trigger("click");
+
+    expect(manualForm.element.style.display).not.toBe("none");
 
     await wrapper
       .get('input[placeholder="Например: Интерстеллар"]')
