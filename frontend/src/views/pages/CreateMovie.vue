@@ -4,6 +4,7 @@ import {
   onMounted,
   reactive,
   ref,
+  shallowRef,
   computed,
   watch,
 } from "vue";
@@ -17,6 +18,8 @@ import { useUserMoviesStore } from "@/stores";
 import { useActorsStore } from "@/stores/actors/actorsStore";
 import { useMainStore } from "@/state/state";
 import AppBackButton from "@/components/AppBackButton/AppBackButton.vue";
+import SkeletonBar from "@/components/Skeleton/SkeletonBar.vue";
+import { useMinLoading } from "@/components/Skeleton/useMinLoading";
 import { showErrorRequest } from "@/state/utils";
 import {
   Genre,
@@ -45,6 +48,7 @@ import {
 import TitleCandidates from "@/components/ContentType/TitleCandidates.vue";
 import { type ContentKind, type ContentSelection } from "@/utils/content-kind";
 import TvdbAdd from "@/components/Tvdb/TvdbAdd.vue";
+import TvdbSearchSkeleton from "@/components/Tvdb/TvdbSearchSkeleton.vue";
 import { tvdbEnabled } from "@/services/tvdb";
 
 const { navigateBack } = useNavigateBack();
@@ -55,7 +59,11 @@ const mainStore = useMainStore();
 
 const userId = computed(() => mainStore.userData?.id || "");
 const catalogueEnabled = ref(false);
-const addMode = ref<"manual" | "search">("manual");
+const addMode = shallowRef<"manual" | "search" | null>(null);
+const showMinLoading = useMinLoading(() => addMode.value === null, 300);
+const showSearchSkeleton = computed(
+  () => showMinLoading.value && (addMode.value === null || catalogueEnabled.value)
+);
 const capabilityRequest = new AbortController();
 
 onMounted(async () => {
@@ -63,7 +71,7 @@ onMounted(async () => {
 
   if (capabilityRequest.signal.aborted) return;
   catalogueEnabled.value = enabled;
-  if (enabled && !formData.title.trim()) addMode.value = "search";
+  addMode.value = enabled ? "search" : "manual";
 });
 
 onBeforeUnmount(() => capabilityRequest.abort());
@@ -382,8 +390,23 @@ const addNewMovie = async () => {
 
       <div class="create-movie__card">
         <h1 class="create-movie__title">Добавить в коллекцию</h1>
+        <div v-if="showSearchSkeleton" role="status" aria-label="Загрузка">
+          <div class="cm-add-modes" aria-hidden="true">
+            <SkeletonBar
+              width="165px"
+              height="48px"
+              radius="var(--fv-radius-sm)"
+            />
+            <SkeletonBar
+              width="104px"
+              height="48px"
+              radius="var(--fv-radius-sm)"
+            />
+          </div>
+          <TvdbSearchSkeleton />
+        </div>
         <div
-          v-if="catalogueEnabled"
+          v-else-if="catalogueEnabled"
           class="cm-add-modes"
           role="group"
           aria-label="Способ добавления"
@@ -404,7 +427,7 @@ const addNewMovie = async () => {
           </button>
         </div>
         <TvdbAdd
-          v-if="catalogueEnabled"
+          v-if="catalogueEnabled && !showSearchSkeleton"
           v-show="addMode === 'search'"
           :user-id="userId"
           :session-revision="mainStore.sessionRevision"

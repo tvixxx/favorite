@@ -32,6 +32,7 @@ export async function tvdbEnabled(signal?: AbortSignal): Promise<boolean> {
       (
         await api.get<{ enabled: boolean }>("/catalog/tvdb/capabilities", {
           signal,
+          timeout: 5_000,
         })
       ).data.enabled === true
     );
